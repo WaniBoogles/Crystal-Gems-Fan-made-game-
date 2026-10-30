@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Crystal Gems!
+Comment=Steven Universe Beat 'Em Up Action Game (Instant Zero-Click Autoplay)
+Exec=bash -c 'DIR="$(dirname "%k")"; exec "$DIR/Play-Crystal-Gems-Linux.sh"'
+Icon=crystal-gems
+Terminal=false
+Categories=Game;ActionGame;

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#ff6097">
+  <title>Crystal Gems! — Action Battler</title>
+  <meta name="apple-mobile-web-app-title" content="Crystal Gems!">
+  <meta name="application-name" content="Crystal Gems!">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="shortcut icon" href="icon-192.png">
+  <link rel="stylesheet" href="game.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Portrait Orientation Warning Overlay (Forces Landscape on Mobile) -->
+  <div id="orientationOverlay" class="orientation-overlay">
+    <div class="rotate-phone-anim">📱 ➔ 🔄</div>
+    <h2 class="orientation-title">ROTATE YOUR PHONE</h2>
+    <p class="orientation-desc">Crystal Gems! is optimized for Landscape mode with two-thumb touch controls!</p>
+  </div>
+
+  <div id="game-container">
+    <!-- Main Render Canvas (Widescreen 1280x720) -->
+    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+    <!-- Tekken-Style Combo Tracker Overlay -->
+    <div id="comboDisplay" class="combo-display" style="display: none;">
+      <div class="combo-hits" id="comboHits">3 HITS!</div>
+      <div class="combo-dmg" id="comboDmg">120 DMG</div>
+    </div>
+
+    <!-- Plants vs Zombies-Style "Huge Wave is Approaching" Warning Banner -->
+    <div id="waveWarningBanner" class="wave-warning-banner" style="display: none;">
+      <span class="banner-icon">⚠️</span>
+      <span class="banner-text" id="waveWarningText">A HUGE WAVE OF CORRUPTED GEMS IS APPROACHING!</span>
+      <span class="banner-icon">⚠️</span>
+    </div>
+
+    <!-- Top In-Game HUD -->
+    <div id="hud" class="hud-overlay" style="display: none;">
+      <!-- Far Left: Active Character Info & Health (Player 1) -->
+      <div class="hud-character-panel" id="hudP1Panel">
+        <div class="hud-avatar-frame" id="hudAvatarFrame">
+          <div class="hud-avatar-icon" id="hudAvatarIcon">⭐</div>
+          <span class="hud-character-name" id="hudCharacterName">Steven</span>
+        </div>
+        <div class="hud-stats">
+          <div class="hud-hearts" id="hudHearts" title="Health">
+            <!-- Dynamically populated hearts -->
+          </div>
+          <div class="hud-harmony-container" title="Overdrive Power-Up Meter">
+            <div class="hud-harmony-label">
+              <span id="overdriveLabel">⚡ STEVEN OVERDRIVE</span>
+              <span id="harmonyPercent">0%</span>
+            </div>
+            <div class="hud-harmony-bar-bg">
+              <div class="hud-harmony-bar-fill" id="harmonyBarFill"></div>
+            </div>
+          </div>
+          <div class="hud-btn-row">
+            <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to enter Overdrive!">
+              <span class="overdrive-icon">⚡</span>
+              <span class="overdrive-text" id="btnOverdriveText">OVERDRIVE [U]</span>
+            </button>
+            <button id="btnFuseHud" class="btn-fuse-hud disabled" type="button" title="Fuse Gems when Sync reaches 100%!">
+              <span class="fuse-btn-icon">💎</span>
+              <span class="fuse-btn-text" id="btnFuseText">FUSE [V]</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mid-Left: Score & Bubbled Gems Pill -->
+      <div class="hud-score-pill" id="hudScorePill">
+        <div class="hud-mini-stat">
+          <span class="mini-stat-label">SCORE</span>
+          <span class="mini-stat-val" id="hudScore">0</span>
+        </div>
+        <div class="hud-mini-stat">
+          <span class="mini-stat-label">BUBBLED</span>
+          <span class="mini-stat-val" id="hudBubbledGems">💎 0</span>
+        </div>
+      </div>
+
+      <!-- Center: Stage & Mission Objective / Boss Health Bar -->
+      <div class="hud-center-panel" id="hudCenterPanel">
+        <div class="hud-stage-badge" id="hudStageBadge">STAGE 1: BEACH CITY</div>
+        <div class="hud-objective-text" id="hudObjectiveText">Defend Beach City from Corrupted Centipeetles!</div>
+
+        <!-- Plants vs Zombies-Style Wave Progression Meter -->
+        <div class="pvz-wave-container" id="pvzWaveContainer">
+          <div class="pvz-wave-header">
+            <span class="pvz-wave-label" id="pvzWaveLabel">WAVE 1 / 4</span>
+            <span class="pvz-wave-status" id="pvzWaveStatus">NORMAL WAVE</span>
+          </div>
+          <div class="pvz-wave-track-wrapper">
+            <div class="pvz-wave-track" id="pvzWaveTrack">
+              <div class="pvz-wave-fill" id="pvzWaveFill" style="width: 0%;"></div>
+              <div class="pvz-wave-flag flag-1" style="left: 25%;" title="Wave 1">🚩</div>
+              <div class="pvz-wave-flag flag-2" style="left: 50%;" title="Wave 2">🚩</div>
+              <div class="pvz-wave-flag flag-3" style="left: 75%;" title="Huge Wave 3!">⚠️</div>
+              <div class="pvz-wave-flag flag-boss" style="left: 96%;" title="Final Boss Wave!">👾</div>
+              <div class="pvz-wave-marker" id="pvzWaveMarker" style="left: 0%;">⭐</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top-Center Animated Boss Health Bar (Active on Level 5 and Boss Fights) -->
+        <div id="bossHud" class="boss-health-container" style="display: none;">
+          <div class="boss-title-row">
+            <span class="boss-skull">👾</span>
+            <span class="boss-name" id="bossName">CORRUPTED JASPER & MOTHER CENTIPEETLE</span>
+            <span class="boss-hp-digits" id="bossHpDigits">1500 / 1500</span>
+          </div>
+          <div class="boss-hp-track">
+            <div class="boss-hp-fill" id="bossHpFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mid-Right: Quick Actions (Mobile, Sound, Screenshot, Pause) -->
+      <div class="hud-actions-pill" id="hudActionsPill">
+        <button id="btnMobileToggle" class="hud-btn" title="Toggle Mobile On-Screen Controls">📱</button>
+        <button id="btnSoundToggle" class="hud-btn" title="Toggle Sound / Music">🔊</button>
+        <button id="btnScreenshot" class="hud-btn" title="Take Clean Screenshot (PrintScreen or P)">📸</button>
+        <button id="btnPause" class="hud-btn" title="Pause Game (ESC)">⏸️</button>
+      </div>
+
+      <!-- Far Right: Player 2 HUD Panel (Active in 2-Player Co-Op Mode) -->
+      <div class="hud-character-panel hud-p2-panel" id="hudP2Panel" style="display: none;">
+        <div class="hud-stats">
+          <div class="hud-hearts" id="hudHeartsP2" title="P2 Health">
+            <!-- Dynamically populated hearts -->
+          </div>
+          <div class="hud-harmony-container" title="P2 Overdrive Meter">
+            <div class="hud-harmony-label">
+              <span id="overdriveLabelP2">⚡ GARNET OVERDRIVE</span>
+              <span id="harmonyPercentP2">0%</span>
+            </div>
+            <div class="hud-harmony-bar-bg">
+              <div class="hud-harmony-bar-fill" id="harmonyBarFillP2"></div>
+            </div>
+          </div>
+          <button id="btnOverdriveP2" class="btn-overdrive-hud disabled" title="Press [O] when 100% full to enter Overdrive!">
+            <span class="overdrive-icon">⚡</span>
+            <span class="overdrive-text" id="btnOverdriveTextP2">OVERDRIVE [O]</span>
+          </button>
+        </div>
+        <div class="hud-avatar-frame" id="hudAvatarFrameP2">
+          <div class="hud-avatar-icon" id="hudAvatarIconP2">🥊</div>
+          <span class="hud-character-name" id="hudCharacterNameP2">Garnet (P2)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dual Action Hotbars (Bottom Screen) -->
+    <div id="actionBarsContainer" class="hud-action-bars-wrapper" style="display: none;">
+      <!-- Player 1 Hotbar (Bottom Left in 2P, Bottom Center in 1P) -->
+      <div id="actionBarP1" class="hud-action-bar hud-action-bar-p1">
+        <div class="action-bar-header">
+          <span class="action-bar-pill p1-pill">P1</span>
+          <span class="action-bar-name" id="barNameP1">AMETHYST</span>
+        </div>
+        <div class="action-slots-row">
+          <div class="action-slot" id="slotJ" title="Normal Attack Combo">
+            <span class="action-key-badge" id="badgeJ">F</span>
+            <div class="action-icon" id="iconJ">🛡️</div>
+            <div class="action-info">
+              <span class="action-name" id="nameJ">Shield Strike</span>
+              <span class="action-type">ATTACK</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdJ"></div>
+          </div>
+          <div class="action-slot" id="slotK" title="Special Attack">
+            <span class="action-key-badge" id="badgeK">G</span>
+            <div class="action-icon" id="iconK">💫</div>
+            <div class="action-info">
+              <span class="action-name" id="nameK">Shield Throw</span>
+              <span class="action-type">SPECIAL</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdK"></div>
+          </div>
+          <div class="action-slot" id="slotL" title="Signature Gem Skill">
+            <span class="action-key-badge" id="badgeL">H</span>
+            <div class="action-icon" id="iconL">🫧</div>
+            <div class="action-info">
+              <span class="action-name" id="nameL">Bubble & Heal</span>
+              <span class="action-type">SKILL</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdL"></div>
+          </div>
+          <div class="action-slot" id="slotI" title="Evasive Dodge">
+            <span class="action-key-badge" id="badgeI">E</span>
+            <div class="action-icon" id="iconI">💨</div>
+            <div class="action-info">
+              <span class="action-name" id="nameI">Dodge</span>
+              <span class="action-type">EVADE</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdI"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Player 2 Hotbar (Bottom Right in 2P mode) -->
+      <div id="actionBarP2" class="hud-action-bar hud-action-bar-p2" style="display: none;">
+        <div class="action-bar-header">
+          <span class="action-bar-pill p2-pill">P2</span>
+          <span class="action-bar-name" id="barNameP2">STEVEN</span>
+        </div>
+        <div class="action-slots-row">
+          <div class="action-slot" id="slotP2_J" title="Normal Attack Combo">
+            <span class="action-key-badge" id="badgeP2_J">J</span>
+            <div class="action-icon" id="iconP2_J">🛡️</div>
+            <div class="action-info">
+              <span class="action-name" id="nameP2_J">Shield Strike</span>
+              <span class="action-type">ATTACK</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdP2_J"></div>
+          </div>
+          <div class="action-slot" id="slotP2_K" title="Special Attack">
+            <span class="action-key-badge" id="badgeP2_K">K</span>
+            <div class="action-icon" id="iconP2_K">💫</div>
+            <div class="action-info">
+              <span class="action-name" id="nameP2_K">Shield Throw</span>
+              <span class="action-type">SPECIAL</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdP2_K"></div>
+          </div>
+          <div class="action-slot" id="slotP2_L" title="Signature Gem Skill">
+            <span class="action-key-badge" id="badgeP2_L">L</span>
+            <div class="action-icon" id="iconP2_L">🫧</div>
+            <div class="action-info">
+              <span class="action-name" id="nameP2_L">Bubble & Heal</span>
+              <span class="action-type">SKILL</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdP2_L"></div>
+          </div>
+          <div class="action-slot" id="slotP2_I" title="Evasive Dodge">
+            <span class="action-key-badge" id="badgeP2_I">I</span>
+            <div class="action-icon" id="iconP2_I">💨</div>
+            <div class="action-info">
+              <span class="action-name" id="nameP2_I">Dodge</span>
+              <span class="action-type">EVADE</span>
+            </div>
+            <div class="action-cooldown-overlay" id="cdP2_I"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile On-Screen Touch Controls (Active only on Mobile / Touch Devices) -->
+    <div id="touchControls" class="touch-controls" style="display: none;">
+      <!-- Left Hand: Movement Only (◀ Left and ▶ Right) -->
+      <div class="touch-dpad" id="touchDpad">
+        <button class="touch-btn touch-move" id="touchLeft" aria-label="Move Left">◀</button>
+        <button class="touch-btn touch-move" id="touchRight" aria-label="Move Right">▶</button>
+      </div>
+
+      <!-- Right Hand: Action Cluster (Jump, Attack, Special, Skill, Overdrive) -->
+      <div class="touch-actions" id="touchActions">
+        <button class="touch-btn btn-overdrive" id="touchOverdrive" aria-label="Pink Overdrive Power-Up">
+          <span class="touch-icon">⚡</span>
+          <span class="touch-lbl">OVERDRIVE</span>
+        </button>
+        <button class="touch-btn btn-skill" id="touchSkill" aria-label="Gem Skill & Heal">
+          <div class="touch-cooldown-overlay" id="touchCdSkill"></div>
+          <span class="touch-cd-timer" id="touchCdTimerSkill"></span>
+          <span class="touch-icon" id="touchIconSkill">🫧</span>
+          <span class="touch-lbl" id="touchLblSkill">SKILL</span>
+        </button>
+        <button class="touch-btn btn-special" id="touchSpecial" aria-label="Special Weapon">
+          <div class="touch-cooldown-overlay" id="touchCdSpecial"></div>
+          <span class="touch-cd-timer" id="touchCdTimerSpecial"></span>
+          <span class="touch-icon" id="touchIconSpecial">💫</span>
+          <span class="touch-lbl" id="touchLblSpecial">SPECIAL</span>
+        </button>
+        <button class="touch-btn btn-jump" id="touchJump" aria-label="Jump">
+          <span class="touch-icon">▲</span>
+          <span class="touch-lbl">JUMP</span>
+        </button>
+        <button class="touch-btn btn-attack touch-main-btn" id="touchAttack" aria-label="Attack Combo">
+          <div class="touch-cooldown-overlay" id="touchCdAttack"></div>
+          <span class="touch-cd-timer" id="touchCdTimerAttack"></span>
+          <span class="touch-icon" id="touchIconAttack">⚔️</span>
+          <span class="touch-lbl" id="touchLblAttack">ATTACK</span>
+        </button>
+        <button class="touch-btn btn-dodge" id="touchDodge" aria-label="Evasive Dodge Roll">
+          <div class="touch-cooldown-overlay" id="touchCdDodge"></div>
+          <span class="touch-cd-timer" id="touchCdTimerDodge"></span>
+          <span class="touch-icon" id="touchIconDodge">💨</span>
+          <span class="touch-lbl" id="touchLblDodge">DODGE</span>
+        </button>
+        <button class="touch-btn btn-fuse" id="touchFuse" aria-label="Trigger Gem Fusion" style="display: none;">
+          <span class="touch-icon">💎</span>
+          <span class="touch-lbl">FUSE</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- UI Overlay Screens -->
+    <!-- 1. Start / Title Screen (Cinematic L4D2-Style Living Lobby) -->
+    <div id="titleScreen" class="overlay-screen">
+      <!-- Left 4 Dead 2 Inspired Living Background Landscape Showcase -->
+      <div class="lobby-slideshow-container" id="lobbySlideshow" aria-hidden="true">
+        <div class="lobby-slide slide-1 active"></div>
+        <div class="lobby-slide slide-2"></div>
+        <div class="lobby-slide slide-3"></div>
+        <div class="lobby-slide slide-4"></div>
+        <div class="lobby-slide slide-5"></div>
+        <div class="lobby-slide slide-6"></div>
+        <div class="lobby-slide slide-7"></div>
+        <!-- Atmospheric Vignette & Cosmic Dust -->
+        <div class="lobby-cinematic-vignette"></div>
+        <div class="lobby-ambient-motes" id="lobbyAmbientMotes"></div>
+      </div>
+
+      <!-- Top-Left Floating Soundtrack Bar on Main Menu -->
+      <div class="lobby-jukebox-bar" id="lobbyJukeboxBar">
+        <div class="jukebox-info">
+          <span class="jukebox-icon-spin">🎵</span>
+          <span class="jukebox-now-playing">SOUNDTRACK:</span>
+        </div>
+        <select id="lobbySelectBgm" class="su-select lobby-select-bgm" title="Select and play any Steven Universe theme">
+          <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
+          <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+          <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
+          <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
+          <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+        </select>
+        <button id="btnLobbyPlayMusic" class="btn-lobby-music playing" type="button" title="Play or Pause Soundtrack">
+          <span id="lobbyMusicPlayIcon">⏸</span>
+          <span id="lobbyMusicPlayText">PAUSE</span>
+        </button>
+      </div>
+
+      <div class="title-content">
+        <div class="title-logo-container">
+          <div class="star-badge">🌟</div>
+          <h1 class="main-title">CRYSTAL GEMS!</h1>
+          <h2 class="sub-title">ACTION BATTLER</h2>
+        </div>
+
+        <!-- Chosen Hero Lobby Showcase (Clickable Guardian Button) -->
+        <button class="lobby-guardian-btn" id="lobbyGuardianCard" type="button" title="Click to Switch Guardian">
+          <div class="lobby-guardian-avatar" id="lobbyGuardianAvatar"><span class="guardian-svg-wrap" style="width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
+    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
+    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- Face / Head -->
+    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
+    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
+    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
+    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
+    <!-- Arched Eyebrows -->
+    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
+    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
+    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
+    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
+    <!-- Red Shirt & Star -->
+    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
+    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
+  </svg></span></div>
+          <div class="lobby-guardian-details">
+            <span class="lobby-guardian-badge">CHOSEN GUARDIAN • CLICK TO SWITCH 🔄</span>
+            <h3 class="lobby-guardian-name" id="lobbyGuardianName">Steven Universe</h3>
+            <p class="lobby-guardian-desc" id="lobbyGuardianDesc">Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Cookie Cat (+1 Heart)</p>
+            <div class="char-types-row" id="lobbyGuardianTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
+            <div class="lobby-guardian-fusion" id="lobbyGuardianFusion">
+              <span class="fusion-dot">💎</span>
+              <span id="lobbyGuardianFusionText">Fuses with: Connie, Amethyst, Pearl, Garnet</span>
+            </div>
+          </div>
+          <div class="lobby-difficulty-pill" id="lobbyDifficultyPill">🟡 MEDIUM</div>
+        </button>
+
+        <div class="menu-button-group">
+          <!-- Play Story (Primary Grand Action) -->
+          <button id="btnPlayStory" class="btn-primary" title="Embark on the Crystal Gems Story Adventure!">
+            <span class="btn-icon">🌟</span>
+            <span>PLAY STORY</span>
+          </button>
+
+          <!-- 1P / 2P Mode Toggle -->
+          <button id="btnPlayerMode" class="btn-secondary btn-mode" title="Toggle between 1-Player Solo and 2-Player Co-Op">
+            <span class="btn-icon">👤</span>
+            <span id="btnPlayerModeText">MODE: 1 PLAYER</span>
+          </button>
+
+          <!-- Tekken-Style Practice Mode -->
+          <button id="btnPractice" class="btn-secondary btn-practice" title="Tekken-style practice mode with infinite HP training dummy & combo counter">
+            <span class="btn-icon">🥋</span>
+            <span>PRACTICE</span>
+          </button>
+
+          <!-- Difficulty Direct Click Cycling (Easy ➔ Medium ➔ Hard ➔ Extreme) -->
+          <button id="btnOpenDifficulty" class="btn-secondary btn-diff" title="Click to cycle difficulty: Easy ➔ Medium ➔ Hard ➔ Extreme">
+            <span class="btn-icon">⚔️</span>
+            <span id="btnDiffLevelText">DIFFICULTY: 🟡 MEDIUM</span>
+          </button>
+
+          <!-- Settings & Audio -->
+          <button id="btnOpenSettings" class="btn-secondary" title="Configure Sound Effects & Music">
+            <span class="btn-icon">⚙️</span>
+            <span>SETTINGS & AUDIO</span>
+          </button>
+
+          <!-- Native Quit Button -->
+          <button id="btnQuitGame" class="btn-secondary btn-quit" title="Exit Crystal Gems">
+            <span class="btn-icon">🚪</span>
+            <span>QUIT</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.5. Character Selection Modal (Choose from 8 Canon Gems!) -->
+    <div id="characterSelectScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card char-select-modal">
+        <div class="modal-header">
+          <h2>💎 SELECT YOUR CRYSTAL GUARDIAN</h2>
+          <button class="btn-close" id="btnCloseCharSelect">✕</button>
+        </div>
+        <div class="modal-body char-select-body">
+          <!-- 2P Mode Guardian Tabs -->
+          <div class="char-player-tabs" id="charPlayerTabs" style="display: none;">
+            <button class="tab-btn active" id="tabSelectP1" type="button">PLAYER 1 GUARDIAN</button>
+            <button class="tab-btn" id="tabSelectP2" type="button">PLAYER 2 GUARDIAN</button>
+          </div>
+          <div class="char-grid-8" id="charGrid8">
+            <!-- Row 1: Garnet, Amethyst, Pearl, Steven, Connie -->
+            <div class="char-grid-item" data-char="garnet">
+              <div class="char-item-bubble garnet-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- 3D Beveled Cubic Box Afro -->
+    <rect x="11" y="9" width="42" height="30" rx="5" fill="#200a2e"/>
+    <path d="M 11 14 L 32 10 L 53 14" stroke="#701a75" stroke-width="2.6" stroke-linecap="round" fill="none"/>
+    <polygon points="11,9 53,9 49,15 15,15" fill="#4a044e" opacity="0.6"/>
+    <!-- Face / Jaw -->
+    <polygon points="19,30 45,30 42,48 22,48" fill="#78350f"/>
+    <!-- Iconic Angular Visor (Ruby & Sapphire Shimmer) -->
+    <defs>
+      <linearGradient id="garnetVisorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#f43f5e"/>
+        <stop offset="50%" stop-color="#ec4899"/>
+        <stop offset="100%" stop-color="#38bdf8"/>
+      </linearGradient>
+    </defs>
+    <polygon points="15,26 49,26 44,38 20,38" fill="url(#garnetVisorGrad)"/>
+    <polygon points="17,27 47,27 44,30 20,30" fill="#ffffff" opacity="0.6"/>
+    <!-- Golden Star Specular Glint (Unleash the Light) -->
+    <polygon points="32,27 33.5,31 37,32 33.5,33 32,37 30.5,33 27,32 30.5,31" fill="#fde047" opacity="0.95"/>
+    <!-- Stoic Mouth / Lips -->
+    <rect x="28" y="43" width="8" height="2" rx="1" fill="#be185d"/>
+    <!-- Asymmetrical Bodysuit Collar -->
+    <path d="M 12 48 L 32 50 L 32 64 L 10 64 Z" fill="#881337"/>
+    <path d="M 32 50 L 52 48 L 54 64 L 32 64 Z" fill="#1e1b4b"/>
+    <!-- Cubic Shoulder Armor -->
+    <polygon points="8,48 16,46 14,56 6,56" fill="#be123c"/>
+    <polygon points="56,48 48,46 50,56 58,56" fill="#312e81"/>
+  </svg></span></div>
+              <span class="char-item-name">Garnet</span>
+              <span class="char-item-role">Leader & Power</span>
+              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span></div>
+            </div>
+            <div class="char-grid-item" data-char="amethyst">
+              <div class="char-item-bubble amethyst-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Long Voluminous Flowing WAVY Pale-Lilac Hair Cascading Past Shoulders -->
+    <path d="M 32 8 C 14 8 6 22 6 36 C 6 48 10 58 14 62 C 18 54 18 46 22 38 C 24 30 28 20 32 18 C 36 20 42 30 44 40 C 46 48 48 56 52 62 C 58 56 60 44 60 34 C 60 18 48 8 32 8 Z" fill="#e9d5ff"/>
+    <path d="M 10 32 C 8 44 14 54 18 60 C 16 52 14 44 18 36" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M 54 32 C 56 44 50 54 46 60 C 48 52 50 44 46 36" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Purple Face -->
+    <circle cx="34" cy="33" r="15.5" fill="#d8b4fe"/>
+    <!-- Mischievous Smirking Quartz Grin with White Teeth -->
+    <path d="M 28 39 Q 36 41 43 37 Q 40 45 33 45 Q 28 45 28 39 Z" fill="#3b0764"/>
+    <path d="M 28 39 Q 36 41 43 37 Q 38 41 33 41 Q 29 41 28 39 Z" fill="#ffffff"/>
+    <!-- Dark Purple Eye (Right Eye visible) -->
+    <ellipse cx="38" cy="31" rx="4" ry="5.5" fill="#3b0764"/>
+    <circle cx="39.5" cy="29.5" r="1.6" fill="#ffffff"/>
+    <path d="M 33 24 Q 38 21 43 23" stroke="#3b0764" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- Flowing Wavy Mane Cascading OVER Left Eye (Signature S-Curve Lock) -->
+    <path d="M 22 10 Q 32 14 28 26 Q 22 36 24 50 Q 16 40 18 24 Z" fill="#d8b4fe"/>
+    <path d="M 26 12 Q 34 20 30 32 Q 26 40 28 54 Q 22 44 24 28 Z" fill="#e9d5ff"/>
+    <!-- Hexagonal Faceted Amethyst Gem on Chest -->
+    <polygon points="32,49 35,51 35,55 32,57 29,55 29,51" fill="#7e22ce" stroke="#f3e8ff" stroke-width="1"/>
+    <!-- Dark Tank Top with Star Strap -->
+    <path d="M 18 52 Q 32 56 46 52 L 48 64 L 16 64 Z" fill="#1e1b4b"/>
+  </svg></span></div>
+              <span class="char-item-name">Amethyst</span>
+              <span class="char-item-role">Dual Whip & Spin</span>
+              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-DARK">DARK</span></div>
+            </div>
+            <div class="char-grid-item" data-char="pearl">
+              <div class="char-item-bubble pearl-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Conical Peach Hair Sweeping Gracefully BACKWARD (-X) -->
+    <path d="M 30 7 Q 12 11 4 22 Q 13 32 25 28 Z" fill="#fed7aa"/>
+    <path d="M 28 9 Q 14 13 7 22 Q 15 29 24 26 Z" fill="#fbcfe8"/>
+    <!-- Porcelain Head in Profile -->
+    <ellipse cx="32" cy="30" rx="14" ry="15" fill="#fff7ed"/>
+    <!-- Sharp Pointed Nose pointing FORWARD (+X) -->
+    <polygon points="38,28 50,31 38,34" fill="#fed7aa"/>
+    <!-- Forehead Luminous Oval Pearl Gemstone -->
+    <ellipse cx="32" cy="18" rx="4.5" ry="6.5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.2"/>
+    <ellipse cx="31" cy="16.5" rx="1.6" ry="2.5" fill="#e0f2fe"/>
+    <!-- Expressive Cyan Anime Eye in Profile -->
+    <ellipse cx="34" cy="29" rx="4" ry="5.5" fill="#0284c7"/>
+    <ellipse cx="35" cy="28.5" rx="2.5" ry="3.8" fill="#082f49"/>
+    <circle cx="36" cy="27.5" r="1.3" fill="#ffffff"/>
+    <path d="M 30 22 Q 35 20 40 23" stroke="#0284c7" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <!-- Peach Blush & Cheerful Smile -->
+    <ellipse cx="34" cy="35" rx="3.5" ry="2" fill="rgba(251, 146, 60, 0.4)"/>
+    <path d="M 32 37 Q 37 40 41 37" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    <!-- Cyan Ballerina Tunic & Gold Star -->
+    <path d="M 18 46 Q 32 50 46 46 L 49 64 L 15 64 Z" fill="#38bdf8"/>
+    <polygon points="32,48 34,53 39,53 35,56 36.5,61 32,58 27.5,61 29,56 25,53 30,53" fill="#fde047"/>
+    <!-- Translucent Pink Sash -->
+    <path d="M 14 56 Q 32 60 50 56 L 48 60 Q 32 64 16 60 Z" fill="rgba(255, 148, 186, 0.8)"/>
+  </svg></span></div>
+              <span class="char-item-name">Pearl</span>
+              <span class="char-item-role">Spear & Holo-Pearl</span>
+              <div class="char-types-row"><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+            </div>
+            <div class="char-grid-item active" data-char="steven">
+              <div class="char-item-bubble steven-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
+    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
+    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- Face / Head -->
+    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
+    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
+    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
+    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
+    <!-- Arched Eyebrows -->
+    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
+    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
+    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
+    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
+    <!-- Red Shirt & Star -->
+    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
+    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
+  </svg></span></div>
+              <span class="char-item-name">Steven</span>
+              <span class="char-item-role">Shield & Bubble Heal</span>
+              <div class="char-types-row"><span class="gem-type-badge type-FAIRY">FAIRY</span><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span></div>
+            </div>
+            <div class="char-grid-item" data-char="connie">
+              <div class="char-item-bubble connie-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Flowing Dark Wavy Hair Cascading Past Shoulders -->
+    <path d="M 32 10 C 16 10 8 22 8 36 C 8 48 12 56 16 62 C 20 54 20 44 22 34 C 24 22 40 22 42 34 C 44 44 44 54 48 62 C 52 56 56 48 56 36 C 56 22 48 10 32 10 Z" fill="#1c1917"/>
+    <path d="M 12 36 C 10 46 16 54 20 60" stroke="#292524" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 52 36 C 54 46 48 54 44 60" stroke="#292524" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- Warm Brown Skin Face -->
+    <ellipse cx="32" cy="34" rx="16" ry="16" fill="#a16207"/>
+    <!-- Signature Turquoise / Teal Headband across Hair (Save the Light Key Item!) -->
+    <path d="M 18 24 Q 32 16 46 24" stroke="#0d9488" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+    <!-- Expressive Dark Eyes & Determined Eyebrows -->
+    <ellipse cx="26" cy="32" rx="4" ry="5.5" fill="#1c1917"/>
+    <ellipse cx="38" cy="32" rx="4" ry="5.5" fill="#1c1917"/>
+    <circle cx="27" cy="30.5" r="1.5" fill="#ffffff"/>
+    <circle cx="39" cy="30.5" r="1.5" fill="#ffffff"/>
+    <path d="M 21 24 Q 26 21 30 23" stroke="#1c1917" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M 43 24 Q 38 21 34 23" stroke="#1c1917" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- Confident Warrior Smile with Teeth -->
+    <path d="M 26 40 Q 32 45 38 40 Z" fill="#ffffff" stroke="#78350f" stroke-width="1.2"/>
+    <!-- Salmon Pink Polo Shirt with White Pointed Collar -->
+    <path d="M 18 50 Q 32 54 46 50 L 48 64 L 16 64 Z" fill="#fb7185"/>
+    <polygon points="26,50 32,56 30,50" fill="#ffffff"/>
+    <polygon points="38,50 32,56 34,50" fill="#ffffff"/>
+  </svg></span></div>
+              <span class="char-item-name">Connie</span>
+              <span class="char-item-role">Knight & Swordmaster</span>
+              <div class="char-types-row"><span class="gem-type-badge type-NORMAL">NORMAL</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+            </div>
+
+            <!-- Row 2: Bismuth, Peridot, Lapis Lazuli, Rose Quartz, Jasper -->
+            <div class="char-grid-item" data-char="bismuth">
+              <div class="char-item-bubble bismuth-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Thick Curved Tubular Rainbow Dreadlocks Bundled by Headband -->
+    <path d="M 14 26 C 10 18 16 10 24 10 C 22 16 20 22 18 28 Z" fill="#ef4444"/>
+    <path d="M 22 12 C 22 8 28 6 34 8 C 32 14 30 20 28 26 Z" fill="#f97316"/>
+    <path d="M 32 8 C 36 6 42 8 44 12 C 40 18 38 24 36 28 Z" fill="#eab308"/>
+    <path d="M 42 12 C 48 10 52 14 52 20 C 48 24 44 28 42 32 Z" fill="#22c55e"/>
+    <path d="M 48 20 C 54 22 56 28 54 34 C 50 36 46 36 44 38 Z" fill="#3b82f6"/>
+    <path d="M 52 32 C 56 36 56 42 52 46 C 48 46 46 42 46 40 Z" fill="#a855f7"/>
+    <!-- Dark Leather Hair Tie -->
+    <path d="M 18 22 Q 34 16 50 22" stroke="#1e293b" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- Muscular Slate-Blue Face -->
+    <circle cx="32" cy="33" r="16" fill="#94a3b8"/>
+    <!-- Big Friendly Eyes & Bushy Brows -->
+    <ellipse cx="26" cy="28" rx="3.5" ry="4.5" fill="#1e293b"/>
+    <ellipse cx="38" cy="28" rx="3.5" ry="4.5" fill="#1e293b"/>
+    <circle cx="27" cy="27" r="1.2" fill="#ffffff"/>
+    <circle cx="39" cy="27" r="1.2" fill="#ffffff"/>
+    <path d="M 22 22 Q 26 20 30 22" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M 42 22 Q 38 20 34 22" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Broad Grin with Big White Teeth -->
+    <path d="M 23 37 Q 32 46 41 37 Z" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
+    <!-- 98-Facet Stepped-Pyramid Chest Gemstone -->
+    <rect x="27" y="50" width="10" height="10" fill="#ec4899"/>
+    <rect x="29" y="52" width="6" height="6" fill="#06b6d4"/>
+    <rect x="31" y="54" width="2" height="2" fill="#eab308"/>
+    <!-- Blacksmith Apron & Star Strap -->
+    <path d="M 14 50 L 50 50 L 52 64 L 12 64 Z" fill="#78350f"/>
+    <line x1="16" y1="50" x2="38" y2="64" stroke="#f59e0b" stroke-width="2"/>
+  </svg></span></div>
+              <span class="char-item-name">Bismuth</span>
+              <span class="char-item-role">Hammer & Anvil Smelter</span>
+              <div class="char-types-row"><span class="gem-type-badge type-STEEL">STEEL</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+            </div>
+            <div class="char-grid-item" data-char="peridot">
+              <div class="char-item-bubble peridot-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Sculpted 3D Tetrahedral Chartreuse Hair (Iconic Faceted Dorito Shape!) -->
+    <polygon points="32,6 54,34 10,34" fill="#d9f99d"/>
+    <polygon points="32,8 52,33 32,24" fill="#bef264"/>
+    <polygon points="32,8 32,24 12,33" fill="#a3e635" opacity="0.75"/>
+    <!-- Lime Green Face -->
+    <polygon points="20,28 44,28 40,46 24,46" fill="#a3e635"/>
+    <!-- Forehead Triangular Peridot Gem -->
+    <polygon points="32,21 35,26 29,26" fill="#4ade80" stroke="#15803d" stroke-width="0.8"/>
+    <!-- Winged Yellow Visor Glasses (Change Your Mind / Save the Light) -->
+    <polygon points="16,28 32,32 48,28 46,38 32,40 18,38" fill="rgba(250, 204, 21, 0.95)" stroke="#ffffff" stroke-width="1.2"/>
+    <circle cx="26" cy="33" r="1.3" fill="#ffffff"/>
+    <circle cx="38" cy="33" r="1.3" fill="#ffffff"/>
+    <!-- Smug Smirk -->
+    <path d="M 28 42 Q 33 45 37 42" stroke="#15803d" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <!-- Tech Uniform with Yellow Diamond Insignia -->
+    <path d="M 18 48 Q 32 52 46 48 L 48 64 L 16 64 Z" fill="#15803d"/>
+    <polygon points="32,50 35,54 32,58 29,54" fill="#facc15"/>
+  </svg></span></div>
+              <span class="char-item-name">Peridot</span>
+              <span class="char-item-role">Ferrokinesis Metal Shards</span>
+              <div class="char-types-row"><span class="gem-type-badge type-STEEL">STEEL</span><span class="gem-type-badge type-ELECTR">ELECTR</span></div>
+            </div>
+            <div class="char-grid-item" data-char="lapis">
+              <div class="char-item-bubble lapis-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Liquid Translucent Cyan Hydro Wings Flanking Head -->
+    <path d="M 16 32 Q 4 16 2 32 Q 10 38 16 36 Z" fill="rgba(56, 189, 248, 0.75)" stroke="#e0f2fe" stroke-width="1.2"/>
+    <path d="M 48 32 Q 60 16 62 32 Q 54 38 48 36 Z" fill="rgba(56, 189, 248, 0.75)" stroke="#e0f2fe" stroke-width="1.2"/>
+    <!-- Fluid Feathered Navy Bob Hair -->
+    <ellipse cx="32" cy="28" rx="18" ry="18" fill="#1e3a8a"/>
+    <path d="M 14 30 L 16 44 L 22 34 Z" fill="#1e3a8a"/>
+    <path d="M 50 30 L 48 44 L 42 34 Z" fill="#1e3a8a"/>
+    <!-- Azure Blue Skin Face -->
+    <ellipse cx="32" cy="33" rx="14" ry="15" fill="#38bdf8"/>
+    <!-- Angular Windswept Bangs -->
+    <polygon points="20,20 26,30 32,22 38,30 44,20" fill="#1e3a8a"/>
+    <!-- Serene / Mystical Blue Eyes -->
+    <ellipse cx="26" cy="32" rx="3.5" ry="4.5" fill="#0c4a6e"/>
+    <ellipse cx="38" cy="32" rx="3.5" ry="4.5" fill="#0c4a6e"/>
+    <circle cx="27" cy="31" r="1.3" fill="#ffffff"/>
+    <circle cx="39" cy="31" r="1.3" fill="#ffffff"/>
+    <!-- Gentle Smile -->
+    <path d="M 28 41 Q 32 44 36 41" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+    <!-- Royal Blue Halter Top & Golden Ribbon Tie -->
+    <path d="M 20 48 Q 32 52 44 48 L 46 64 L 18 64 Z" fill="#1d4ed8"/>
+    <polygon points="32,48 30,53 34,53" fill="#fbbf24"/>
+  </svg></span></div>
+              <span class="char-item-name">Lapis Lazuli</span>
+              <span class="char-item-role">Water Wings & Hydro Wave</span>
+              <div class="char-types-row"><span class="gem-type-badge type-WATER">WATER</span><span class="gem-type-badge type-FLYING">FLYING</span></div>
+            </div>
+            <div class="char-grid-item" data-char="rose">
+              <div class="char-item-bubble rose-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Cascading Voluminous Pink Spiral Rose-Tube Ringlets with Hollow Centers -->
+    <path d="M 32 8 C 16 8 8 20 8 36 C 8 48 12 56 16 62 C 20 54 20 44 22 36 C 24 24 40 24 42 36 C 44 44 44 54 48 62 C 52 56 56 48 56 36 C 56 20 48 8 32 8 Z" fill="#f472b6"/>
+    <!-- Hollow Center Spirals -->
+    <path d="M 12 28 C 10 36 14 44 18 42 C 20 40 18 34 16 36" stroke="#db2777" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 52 28 C 54 36 50 44 46 42 C 44 40 46 34 48 36" stroke="#db2777" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 16 46 C 14 52 18 58 22 56" stroke="#db2777" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <path d="M 48 46 C 50 52 46 58 42 56" stroke="#db2777" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- Gentle Romantic Curtain Bangs -->
+    <path d="M 22 18 Q 32 22 42 18 Q 32 26 22 18 Z" fill="#fbcfe8"/>
+    <!-- Gentle Peach Face -->
+    <ellipse cx="32" cy="33" rx="15" ry="16" fill="#fed7aa"/>
+    <!-- Gentle Eyes with Eyelashes -->
+    <ellipse cx="26" cy="31" rx="3.5" ry="4.5" fill="#1e102d"/>
+    <ellipse cx="38" cy="31" rx="3.5" ry="4.5" fill="#1e102d"/>
+    <circle cx="27" cy="30" r="1.3" fill="#ffffff"/>
+    <circle cx="39" cy="30" r="1.3" fill="#ffffff"/>
+    <!-- Sweet Pink Smile -->
+    <path d="M 27 40 Q 32 44 37 40" stroke="#db2777" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <!-- Tiered White Gown with Star Cutout & Navel Gem -->
+    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ffffff"/>
+    <polygon points="32,52 34,56 38,56 35,59 36,63 32,60 28,63 29,59 26,56 30,56" fill="#f43f5e"/>
+    <circle cx="32" cy="58" r="2.2" fill="#fbcfe8"/>
+  </svg></span></div>
+              <span class="char-item-name">Rose Quartz</span>
+              <span class="char-item-role">Rose Sword & Tears of Life</span>
+              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-FAIRY">FAIRY</span></div>
+            </div>
+            <div class="char-grid-item" data-char="jasper">
+              <div class="char-item-bubble jasper-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Massive Swept-Back WAVY Pale Peach-Cream Lion's Mane Cascading Behind Shoulders -->
+    <path d="M 32 6 C 14 6 6 18 6 34 C 6 48 10 58 14 62 C 16 52 18 44 20 36 C 22 26 26 18 32 16 C 38 18 42 26 44 36 C 46 44 48 52 50 62 C 54 58 58 48 58 34 C 58 18 50 6 32 6 Z" fill="#fed7aa"/>
+    <path d="M 10 32 C 8 44 12 54 16 60 C 14 50 14 42 18 34" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <path d="M 54 32 C 56 44 52 54 48 60 C 50 50 50 42 46 34" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+    <!-- Widow's Peak Crown Crest -->
+    <polygon points="32,12 36,20 28,20" fill="#fed7aa"/>
+    <!-- Broad Orange Face with Dark Red Tiger Stripes -->
+    <polygon points="18,24 46,24 42,48 22,48" fill="#ea580c"/>
+    <path d="M 18 28 L 26 30 L 18 34 Z" fill="#991b1b"/>
+    <path d="M 46 28 L 38 30 L 46 34 Z" fill="#991b1b"/>
+    <path d="M 28 24 L 32 30 L 36 24 Z" fill="#991b1b"/>
+    <!-- Faceted Amber Gemstone ON NOSE -->
+    <polygon points="32,32 36,37 32,41 28,37" fill="#b45309" stroke="#f59e0b" stroke-width="1"/>
+    <!-- Fierce Golden Eyes -->
+    <ellipse cx="24" cy="29" rx="3.5" ry="4" fill="#fbbf24"/>
+    <ellipse cx="40" cy="29" rx="3.5" ry="4" fill="#fbbf24"/>
+    <ellipse cx="24" cy="29" rx="1.8" ry="3" fill="#450a0a"/>
+    <ellipse cx="40" cy="29" rx="1.8" ry="3" fill="#450a0a"/>
+    <!-- Fierce Warrior Scowl -->
+    <path d="M 26 44 L 38 43" stroke="#450a0a" stroke-width="2" stroke-linecap="round"/>
+    <!-- Maroon Tunic with Yellow Diamond -->
+    <path d="M 16 50 Q 32 54 48 50 L 50 64 L 14 64 Z" fill="#7f1d1d"/>
+    <polygon points="32,51 35,55 32,59 29,55" fill="#fde047"/>
+  </svg></span></div>
+              <span class="char-item-name">Jasper</span>
+              <span class="char-item-role">Beta Quartz Juggernaut</span>
+              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-DRAGON">DRAGON</span></div>
+            </div>
+          </div>
+
+          <!-- Selected Character Full Dossier Preview -->
+          <div class="char-preview-pane" id="charPreviewPane">
+            <div class="char-pane-header">
+              <div class="char-pane-icon" id="paneIcon"><span class="guardian-svg-wrap" style="width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
+    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
+    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <!-- Face / Head -->
+    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
+    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
+    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
+    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
+    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
+    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
+    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
+    <!-- Arched Eyebrows -->
+    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
+    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
+    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
+    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
+    <!-- Red Shirt & Star -->
+    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
+    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
+  </svg></span></div>
+              <div>
+                <h3 class="char-pane-name" id="paneName">Steven Universe</h3>
+                <span class="char-pane-title" id="paneTitle">The Heart of the Crystal Gems</span>
+                <div class="char-types-row" id="paneTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
+              </div>
+            </div>
+            <p class="char-pane-lore" id="paneLore">Half-human, half-gem hero. Uses Rose Quartz's magical shield and soothing Cookie Cat healing powers to defend Earth!</p>
+            <div class="char-pane-powers">
+              <div class="power-tag"><b>[J] Attack:</b> <span id="paneJ">Shield Strike & Rose Punch combo</span></div>
+              <div class="power-tag"><b>[K] Special:</b> <span id="paneK">Bouncing Rose Shield Throw</span></div>
+              <div class="power-tag"><b>[L] Skill:</b> <span id="paneL">Bubble Shield & Cookie Cat heal (+1 Heart)</span></div>
+            </div>
+
+            <!-- Canonical Fusion Compatibility Dossier -->
+            <div class="char-fusion-preview" id="charFusionPreview">
+              <span class="fusion-preview-badge">💎 CANON FUSIONS FOR THIS GEM:</span>
+              <div class="fusion-preview-list" id="fusionPreviewList">
+                <span class="fusion-chip">⚔️🛡️ <b>Stevonnie</b> (+ Connie)</span>
+                <span class="fusion-chip">🪀🌪️ <b>Smoky Quartz</b> (+ Amethyst)</span>
+                <span class="fusion-chip">☂️🌈 <b>Rainbow Quartz 2.0</b> (+ Pearl)</span>
+                <span class="fusion-chip">☀️🔥 <b>Sunstone</b> (+ Garnet)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- All 9 Canon Fusions Showcase Directory -->
+          <div class="fusions-directory-panel">
+            <span class="fusions-dir-title">✨ STEVEN UNIVERSE CANONICAL FUSION MATRIX:</span>
+            <div class="fusions-dir-grid">
+              <div class="fusion-card-mini" title="Steven + Connie = Stevonnie"><span>⚔️🛡️ Stevonnie</span><small>Steven + Connie</small></div>
+              <div class="fusion-card-mini" title="Amethyst + Pearl = Opal"><span>🏹🌟 Opal</span><small>Amethyst + Pearl</small></div>
+              <div class="fusion-card-mini" title="Garnet + Pearl = Sardonyx"><span>🔨✨ Sardonyx</span><small>Garnet + Pearl</small></div>
+              <div class="fusion-card-mini" title="Garnet + Amethyst = Sugilite"><span>🟣⛓️ Sugilite</span><small>Garnet + Amethyst</small></div>
+              <div class="fusion-card-mini" title="Steven + Amethyst = Smoky Quartz"><span>🪀🌪️ Smoky Quartz</span><small>Steven + Amethyst</small></div>
+              <div class="fusion-card-mini" title="Steven + Garnet = Sunstone"><span>☀️🔥 Sunstone</span><small>Steven + Garnet</small></div>
+              <div class="fusion-card-mini" title="Steven + Pearl = Rainbow 2.0"><span>☂️🌈 Rainbow 2.0</span><small>Steven + Pearl</small></div>
+              <div class="fusion-card-mini" title="Lapis + Jasper = Malachite"><span>🌊🧊 Malachite</span><small>Lapis + Jasper</small></div>
+              <div class="fusion-card-mini" title="Rose + Pearl = Rainbow Quartz"><span>🌹🩰 Rainbow Quartz</span><small>Rose + Pearl</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnConfirmChar" style="width: 100%;">⭐ SELECT THIS GUARDIAN & RETURN TO LOBBY</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.6. Combat Difficulty Selection Modal -->
+    <div id="difficultyScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card difficulty-card">
+        <div class="modal-header">
+          <h2>⚔️ SELECT COMBAT DIFFICULTY</h2>
+          <button class="btn-close" id="btnCloseDifficulty">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-desc">Choose your challenge level across all 10 Campaign Episodes:</p>
+          <div class="difficulty-grid">
+            <button class="diff-btn" data-diff="easy">
+              <span class="diff-name">🟢 EASY</span>
+              <span class="diff-info">7 Hearts • 0.75x Monster HP • 45% Cookie Snack Drops • Relaxed Story</span>
+            </button>
+            <button class="diff-btn active" data-diff="medium">
+              <span class="diff-name">🟡 MEDIUM</span>
+              <span class="diff-info">5 Hearts • Standard Combat Multipliers • 30% Cookie Drops</span>
+            </button>
+            <button class="diff-btn" data-diff="hard">
+              <span class="diff-name">🟠 HARD</span>
+              <span class="diff-info">4 Hearts • Tougher Monsters • 18% Cookie Drops • High Intensity</span>
+            </button>
+            <button class="diff-btn" data-diff="extreme">
+              <span class="diff-name">🔴 EXTREME</span>
+              <span class="diff-info">3 Hearts • Fast Ruthless Enemies • 10% Cookie Drops • True Gem Hero</span>
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnConfirmDifficulty" style="width: 100%;">CONFIRM DIFFICULTY & RETURN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.7. Game Audio & Display Settings Modal -->
+    <div id="settingsScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card settings-card">
+        <div class="modal-header">
+          <h2>⚙️ GAME & AUDIO SETTINGS</h2>
+          <button class="btn-close" id="btnCloseSettings">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <h3 class="settings-subtitle">🔊 AUDIO & VOLUME CONTROLS</h3>
+            <div class="settings-toggles">
+              <button class="toggle-btn" id="btnSettingSound">🔊 Sound Effects: ON</button>
+              <button class="toggle-btn" id="btnSettingMusic">🎵 Synth Music (BGM): ON</button>
+            </div>
+            <div class="volume-slider-group" style="margin-top: 14px; display: flex; flex-direction: column; gap: 10px; background: rgba(15, 23, 42, 0.45); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);">
+              <div class="slider-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <label for="sliderSfxVol" style="font-size: 13px; font-weight: 700; color: #ff94ba; min-width: 130px; display: flex; align-items: center; gap: 6px;">💥 SFX Volume:</label>
+                <input type="range" id="sliderSfxVol" min="0" max="100" value="80" class="su-slider" style="flex: 1; cursor: pointer;">
+                <span id="sliderSfxVal" style="font-size: 13px; font-weight: 800; color: #ffffff; min-width: 45px; text-align: right;">80%</span>
+              </div>
+              <div class="slider-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <label for="sliderMusicVol" style="font-size: 13px; font-weight: 700; color: #38bdf8; min-width: 130px; display: flex; align-items: center; gap: 6px;">🎵 Music (BGM):</label>
+                <input type="range" id="sliderMusicVol" min="0" max="100" value="70" class="su-slider" style="flex: 1; cursor: pointer;">
+                <span id="sliderMusicVal" style="font-size: 13px; font-weight: 800; color: #ffffff; min-width: 45px; text-align: right;">70%</span>
+              </div>
+            </div>
+
+            <!-- Jukebox Soundtrack Theme Selector -->
+            <div class="bgm-select-group" style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px; background: rgba(15, 23, 42, 0.45); padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.25);">
+              <label for="selectBgmTrack" style="font-size: 12px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 6px; letter-spacing: 0.5px;">
+                🎼 ACTIVE SOUNDTRACK (JUKEBOX):
+              </label>
+              <select id="selectBgmTrack" class="su-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 12px; border: 1.5px solid #38bdf8; outline: none; cursor: pointer;">
+                <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+                <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
+                <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+              </select>
+              <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
+                💡 Changing track previews it instantly and plays it during combat!
+              </p>
+            </div>
+          </div>
+          <div class="settings-section" style="margin-top: 18px;">
+            <h3 class="settings-subtitle">⚡ GRAPHICS & PERFORMANCE</h3>
+            <div class="settings-toggles">
+              <button class="toggle-btn" id="btnSettingPerf">⚡ Fast Performance Mode: OFF</button>
+              <button class="toggle-btn" id="btnSettingShake">📳 Screen Shake: ON</button>
+            </div>
+            <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">💡 Enable "Fast Performance Mode" if you experience any lag or frame drops on mobile devices.</p>
+          </div>
+          <div class="settings-section" style="margin-top: 18px;">
+            <h3 class="settings-subtitle">📱 CONTROLS & DISPLAY</h3>
+            <div class="settings-toggles">
+              <button class="toggle-btn" id="btnSettingTouch">📱 Mobile Controls: AUTO</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnSaveSettings" style="width: 100%;">SAVE SETTINGS & RETURN TO LOBBY</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.8. Stage Clear Celebratory Banner Overlay -->
+    <div id="stageClearBanner" class="stage-clear-banner" style="display: none;">
+      <div class="stage-clear-content">
+        <div class="stage-clear-star">⭐</div>
+        <h2 id="stageClearTitle">STAGE 1 COMPLETED!</h2>
+        <div class="stage-clear-desc" id="stageClearDesc">Beach City Boardwalk is safe! Next: Strawberry Battlefield</div>
+      </div>
+    </div>
+
+    <!-- 2. How to Play & Lore Modal -->
+    <div id="howToPlayScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>🌟 GEM POWERS, LORE & COMBAT TECHNIQUES [J, K, L]</h2>
+          <button class="btn-close" id="btnCloseHowToPlay">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="guide-grid">
+            <div class="guide-item">
+              <h3>⚔️ Primary Controls</h3>
+              <p>Move with <b>A / D</b> (or Touch ◀ ▶) and jump with <b>W / Space</b> (or Touch ▲). Attack with <b>[J]</b>, Special weapon with <b>[K]</b>, Signature Gem Skill / Ultimate with <b>[L]</b>!</p>
+            </div>
+            <div class="guide-item" style="border-color: #ff6097; background: rgba(255, 20, 147, 0.12);">
+              <h3 style="color: #ff6097;">⚡ Pink Overdrive Power-Up (Future State)</h3>
+              <p>Build your Overdrive meter by poofing monsters and collecting gems. When full (100%), press <b>[F]</b> or tap <b>⚡ OVERDRIVE</b> to enter the glowing Pink State for 12 seconds: <b>+85% Speed, 2X Damage, 3X Faster Cooldowns, and 50% Damage Resistance</b>!</p>
+            </div>
+            <div class="guide-item">
+              <h3>🥊 Top Row Guardians</h3>
+              <ul>
+                <li><b>Steven:</b> [J] Shield Bash Combo, [K] Bouncing Ricochet Shield (3 bounces), [L] Rose's Protective Bubble & Cookie Cat Snack (+1 Full Heart)! Hold [S] / Down to Guard!</li>
+                <li><b>Garnet:</b> [J] Gauntlet 1-2 Flurry (POW!), [K] Jet Rocket Gauntlet Launch, [L] <b>Giant Gauntlets Seismic Slam</b> (enlarges gauntlets to titanic size and slams both giant fists down in an earthquake)!</li>
+                <li><b>Amethyst:</b> [J] Dual Spiked Whip Flurry, [K] <b>Sonic Spin Dash (Quartz Buzzsaw)</b> (complete damage immunity while rolling through ranks!), [L] Dual Whip Violet Energy Geysers (4 rising purple flame plumes)!</li>
+                <li><b>Pearl:</b> [J] Piercing Spear Flurry, [K] Triple Laser Spear Beam spread, [L] Holo-Pearl Clone Duelist (autonomous fencing ally)!</li>
+              </ul>
+            </div>
+            <div class="guide-item">
+              <h3>🔨 Bottom Row Guardians</h3>
+              <ul>
+                <li><b>Bismuth:</b> [J] Blacksmith War Hammer Smash (heavy knockback!), [K] Forged Anvil Launcher Cannon (staggers foes), [L] <b>Molten Forge Breaking Point</b> (colossal knockback throwing monsters across the screen)!</li>
+                <li><b>Peridot:</b> [J] Ferrokinetic Scrap Swipes, [K] Scrap Metal Salvo (levitates & hurls 3 magnetic scrap chunks: girder, gear, trash lid), [L] <b>Homeworld Flask Robonoid Drone</b> + Magnetic EMP Vortex Field!</li>
+                <li><b>Lapis Lazuli:</b> [J] Liquid Water Scythe Slashes, [K] Surging Hydro-Fist projectile, [L] Oceanic Tidal Wave Surge (towering ocean tsunami)!</li>
+                <li><b>Rose Quartz:</b> [J] Rose Broadsword Crescent Slashes, [K] Thorny Rose Crest Shield, [L] <b>Sacred Tears of Resurrection</b> (blooming 8-petaled Rose mandala, celestial light rays, +2 Full Hearts heal)!</li>
+              </ul>
+            </div>
+            <div class="guide-item">
+              <h3>💎 Gem Power-Ups & Healing Hearts</h3>
+              <p>Defeat corrupted monsters to poof them! Monsters have a <b>35–40% chance to drop healing Hearts (or Cookie Cats)</b> to restore your HP, while raw gemstones can be collected for an instant <b>Gem Power-Up (+25% Overdrive & +500 PTS)</b> and safely stored in the Crystal Temple!</p>
+            </div>
+            <div class="guide-item">
+              <h3>👑 10 Episodes Across Seasons 1 - 5</h3>
+              <p>Journey through the entire story: Beach City ➔ Galaxy Warp ➔ Kindergarten ➔ Earth's Mantle Core ➔ Lava Forge ➔ North Sea ➔ Space Zoo ➔ Homeworld Trial ➔ Diamond Reunion ➔ Battle of Heart and Mind (White Diamond)! Defeat bosses with the top-center health bar to achieve Era 3 Peace!</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnHowToPlayGotIt">READY TO BELIEVE IN THE CRYSTAL GEMS!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Temple Bubble Room Modal -->
+    <div id="bubbleRoomScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card bubble-room-modal">
+        <div class="modal-header">
+          <h2>🔮 THE CRYSTAL TEMPLE BURNING ROOM</h2>
+          <button class="btn-close" id="btnCloseBubbleRoom">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="bubble-room-intro">Corrupted gems bubbled and safely kept in stasis away from darkness:</p>
+          <div class="bubbles-gallery" id="bubblesGallery"></div>
+          <div class="bubble-stats-row">
+            <div>Total Corrupted Gems Bubbled: <b id="totalBubbledStat">0</b></div>
+            <div>High Score: <b id="highScoreStat">0</b></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" id="btnCloseBubbleRoomBtn">BACK TO MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.5. Android & Xiaomi Shortcut / Install Guide Modal -->
+    <div id="installModalScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card install-card">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <img src="icon-192.png" alt="Steven Universe Star Icon" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(255,96,151,0.6);">
+            <div>
+              <h2 style="font-size: 17px; margin: 0; color: #ff6097;">ADD TO PHONE HOME SCREEN</h2>
+              <div style="font-size: 12px; color: #cbd5e1;">Play fullscreen with the Pink Star app icon!</div>
+            </div>
+          </div>
+          <button class="btn-close" id="btnCloseInstallModalX">✕</button>
+        </div>
+        <div class="modal-body" style="text-align: left; padding: 12px 4px;">
+          <div class="install-step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <strong>Open on Phone in Chrome or Mi Browser:</strong><br>
+              Connect your phone to the same Wi-Fi as your PC and open the local game link or scan the QR code.
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <strong>Tap "Install App" or Browser Menu (⋮):</strong><br>
+              Tap the <strong>[INSTALL NOW]</strong> button below, OR tap the 3 dots (⋮) in the top-right corner of Chrome/Browser and choose <em>"Install app"</em> or <em>"Add to Home screen"</em>.
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <strong>⭐ Launch from Your Phone's Home Screen:</strong><br>
+              The <strong>Pink Star icon</strong> will be placed on your home screen. Tapping it opens the game fullscreen like a native app and works 100% offline!
+            </div>
+          </div>
+          <div class="xiaomi-tip-box">
+            <strong style="color: #ffd700;">⚠️ Xiaomi MIUI / HyperOS Note:</strong><br>
+            If the icon does not appear on your Xiaomi home screen, Xiaomi's security may have blocked shortcuts. Enable it in:<br>
+            <strong>Phone Settings ➔ Apps ➔ Manage Apps ➔ Chrome (or Mi Browser) ➔ Other permissions ➔ Home screen shortcuts ➔ Set to "Always allow" (Green checkmark)</strong>.
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button id="btnTriggerInstallNative" class="btn-install" style="font-size: 14px; padding: 8px 18px;">⭐ INSTALL NOW</button>
+          <button id="btnCloseInstallModal" class="btn-secondary" style="font-size: 14px; padding: 8px 18px;">CLOSE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Pause Screen -->
+    <div id="pauseScreen" class="overlay-screen" style="display: none;">
+      <div class="pause-card">
+        <h2>⏸️ GAME PAUSED</h2>
+        <p>Take a breath! Cookie Cats are best enjoyed slowly.</p>
+
+        <!-- In-Game Audio & Music Adjustment -->
+        <div class="pause-audio-box" style="margin: 14px 0 16px 0; width: 100%; max-width: 320px; background: rgba(15, 23, 42, 0.75); border: 1.5px solid rgba(255, 125, 167, 0.35); border-radius: 14px; padding: 12px 16px; text-align: left; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
+          <div style="font-size: 11px; font-weight: 800; color: #fbcfe8; letter-spacing: 1px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🎛️ AUDIO & MUSIC ADJUSTMENT</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: #ff94ba; min-width: 95px;">💥 SFX Vol:</span>
+              <input type="range" id="pauseSliderSfxVol" min="0" max="100" value="80" class="su-slider" style="flex: 1; cursor: pointer;">
+              <span id="pauseSliderSfxVal" style="font-size: 12px; font-weight: 800; color: #ffffff; min-width: 38px; text-align: right;">80%</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+              <span style="font-size: 12px; font-weight: 700; color: #38bdf8; min-width: 95px;">🎵 BGM Vol:</span>
+              <input type="range" id="pauseSliderMusicVol" min="0" max="100" value="70" class="su-slider" style="flex: 1; cursor: pointer;">
+              <span id="pauseSliderMusicVal" style="font-size: 12px; font-weight: 800; color: #ffffff; min-width: 38px; text-align: right;">70%</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+              <span style="font-size: 11px; font-weight: 700; color: #a5f3fc;">🎼 Soundtrack:</span>
+              <select id="pauseSelectBgmTrack" class="su-select" style="width: 100%; padding: 6px 10px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 11px; border: 1.2px solid #38bdf8; outline: none; cursor: pointer;">
+                <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+                <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
+                <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="pause-btn-group">
+          <button id="btnResume" class="btn-primary">RESUME BATTLE</button>
+          <button id="btnRestartStage" class="btn-secondary">RESTART STAGE</button>
+          <button id="btnQuitToMenu" class="btn-text">QUIT TO MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Stage Clear / Victory Screen -->
+    <div id="victoryScreen" class="overlay-screen" style="display: none;">
+      <div class="victory-card">
+        <div class="star-burst">⭐</div>
+        <h2 id="victoryTitle">STAGE COMPLETE!</h2>
+        <div class="victory-subtitle" id="victorySubtitle">Beach City is safe once more!</div>
+        
+        <div class="victory-stats">
+          <div class="vstat">
+            <span>Enemies Poofed</span>
+            <b id="vStatPoofed">0</b>
+          </div>
+          <div class="vstat">
+            <span>Gems Bubbled</span>
+            <b id="vStatBubbled">0</b>
+          </div>
+          <div class="vstat">
+            <span>Stage Score</span>
+            <b id="vStatScore">0</b>
+          </div>
+          <div class="vstat rank-stat">
+            <span>Gem Rank</span>
+            <b id="vStatRank" class="rank-badge">S</b>
+          </div>
+        </div>
+
+        <div class="victory-actions">
+          <button id="btnNextStage" class="btn-primary">NEXT STAGE ➔</button>
+          <button id="btnVictoryMenu" class="btn-secondary">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Game Over Screen -->
+    <div id="gameOverScreen" class="overlay-screen" style="display: none;">
+      <div class="game-over-card">
+        <div class="cracked-gem-icon">💔</div>
+        <h2>THE GEMS HAVE POOFED!</h2>
+        <p>Don't lose hope! As long as we have each other, we can always find a way!</p>
+        <div class="game-over-stats">
+          <div>Final Score: <b id="goFinalScore">0</b></div>
+          <div>Bubbled Gems: <b id="goBubbled">0</b></div>
+        </div>
+        <div class="game-over-actions">
+          <button id="btnRetry" class="btn-primary">TRY AGAIN (BELIEVE IN STEVEN!)</button>
+          <button id="btnGameOverMenu" class="btn-secondary">MAIN MENU</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Quit Confirmation / Farewell Screen -->
+    <div id="quitScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card quit-card" style="text-align: center; max-width: 440px; padding: 24px;">
+        <div class="star-badge" style="font-size: 42px; margin-bottom: 8px;">🌟</div>
+        <h2 style="font-family: var(--su-font-display); color: #ffd700; margin-bottom: 8px;">THANK YOU FOR PLAYING!</h2>
+        <p style="color: #e2e8f0; font-size: 14px; line-height: 1.4; margin-bottom: 20px;">
+          Crystal Gems! is shutting down. You can safely close this window, or return to the main menu below:
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+          <button class="btn-primary" id="btnCancelQuit">RETURN TO TITLE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Scripts (runs directly on file:// or mobile browser) -->
+  <script src="game.js"></script>
+</body>
+</html>

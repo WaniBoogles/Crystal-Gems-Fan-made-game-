@@ -1,0 +1,111 @@
+========================================================================
+   💎 CRYSTAL GEMS: CRYSTAL GUARDIANS UNLEASHED 💎
+   Portable USB Edition - Complete Multi-Platform Package
+========================================================================
+
+Welcome! This folder contains everything you need to play "Crystal Gems"
+directly from a USB flash drive on any Windows PC, Android device, or
+mobile phone/tablet!
+
+------------------------------------------------------------------------
+📁 WHAT'S INSIDE THIS FOLDER:
+------------------------------------------------------------------------
+
+1. "Crystal Gems.exe"
+   - Native Windows standalone executable.
+   - Simply double-click to play!
+   - Self-contained with the entire game and star icon embedded inside.
+   - Automatically opens in dedicated clean app mode with 60 FPS hardware
+     acceleration and full stereo sound effects.
+   - 100% offline - no internet connection required.
+
+2. "Play-Crystal-Gems.bat"
+   - Quick 1-click launcher script for Windows.
+   - Great fallback if your computer restricts running third-party .exe files.
+
+3. "Play-Crystal-Gems-Linux.sh" / "Crystal Gems!.desktop"
+   - Native 1-click launcher for Linux Mint, Ubuntu, and Debian systems.
+   - Launches directly with full hardware acceleration and 100% zero-click
+     instant soundtrack playback on launch!
+   - Simply double-click "Crystal Gems!.desktop" or run "./Play-Crystal-Gems-Linux.sh".
+
+4. "Crystal-Gems.apk"
+   - Official Android Package for Android phones, tablets, and TV.
+   - 1-tap installation, offline gameplay with full on-screen touch controls.
+   - Aligned and cryptographically signed (v1 + v2 APK Signature Scheme).
+
+5. "Crystal-Gems-Mobile.html" / "Crystal-Gems.html"
+   - Complete single-file standalone web edition.
+   - Can be opened in ANY web browser on Windows, Mac, Linux, Android, or iOS.
+   - Includes on-screen touch joystick and action buttons for phones & tablets.
+
+6. "Crystal Gems.ico", "crystal-gems.png" & "autorun.inf"
+   - USB icon and autorun metadata so your USB drive displays the
+     Crystal Gems star icon in Windows Explorer and Linux file managers.
+
+------------------------------------------------------------------------
+🎮 CONTROLS REFERENCE:
+------------------------------------------------------------------------
+
+[ 1-PLAYER SOLO MODE ]
+• Move Left / Right : [A] / [D]
+• Jump / Double Jump: [W] or [Space]
+• Shield / Crouch   : [S]
+• Attack Combo [J]  : [J]
+• Special Attack [K]: [K]
+• Skill / Ability[L]: [L]
+• Dodge Dash [I]    : [I]
+• Pink Overdrive [U]: [U] or [O] (when meter reaches 100%)
+• Note: Gem Fusion is canonically reserved for 2-Player Co-Op Mode!
+
+[ 2-PLAYER CO-OP MODE ]
+Player 1 (Left Side of Keyboard):
+• Move Left / Right : [A] / [D]
+• Jump / Double Jump: [W]
+• Shield / Crouch   : [S]
+• Primary Attack [F]: [F]
+• Special Attack [G]: [G]
+• Skill Ability [H] : [H]
+• Dodge Dash [E]    : [E]
+• Overdrive [R]     : [R]
+• Tag-Team Fusion   : [V] (Triggers 4s Cinematic Screen Nuke & Synergy Buff!)
+
+Player 2 (Right Side / Arrow Keys):
+• Move Left / Right : [Left Arrow] / [Right Arrow]
+• Jump / Double Jump: [Up Arrow]
+• Shield / Crouch   : [Down Arrow]
+• Primary Attack [J]: [J]
+• Special Attack [K]: [K]
+• Skill Ability [L] : [L]
+• Dodge Dash [I]    : [I]
+• Overdrive [O]     : [O]
+
+[ MOBILE / TOUCH SCREEN CONTROLS ]
+• Left Virtual D-Pad: Slide left/right to move, tap up to jump
+• Right Action Buttons:
+  - 💥 Attack
+  - ✨ Special
+  - 🌟 Skill
+  - 💨 Dodge
+  - ⚡ Overdrive
+  - 💎 Tag Fuse
+
+------------------------------------------------------------------------
+✨ KEY GAME FEATURES IN THIS VERSION:
+------------------------------------------------------------------------
+• 10 Fully Animated Crystal Gems & Guardians:
+  Steven, Garnet, Amethyst, Pearl, Bismuth, Peridot, Lapis Lazuli,
+  Rose Quartz, Connie Maheswaran, and Jasper!
+• 9 Canonical Steven Universe Fusions:
+  Stevonnie, Smoky Quartz, Rainbow Quartz 2.0, Sunstone, Sugilite,
+  Sardonyx, Opal, Malachite, and Rainbow Quartz (Classic).
+• Tag-Team Hyper Attack System:
+  4-second invulnerable screen-clearing cinematic blast, +1 Heart heal,
+  smooth side-by-side landing, and 8-second Gem Harmony Synergy Buff
+  (+25% Speed & Attack Power)!
+• 7 Canonical Background Landscapes with smooth sliding fade transitions.
+• 5-Zone Top HUD layout with dedicated Dual Action Bars (P1 Left, P2 Right).
+• Zero lingering bugs: perfectly clean resets across menus and restarts.
+
+Enjoy the game! ⭐
+========================================================================
