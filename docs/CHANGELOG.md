@@ -1,5 +1,18 @@
 # Changelog
 
+## 2025-11-01 — "Cut-in" revision
+
+### Rebuilt — super-move portraits, Unleash-the-Light style
+* New portrait art: expressive busts with open smiles, big highlighted eyes, blush, ink
+  outlines, rim light, sparkles and a raised waving arm. Transparent cut-outs so the star
+  burst reads behind them.
+* Cut-in layout matches the reference: **partner A on the left, partner B on the right,
+  mirrored**, each on a pulsing SU star burst, with the name card centred underneath.
+  Overdrive by P1 fills the left slot, P2 the right; a fusion fills **both** with the two
+  partners, and the fusion's own name is the title.
+* Portraits are painted straight into a `<canvas>` in the cut-in (a data-URL `<img>` painted a
+  frame late and showed up blank).
+
 ## 2025-11-01 — "Portraits" revision
 
 ### Added — painted super-move portraits

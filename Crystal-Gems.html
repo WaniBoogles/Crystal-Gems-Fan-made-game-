@@ -3575,20 +3575,52 @@ option {
   to { transform: translateX(-26px); }
 }
 
+/* Two flanking portrait slots: P1 (or partner A) left, P2 (partner B) right mirrored,
+   each on a big SU star burst, exactly like the reference cut-in. */
 .cutin-portrait-wrap {
-  position: relative;
-  width: 340px;
-  height: 340px;
+  position: absolute;
+  bottom: 21%;
+  width: min(38vw, 400px);
+  height: min(38vw, 400px);
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 0 34px rgba(255, 255, 255, 0.55))
-          drop-shadow(0 0 90px rgba(255, 96, 151, 0.65));
+  filter: drop-shadow(0 0 26px rgba(255, 255, 255, 0.5))
+          drop-shadow(0 0 70px rgba(255, 96, 151, 0.55));
+  will-change: transform, opacity;
+}
+
+.cutin-portrait-wrap.cutin-left  { left: 1.5%; }
+.cutin-portrait-wrap.cutin-right { right: 1.5%; transform: scaleX(-1); }
+
+.cutin-portrait-wrap.hidden { display: none; }
+
+.cutin-portrait-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.45));
+}
+
+.cutin-star-burst {
+  position: absolute;
+  inset: 6%;
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.55) 38%, rgba(255,255,255,0) 62%);
+  clip-path: polygon(50% 0%, 61% 34%, 98% 35%, 68% 57%, 79% 93%, 50% 71%, 21% 93%, 32% 57%, 2% 35%, 39% 34%);
+  animation: cutinStarPulse 1.1s ease-in-out infinite alternate;
+  opacity: 0.95;
+}
+
+@keyframes cutinStarPulse {
+  from { transform: scale(0.96) rotate(-3deg); opacity: 0.8; }
+  to { transform: scale(1.05) rotate(3deg); opacity: 1; }
 }
 
 .cutin-portrait {
-  width: 100%;
-  height: 100%;
+  position: relative;
+  z-index: 2;              /* above the absolutely-positioned star burst */
+  width: 84%;              /* leaves the star visible as a frame around the bust */
+  height: 84%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3599,24 +3631,22 @@ option {
   height: 100%;
 }
 
-.cutin-portrait-wrap.from-left { animation: cutinLeft 0.62s cubic-bezier(0.16, 1, 0.3, 1) both; }
-.cutin-portrait-wrap.from-right { animation: cutinRight 0.62s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cutin-portrait-wrap.cutin-left { animation: cutinFromLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.cutin-portrait-wrap.cutin-right { animation: cutinFromRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
-@keyframes cutinLeft {
-  0% { transform: translateX(-115%) scale(0.55) rotate(-10deg); opacity: 0; }
-  70% { transform: translateX(3%) scale(1.06) rotate(2deg); opacity: 1; }
+@keyframes cutinFromLeft {
+  0% { transform: translateX(-55%) scale(0.78) rotate(-8deg); opacity: 0; }
   100% { transform: translateX(0) scale(1) rotate(0deg); opacity: 1; }
 }
 
-@keyframes cutinRight {
-  0% { transform: translateX(115%) scale(0.55) rotate(10deg) scaleX(-1); opacity: 0; }
-  70% { transform: translateX(-3%) scale(1.06) rotate(-2deg) scaleX(-1); opacity: 1; }
+@keyframes cutinFromRight {
+  0% { transform: translateX(55%) scale(0.78) rotate(8deg) scaleX(-1); opacity: 0; }
   100% { transform: translateX(0) scale(1) rotate(0deg) scaleX(-1); opacity: 1; }
 }
 
 .cutin-banner {
   position: absolute;
-  bottom: 12%;
+  bottom: 6%;
   left: 0;
   right: 0;
   text-align: center;
@@ -4802,8 +4832,13 @@ option {
     <div id="portraitCutin" class="portrait-cutin" style="display: none;">
       <div class="cutin-rays"></div>
       <div class="cutin-speedlines"></div>
-      <div class="cutin-portrait-wrap" id="cutinPortraitWrap">
-        <div class="cutin-portrait" id="cutinPortrait"></div>
+      <div class="cutin-portrait-wrap cutin-left" id="cutinLeftWrap">
+        <div class="cutin-star-burst"></div>
+        <div class="cutin-portrait" id="cutinPortraitLeft"></div>
+      </div>
+      <div class="cutin-portrait-wrap cutin-right" id="cutinRightWrap">
+        <div class="cutin-star-burst"></div>
+        <div class="cutin-portrait" id="cutinPortraitRight"></div>
       </div>
       <div class="cutin-banner">
         <div class="cutin-kicker" id="cutinKicker">PINK OVERDRIVE</div>
@@ -18626,204 +18661,287 @@ function portraitHairBack(ctx, spec, W, H) {
 function drawPortrait(ctx, id, size = 512) {
   const spec = PORTRAIT_SPECS[id] || PORTRAIT_SPECS.steven;
   const W = size, H = size;
+  const ink = 'rgba(42, 16, 32, 0.92)';
+  const lw = W * 0.016;
   ctx.clearRect(0, 0, W, H);
 
-  // Backdrop: signature colour burst + rays
-  const bg = ctx.createRadialGradient(W * 0.5, H * 0.44, W * 0.05, W * 0.5, H * 0.5, W * 0.75);
-  bg.addColorStop(0, spec.accent || '#ffd166');
-  bg.addColorStop(0.45, spec.outfit || '#7f1d3a');
-  bg.addColorStop(1, '#0b0714');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
+  const cx = W * 0.48;
+  const headY = H * 0.385;
+  const headRX = W * 0.225;
+  const headRY = H * 0.245;
 
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // ---- Raised arm (waving) behind the torso --------------------------------
   ctx.save();
-  ctx.translate(W / 2, H / 2);
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = '#ffffff';
-  for (let i = 0; i < 18; i++) {
-    ctx.rotate(Math.PI / 9);
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W * 0.06, -H); ctx.lineTo(-W * 0.06, -H); ctx.closePath(); ctx.fill();
-  }
+  ctx.strokeStyle = spec.outfit;
+  ctx.lineWidth = W * 0.115;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.70, H * 0.80);
+  ctx.quadraticCurveTo(W * 0.86, H * 0.68, W * 0.83, H * 0.47);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(42,16,32,0.55)';
+  ctx.lineWidth = W * 0.012;
+  ctx.stroke();
+  // hand
+  ctx.fillStyle = spec.skin;
+  ctx.beginPath();
+  ctx.arc(W * 0.83, H * 0.44, W * 0.052, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.stroke();
   ctx.restore();
 
-  // Shoulders
+  // ---- Shoulders / torso ---------------------------------------------------
+  const torso = () => {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.04, H * 1.02);
+    ctx.quadraticCurveTo(W * 0.10, H * 0.72, W * 0.32, H * 0.64);
+    ctx.lineTo(W * 0.64, H * 0.64);
+    ctx.quadraticCurveTo(W * 0.86, H * 0.72, W * 0.92, H * 1.02);
+    ctx.closePath();
+  };
   ctx.fillStyle = spec.outfit;
-  ctx.beginPath();
-  ctx.moveTo(W * 0.02, H);
-  ctx.quadraticCurveTo(W * 0.10, H * 0.72, W * 0.34, H * 0.66);
-  ctx.lineTo(W * 0.66, H * 0.66);
-  ctx.quadraticCurveTo(W * 0.90, H * 0.72, W * 0.98, H);
-  ctx.closePath(); ctx.fill();
-  // collar
+  torso(); ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.stroke();
+
+  // collar / neckline
   ctx.fillStyle = spec.collar || spec.outfit;
   ctx.beginPath();
-  ctx.moveTo(W * 0.36, H * 0.67); ctx.lineTo(W * 0.50, H * 0.86); ctx.lineTo(W * 0.64, H * 0.67);
-  ctx.closePath(); ctx.fill();
+  ctx.moveTo(W * 0.33, H * 0.655);
+  ctx.quadraticCurveTo(cx, H * 0.86, W * 0.63, H * 0.655);
+  ctx.quadraticCurveTo(cx, H * 0.75, W * 0.33, H * 0.655);
+  ctx.fill();
+
   if (spec.star) {
     ctx.fillStyle = '#ffd166';
-    const sx = W * 0.5, sy = H * 0.84, r = W * 0.06;
+    ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.7;
+    const sx = cx, sy = H * 0.85, r = W * 0.062;
     ctx.beginPath();
     for (let i = 0; i < 5; i++) {
       const a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
       ctx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r);
       ctx.lineTo(sx + Math.cos(a + Math.PI / 5) * r * 0.45, sy + Math.sin(a + Math.PI / 5) * r * 0.45);
     }
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
   }
 
-  // Neck
+  // ---- Neck ---------------------------------------------------------------
   ctx.fillStyle = spec.shade;
-  ctx.fillRect(W * 0.43, H * 0.56, W * 0.14, H * 0.13);
+  ctx.beginPath();
+  ctx.roundRect(cx - W * 0.062, H * 0.545, W * 0.124, H * 0.135, W * 0.03);
+  ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.stroke();
 
+  // ---- Hair (back volume) -------------------------------------------------
   portraitHairBack(ctx, spec, W, H);
 
-  // Head
+  // ---- Head ---------------------------------------------------------------
   ctx.fillStyle = spec.skin;
-  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.40, W * 0.235, H * 0.255, 0, 0, Math.PI * 2); ctx.fill();
-  // jaw shading
-  ctx.fillStyle = spec.shade;
-  ctx.globalAlpha = 0.35;
-  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.55, W * 0.15, H * 0.08, 0, 0, Math.PI); ctx.fill();
-  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.ellipse(cx, headY, headRX, headRY, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw; ctx.stroke();
 
-  // Front hair / bangs
+  // cheek shading
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = spec.shade;
+  ctx.beginPath();
+  ctx.ellipse(cx, headY + headRY * 0.55, headRX * 0.72, headRY * 0.3, 0, 0, Math.PI);
+  ctx.fill();
+  ctx.restore();
+
+  // ---- Face ---------------------------------------------------------------
+  const eyeY = headY + H * 0.005;
+  const eyeDX = W * 0.088;
+  // whites
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(cx - eyeDX, eyeY, W * 0.055, H * 0.068, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + eyeDX, eyeY, W * 0.055, H * 0.068, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.8;
+  ctx.beginPath();
+  ctx.ellipse(cx - eyeDX, eyeY, W * 0.055, H * 0.068, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + eyeDX, eyeY, W * 0.055, H * 0.068, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  // irises
+  const irisGrad = ctx.createRadialGradient(cx - eyeDX, eyeY, 2, cx - eyeDX, eyeY, W * 0.05);
+  irisGrad.addColorStop(0, spec.eyes || '#1f2937');
+  irisGrad.addColorStop(1, '#0b0714');
+  ctx.fillStyle = irisGrad;
+  ctx.beginPath();
+  ctx.ellipse(cx - eyeDX + W * 0.004, eyeY + H * 0.004, W * 0.033, H * 0.048, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + eyeDX + W * 0.004, eyeY + H * 0.004, W * 0.033, H * 0.048, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // highlights
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(cx - eyeDX - W * 0.008, eyeY - H * 0.016, W * 0.014, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX - W * 0.008, eyeY - H * 0.016, W * 0.014, 0, Math.PI * 2);
+  ctx.arc(cx - eyeDX + W * 0.016, eyeY + H * 0.020, W * 0.007, 0, Math.PI * 2);
+  ctx.arc(cx + eyeDX + W * 0.016, eyeY + H * 0.020, W * 0.007, 0, Math.PI * 2);
+  ctx.fill();
+
+  // brows
+  ctx.strokeStyle = spec.hair; ctx.lineWidth = W * 0.016;
+  ctx.beginPath();
+  ctx.moveTo(cx - eyeDX - W * 0.048, eyeY - H * 0.082);
+  ctx.quadraticCurveTo(cx - eyeDX, eyeY - H * 0.105, cx - eyeDX + W * 0.048, eyeY - H * 0.080);
+  ctx.moveTo(cx + eyeDX - W * 0.048, eyeY - H * 0.080);
+  ctx.quadraticCurveTo(cx + eyeDX, eyeY - H * 0.105, cx + eyeDX + W * 0.048, eyeY - H * 0.082);
+  ctx.stroke();
+
+  // blush
+  ctx.fillStyle = 'rgba(244, 114, 182, 0.35)';
+  ctx.beginPath();
+  ctx.ellipse(cx - W * 0.135, eyeY + H * 0.062, W * 0.042, H * 0.024, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx + W * 0.135, eyeY + H * 0.062, W * 0.042, H * 0.024, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // nose
+  ctx.strokeStyle = spec.shade; ctx.lineWidth = W * 0.011;
+  ctx.beginPath();
+  ctx.moveTo(cx, headY + H * 0.072);
+  ctx.quadraticCurveTo(cx + W * 0.018, headY + H * 0.10, cx - W * 0.004, headY + H * 0.108);
+  ctx.stroke();
+
+  // open, joyful smile
+  ctx.fillStyle = '#7f1d3a';
+  ctx.beginPath();
+  ctx.moveTo(cx - W * 0.075, headY + H * 0.135);
+  ctx.quadraticCurveTo(cx, headY + H * 0.225, cx + W * 0.075, headY + H * 0.135);
+  ctx.quadraticCurveTo(cx, headY + H * 0.165, cx - W * 0.075, headY + H * 0.135);
+  ctx.fill();
+  ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.7; ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(cx - W * 0.062, headY + H * 0.140);
+  ctx.quadraticCurveTo(cx, headY + H * 0.170, cx + W * 0.062, headY + H * 0.140);
+  ctx.quadraticCurveTo(cx, headY + H * 0.152, cx - W * 0.062, headY + H * 0.140);
+  ctx.fill();
+  ctx.fillStyle = '#f472b6';
+  ctx.beginPath();
+  ctx.ellipse(cx, headY + H * 0.185, W * 0.028, H * 0.016, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ---- Hair (front) -------------------------------------------------------
   ctx.fillStyle = spec.hair;
+  ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.9;
   if (spec.hairType === 'peak') {
     ctx.beginPath();
-    ctx.moveTo(W * 0.28, H * 0.36); ctx.quadraticCurveTo(W * 0.5, H * 0.02, W * 0.72, H * 0.36);
-    ctx.quadraticCurveTo(W * 0.5, H * 0.26, W * 0.28, H * 0.36); ctx.fill();
+    ctx.moveTo(cx - W * 0.22, headY - H * 0.12);
+    ctx.quadraticCurveTo(cx, headY - H * 0.42, cx + W * 0.22, headY - H * 0.12);
+    ctx.quadraticCurveTo(cx, headY - H * 0.24, cx - W * 0.22, headY - H * 0.12);
+    ctx.fill(); ctx.stroke();
   } else if (spec.hairType === 'triangle') {
     ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.06); ctx.lineTo(W * 0.80, H * 0.34);
-    ctx.quadraticCurveTo(W * 0.5, H * 0.24, W * 0.20, H * 0.34); ctx.closePath(); ctx.fill();
+    ctx.moveTo(cx, headY - H * 0.36); ctx.lineTo(cx + W * 0.28, headY - H * 0.06);
+    ctx.quadraticCurveTo(cx, headY - H * 0.20, cx - W * 0.28, headY - H * 0.06);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
   } else if (spec.hairType === 'cube') {
-    ctx.beginPath(); ctx.roundRect(W * 0.27, H * 0.14, W * 0.46, H * 0.16, W * 0.05); ctx.fill();
-  } else if (spec.hairType === 'bob' || spec.hairType === 'wavy' || spec.hairType === 'long' || spec.hairType === 'mane' || spec.hairType === 'bigcurls') {
     ctx.beginPath();
-    ctx.moveTo(W * 0.26, H * 0.36); ctx.quadraticCurveTo(W * 0.36, H * 0.10, W * 0.5, H * 0.13);
-    ctx.quadraticCurveTo(W * 0.64, H * 0.10, W * 0.74, H * 0.36);
-    ctx.quadraticCurveTo(W * 0.62, H * 0.22, W * 0.50, H * 0.25);
-    ctx.quadraticCurveTo(W * 0.38, H * 0.22, W * 0.26, H * 0.36); ctx.fill();
+    ctx.roundRect(cx - W * 0.26, headY - H * 0.34, W * 0.52, H * 0.20, W * 0.05);
+    ctx.fill(); ctx.stroke();
+  } else if (['bob', 'wavy', 'long', 'mane', 'bigcurls'].includes(spec.hairType)) {
+    ctx.beginPath();
+    ctx.moveTo(cx - W * 0.23, headY - H * 0.08);
+    ctx.quadraticCurveTo(cx - W * 0.14, headY - H * 0.38, cx, headY - H * 0.34);
+    ctx.quadraticCurveTo(cx + W * 0.14, headY - H * 0.38, cx + W * 0.23, headY - H * 0.08);
+    ctx.quadraticCurveTo(cx + W * 0.10, headY - H * 0.24, cx, headY - H * 0.21);
+    ctx.quadraticCurveTo(cx - W * 0.10, headY - H * 0.24, cx - W * 0.23, headY - H * 0.08);
+    ctx.fill(); ctx.stroke();
   } else {
     for (let i = 0; i < 5; i++) {
       ctx.beginPath();
-      ctx.arc(W * (0.32 + i * 0.09), H * (0.24 + Math.sin(i) * 0.02), W * 0.075, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(cx + W * (i - 2) * 0.085, headY - H * 0.22 + Math.sin(i) * H * 0.02, W * 0.072, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
     }
   }
 
-  // Eyes
-  const eyeY = H * 0.42;
-  const eyeDX = W * 0.095;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.ellipse(W * 0.5 - eyeDX, eyeY, W * 0.052, H * 0.062, 0, 0, Math.PI * 2);
-  ctx.ellipse(W * 0.5 + eyeDX, eyeY, W * 0.052, H * 0.062, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = spec.eyes || '#1f2937';
-  ctx.beginPath();
-  ctx.ellipse(W * 0.5 - eyeDX + W * 0.006, eyeY + H * 0.004, W * 0.030, H * 0.044, 0, 0, Math.PI * 2);
-  ctx.ellipse(W * 0.5 + eyeDX + W * 0.006, eyeY + H * 0.004, W * 0.030, H * 0.044, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(W * 0.5 - eyeDX + W * 0.016, eyeY - H * 0.012, W * 0.011, 0, Math.PI * 2);
-  ctx.arc(W * 0.5 + eyeDX + W * 0.016, eyeY - H * 0.012, W * 0.011, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Brows
-  ctx.strokeStyle = spec.hair;
-  ctx.lineWidth = W * 0.014;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(W * 0.5 - eyeDX - W * 0.045, eyeY - H * 0.075);
-  ctx.quadraticCurveTo(W * 0.5 - eyeDX, eyeY - H * 0.095, W * 0.5 - eyeDX + W * 0.045, eyeY - H * 0.072);
-  ctx.moveTo(W * 0.5 + eyeDX - W * 0.045, eyeY - H * 0.072);
-  ctx.quadraticCurveTo(W * 0.5 + eyeDX, eyeY - H * 0.095, W * 0.5 + eyeDX + W * 0.045, eyeY - H * 0.075);
-  ctx.stroke();
-
-  // Nose + smile
-  ctx.strokeStyle = spec.shade;
-  ctx.lineWidth = W * 0.012;
-  ctx.beginPath();
-  ctx.moveTo(W * 0.5, H * 0.47); ctx.quadraticCurveTo(W * 0.52, H * 0.50, W * 0.5, H * 0.51);
-  ctx.stroke();
-  ctx.strokeStyle = '#5b2431';
-  ctx.lineWidth = W * 0.016;
-  ctx.beginPath();
-  ctx.moveTo(W * 0.44, H * 0.545); ctx.quadraticCurveTo(W * 0.5, H * 0.585, W * 0.56, H * 0.545);
-  ctx.stroke();
-
-  // Visor (Garnet / Peridot)
-  if (spec.visor) {
-    ctx.fillStyle = spec.visor;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.30, eyeY - H * 0.035); ctx.lineTo(W * 0.70, eyeY - H * 0.035);
-    ctx.lineTo(W * 0.64, eyeY + H * 0.045); ctx.lineTo(W * 0.36, eyeY + H * 0.045);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = spec.accent; ctx.lineWidth = W * 0.012; ctx.stroke();
-    ctx.fillStyle = spec.eyes;
-    ctx.beginPath();
-    ctx.ellipse(W * 0.5 - eyeDX, eyeY + H * 0.004, W * 0.024, H * 0.02, 0, 0, Math.PI * 2);
-    ctx.ellipse(W * 0.5 + eyeDX, eyeY + H * 0.004, W * 0.024, H * 0.02, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Jasper's eye markings
-  if (spec.stripes) {
-    ctx.fillStyle = spec.accent;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.30, eyeY - H * 0.10); ctx.lineTo(W * 0.40, eyeY - H * 0.07); ctx.lineTo(W * 0.30, eyeY - H * 0.04);
-    ctx.moveTo(W * 0.70, eyeY - H * 0.10); ctx.lineTo(W * 0.60, eyeY - H * 0.07); ctx.lineTo(W * 0.70, eyeY - H * 0.04);
-    ctx.fill();
-  }
-
-  // Gem
-  const gemX = spec.gemHead ? W * 0.5 : W * 0.5;
-  const gemY = spec.gemHead ? H * 0.255 : H * 0.70;
+  // ---- Gem ----------------------------------------------------------------
   if (spec.gem) {
+    const gx = cx, gy = spec.gemHead ? headY - H * 0.245 : H * 0.755;
+    const r = W * (spec.gemHead ? 0.045 : 0.058);
     ctx.save();
-    ctx.translate(gemX, gemY);
-    const r = W * (spec.gemHead ? 0.045 : 0.055);
+    ctx.translate(gx, gy);
     const g = ctx.createLinearGradient(-r, -r, r, r);
-    g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, spec.gem); g.addColorStop(1, spec.shade);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, spec.gem); g.addColorStop(1, spec.shade);
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, -r * 0.35); ctx.lineTo(r * 0.55, r);
-    ctx.lineTo(-r * 0.55, r); ctx.lineTo(-r * 0.9, -r * 0.35);
+    ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, -r * 0.3); ctx.lineTo(r * 0.5, r);
+    ctx.lineTo(-r * 0.5, r); ctx.lineTo(-r * 0.9, -r * 0.3);
     ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = W * 0.008; ctx.stroke();
+    ctx.strokeStyle = ink; ctx.lineWidth = lw * 0.8; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath(); ctx.moveTo(0, -r * 0.8); ctx.lineTo(r * 0.34, -r * 0.2); ctx.lineTo(0, r * 0.1); ctx.lineTo(-r * 0.34, -r * 0.2);
+    ctx.closePath(); ctx.fill();
     ctx.restore();
   }
   if (spec.noseGem) {
     ctx.fillStyle = spec.gem || '#fbbf24';
     ctx.beginPath();
-    ctx.moveTo(W * 0.5, H * 0.49); ctx.lineTo(W * 0.53, H * 0.515); ctx.lineTo(W * 0.5, H * 0.54); ctx.lineTo(W * 0.47, H * 0.515);
+    ctx.moveTo(cx, headY + H * 0.055); ctx.lineTo(cx + W * 0.028, headY + H * 0.082);
+    ctx.lineTo(cx, headY + H * 0.108); ctx.lineTo(cx - W * 0.028, headY + H * 0.082);
     ctx.closePath(); ctx.fill();
   }
 
-  // Freckles
+  // ---- Accessories --------------------------------------------------------
+  if (spec.visor) {
+    ctx.fillStyle = spec.visor;
+    ctx.beginPath();
+    ctx.moveTo(cx - W * 0.215, eyeY - H * 0.038);
+    ctx.lineTo(cx + W * 0.215, eyeY - H * 0.038);
+    ctx.lineTo(cx + W * 0.16, eyeY + H * 0.050);
+    ctx.lineTo(cx - W * 0.16, eyeY + H * 0.050);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = spec.accent; ctx.lineWidth = lw; ctx.stroke();
+    ctx.fillStyle = spec.eyes;
+    ctx.beginPath();
+    ctx.ellipse(cx - eyeDX, eyeY + H * 0.004, W * 0.026, H * 0.022, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx + eyeDX, eyeY + H * 0.004, W * 0.026, H * 0.022, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (spec.stripes) {
+    ctx.fillStyle = spec.accent;
+    ctx.beginPath();
+    ctx.moveTo(cx - W * 0.215, eyeY - H * 0.105); ctx.lineTo(cx - W * 0.115, eyeY - H * 0.075); ctx.lineTo(cx - W * 0.215, eyeY - H * 0.045);
+    ctx.moveTo(cx + W * 0.215, eyeY - H * 0.105); ctx.lineTo(cx + W * 0.115, eyeY - H * 0.075); ctx.lineTo(cx + W * 0.215, eyeY - H * 0.045);
+    ctx.fill();
+  }
   if (spec.freckles) {
     ctx.fillStyle = 'rgba(190, 90, 90, 0.55)';
-    [[-0.14, 0.02], [-0.10, 0.045], [-0.17, 0.05], [0.14, 0.02], [0.10, 0.045], [0.17, 0.05]].forEach(([dx, dy]) => {
-      ctx.beginPath(); ctx.arc(W * (0.5 + dx), H * (0.5 + dy), W * 0.008, 0, Math.PI * 2); ctx.fill();
+    [[-0.155, 0.055], [-0.115, 0.078], [-0.185, 0.082], [0.155, 0.055], [0.115, 0.078], [0.185, 0.082]].forEach(([dx, dy]) => {
+      ctx.beginPath(); ctx.arc(cx + W * dx, headY + H * dy, W * 0.0085, 0, Math.PI * 2); ctx.fill();
     });
   }
 
-  // Rim light
+  // ---- Rim light ----------------------------------------------------------
   ctx.save();
-  ctx.globalAlpha = 0.35;
+  ctx.globalAlpha = 0.4;
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = W * 0.02;
-  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.40, W * 0.235, H * 0.255, 0, Math.PI * 1.15, Math.PI * 1.75); ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(cx, headY, headRX, headRY, 0, Math.PI * 1.10, Math.PI * 1.72);
+  ctx.stroke();
   ctx.restore();
 
-  // Vignette
-  const veg = ctx.createRadialGradient(W * 0.5, H * 0.45, W * 0.2, W * 0.5, H * 0.5, W * 0.78);
-  veg.addColorStop(0, 'rgba(0,0,0,0)');
-  veg.addColorStop(1, 'rgba(0,0,0,0.55)');
-  ctx.fillStyle = veg;
-  ctx.fillRect(0, 0, W, H);
+  // ---- Sparkles -----------------------------------------------------------
+  const sparkle = (sx, sy, r) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.92)';
+    ctx.beginPath();
+    ctx.moveTo(sx, sy - r); ctx.quadraticCurveTo(sx + r * 0.22, sy - r * 0.22, sx + r, sy);
+    ctx.quadraticCurveTo(sx + r * 0.22, sy + r * 0.22, sx, sy + r);
+    ctx.quadraticCurveTo(sx - r * 0.22, sy + r * 0.22, sx - r, sy);
+    ctx.quadraticCurveTo(sx - r * 0.22, sy - r * 0.22, sx, sy - r);
+    ctx.fill();
+  };
+  sparkle(W * 0.16, H * 0.18, W * 0.045);
+  sparkle(W * 0.84, H * 0.22, W * 0.035);
+  sparkle(W * 0.10, H * 0.62, W * 0.028);
+  sparkle(W * 0.90, H * 0.70, W * 0.032);
 }
 
 const _portraitCache = {};
@@ -19826,21 +19944,46 @@ class StevenUniverseGame {
     this.cutinOnDone = o.onDone || null;
 
     const root = document.getElementById('portraitCutin');
-    const wrap = document.getElementById('cutinPortraitWrap');
-    const portrait = document.getElementById('cutinPortrait');
     const kicker = document.getElementById('cutinKicker');
     const nameEl = document.getElementById('cutinName');
     const quoteEl = document.getElementById('cutinQuote');
     const flash = document.getElementById('cutinFlash');
+    const leftWrap = document.getElementById('cutinLeftWrap');
+    const rightWrap = document.getElementById('cutinRightWrap');
+    const leftPortrait = document.getElementById('cutinPortraitLeft');
+    const rightPortrait = document.getElementById('cutinPortraitRight');
 
-    if (wrap) wrap.className = 'cutin-portrait-wrap ' + (o.side === 'right' ? 'from-right' : 'from-left');
-    if (portrait) {
-      const portraitId = o.portraitId || o.charId;
-      const portraitUrl = portraitId ? getPortraitDataUrl(portraitId, 512) : '';
-      portrait.innerHTML = portraitUrl
-        ? `<img src="${portraitUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">`
-        : `<div style="font-size:190px;line-height:1;filter:drop-shadow(0 0 26px rgba(255,255,255,.85))">${o.icon || '💎'}</div>`;
-    }
+    // Partner A always takes the left slot, partner B the right (mirrored by CSS).
+    const primaryId = o.portraitId || o.charId;
+    const partnerId = o.secondPortraitId || null;
+    const showLeft = partnerId ? true : (o.side !== 'right');
+    const showRight = partnerId ? true : (o.side === 'right');
+
+    // Painted straight into a <canvas>: a data-URL <img> can paint a frame late (and
+    // showed up blank), while canvas output is synchronous.
+    const portraitMarkup = (id) => id
+      ? `<canvas class="cutin-portrait-canvas" data-portrait="${id}" width="512" height="512"></canvas>`
+      : `<div style="font-size:170px;line-height:1">${o.icon || '💎'}</div>`;
+
+    if (leftWrap) leftWrap.classList.toggle('hidden', !showLeft);
+    if (rightWrap) rightWrap.classList.toggle('hidden', !showRight);
+    if (leftPortrait) leftPortrait.innerHTML = showLeft ? portraitMarkup(primaryId) : '';
+    if (rightPortrait) rightPortrait.innerHTML = showRight ? portraitMarkup(partnerId || primaryId) : '';
+
+    [leftPortrait, rightPortrait].forEach(el => {
+      if (!el) return;
+      const cv = el.querySelector('canvas[data-portrait]');
+      if (!cv) return;
+      try { drawPortrait(cv.getContext('2d'), cv.dataset.portrait, 512); } catch (e) {}
+    });
+
+    // Restart the entrance animation on every activation
+    [leftWrap, rightWrap].forEach(w => {
+      if (!w) return;
+      w.style.animation = 'none';
+      void w.offsetWidth;
+      w.style.animation = '';
+    });
     if (kicker) { kicker.textContent = o.kicker || 'PINK OVERDRIVE'; kicker.style.color = o.kickerColor || '#ffd700'; }
     if (nameEl) nameEl.textContent = o.name || '';
     if (quoteEl) quoteEl.textContent = o.quote || '';
@@ -22065,7 +22208,8 @@ class StevenUniverseGame {
     this.startCutin({
       kicker: 'GEM FUSION',
       kickerColor: fusion.color || '#f472b6',
-      portraitId: fusion.id,
+      portraitId: (fusion.gems && fusion.gems[0]) || fusion.id,
+      secondPortraitId: (fusion.gems && fusion.gems[1]) || null,
       icon: fusion.icon || '💎',
       name: fusion.name.toUpperCase(),
       quote: `${fusion.weapon} · ${power.title}`,
