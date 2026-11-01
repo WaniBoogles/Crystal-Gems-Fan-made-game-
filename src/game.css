@@ -3470,9 +3470,8 @@ option {
 }
 
 .dialogue-hint {
-  position: absolute;
-  right: 18px;
-  bottom: 10px;
+  align-self: flex-end;
+  margin-top: 2px;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 1.2px;
@@ -3671,4 +3670,127 @@ option {
 }
 
 .stage-veil.veil-in .stage-veil-blur { opacity: 1; }
+/* ==========================================================
+   BOSS GATE PROMPT (walk right when you are ready)
+   ========================================================== */
+.boss-gate-hint {
+  position: absolute;
+  right: 22px;
+  bottom: 110px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(124, 21, 51, 0.95), rgba(15, 23, 42, 0.95));
+  border: 2.5px solid #ffcf33;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 26px rgba(255, 207, 51, 0.45);
+  z-index: 45;
+  pointer-events: none;
+  animation: bossGateBob 1.6s ease-in-out infinite;
+}
+
+@keyframes bossGateBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.boss-gate-arrow {
+  font-size: 30px;
+  color: #ffcf33;
+  line-height: 1;
+  text-shadow: 0 0 14px rgba(255, 207, 51, 0.9);
+  animation: bossGateNudge 0.9s ease-in-out infinite;
+}
+
+@keyframes bossGateNudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(8px); }
+}
+
+.boss-gate-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.boss-gate-copy strong {
+  font-family: var(--su-font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #ffd700;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.boss-gate-copy small {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fde68a;
+  opacity: 0.9;
+}
+/* ==========================================================
+   EPISODE SELECT
+   ========================================================== */
+.episode-card {
+  width: min(760px, 94vw);
+}
+
+.episode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.episode-btn {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 10px;
+  padding: 10px 12px;
+  text-align: left;
+  background: rgba(33, 11, 54, 0.9);
+  border: 1.5px solid rgba(255, 96, 151, 0.45);
+  border-radius: 12px;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.episode-btn:hover {
+  border-color: #ffd700;
+  background: rgba(255, 96, 151, 0.18);
+  transform: translateY(-2px);
+}
+
+.ep-num {
+  grid-row: span 2;
+  font-family: var(--su-font-display);
+  font-size: 22px;
+  color: #ffcf33;
+  text-shadow: 0 0 12px rgba(255, 207, 51, 0.6);
+}
+
+.ep-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.ep-src {
+  font-size: 10px;
+  font-weight: 700;
+  color: #c084fc;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.btn-story.off {
+  opacity: 0.75;
+  border-color: rgba(148, 163, 184, 0.6) !important;
+}
+
+.btn-story.off #btnStoryModeText::after {
+  content: "";
+}
 

@@ -421,6 +421,18 @@
             <span id="btnDiffLevelText">DIFFICULTY: 🟡 MEDIUM</span>
           </button>
 
+          <!-- Story cutscene toggle (dialogue on/off) -->
+          <button id="btnStoryMode" class="btn-secondary btn-story" title="Toggle story dialogue between waves and bosses">
+            <span class="btn-icon">📖</span>
+            <span id="btnStoryModeText">STORY: ON</span>
+          </button>
+
+          <!-- Episode / stage select -->
+          <button id="btnEpisodes" class="btn-secondary" title="Replay any of the 10 episodes directly">
+            <span class="btn-icon">🗺️</span>
+            <span>EPISODES</span>
+          </button>
+
           <!-- Settings & Audio -->
           <button id="btnOpenSettings" class="btn-secondary" title="Configure Sound Effects & Music">
             <span class="btn-icon">⚙️</span>
@@ -432,6 +444,34 @@
             <span class="btn-icon">🚪</span>
             <span>QUIT</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.45. Episode Select (replay any of the 10 episodes) -->
+    <div id="episodeSelectScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card episode-card">
+        <div class="modal-header">
+          <h2>🗺️ SELECT AN EPISODE</h2>
+          <button class="btn-close" id="btnCloseEpisodes">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-desc">Jump straight into any episode with your current guardian, mode and difficulty.</p>
+          <div class="episode-grid" id="episodeGrid">
+            <button class="episode-btn" data-episode="1"><span class="ep-num">1</span><span class="ep-name">Beach City Boardwalk</span><span class="ep-src">Season 1</span></button>
+            <button class="episode-btn" data-episode="2"><span class="ep-num">2</span><span class="ep-name">Galaxy Warp &amp; Spire</span><span class="ep-src">Season 1</span></button>
+            <button class="episode-btn" data-episode="3"><span class="ep-num">3</span><span class="ep-name">The Prime Kindergarten</span><span class="ep-src">Season 1</span></button>
+            <button class="episode-btn" data-episode="4"><span class="ep-num">4</span><span class="ep-name">The Cluster</span><span class="ep-src">Season 2–3</span></button>
+            <button class="episode-btn" data-episode="5"><span class="ep-num">5</span><span class="ep-name">Bismuth's Forge</span><span class="ep-src">Season 3</span></button>
+            <button class="episode-btn" data-episode="6"><span class="ep-num">6</span><span class="ep-name">The Frozen North</span><span class="ep-src">Season 3</span></button>
+            <button class="episode-btn" data-episode="7"><span class="ep-num">7</span><span class="ep-name">Pink Diamond's Zoo</span><span class="ep-src">Season 4</span></button>
+            <button class="episode-btn" data-episode="8"><span class="ep-num">8</span><span class="ep-name">Homeworld Shore</span><span class="ep-src">Season 5</span></button>
+            <button class="episode-btn" data-episode="9"><span class="ep-num">9</span><span class="ep-name">Trial &amp; Off-Colors</span><span class="ep-src">Season 5</span></button>
+            <button class="episode-btn" data-episode="10"><span class="ep-num">10</span><span class="ep-name">Change Your Mind</span><span class="ep-src">Finale</span></button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" id="btnCloseEpisodesBtn" style="width:100%;">BACK TO MENU</button>
         </div>
       </div>
     </div>
@@ -950,6 +990,15 @@
         <div class="dialogue-nameplate"><span id="dialogueName">Garnet</span></div>
         <p class="dialogue-text" id="dialogueText"></p>
         <div class="dialogue-hint" id="dialogueHint">CLICK or SPACE ▶</div>
+      </div>
+    </div>
+
+    <!-- Boss gate prompt: walk right when ready -->
+    <div id="bossGateHint" class="boss-gate-hint" style="display: none;">
+      <span class="boss-gate-arrow">➜</span>
+      <div class="boss-gate-copy">
+        <strong>WALK RIGHT TO FACE THE BOSS</strong>
+        <small>Collect bubbles &amp; hearts first — spend them on Overdrive!</small>
       </div>
     </div>
 

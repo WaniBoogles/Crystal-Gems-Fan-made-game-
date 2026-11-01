@@ -13142,94 +13142,108 @@ const STORY_SCRIPT = {
   1: {
     map: 'Beach City Boardwalk',
     waves: [
-      [{ w: 'garnet', t: "Centipeetles on the boardwalk. Stay behind us, Steven." },
-       { w: 'party', t: "I can help! I've been practising with my shield!" }],
-      [{ w: 'pearl', t: "They're nesting by the fry stand. Keep the civilians clear." },
-       { w: 'amethyst', t: "Relax, P. I'll smash 'em before they even— oops." }],
-      [{ w: 'party', t: "That one's scared, not evil. Corrupted gems are just... hurt." },
-       { w: 'garnet', t: "Then we bubble them gently. That is the whole point." }],
-      [{ w: 'amethyst', t: "Big one's coming. Like, really big." },
-       { w: 'pearl', t: "Formation! Shield up — we finish this on the sand." }]
+      [{ w: 'garnet', t: "Centipeetles. Three of them, right on the boardwalk." },
+       { w: 'party',  t: "Three?! Okay. Okay okay okay. I can do three." },
+       { w: 'amethyst', t: "You can do one. We'll take the other two." }],
+      [{ w: 'pearl', t: "They're nesting behind the fry stand — mind the civilians!" },
+       { w: 'amethyst', t: "Ohhh, so THAT'S why we don't just smash everything." },
+       { w: 'pearl', t: "It has literally always been why, Amethyst." }],
+      [{ w: 'party', t: "Hey... that little one isn't attacking. It's guarding something." },
+       { w: 'garnet', t: "Corrupted gems aren't evil, Steven. They're frightened." },
+       { w: 'party', t: "Then we bubble them gently. Nobody gets hurt." }],
+      [{ w: 'amethyst', t: "Uh, guys? The big one's awake. Like, tower-of-mother big." },
+       { w: 'pearl', t: "Formation! Backs to the water!" },
+       { w: 'party', t: "I've got the shield — let's finish this on the sand!" }]
     ],
     boss: [
       { w: 'villain', n: 'MOTHER CENTIPEETLE', i: '🐛', t: 'SCREEEEEE!' },
-      { w: 'steven', t: "She's protecting her hatchlings. So we show her we're not the enemy." }
+      { w: 'steven', t: "She's protecting her babies. We are NOT the enemy here." },
+      { w: 'garnet', t: "Then show her, Steven. Kindness first. Shield second." }
     ]
   },
   2: {
     map: 'Galaxy Warp & Spire',
     waves: [
-      [{ w: 'pearl', t: "The Galaxy Warp is cracked. Every pad we cross could send us anywhere." },
-       { w: 'garnet', t: "Then we walk." }],
-      [{ w: 'party', t: "This place is old. Like, before-Beach-City old." },
-       { w: 'garnet', t: "Older than the town. Older than the coastline." }],
+      [{ w: 'pearl', t: "The Galaxy Warp is cracked. Every pad we cross could fling us anywhere in the galaxy." },
+       { w: 'garnet', t: "Then we walk. Slowly." },
+       { w: 'amethyst', t: "Booooring. I vote fling." }],
+      [{ w: 'party', t: "This place is ancient. Like, before-Beach-City ancient." },
+       { w: 'garnet', t: "Older than the town. Older than the coastline. Older than me." }],
       [{ w: 'pearl', t: "Blade Quartzes. They were soldiers once — Rose's own allies." },
        { w: 'party', t: "Do they remember her?" },
-       { w: 'pearl', t: "I don't think they remember anything." }],
-      [{ w: 'amethyst', t: "Spire's waking up. That's a lot of stairs, even for me." },
+       { w: 'pearl', t: "...I don't think they remember anything at all." }],
+      [{ w: 'amethyst', t: "Spire's waking up. That's a LOT of stairs, even for me." },
        { w: 'party', t: "Race you to the top?" },
-       { w: 'amethyst', t: "You're on, chubs." }]
+       { w: 'amethyst', t: "You're on, chubs. Loser buys Cookie Cats." }]
     ],
     boss: [
       { w: 'villain', n: 'ANCIENT SPIRE GIANT BIRD', i: '🦅', t: 'KRAAAAA!' },
-      { w: 'garnet', t: "It slept through the war. Let's put it back to sleep." }
+      { w: 'garnet', t: "It slept through the war. It doesn't even know it lost." },
+      { w: 'party', t: "Then let's put it back to sleep. Gently this time." }
     ]
   },
   3: {
     map: 'The Prime Kindergarten',
     waves: [
       [{ w: 'amethyst', t: "Welcome to my birthplace. Home sweet hole." },
-       { w: 'party', t: "You were... made here?" },
-       { w: 'amethyst', t: "Every hole in that wall is a gem. One of 'em's me." }],
-      [{ w: 'pearl', t: "The injectors are still humming. This place should be dead." },
-       { w: 'amethyst', t: "It's not dead. It's just empty." }],
-      [{ w: 'amethyst', t: "Homeworld used this place up, then left." },
-       { w: 'party', t: "That's awful." },
-       { w: 'amethyst', t: "Yeah. But I got you guys out of it." }],
-      [{ w: 'amethyst', t: "Cluster mutants — gems that didn't make it out." },
-       { w: 'party', t: "Then we bubble them. All of them." }]
+       { w: 'party', t: "You were... made here? Out of that wall?" },
+       { w: 'amethyst', t: "Every hole is a gem. One of 'em's me." }],
+      [{ w: 'pearl', t: "The injectors are still humming. This place should have died a thousand years ago." },
+       { w: 'amethyst', t: "It's not dead, P. It's just empty. There's a difference." }],
+      [{ w: 'amethyst', t: "Homeworld used this place up, then left it to rot — with us inside." },
+       { w: 'party', t: "That's horrible." },
+       { w: 'amethyst', t: "Yeah. But I got you guys out of it. So. There's that." }],
+      [{ w: 'amethyst', t: "Cluster mutants. Gems that didn't make it out of the ground right." },
+       { w: 'party', t: "Then we bubble every single one of them." },
+       { w: 'amethyst', t: "Now you're talking like a Crystal Gem." }]
     ],
     boss: [
       { w: 'villain', n: 'KINDERGARTEN AMALGAM TITAN', i: '🪨', t: 'GRRRRAAAH!' },
       { w: 'amethyst', t: "That titan's the Kindergarten's last tantrum." },
       { w: 'party', t: "Then let's give it a hug." },
-      { w: 'amethyst', t: "A punch-hug." }
+      { w: 'amethyst', t: "A punch-hug. My favourite kind." }
     ]
   },
   4: {
     map: "Earth's Mantle — The Cluster",
     waves: [
-      [{ w: 'peridot', t: "The Cluster is gestating at the planet's core. We have hours, not days." },
-       { w: 'party', t: "Then we drill." }],
-      [{ w: 'peridot', t: "Warning: the mantle is unstable and I am extremely not built for this." },
-       { w: 'party', t: "You're doing great, Peridot." }],
-      [{ w: 'party', t: "They're all fused together down here. Millions of gems." },
-       { w: 'peridot', t: "They didn't choose it. Nobody asked them." }],
-      [{ w: 'peridot', t: "If the Cluster wakes, Earth cracks like an egg." },
-       { w: 'garnet', t: "Then it stays asleep. Permanently." }]
+      [{ w: 'peridot', t: "The Cluster is gestating at the planet's core. We have HOURS, not days!" },
+       { w: 'party', t: "Then we drill. Right now." },
+       { w: 'peridot', t: "I hate that that's the plan. I hate that it's a GOOD plan!" }],
+      [{ w: 'peridot', t: "Warning: mantle unstable. Also warning: I am extremely not built for this!" },
+       { w: 'party', t: "You're doing amazing, Peridot." },
+       { w: 'peridot', t: "I know! Keep saying it!" }],
+      [{ w: 'party', t: "They're all fused together down here. Millions of them." },
+       { w: 'peridot', t: "They didn't choose it. Nobody asked them. That's what Homeworld DOES." }],
+      [{ w: 'peridot', t: "If the Cluster wakes, Earth cracks like an egg and we are the YOLK!" },
+       { w: 'garnet', t: "Then it stays asleep. Permanently." },
+       { w: 'peridot', t: "Garnet said 'permanently' and I felt that in my gem." }]
     ],
     boss: [
       { w: 'villain', n: 'GEO-WEAPON CLUSTER CORE', i: '🌋', t: '...who... am... I...' },
-      { w: 'peridot', t: "It's aware. It's confused." },
+      { w: 'peridot', t: "It's aware! It's confused! It's ALSO enormous!" },
       { w: 'party', t: "Then we talk to it. Gems can be talked to." }
     ]
   },
   5: {
     map: "Bismuth's Burning Forge",
     waves: [
-      [{ w: 'bismuth', t: "Welcome to my workshop! Best forge on Earth. Mind the lava." },
-       { w: 'party', t: "You made all of Rose's weapons here?" }],
-      [{ w: 'bismuth', t: "Rose's sword? My finest work. Built it to cut anything but a gem." },
-       { w: 'pearl', t: "We agreed never to speak of the Breaking Point." }],
-      [{ w: 'bismuth', t: "Those automatons were mine — turned on us when Homeworld took the forge." },
+      [{ w: 'bismuth', t: "Welcome to my workshop! Best forge on Earth — mind the lava, it bites." },
+       { w: 'party', t: "You made ALL of Rose's weapons here?" },
+       { w: 'bismuth', t: "Every last one. Even the ones she never used." }],
+      [{ w: 'bismuth', t: "Rose's sword? My finest work. Built it to cut anything except a gem." },
+       { w: 'pearl', t: "We agreed never to speak about the Breaking Point." },
+       { w: 'bismuth', t: "Yeah, well. We agreed a lot of things, Pearl." }],
+      [{ w: 'bismuth', t: "These automatons were mine — turned on us the day Homeworld took the forge." },
        { w: 'party', t: "Can you fix them?" },
-       { w: 'bismuth', t: "Fix? I'm gonna break 'em." }],
+       { w: 'bismuth', t: "Fix? Buddy, I'm gonna BREAK 'em." }],
       [{ w: 'garnet', t: "Bismuth, focus. The forge is fighting back." },
-       { w: 'bismuth', t: "Forge is mine. It knows better." }]
+       { w: 'bismuth', t: "Forge is MINE. It knows better than to fight me." },
+       { w: 'garnet', t: "...It's a building, Bismuth." }]
     ],
     boss: [
       { w: 'villain', n: 'ANCIENT FORGE SENTINEL', i: '🔥', t: 'SYSTEM: INTRUDER.' },
-      { w: 'bismuth', t: "Big, hot and ugly — my specialty." },
+      { w: 'bismuth', t: "Big, hot, ugly. My specialty." },
       { w: 'party', t: "Together?" },
       { w: 'bismuth', t: "Always, little man." }
     ]
@@ -13238,91 +13252,112 @@ const STORY_SCRIPT = {
     map: 'The Frozen North',
     waves: [
       [{ w: 'lapis', t: "I can feel him under the ice. Jasper." },
-       { w: 'party', t: "You don't have to fight him." },
-       { w: 'lapis', t: "I know. I want to." }],
-      [{ w: 'lapis', t: "When we were Malachite, I held us both at the bottom of the ocean." },
-       { w: 'party', t: "You're not that person anymore." }],
+       { w: 'party', t: "You don't have to do this." },
+       { w: 'lapis', t: "I know. That's exactly why I'm doing it." }],
+      [{ w: 'lapis', t: "When we were Malachite, I held us both at the bottom of the ocean. For months." },
+       { w: 'party', t: "Lapis..." },
+       { w: 'lapis', t: "I'm not that person anymore. I need him to know that." }],
       [{ w: 'garnet', t: "The corruption is eating him alive." },
-       { w: 'lapis', t: "He asked for power. He got it." }],
-      [{ w: 'jasper', t: "You think you can beat me, runt?" },
-       { w: 'party', t: "I think we can save you." },
+       { w: 'lapis', t: "He asked for power. He got it." },
+       { w: 'garnet', t: "Nobody deserves this. Not even him." }],
+      [{ w: 'jasper', t: "You think you can beat me, runt?!" },
+       { w: 'party', t: "I think we can SAVE you!" },
        { w: 'jasper', t: "SAVE THIS!" }]
     ],
     boss: [
       { w: 'villain', n: 'CORRUPTED JASPER', i: '🐯', t: "BETA'S FINEST DOESN'T LOSE!" },
-      { w: 'garnet', t: "You already did, Jasper. You lost yourself." }
+      { w: 'garnet', t: "You already did, Jasper. You lost yourself." },
+      { w: 'party', t: "But you can still come back. I've seen it." }
     ]
   },
   7: {
     map: "Pink Diamond's Space Zoo",
     waves: [
-      [{ w: 'pearl', t: "A Human Zoo. They kept people in here like collectibles." },
-       { w: 'party', t: "That's... really messed up." }],
+      [{ w: 'pearl', t: "A Human Zoo. They kept people in here. Like collectibles." },
+       { w: 'party', t: "That's... really messed up." },
+       { w: 'pearl', t: "Yes. That's one word for it." }],
       [{ w: 'garnet', t: "Blue Diamond's gems still run this place." },
-       { w: 'pearl', t: "Then we go quietly. Or loudly. I'm flexible." }],
-      [{ w: 'party', t: "These Zoomans are happy. They don't know anything else." },
-       { w: 'lapis', t: "Freedom you don't know you're missing isn't freedom." }],
+       { w: 'pearl', t: "Then we go quietly. Or loudly. I'm flexible." },
+       { w: 'garnet', t: "You're never quiet." }],
+      [{ w: 'party', t: "These Zoomans are happy. They don't know anything else exists." },
+       { w: 'lapis', t: "Freedom you don't know you're missing isn't freedom. It's a cage with nice wallpaper." }],
       [{ w: 'garnet', t: "Agate's wardens hold the control room." },
-       { w: 'pearl', t: "I'll take the controls. You take the smashy part." }]
+       { w: 'pearl', t: "I'll take the controls. You take the smashy part." },
+       { w: 'garnet', t: "Finally. A plan I like." }]
     ],
     boss: [
       { w: 'villain', n: 'HOLY BLUE AGATE WARDEN', i: '🔷', t: 'HOW DARE YOU TOUCH MY ZOO!' },
-      { w: 'pearl', t: "Cruel, petty and loud." },
-       { w: 'garnet', t: "Then she'll be loud when she loses." }
+      { w: 'pearl', t: "Cruel, petty, and loud." },
+      { w: 'garnet', t: "Then she'll be very loud when she loses." }
     ]
   },
   8: {
     map: 'Homeworld Abduction Shore',
     waves: [
       [{ w: 'party', t: "They're taking humans. Like they took Dad." },
-       { w: 'connie', t: "Not on our beach they're not." }],
+       { w: 'connie', t: "Not on our beach. Not today." },
+       { w: 'party', t: "Connie, you're terrifying." },
+       { w: 'connie', t: "Thank you!" }],
       [{ w: 'connie', t: "Pearl taught me to hold a sword. She didn't teach me to lose." },
-       { w: 'party', t: "That's... actually terrifying, Connie." }],
-      [{ w: 'garnet', t: "Topaz fusion. Two gems, one body, no choice in the matter." },
-       { w: 'party', t: "That's not a fusion. That's a prison." }],
-      [{ w: 'party', t: "Aquamarine's ship is lifting. If it clears, those people are gone." },
-       { w: 'connie', t: "Then we don't let it lift." }]
+       { w: 'party', t: "That's... actually a little scary, Connie." },
+       { w: 'connie', t: "Good!" }],
+      [{ w: 'garnet', t: "Topaz fusion. Two gems, one body, and no choice in the matter." },
+       { w: 'party', t: "That's not a fusion. That's a prison." },
+       { w: 'garnet', t: "Exactly." }],
+      [{ w: 'party', t: "Aquamarine's ship is lifting! If it clears the beach, those people are gone!" },
+       { w: 'connie', t: "Then it doesn't clear the beach." },
+       { w: 'party', t: "I love it when you say things like that!" }]
     ],
     boss: [
       { w: 'villain', n: 'FUSED TOPAZ ENFORCER', i: '💛', t: 'ORDERS ARE ORDERS.' },
-      { w: 'connie', t: "They're not evil — they're scared." },
-       { w: 'party', t: "Then let's be brave enough for both of them." }
+      { w: 'connie', t: "They're not evil. They're scared." },
+      { w: 'party', t: "Then let's be brave enough for both of them!" }
     ]
   },
   9: {
     map: 'Homeworld Trial & Off-Colors',
     waves: [
       [{ w: 'party', t: "The courtroom. Last time I stood here, I was on trial for Mom's murder." },
-       { w: 'connie', t: "And this time?" }],
-      [{ w: 'party', t: "This time I'm not alone." },
-       { w: 'pearl', t: "You never were." }],
-      [{ w: 'garnet', t: "Off-Colors — Rhodonite, Padparadscha, Fluorite. Gems Homeworld threw away." },
-       { w: 'party', t: "Then they're Crystal Gems now." }],
+       { w: 'connie', t: "And this time?" },
+       { w: 'party', t: "This time I brought backup." }],
+      [{ w: 'party', t: "I'm not alone anymore." },
+       { w: 'pearl', t: "You never were, Steven." },
+       { w: 'garnet', t: "We're right here." }],
+      [{ w: 'garnet', t: "Off-Colors. Rhodonite, Padparadscha, Fluorite. Gems Homeworld threw away." },
+       { w: 'party', t: "Then they're Crystal Gems now." },
+       { w: 'garnet', t: "That's the whole idea, yes." }],
       [{ w: 'garnet', t: "The Robonoid Hunter was built to find runaway gems." },
-       { w: 'party', t: "Good. Let it find us." }]
+       { w: 'party', t: "Good! Let it find us!" },
+       { w: 'pearl', t: "Steven, that is NOT a strategy!" },
+       { w: 'party', t: "It's a LITTLE bit of a strategy!" }]
     ],
     boss: [
       { w: 'villain', n: 'ROBONOID HUNTER COLOSSUS', i: '🤖', t: 'TARGETS ACQUIRED.' },
       { w: 'pearl', t: "Aim for the core!" },
-       { w: 'party', t: "Every gem deserves a chance. Even the one hunting us." }
+      { w: 'party', t: "Every gem deserves a chance. Even the one hunting us." }
     ]
   },
   10: {
     map: 'Change Your Mind — Era 3',
     waves: [
-      [{ w: 'party', t: "White Diamond's mecha is the size of a city." },
-       { w: 'garnet', t: "Then we make ourselves the size of a problem." }],
+      [{ w: 'party', t: "White Diamond's mecha is the size of a CITY." },
+       { w: 'garnet', t: "Then we make ourselves the size of a problem." },
+       { w: 'amethyst', t: "Now THAT I can work with!" }],
       [{ w: 'connie', t: "Everyone's here. All of us." },
-       { w: 'bismuth', t: "All of us is what Homeworld is afraid of." }],
+       { w: 'bismuth', t: "All of us is what Homeworld is afraid of." },
+       { w: 'party', t: "Then let's give them something to be afraid of!" }],
       [{ w: 'pearl', t: "White Diamond believes she is perfect. Perfection doesn't bend." },
-       { w: 'party', t: "Then I'll bend it." }],
+       { w: 'party', t: "Then I'll bend it." },
+       { w: 'pearl', t: "...That's either very brave or very stupid." },
+       { w: 'party', t: "Both! It's both!" }],
       [{ w: 'party', t: "I'm not Rose Quartz. I'm not Pink Diamond. I'm Steven." },
-       { w: 'garnet', t: "And that's enough." }]
+       { w: 'garnet', t: "And that's enough." },
+       { w: 'amethyst', t: "Yeah it is!" }]
     ],
     boss: [
       { w: 'villain', n: 'WHITE DIAMOND SUPREME MECHA', i: '💎', t: 'I AM PERFECTION.' },
       { w: 'party', t: "No. You're just scared of being wrong." },
-       { w: 'garnet', t: "Era 3 starts here." }
+      { w: 'garnet', t: "Era 3 starts here." }
     ]
   }
 };
@@ -13415,6 +13450,8 @@ class StevenUniverseGame {
     this.isTransitioning = false;
 
     this.difficulty = SafeStorage.getItem('su_difficulty') || 'medium';
+    // Story cutscenes (dialogue between waves). OFF = pure arcade run.
+    this.storyMode = (SafeStorage.getItem('su_storyMode') || 'true') !== 'false';
     this.tempDifficulty = this.difficulty;
 
     const diffCfg = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
@@ -14190,6 +14227,34 @@ class StevenUniverseGame {
     };
   }
 
+  // Dialogue and cut-in are in-game overlays only: they vanish while the pause
+  // menu, title screen or any modal is up, and come back on resume.
+  setOverlaysVisible(visible) {
+    if (!visible) {
+      const gate = document.getElementById('bossGateHint');
+      if (gate) gate.style.display = 'none';
+    } else if (this.isWaitingForBoss) {
+      const gate = document.getElementById('bossGateHint');
+      if (gate) gate.style.display = 'flex';
+    }
+    const box = document.getElementById('dialogueBox');
+    if (box) {
+      if (!visible) {
+        box.style.display = 'none';
+      } else if (this.dialogueActive) {
+        box.style.display = 'flex';
+        box.classList.add('dialogue-in');
+      }
+    }
+    if (!visible) {
+      const cutin = document.getElementById('portraitCutin');
+      if (cutin) cutin.style.display = 'none';
+    } else if (this.cutinActive) {
+      const cutin = document.getElementById('portraitCutin');
+      if (cutin) cutin.style.display = 'flex';
+    }
+  }
+
   // Zero every held input. Called on blur, tab hide, pause and menu changes so a
   // missed keyup can never leave the hero sliding on their own.
   releaseAllInputs() {
@@ -14266,6 +14331,19 @@ class StevenUniverseGame {
       nameEl.parentElement.style.background = `linear-gradient(135deg, ${speaker.color}, #7c1533)`;
     }
     if (textEl) textEl.textContent = line.t;
+    const hintEl = document.getElementById('dialogueHint');
+    if (hintEl) {
+      hintEl.textContent = 'CLICK or SPACE ▶';
+      // Inline style so no cascade quirk can ever hide the "how to continue" hint.
+      hintEl.style.display = 'block';
+      hintEl.style.visibility = 'visible';
+      hintEl.style.opacity = '0.9';
+      hintEl.style.color = '#ffd700';
+      hintEl.style.fontSize = '10px';
+      hintEl.style.fontWeight = '900';
+      hintEl.style.letterSpacing = '1.2px';
+      hintEl.style.textAlign = 'right';
+    }
     if (portraitEl) {
       if (speaker.villain) {
         portraitEl.innerHTML = `<div style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;background:radial-gradient(circle, ${speaker.color}55, #0b0714);border:2px solid ${speaker.color};box-shadow:0 0 22px ${speaker.color}88">${speaker.icon}</div>`;
@@ -14362,6 +14440,114 @@ class StevenUniverseGame {
     }
   }
 
+  // The last wave is cleared: the boss waits at the right edge. The player walks
+  // there themselves so they can farm bubbles/pickups for Overdrive first.
+  updateStoryModeUI() {
+    const btn = document.getElementById('btnStoryMode');
+    const label = document.getElementById('btnStoryModeText');
+    if (btn) btn.classList.toggle('off', this.storyMode === false);
+    if (label) label.textContent = this.storyMode === false ? 'STORY: OFF' : 'STORY: ON';
+  }
+
+  toggleStoryMode() {
+    this.storyMode = !this.storyMode;
+    SafeStorage.setItem('su_storyMode', this.storyMode ? 'true' : 'false');
+    this.updateStoryModeUI();
+    this.audio.playSfx('menuTap');
+  }
+
+  // Jump straight into any episode from the menu (no restarting from episode 1).
+  startEpisode(stageNumber) {
+    const n = Math.max(1, Math.min(10, parseInt(stageNumber, 10) || 1));
+    if (this.dialogueActive) {
+      this.dialogueActive = false;
+      this.dialogueOnDone = null;
+      const box = document.getElementById('dialogueBox');
+      if (box) box.style.display = 'none';
+    }
+    this.startNewGame('story');
+    // startNewGame forces episode 1 — override it for the chosen stage.
+    this.stageIndex = n;
+    this.lastStoryBeat = null;
+    this.isWaitingForBoss = false;
+    const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
+    this.enemyManager.reset(n, diff, this.pickups);
+    this.updateHUD();
+    this.startStageWave();
+  }
+
+  openEpisodeScreen() {
+    const screen = document.getElementById('episodeSelectScreen');
+    if (screen) screen.style.display = 'flex';
+    this.audio.playSfx('menuTap');
+  }
+
+  closeEpisodeScreen() {
+    const screen = document.getElementById('episodeSelectScreen');
+    if (screen) screen.style.display = 'none';
+  }
+
+  openBossGate() {
+    if (this.isWaitingForBoss) return;
+    this.isWaitingForBoss = true;
+    this.bossGatePulse = 0;
+    this.bossGateAutoTimer = (this.storyMode === false) ? 2.4 : 0;
+    this.audio.playSfx('waveWarning');
+    this.triggerWaveWarning('⚠️ THE BOSS IS WAITING AT THE RIGHT EDGE! ⚠️', true);
+    const hint = document.getElementById('bossGateHint');
+    if (hint) hint.style.display = 'flex';
+  }
+
+  enterBossArena() {
+    if (!this.isWaitingForBoss) return;
+    this.isWaitingForBoss = false;
+    const hint = document.getElementById('bossGateHint');
+    if (hint) hint.style.display = 'none';
+    this.audio.playSfx('warpPad');
+    this.setVeil(true);
+    this.screenTransition = { kind: 'boss', phase: 'veil', timer: 0.42 };
+  }
+
+  drawBossGateArrow(ctx) {
+    const x = this.stageWidth - 78;
+    const y = this.groundY - 96;
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 220);
+    ctx.save();
+    ctx.globalAlpha = 0.55 + 0.45 * pulse;
+
+    const glow = ctx.createRadialGradient(x, y, 6, x, y, 82);
+    glow.addColorStop(0, 'rgba(255, 207, 51, 0.55)');
+    glow.addColorStop(1, 'rgba(255, 207, 51, 0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(x, y, 82, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffcf33';
+    ctx.strokeStyle = '#7c1533';
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 3; i++) {
+      const off = ((Date.now() / 300 + i * 0.5) % 1.5) * 16;
+      ctx.beginPath();
+      ctx.moveTo(x - 30 + off, y - 17);
+      ctx.lineTo(x + 2 + off, y);
+      ctx.lineTo(x - 30 + off, y + 17);
+      ctx.lineTo(x - 17 + off, y);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    ctx.font = "900 13px 'Fredoka One', 'Nunito', sans-serif";
+    ctx.textAlign = 'center';
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.strokeText('BOSS AHEAD', x - 8, y - 36);
+    ctx.fillStyle = '#fff7ed';
+    ctx.fillText('BOSS AHEAD', x - 8, y - 36);
+    ctx.restore();
+  }
+
   beginWaveExit(nextWaveIdx) {
     if (this.screenTransition) return;
     this.isWaitingForWaveClear = false;
@@ -14439,6 +14625,8 @@ class StevenUniverseGame {
         this.screenTransition = null;
         if (t.kind === 'wave') {
           this.prepareWave(t.nextWaveIdx);
+        } else if (t.kind === 'boss') {
+          this.prepareBossWave();
         } else {
           this.performStageAdvance();
         }
@@ -14447,6 +14635,9 @@ class StevenUniverseGame {
   }
 
   startStageWave() {
+    this.isWaitingForBoss = false;
+    const gateHint = document.getElementById('bossGateHint');
+    if (gateHint) gateHint.style.display = 'none';
     const titles = [
       'EPISODE 1: BEACH CITY BOARDWALK',
       'EPISODE 2: GALAXY WARP & SPIRE',
@@ -14526,7 +14717,7 @@ class StevenUniverseGame {
     }
 
     // Story beat for this wave (plays once, before the enemies arrive)
-    const story = STORY_SCRIPT[this.stageIndex];
+    const story = (this.storyMode !== false) ? STORY_SCRIPT[this.stageIndex] : null;
     const beatKey = `${this.stageIndex}:w${waveIdx}`;
     if (story && story.waves && story.waves[waveIdx] && this.lastStoryBeat !== beatKey) {
       this.lastStoryBeat = beatKey;
@@ -14579,7 +14770,7 @@ class StevenUniverseGame {
     const epData = EPISODE_WAVES[this.stageIndex];
     if (!epData) return;
 
-    const story = STORY_SCRIPT[this.stageIndex];
+    const story = (this.storyMode !== false) ? STORY_SCRIPT[this.stageIndex] : null;
     const beatKey = `${this.stageIndex}:boss`;
     if (story && story.boss && this.lastStoryBeat !== beatKey) {
       this.lastStoryBeat = beatKey;
@@ -14731,15 +14922,20 @@ class StevenUniverseGame {
   }
 
   update(dt) {
+    // Portrait cut-in: the world keeps flowing, just in slow motion, so the run
+    // never stalls. The timer itself runs on real time.
+    if (this.cutinActive) {
+      this.cutinTimer -= dt;
+      if (this.cutinTimer <= 0) {
+        this.endCutin();
+      } else {
+        dt *= (this.cutinSlowFactor || 0.22);
+      }
+    }
+
     this.environment.update();
     this.particles.update();
 
-    // Hitstop for the portrait cut-in, plus dialogue / walk-out transitions.
-    if (this.cutinActive) {
-      this.cutinTimer -= dt;
-      if (this.cutinTimer <= 0) this.endCutin();
-      return;
-    }
     if (this.dialogueActive) {
       this.dialogueAutoTimer = (this.dialogueAutoTimer || 0) + dt;
       if (this.dialogueAutoTimer > 7) this.advanceDialogue();
@@ -14748,6 +14944,17 @@ class StevenUniverseGame {
     if (this.screenTransition) {
       this.updateScreenTransition(dt);
       return;
+    }
+
+    // Boss gate: walk to the right edge when you are ready (or auto in arcade mode).
+    if (this.isWaitingForBoss) {
+      this.bossGatePulse = (this.bossGatePulse || 0) + dt;
+      if (this.bossGateAutoTimer > 0) {
+        this.bossGateAutoTimer -= dt;
+        if (this.bossGateAutoTimer <= 0) this.enterBossArena();
+      } else if (this.player && this.player.x > this.stageWidth - 140) {
+        this.enterBossArena();
+      }
     }
 
     if (this.isTransitioning) {
@@ -14897,7 +15104,13 @@ class StevenUniverseGame {
               this.waveClearTimer -= dt;
               if (this.waveClearTimer <= 0) {
                 this.isWaitingForWaveClear = false;
-                this.beginWaveExit(this.waveIndex + 1);
+                // Waves flow straight into each other — no walking off screen.
+                // Only the run up to a boss asks the player to walk right, manually.
+                if (this.waveIndex >= epData.waves.length - 1) {
+                  this.openBossGate();
+                } else {
+                  this.prepareWave(this.waveIndex + 1);
+                }
               }
             }
           } else {
@@ -15079,8 +15292,8 @@ class StevenUniverseGame {
       name: theme.name,
       quote: 'PINK STATE · 2× POWER · 12 SECONDS',
       side: playerId === 'p2' ? 'right' : 'left',
-      duration: 1.9,
-      freeze: 1.9,
+      duration: 1.05,
+      freeze: 0,
       onDone: () => this.applyOverdrive(playerId)
     });
   }
@@ -15306,6 +15519,9 @@ class StevenUniverseGame {
 
     // Foreground Terrain & Platforms across full 2600px
     this.environment.drawForeground(this.ctx, this.stageIndex, this.gameMode === 'practice');
+
+    // Boss gate arrow: tells the player where to walk, and never moves them there.
+    if (this.isWaitingForBoss) this.drawBossGateArrow(this.ctx);
 
     // Pickups (Cookie Cats, Hearts)
     for (const p of this.pickups) {
@@ -16406,8 +16622,8 @@ class StevenUniverseGame {
       name: fusion.name.toUpperCase(),
       quote: `${fusion.weapon} · ${power.title}`,
       side: 'left',
-      duration: 1.6,
-      freeze: 1.0
+      duration: 1.0,
+      freeze: 0
     });
     const overcharge = Math.max(0, (this.fusionEnergy || 0) - 100);
     const duration = power.duration + Math.min(1.2, overcharge * 0.05);
@@ -17409,6 +17625,7 @@ class StevenUniverseGame {
         if (this.state === 'playing') {
           this.state = 'paused';
           this.releaseAllInputs();
+          this.setOverlaysVisible(false);
           if (this.syncVolumeUI) this.syncVolumeUI();
           document.getElementById('pauseScreen').style.display = 'flex';
           const touchBox = document.getElementById('touchControls');
@@ -17416,6 +17633,7 @@ class StevenUniverseGame {
         } else if (this.state === 'paused') {
           this.state = 'playing';
           this.releaseAllInputs();
+          this.setOverlaysVisible(true);
           this.lastTime = performance.now();
           document.getElementById('pauseScreen').style.display = 'none';
           const touchBox = document.getElementById('touchControls');
@@ -17531,6 +17749,18 @@ class StevenUniverseGame {
       btn.addEventListener('click', () => this.setDifficulty(btn.dataset.diff));
     });
     safeClick('btnQuitGame', () => this.quitGame());
+    safeClick('btnStoryMode', () => this.toggleStoryMode());
+    safeClick('btnEpisodes', () => this.openEpisodeScreen());
+    safeClick('btnCloseEpisodes', () => this.closeEpisodeScreen());
+    safeClick('btnCloseEpisodesBtn', () => this.closeEpisodeScreen());
+    document.querySelectorAll('.episode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ep = parseInt(btn.dataset.episode, 10);
+        this.closeEpisodeScreen();
+        this.startEpisode(ep);
+      });
+    });
+    this.updateStoryModeUI();
     safeClick('btnCancelQuit', () => {
       this.audio.playSfx('menuTap');
       this.showTitleScreen();
@@ -17898,6 +18128,7 @@ class StevenUniverseGame {
       if (this.state === 'playing') {
         this.state = 'paused';
         this.releaseAllInputs();
+        this.setOverlaysVisible(false);
         syncVolumeUI();
         const ps = document.getElementById('pauseScreen');
         if (ps) ps.style.display = 'flex';

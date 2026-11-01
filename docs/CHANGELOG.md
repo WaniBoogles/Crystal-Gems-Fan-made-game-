@@ -1,5 +1,38 @@
 # Changelog
 
+## 2025-11-01 — "Flow" revision
+
+### Changed — waves no longer walk you off screen
+* Clearing waves 1–3 now flows **straight into the next wave in place**: the dialogue plays,
+  the next wave spawns, nobody is moved. The auto walk-right transition between waves is gone.
+* **Boss gate:** after the last wave, the boss waits at the right edge. The player walks there
+  **manually** — so they can farm bubbles, hearts and Overdrive charge first. Entering the arena
+  runs the fade-to-black + walk-in, then the boss dialogue.
+* New indicators for the gate: a pulsing in-world **"BOSS AHEAD" arrow** at the stage edge, a
+  full-width banner, and a bottom-right prompt explaining why you'd want to walk there.
+* Episode completion still fades to black and starts the next map.
+
+### Changed — Overdrive is 1 second and slow-motion
+* The portrait cut-in is now **~1.05 s** (fusion 1.0 s) instead of 1.9 s.
+* The world no longer freezes: it runs at **22% speed** during the cut-in (slow motion), so the
+  fight keeps flowing and the buff lands immediately after.
+
+### Fixed — dialogue showed through the pause menu
+* Dialogue and cut-in overlays are now in-game only: they hide on pause/title and come back on
+  resume. The boss-gate prompt follows the same rule.
+
+### Changed — dialogue
+* Every beat is now **2–4 lines** with actual energy — banter, panic, jokes and the emotional
+  beats the scene deserves (Peridot's dread, Lapis facing Malachite, Bismuth vs Pearl, Connie's
+  enthusiasm, the finale).
+* Lines stay with the cast who are actually present in that part of the story.
+
+### Added — mode options
+* **STORY: ON/OFF** toggle in the lobby (persisted). OFF = pure arcade: no dialogue, boss gate
+  auto-opens after a short beat.
+* **EPISODES** button + modal: jump into any of the 10 episodes from the main menu with your
+  current guardian, player mode and difficulty — no need to replay from Episode 1.
+
 ## 2025-11-01 — "Control fixes" revision
 
 Three reported bugs, plus the desktop wrapper that caused the worst of them.
