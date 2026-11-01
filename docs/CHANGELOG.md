@@ -1,5 +1,29 @@
 # Changelog
 
+## 2025-11-01 — "Hotfix" revision
+
+### Fixed — the hero could not move (all modes)
+* **Root cause:** removing the mobile settings row left an **unclosed `<div>`** in
+  `settingsScreen`. Everything after it — the dialogue box, the boss-gate prompt, the Overdrive
+  cut-in and the stage veil — was swallowed into the hidden settings modal. `dialogueActive`
+  stayed `true` with an invisible box, so `update()` returned early every frame: the hero froze,
+  enemies never spawned and the Overdrive portrait never appeared.
+* Removed the orphan wrapper; all overlays are direct children of `#game-container` again and
+  the document nesting balances to zero.
+
+### Fixed — Overdrive shows its portrait again
+* The cut-in artwork was in that hidden modal. It is visible again: portrait sweeps in from the
+  left (mirrored from the right for P2), ~1.05 s, with slow motion instead of a freeze.
+
+### Fixed — HUD avatar showed an emoji (🔧 for Peridot)
+* The in-game avatar now uses each guardian's **portrait SVG** (same art as the menu) for both
+  P1 and P2, instead of the roster emoji.
+
+### Changed — pause keeps the game visible
+* `.overlay-screen` is now translucent with a light blur, so pausing shows the **frozen game and
+  its HUD behind the pause card** instead of a near-black wall. The pause menu itself is
+  unchanged.
+
 ## 2025-11-01 — "Voice & Sound" revision
 
 ### Fixed — dialogue no longer puts lines in the wrong mouth

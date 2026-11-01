@@ -1301,7 +1301,10 @@ body.mobile-device .touch-controls.active {
 .overlay-screen {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(30, 16, 52, 0.94) 0%, rgba(13, 7, 26, 0.98) 100%);
+  /* Translucent so the frozen game and its HUD stay visible behind the pause card */
+  background: radial-gradient(circle at center, rgba(24, 12, 44, 0.62) 0%, rgba(8, 4, 16, 0.82) 100%);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -4759,7 +4762,6 @@ option {
             </div>
             <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">💡 Enable "Fast Performance Mode" if you experience any lag or frame drops on mobile devices.</p>
           </div>
-          <div class="settings-section" style="margin-top: 18px;">
         </div>
         <div class="modal-footer">
           <button class="btn-primary" id="btnSaveSettings" style="width: 100%;">SAVE SETTINGS & RETURN TO LOBBY</button>
@@ -21561,7 +21563,12 @@ class StevenUniverseGame {
     const nameEl = document.getElementById('hudCharacterName');
     if (nameEl && nameEl.textContent !== charData.name) nameEl.textContent = charData.name;
     const avatarEl = document.getElementById('hudAvatarIcon');
-    if (avatarEl && avatarEl.textContent !== charData.icon) avatarEl.textContent = charData.icon;
+    if (avatarEl && avatarEl.dataset.char !== this.player.activeChar) {
+      avatarEl.dataset.char = this.player.activeChar;
+      avatarEl.innerHTML = (typeof getGuardianSvg === 'function')
+        ? getGuardianSvg(this.player.activeChar, 44)
+        : charData.icon;
+    }
 
     const odTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
     const odLabel = document.getElementById('overdriveLabel');
@@ -21602,7 +21609,12 @@ class StevenUniverseGame {
       const nameP2 = document.getElementById('hudCharacterNameP2');
       if (nameP2 && nameP2.textContent !== `${charDataP2.name} (P2)`) nameP2.textContent = `${charDataP2.name} (P2)`;
       const avatarP2 = document.getElementById('hudAvatarIconP2');
-      if (avatarP2 && avatarP2.textContent !== charDataP2.icon) avatarP2.textContent = charDataP2.icon;
+      if (avatarP2 && avatarP2.dataset.char !== this.player2.activeChar) {
+        avatarP2.dataset.char = this.player2.activeChar;
+        avatarP2.innerHTML = (typeof getGuardianSvg === 'function')
+          ? getGuardianSvg(this.player2.activeChar, 44)
+          : charDataP2.icon;
+      }
 
       const heartsContainerP2 = document.getElementById('hudHeartsP2');
       if (heartsContainerP2) {

@@ -1280,7 +1280,10 @@ body.mobile-device .touch-controls.active {
 .overlay-screen {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(30, 16, 52, 0.94) 0%, rgba(13, 7, 26, 0.98) 100%);
+  /* Translucent so the frozen game and its HUD stay visible behind the pause card */
+  background: radial-gradient(circle at center, rgba(24, 12, 44, 0.62) 0%, rgba(8, 4, 16, 0.82) 100%);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   justify-content: center;
   align-items: center;

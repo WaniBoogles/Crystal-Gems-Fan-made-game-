@@ -16507,7 +16507,12 @@ class StevenUniverseGame {
     const nameEl = document.getElementById('hudCharacterName');
     if (nameEl && nameEl.textContent !== charData.name) nameEl.textContent = charData.name;
     const avatarEl = document.getElementById('hudAvatarIcon');
-    if (avatarEl && avatarEl.textContent !== charData.icon) avatarEl.textContent = charData.icon;
+    if (avatarEl && avatarEl.dataset.char !== this.player.activeChar) {
+      avatarEl.dataset.char = this.player.activeChar;
+      avatarEl.innerHTML = (typeof getGuardianSvg === 'function')
+        ? getGuardianSvg(this.player.activeChar, 44)
+        : charData.icon;
+    }
 
     const odTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
     const odLabel = document.getElementById('overdriveLabel');
@@ -16548,7 +16553,12 @@ class StevenUniverseGame {
       const nameP2 = document.getElementById('hudCharacterNameP2');
       if (nameP2 && nameP2.textContent !== `${charDataP2.name} (P2)`) nameP2.textContent = `${charDataP2.name} (P2)`;
       const avatarP2 = document.getElementById('hudAvatarIconP2');
-      if (avatarP2 && avatarP2.textContent !== charDataP2.icon) avatarP2.textContent = charDataP2.icon;
+      if (avatarP2 && avatarP2.dataset.char !== this.player2.activeChar) {
+        avatarP2.dataset.char = this.player2.activeChar;
+        avatarP2.innerHTML = (typeof getGuardianSvg === 'function')
+          ? getGuardianSvg(this.player2.activeChar, 44)
+          : charDataP2.icon;
+      }
 
       const heartsContainerP2 = document.getElementById('hudHeartsP2');
       if (heartsContainerP2) {
