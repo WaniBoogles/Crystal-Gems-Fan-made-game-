@@ -2188,6 +2188,18 @@ class PlayerHero {
 
   // Canonical typing from the roster dossier (lowercased for the matchup chart).
   getTypeList() {
+    // A fusion carries both partners' gem types, so either partner's element gets STAB.
+    if (this.isFusion && this.fusionData && Array.isArray(this.fusionData.gems)) {
+      const merged = [];
+      this.fusionData.gems.forEach(gemId => {
+        const d = (typeof GUARDIAN_DATA !== 'undefined') ? GUARDIAN_DATA[gemId] : null;
+        ((d && d.types) || []).forEach(t => {
+          const key = String(t).toLowerCase();
+          if (!merged.includes(key)) merged.push(key);
+        });
+      });
+      if (merged.length) return merged;
+    }
     const data = (typeof GUARDIAN_DATA !== 'undefined' && GUARDIAN_DATA[this.activeChar]) || null;
     const raw = (data && data.types) || ['FAIRY', 'PSYCHIC'];
     return raw.map(t => String(t).toLowerCase());
@@ -13490,6 +13502,291 @@ function safeJsonParse(str, fallback) {
 // ============================================================================
 // 7. MAIN GAME CONTROLLER & HUD SYNCHRONIZER
 // ============================================================================
+// ============================================================================
+// 7.0. SUPER-MOVE PORTRAITS
+// Painted bust portraits for the Overdrive / Fusion cut-ins. Drawn with Canvas so
+// they scale cleanly to the 340px cut-in frame, and cached as data URLs.
+// ============================================================================
+const PORTRAIT_SPECS = {
+  steven:   { skin: '#f7d3bd', shade: '#e6b49b', hair: '#2a1720', hairType: 'curls',  outfit: '#e8453c', collar: '#f4766f', gem: '#f472b6', accent: '#ffd166', star: true,  freckles: true,  eyes: '#2b1b3a' },
+  garnet:   { skin: '#8b4a42', shade: '#73372f', hair: '#1b0d26', hairType: 'cube',   outfit: '#7f1d3a', collar: '#a32448', gem: '#ef4444', accent: '#f472b6', visor: '#2a1050', eyes: '#fde047' },
+  amethyst: { skin: '#c99ae8', shade: '#a875cc', hair: '#e9d5ff', hairType: 'long',   outfit: '#1f1235', collar: '#31224f', gem: '#7c3aed', accent: '#c084fc', star: true, eyes: '#2b1b3a' },
+  pearl:    { skin: '#fff3e6', shade: '#f2d6bd', hair: '#f7dcc4', hairType: 'peak',   outfit: '#38bdf8', collar: '#7dd3fc', gem: '#f8fafc', accent: '#f9a8d4', gemHead: true, eyes: '#1e3a5f' },
+  bismuth:  { skin: '#94a3b8', shade: '#6f7c8f', hair: '#7c3aed', hairType: 'dreads', outfit: '#475569', collar: '#64748b', gem: '#ec4899', accent: '#f59e0b', eyes: '#1f2937' },
+  peridot:  { skin: '#b7f27a', shade: '#8fd456', hair: '#d9f99d', hairType: 'triangle', outfit: '#14532d', collar: '#166534', gem: '#a3e635', accent: '#4ade80', gemHead: true, visor: '#0f2b1c', eyes: '#052e16' },
+  lapis:    { skin: '#7cc7e8', shade: '#5aa7cc', hair: '#172554', hairType: 'bob',   outfit: '#1e3a8a', collar: '#2563eb', gem: '#38bdf8', accent: '#bae6fd', eyes: '#082f49' },
+  rose:     { skin: '#f9b9d0', shade: '#e694b3', hair: '#f472b6', hairType: 'bigcurls', outfit: '#fdf2f8', collar: '#fbcfe8', gem: '#fb7185', accent: '#fda4af', eyes: '#3f1226' },
+  connie:   { skin: '#a9714b', shade: '#8a5738', hair: '#1c1917', hairType: 'wavy',  outfit: '#f9a8d4', collar: '#fbcfe8', gem: null,      accent: '#2dd4bf', eyes: '#1c1917' },
+  jasper:   { skin: '#f2a65a', shade: '#d98a3c', hair: '#fde9d2', hairType: 'mane',   outfit: '#7f1d1d', collar: '#991b1b', gem: '#fbbf24', accent: '#f97316', noseGem: true, stripes: true, eyes: '#3f1d0b' },
+  stevonnie:      { skin: '#b8794f', shade: '#98603b', hair: '#241a17', hairType: 'wavy',    outfit: '#e8453c', collar: '#f9a8d4', gem: '#f472b6', accent: '#f9a8d4', star: true, eyes: '#241a17' },
+  smoky:          { skin: '#b98bdd', shade: '#9668bb', hair: '#e9d5ff', hairType: 'long',    outfit: '#e8453c', collar: '#c084fc', gem: '#a855f7', accent: '#c084fc', star: true, eyes: '#2b1b3a' },
+  rainbow2:       { skin: '#fff3e6', shade: '#f2d6bd', hair: '#f7dcc4', hairType: 'peak',    outfit: '#f9a8d4', collar: '#38bdf8', gem: '#ffffff', accent: '#38bdf8', eyes: '#1e3a5f' },
+  sunstone:       { skin: '#c66a3c', shade: '#a8542c', hair: '#1b0d26', hairType: 'cube',    outfit: '#f97316', collar: '#fbbf24', gem: '#ef4444', accent: '#fbbf24', star: true, eyes: '#3f1d0b' },
+  sugilite:       { skin: '#a06bd0', shade: '#7f4fae', hair: '#e9d5ff', hairType: 'long',    outfit: '#a21caf', collar: '#d946ef', gem: '#7c3aed', accent: '#f472b6', eyes: '#2b1b3a' },
+  sardonyx:       { skin: '#a35a4a', shade: '#864438', hair: '#f7dcc4', hairType: 'peak',    outfit: '#7f1d3a', collar: '#14b8a6', gem: '#fb923c', accent: '#14b8a6', eyes: '#3f1226' },
+  opal:           { skin: '#dcc7ea', shade: '#c0a6d4', hair: '#f8fafc', hairType: 'peak',    outfit: '#0f766e', collar: '#2dd4bf', gem: '#22d3ee', accent: '#a5f3fc', eyes: '#164e63' },
+  malachite:      { skin: '#7cc7e8', shade: '#59a3c4', hair: '#f8fafc', hairType: 'mane',    outfit: '#0f766e', collar: '#38bdf8', gem: '#38bdf8', accent: '#67e8f9', eyes: '#082f49' },
+  rainbowClassic: { skin: '#f9b9d0', shade: '#e694b3', hair: '#f472b6', hairType: 'bigcurls',outfit: '#fdf2f8', collar: '#fbcfe8', gem: '#ffffff', accent: '#fda4af', eyes: '#3f1226' }
+};
+
+function portraitHairBack(ctx, spec, W, H) {
+  const c = spec.hair;
+  ctx.fillStyle = c;
+  if (spec.hairType === 'cube' || spec.hairType === 'afro') {
+    ctx.beginPath(); ctx.roundRect(W * 0.16, H * 0.05, W * 0.68, H * 0.50, W * 0.10); ctx.fill();
+  } else if (spec.hairType === 'long' || spec.hairType === 'wavy' || spec.hairType === 'bigcurls' || spec.hairType === 'mane') {
+    const spread = spec.hairType === 'bigcurls' ? 0.10 : 0.06;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.33, H * 0.16);
+    ctx.bezierCurveTo(W * (0.20 - spread), H * 0.34, W * (0.19 - spread), H * 0.62, W * (0.27 - spread * 0.7), H * 0.78);
+    ctx.lineTo(W * (0.73 + spread * 0.7), H * 0.78);
+    ctx.bezierCurveTo(W * (0.81 + spread), H * 0.62, W * (0.80 + spread), H * 0.34, W * 0.67, H * 0.16);
+    ctx.closePath(); ctx.fill();
+  } else if (spec.hairType === 'dreads') {
+    for (let i = 0; i < 7; i++) {
+      const t = i / 6;
+      ctx.fillStyle = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899'][i];
+      ctx.beginPath();
+      ctx.ellipse(W * (0.16 + t * 0.68), H * (0.22 + Math.sin(t * Math.PI) * 0.10), W * 0.055, H * 0.24, t * 0.5 - 0.25, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (spec.hairType === 'bob') {
+    ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.35, W * 0.29, H * 0.30, 0, 0, Math.PI * 2); ctx.fill();
+  } else if (spec.hairType === 'triangle') {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.02); ctx.lineTo(W * 0.86, H * 0.42);
+    ctx.lineTo(W * 0.14, H * 0.42); ctx.closePath(); ctx.fill();
+  } else if (spec.hairType === 'peak') {
+    ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.31, W * 0.26, H * 0.26, 0, 0, Math.PI * 2); ctx.fill();
+  } else { // curls
+    for (let i = 0; i < 7; i++) {
+      const a = Math.PI * (0.15 + i * 0.12);
+      ctx.beginPath();
+      ctx.arc(W * 0.5 + Math.cos(a) * W * 0.30, H * 0.34 - Math.sin(a) * H * 0.16, W * 0.13, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawPortrait(ctx, id, size = 512) {
+  const spec = PORTRAIT_SPECS[id] || PORTRAIT_SPECS.steven;
+  const W = size, H = size;
+  ctx.clearRect(0, 0, W, H);
+
+  // Backdrop: signature colour burst + rays
+  const bg = ctx.createRadialGradient(W * 0.5, H * 0.44, W * 0.05, W * 0.5, H * 0.5, W * 0.75);
+  bg.addColorStop(0, spec.accent || '#ffd166');
+  bg.addColorStop(0.45, spec.outfit || '#7f1d3a');
+  bg.addColorStop(1, '#0b0714');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 18; i++) {
+    ctx.rotate(Math.PI / 9);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W * 0.06, -H); ctx.lineTo(-W * 0.06, -H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  // Shoulders
+  ctx.fillStyle = spec.outfit;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.02, H);
+  ctx.quadraticCurveTo(W * 0.10, H * 0.72, W * 0.34, H * 0.66);
+  ctx.lineTo(W * 0.66, H * 0.66);
+  ctx.quadraticCurveTo(W * 0.90, H * 0.72, W * 0.98, H);
+  ctx.closePath(); ctx.fill();
+  // collar
+  ctx.fillStyle = spec.collar || spec.outfit;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.36, H * 0.67); ctx.lineTo(W * 0.50, H * 0.86); ctx.lineTo(W * 0.64, H * 0.67);
+  ctx.closePath(); ctx.fill();
+  if (spec.star) {
+    ctx.fillStyle = '#ffd166';
+    const sx = W * 0.5, sy = H * 0.84, r = W * 0.06;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+      ctx.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r);
+      ctx.lineTo(sx + Math.cos(a + Math.PI / 5) * r * 0.45, sy + Math.sin(a + Math.PI / 5) * r * 0.45);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Neck
+  ctx.fillStyle = spec.shade;
+  ctx.fillRect(W * 0.43, H * 0.56, W * 0.14, H * 0.13);
+
+  portraitHairBack(ctx, spec, W, H);
+
+  // Head
+  ctx.fillStyle = spec.skin;
+  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.40, W * 0.235, H * 0.255, 0, 0, Math.PI * 2); ctx.fill();
+  // jaw shading
+  ctx.fillStyle = spec.shade;
+  ctx.globalAlpha = 0.35;
+  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.55, W * 0.15, H * 0.08, 0, 0, Math.PI); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Front hair / bangs
+  ctx.fillStyle = spec.hair;
+  if (spec.hairType === 'peak') {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.28, H * 0.36); ctx.quadraticCurveTo(W * 0.5, H * 0.02, W * 0.72, H * 0.36);
+    ctx.quadraticCurveTo(W * 0.5, H * 0.26, W * 0.28, H * 0.36); ctx.fill();
+  } else if (spec.hairType === 'triangle') {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.06); ctx.lineTo(W * 0.80, H * 0.34);
+    ctx.quadraticCurveTo(W * 0.5, H * 0.24, W * 0.20, H * 0.34); ctx.closePath(); ctx.fill();
+  } else if (spec.hairType === 'cube') {
+    ctx.beginPath(); ctx.roundRect(W * 0.27, H * 0.14, W * 0.46, H * 0.16, W * 0.05); ctx.fill();
+  } else if (spec.hairType === 'bob' || spec.hairType === 'wavy' || spec.hairType === 'long' || spec.hairType === 'mane' || spec.hairType === 'bigcurls') {
+    ctx.beginPath();
+    ctx.moveTo(W * 0.26, H * 0.36); ctx.quadraticCurveTo(W * 0.36, H * 0.10, W * 0.5, H * 0.13);
+    ctx.quadraticCurveTo(W * 0.64, H * 0.10, W * 0.74, H * 0.36);
+    ctx.quadraticCurveTo(W * 0.62, H * 0.22, W * 0.50, H * 0.25);
+    ctx.quadraticCurveTo(W * 0.38, H * 0.22, W * 0.26, H * 0.36); ctx.fill();
+  } else {
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.arc(W * (0.32 + i * 0.09), H * (0.24 + Math.sin(i) * 0.02), W * 0.075, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Eyes
+  const eyeY = H * 0.42;
+  const eyeDX = W * 0.095;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(W * 0.5 - eyeDX, eyeY, W * 0.052, H * 0.062, 0, 0, Math.PI * 2);
+  ctx.ellipse(W * 0.5 + eyeDX, eyeY, W * 0.052, H * 0.062, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = spec.eyes || '#1f2937';
+  ctx.beginPath();
+  ctx.ellipse(W * 0.5 - eyeDX + W * 0.006, eyeY + H * 0.004, W * 0.030, H * 0.044, 0, 0, Math.PI * 2);
+  ctx.ellipse(W * 0.5 + eyeDX + W * 0.006, eyeY + H * 0.004, W * 0.030, H * 0.044, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(W * 0.5 - eyeDX + W * 0.016, eyeY - H * 0.012, W * 0.011, 0, Math.PI * 2);
+  ctx.arc(W * 0.5 + eyeDX + W * 0.016, eyeY - H * 0.012, W * 0.011, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Brows
+  ctx.strokeStyle = spec.hair;
+  ctx.lineWidth = W * 0.014;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(W * 0.5 - eyeDX - W * 0.045, eyeY - H * 0.075);
+  ctx.quadraticCurveTo(W * 0.5 - eyeDX, eyeY - H * 0.095, W * 0.5 - eyeDX + W * 0.045, eyeY - H * 0.072);
+  ctx.moveTo(W * 0.5 + eyeDX - W * 0.045, eyeY - H * 0.072);
+  ctx.quadraticCurveTo(W * 0.5 + eyeDX, eyeY - H * 0.095, W * 0.5 + eyeDX + W * 0.045, eyeY - H * 0.075);
+  ctx.stroke();
+
+  // Nose + smile
+  ctx.strokeStyle = spec.shade;
+  ctx.lineWidth = W * 0.012;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.5, H * 0.47); ctx.quadraticCurveTo(W * 0.52, H * 0.50, W * 0.5, H * 0.51);
+  ctx.stroke();
+  ctx.strokeStyle = '#5b2431';
+  ctx.lineWidth = W * 0.016;
+  ctx.beginPath();
+  ctx.moveTo(W * 0.44, H * 0.545); ctx.quadraticCurveTo(W * 0.5, H * 0.585, W * 0.56, H * 0.545);
+  ctx.stroke();
+
+  // Visor (Garnet / Peridot)
+  if (spec.visor) {
+    ctx.fillStyle = spec.visor;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.30, eyeY - H * 0.035); ctx.lineTo(W * 0.70, eyeY - H * 0.035);
+    ctx.lineTo(W * 0.64, eyeY + H * 0.045); ctx.lineTo(W * 0.36, eyeY + H * 0.045);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = spec.accent; ctx.lineWidth = W * 0.012; ctx.stroke();
+    ctx.fillStyle = spec.eyes;
+    ctx.beginPath();
+    ctx.ellipse(W * 0.5 - eyeDX, eyeY + H * 0.004, W * 0.024, H * 0.02, 0, 0, Math.PI * 2);
+    ctx.ellipse(W * 0.5 + eyeDX, eyeY + H * 0.004, W * 0.024, H * 0.02, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Jasper's eye markings
+  if (spec.stripes) {
+    ctx.fillStyle = spec.accent;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.30, eyeY - H * 0.10); ctx.lineTo(W * 0.40, eyeY - H * 0.07); ctx.lineTo(W * 0.30, eyeY - H * 0.04);
+    ctx.moveTo(W * 0.70, eyeY - H * 0.10); ctx.lineTo(W * 0.60, eyeY - H * 0.07); ctx.lineTo(W * 0.70, eyeY - H * 0.04);
+    ctx.fill();
+  }
+
+  // Gem
+  const gemX = spec.gemHead ? W * 0.5 : W * 0.5;
+  const gemY = spec.gemHead ? H * 0.255 : H * 0.70;
+  if (spec.gem) {
+    ctx.save();
+    ctx.translate(gemX, gemY);
+    const r = W * (spec.gemHead ? 0.045 : 0.055);
+    const g = ctx.createLinearGradient(-r, -r, r, r);
+    g.addColorStop(0, '#ffffff'); g.addColorStop(0.5, spec.gem); g.addColorStop(1, spec.shade);
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(0, -r); ctx.lineTo(r * 0.9, -r * 0.35); ctx.lineTo(r * 0.55, r);
+    ctx.lineTo(-r * 0.55, r); ctx.lineTo(-r * 0.9, -r * 0.35);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = W * 0.008; ctx.stroke();
+    ctx.restore();
+  }
+  if (spec.noseGem) {
+    ctx.fillStyle = spec.gem || '#fbbf24';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.5, H * 0.49); ctx.lineTo(W * 0.53, H * 0.515); ctx.lineTo(W * 0.5, H * 0.54); ctx.lineTo(W * 0.47, H * 0.515);
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Freckles
+  if (spec.freckles) {
+    ctx.fillStyle = 'rgba(190, 90, 90, 0.55)';
+    [[-0.14, 0.02], [-0.10, 0.045], [-0.17, 0.05], [0.14, 0.02], [0.10, 0.045], [0.17, 0.05]].forEach(([dx, dy]) => {
+      ctx.beginPath(); ctx.arc(W * (0.5 + dx), H * (0.5 + dy), W * 0.008, 0, Math.PI * 2); ctx.fill();
+    });
+  }
+
+  // Rim light
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = W * 0.02;
+  ctx.beginPath(); ctx.ellipse(W * 0.5, H * 0.40, W * 0.235, H * 0.255, 0, Math.PI * 1.15, Math.PI * 1.75); ctx.stroke();
+  ctx.restore();
+
+  // Vignette
+  const veg = ctx.createRadialGradient(W * 0.5, H * 0.45, W * 0.2, W * 0.5, H * 0.5, W * 0.78);
+  veg.addColorStop(0, 'rgba(0,0,0,0)');
+  veg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = veg;
+  ctx.fillRect(0, 0, W, H);
+}
+
+const _portraitCache = {};
+function getPortraitDataUrl(id, size = 512) {
+  const key = `${id}@${size}`;
+  if (_portraitCache[key]) return _portraitCache[key];
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    drawPortrait(canvas.getContext('2d'), id, size);
+    _portraitCache[key] = canvas.toDataURL('image/png');
+  } catch (e) {
+    _portraitCache[key] = '';
+  }
+  return _portraitCache[key];
+}
+
 class StevenUniverseGame {
   constructor() {
     this.canvas = document.getElementById('gameCanvas');
@@ -14483,8 +14780,10 @@ class StevenUniverseGame {
 
     if (wrap) wrap.className = 'cutin-portrait-wrap ' + (o.side === 'right' ? 'from-right' : 'from-left');
     if (portrait) {
-      portrait.innerHTML = o.charId
-        ? ((typeof getGuardianSvg === 'function') ? getGuardianSvg(o.charId, 340) : '')
+      const portraitId = o.portraitId || o.charId;
+      const portraitUrl = portraitId ? getPortraitDataUrl(portraitId, 512) : '';
+      portrait.innerHTML = portraitUrl
+        ? `<img src="${portraitUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">`
         : `<div style="font-size:190px;line-height:1;filter:drop-shadow(0 0 26px rgba(255,255,255,.85))">${o.icon || '💎'}</div>`;
     }
     if (kicker) { kicker.textContent = o.kicker || 'PINK OVERDRIVE'; kicker.style.color = o.kickerColor || '#ffd700'; }
@@ -16711,6 +17010,7 @@ class StevenUniverseGame {
     this.startCutin({
       kicker: 'GEM FUSION',
       kickerColor: fusion.color || '#f472b6',
+      portraitId: fusion.id,
       icon: fusion.icon || '💎',
       name: fusion.name.toUpperCase(),
       quote: `${fusion.weapon} · ${power.title}`,
@@ -17292,12 +17592,12 @@ class StevenUniverseGame {
         const nameP2_L = document.getElementById('nameP2_L');
         const iconP2_I = document.getElementById('iconP2_I');
         const nameP2_I = document.getElementById('nameP2_I');
-        if (iconP2_J) iconP2_J.textContent = coop.p2.j.icon;
-        if (nameP2_J) nameP2_J.textContent = coop.p2.j.name;
-        if (iconP2_K) iconP2_K.textContent = coop.p2.k.icon;
-        if (nameP2_K) nameP2_K.textContent = coop.p2.k.name;
-        if (iconP2_L) iconP2_L.textContent = coop.p2.l.icon;
-        if (nameP2_L) nameP2_L.textContent = coop.p2.l.name;
+        if (iconP2_J) iconP2_J.textContent = coop.p1.j.icon;
+        if (nameP2_J) nameP2_J.textContent = coop.p1.j.name;
+        if (iconP2_K) iconP2_K.textContent = coop.p1.k.icon;
+        if (nameP2_K) nameP2_K.textContent = coop.p1.k.name;
+        if (iconP2_L) iconP2_L.textContent = coop.p1.l.icon;
+        if (nameP2_L) nameP2_L.textContent = coop.p1.l.name;
         if (iconP2_I) iconP2_I.textContent = '🛡️';
         if (nameP2_I) nameP2_I.textContent = 'Invulnerable';
       } else {

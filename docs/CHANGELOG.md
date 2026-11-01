@@ -1,5 +1,24 @@
 # Changelog
 
+## 2025-11-01 — "Portraits" revision
+
+### Added — painted super-move portraits
+* The Overdrive and Fusion cut-ins no longer blow a 64px menu icon up to 340px (the
+  "jumpscare"). Every character now has a proper **painted bust portrait** drawn with Canvas:
+  coloured burst backdrop, shaded face, rim light, gem, and their signature features
+  (Garnet's visor, Peridot's triangle and visor, Jasper's cheek stripes, Bismuth's rainbow
+  dreads, Pearl's forehead gem, Rose's curls...).
+* **All 19** are covered: the 10 guardians and the 9 fusions, each fusion blending both
+  partners' palettes and gem colours (Stevonnie = Connie's hair on Steven's shirt, Malachite =
+  Lapis' blue skin under Jasper's white mane, and so on).
+* Portraits are cached as data URLs, so the cut-in stays instant.
+
+### Changed — fusions share their kit
+* A fusion's typing is now the **union of both partners' gem types**, so either partner's
+  element gets STAB — Stevonnie can hit FAIRY and NORMAL with equal weight.
+* In 2-player fusion both hotbars show the **same shared move set** instead of two different
+  lists, because both players are driving one body.
+
 ## 2025-11-01 — "Polish" revision
 
 ### Removed
