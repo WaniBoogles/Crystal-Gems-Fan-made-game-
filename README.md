@@ -7,7 +7,7 @@ Built from scratch in **vanilla HTML5 Canvas + CSS + Web Audio** — no game eng
 no external image files in the game code: every hero, corruption, boss and effect is drawn with
 Canvas paths.
 
-* **21,555 lines** of hand-written game code (`src/`)
+* **22,128 lines** of hand-written game code (`src/`)
 * **10 playable guardians**, **9 canonical fusions**, **10 episodes**, **10 bosses**
 * **11 gem types** with a real Pokémon-style matchup engine
 * **5 difficulty tiers** — from a story-mode stroll to *DIAMOND*
@@ -36,6 +36,9 @@ clean Edge/Chrome app window. Or open `Crystal-Gems.html` directly.
 ### 🍎 macOS / anything else
 Open **`Crystal-Gems.html`** in Chrome, Edge, Firefox, Safari or Brave. 100 % offline after load
 (fonts fall back to system faces when offline).
+
+The stage is authored at 1280×720 and **scaled as a single unit**, so the browser, the native
+window and a 4K fullscreen all show the same layout — HUD included — at every window size.
 
 > Android/APK packaging was removed in this revision — the project is PC-focused now. The old
 > packaging notes live in `dev-history/`.
@@ -148,12 +151,13 @@ docs/
 src/
   game.html                ← markup & screens (1,180 lines)
   game.css                 ← HUD, menus, responsive layout (3,221 lines)
-  game.js                  ← engine, heroes, enemies, audio (17,154 lines)
+  game.js                  ← engine, heroes, enemies, audio (17,576 lines)
 tools/
   build.py                 ← bundle src/ → Crystal-Gems.html
   preview.sh               ← headless gameplay screenshot / smoke test
   test-types.js            ← 126 unit tests for the matchup engine
-  character-sheet.html     ← dev view of all 10 heroes at 4× zoom
+  character-sheet.html     ← dev view of all 10 heroes at 3.4× zoom
+  monster-sheet.html       ← dev view of the basic corruptions at 2.6× zoom
   windows-launcher/        ← C# source for build/Crystal Gems.exe
 dev-history/               ← archived patchers, v1 sources, legacy builds
 ```

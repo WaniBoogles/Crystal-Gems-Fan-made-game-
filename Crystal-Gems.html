@@ -63,12 +63,20 @@ html, body {
 
 #game-container {
   position: relative;
-  width: 100vw;
-  height: 100vh;
-  max-width: calc(100vh * (16 / 9));
-  max-height: calc(100vw * (9 / 16));
-  aspect-ratio: 16 / 9;
-  margin: auto;
+  /* Fixed 1280x720 design canvas; #game-container is scaled as a whole (canvas + HUD +
+     menus) by --gc-scale so every layout is pixel-identical in the native window and in
+     any browser, at any window size. No more HUD overflow on letterboxed viewports. */
+  width: 1280px;
+  height: 720px;
+  /* Absolute + translate centring: flex centring fails when the fixed 1280x720 stage is
+     larger than the window (negative free space pins it to the top and clips the hotbar). */
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: 0;
+  flex: 0 0 auto;
+  transform: translate(-50%, -50%) scale(var(--gc-scale, 1));
+  transform-origin: center center;
   background: #000;
   box-shadow: 0 0 50px rgba(255, 96, 151, 0.35), 0 0 100px rgba(56, 189, 248, 0.18);
   border-radius: 14px;
@@ -97,16 +105,31 @@ html, body {
   top: 10px;
   left: 14px;
   right: 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  /* 3-column grid: P1 | centre | P2, with the quick-action pill centred underneath.
+     A flex row used to overflow the 1280px stage once a second player panel joined. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 6px;
   pointer-events: none;
   z-index: 10;
-  gap: 8px;
 }
 
 .hud-overlay * {
   pointer-events: auto;
+}
+
+#hudP1Panel { grid-area: 1 / 1; justify-self: start; max-width: 100%; min-width: 0; }
+.hud-center-panel { grid-area: 1 / 2; justify-self: center; }
+.hud-actions-pill { grid-area: 2 / 2; justify-self: center; margin-top: 2px; }
+#hudP2Panel { grid-area: 1 / 3; justify-self: end; max-width: 100%; min-width: 0; }
+#hudScorePill { grid-area: 2 / 1; justify-self: start; }
+
+.hud-character-panel {
+  max-width: 100%;
+  min-width: 0;
 }
 
 /* Left: Character Info & Health */
@@ -939,12 +962,6 @@ body.mobile-device {
 body.mobile-device #game-container {
   position: relative !important;
   inset: auto !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: calc(100vh * (16 / 9)) !important;
-  max-height: calc(100vw * (9 / 16)) !important;
-  aspect-ratio: 16 / 9 !important;
-  margin: auto !important;
   border-radius: 8px !important;
   box-shadow: 0 0 45px rgba(0, 0, 0, 0.95), 0 0 25px rgba(255, 125, 167, 0.3) !important;
   overflow: hidden !important;
@@ -3094,10 +3111,22 @@ body.mobile-device .touch-controls.active {
 }
 
 /* Custom Styled Jukebox Select Dropdowns */
+select,
+option,
+optgroup {
+  color-scheme: dark !important;
+}
+
 .su-select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  background-color: #091024 !important;
+  color: #ffffff !important;
+  border: 1.2px solid #38bdf8;
+  font-family: var(--su-font-body);
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 10px center;
@@ -3108,6 +3137,128 @@ body.mobile-device .touch-controls.active {
 .su-select:focus {
   border-color: #f472b6 !important;
   box-shadow: 0 0 10px rgba(244, 114, 182, 0.45);
+}
+
+/* --- Themed dropdown (replaces platform-painted <select> chrome) ------------ */
+.su-native-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+  border: 0 !important;
+}
+
+.su-dropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.su-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1.2px solid #38bdf8;
+  background: #091024;
+  color: #f8fafc;
+  font-family: var(--su-font-body);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.su-dropdown-btn:hover {
+  border-color: #f472b6;
+  background: #0f1c3a;
+}
+
+.su-dropdown-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.su-dropdown-chevron {
+  color: #38bdf8;
+  font-size: 11px;
+  line-height: 1;
+  transition: transform 0.18s ease;
+}
+
+.su-dropdown.open .su-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.su-dropdown-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: #0b1329;
+  border: 1.5px solid #38bdf8;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65);
+  z-index: 300;
+}
+
+.su-dropdown.open .su-dropdown-list {
+  display: flex;
+}
+
+.su-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #dbeafe;
+  font-family: var(--su-font-body);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.su-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.18);
+  color: #ffffff;
+}
+
+.su-dropdown-item.selected {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.35), rgba(56, 189, 248, 0.30));
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.lobby-jukebox-bar .su-dropdown {
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 430px;
+}
+
+option {
+  background-color: #0b1329 !important;
+  color: #e2e8f0 !important;
+  font-weight: 700;
 }
 
 /* Lobby Interactive Jukebox Bar - Top-Left side of Main Menu */
@@ -9807,33 +9958,36 @@ class PlayerHero {
     ctx.quadraticCurveTo(-16 + sashSway * 0.5, -24 + bob, -19 + sashSway * 0.8, -12 + bob + hair.swayY);
     ctx.stroke();
 
-    // 5. Sculpted Layered Conical Peach-Blossom Hair (Sweeps Gracefully BACKWARD [-X]!)
-    const tipX = -21 + hair.swayX * 0.65;
-    const tipY = -87 + bob + hair.swayY * 0.5;
-    // Lower warm rose-peach shadow feather
-    ctx.fillStyle = '#fda4af';
+    // 5. Canon Pearl haircut: short back-swept bob with a tapered point and soft volume
+    const tipX = -18 + hair.swayX * 0.5;
+    const tipY = -101 + bob + hair.swayY * 0.4;
+
+    // Rounded skull-cap mass that comes to a point behind the head
+    ctx.fillStyle = '#f7ddc4';
     ctx.beginPath();
-    ctx.moveTo(0, -92 + bob);
-    ctx.quadraticCurveTo(-12, -88 + bob, tipX + 3, tipY + 5);
-    ctx.quadraticCurveTo(-12, -75 + bob, -3, -75 + bob);
+    ctx.moveTo(10, -90 + bob);
+    ctx.quadraticCurveTo(15, -103 + bob, 3, -106 + bob);
+    ctx.quadraticCurveTo(-9, -108 + bob, tipX, tipY);
+    ctx.quadraticCurveTo(-14, -92 + bob, -9, -80 + bob);
+    ctx.quadraticCurveTo(0, -76 + bob, 9, -83 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // Main sculpted aerodynamic peach-cream cone sweeping back (-X)
-    ctx.fillStyle = '#fed7aa';
+    // Tapered nape lock sweeping down-back
+    ctx.fillStyle = '#eac4a2';
     ctx.beginPath();
-    ctx.moveTo(4, -96.5 + bob);
-    ctx.bezierCurveTo(-6, -100 + bob, -16, -94 + bob, tipX, tipY);
-    ctx.quadraticCurveTo(-14, -78 + bob, -4, -76 + bob);
+    ctx.moveTo(-8, -85 + bob);
+    ctx.quadraticCurveTo(tipX - 1, tipY + 7, -15, -74 + bob);
+    ctx.quadraticCurveTo(-11, -86 + bob, -4, -89 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // Upper pastel pink-cream crown highlight feather
-    ctx.fillStyle = '#fbcfe8';
+    // Glossy crown highlight
+    ctx.fillStyle = '#fdf0e0';
     ctx.beginPath();
-    ctx.moveTo(2, -96 + bob);
-    ctx.bezierCurveTo(-6, -98 + bob, -14, -92 + bob, tipX + 5, tipY - 1);
-    ctx.quadraticCurveTo(-11, -85 + bob, -1, -86 + bob);
+    ctx.moveTo(8, -95 + bob);
+    ctx.quadraticCurveTo(3, -106 + bob, -8, -101 + bob);
+    ctx.quadraticCurveTo(-1, -98 + bob, 2, -92 + bob);
     ctx.closePath();
     ctx.fill();
 
@@ -9844,14 +9998,12 @@ class PlayerHero {
     ctx.ellipse(0, -84 + bob, 11.5, 13, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Delicate swept side-part wisps framing temple (sweeping backward, never poking forward!)
-    ctx.fillStyle = '#fed7aa';
+    // Signature forehead curl (the little question-mark wisp over the gem)
+    ctx.strokeStyle = '#eac4a2';
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(5, -95 + bob);
-    ctx.quadraticCurveTo(-2, -92 + bob, -7, -83 + bob);
-    ctx.quadraticCurveTo(-5, -89 + bob, -2, -95 + bob);
-    ctx.closePath();
-    ctx.fill();
+    ctx.arc(6, -94 + bob, 4.4, Math.PI * 0.05, Math.PI * 1.35);
+    ctx.stroke();
 
     // 7. Forehead Luminous Oval Pearl Gemstone
     ctx.fillStyle = '#ffffff';
@@ -9985,7 +10137,7 @@ class PlayerHero {
         ctx.strokeStyle = '#67e8f9';
         ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.moveTo(40, 0); ctx.lineTo(94, 0);
+        ctx.moveTo(34, 0); ctx.lineTo(78, 0);
         ctx.stroke();
         ctx.restore();
       }
@@ -9995,25 +10147,19 @@ class PlayerHero {
     ctx.translate(spearBaseX, spearBaseY);
     ctx.rotate(spearAngle);
 
-    // Sturdy Pearlescent Shaft (6px thick with golden spiral wraps)
+    // Slender pearlescent shaft with a single gold collar (canon: elegant, not a lance)
     ctx.fillStyle = '#f8fafc';
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 1;
-    ctx.fillRect(-22, -3, 62, 6);
-    ctx.strokeRect(-22, -3, 62, 6);
+    ctx.fillRect(-16, -2, 54, 4);
+    ctx.strokeRect(-16, -2, 54, 4);
 
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 2;
-    for (let g = -18; g < 36; g += 9) {
-      ctx.beginPath();
-      ctx.moveTo(g, -3);
-      ctx.lineTo(g + 4, 3);
-      ctx.stroke();
-    }
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(30, -2.6, 5, 5.2);
 
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
-    ctx.arc(-22, 0, 4.5, 0, Math.PI * 2);
+    ctx.arc(-16, 0, 3.6, 0, Math.PI * 2);
     ctx.fill();
 
     // Spiraling Golden Wing Crossguard Collar
@@ -10040,36 +10186,36 @@ class PlayerHero {
     ctx.strokeStyle = '#e0f2fe';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(46, -7);
-    ctx.lineTo(76, -8);
-    ctx.lineTo(92, 0);
-    ctx.lineTo(76, 8);
-    ctx.lineTo(46, 7);
+    ctx.moveTo(38, -5);
+    ctx.lineTo(58, -6.5);
+    ctx.lineTo(74, 0);
+    ctx.lineTo(58, 6.5);
+    ctx.lineTo(38, 5);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(48, 0);
-    ctx.lineTo(84, 0);
-    ctx.lineTo(76, -3);
+    ctx.moveTo(40, 0);
+    ctx.lineTo(68, 0);
+    ctx.lineTo(58, -2.6);
     ctx.closePath();
     ctx.fill();
 
     ctx.strokeStyle = '#67e8f9';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(74, -7);
-    ctx.lineTo(92, 0);
-    ctx.lineTo(74, 7);
+    ctx.moveTo(58, -6);
+    ctx.lineTo(74, 0);
+    ctx.lineTo(58, 6);
     ctx.stroke();
 
     if (isLaser) {
       ctx.strokeStyle = '#67e8f9';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(92, 0, 12 + Math.sin(Date.now() / 35) * 4, 0, Math.PI * 2);
+      ctx.arc(74, 0, 10 + Math.sin(Date.now() / 35) * 3, 0, Math.PI * 2);
       ctx.stroke();
     }
 
@@ -10638,32 +10784,55 @@ class PlayerHero {
     const isThrow = (actionType === 'throw');
     const isGlowing = this.isPinkOverdrive || isTidal;
 
-    // 0. Translucent Hydro Water Wings Sprouting From Upper Back (Drawn behind body for clean depth!)
+    // 0. Layered hydro wings: three tapered water blades per side, translucent with a
+    //    bright leading edge. Reads as water wings instead of two flat balloons.
     ctx.save();
-    ctx.fillStyle = isTidal ? 'rgba(56, 189, 248, 0.88)' : 'rgba(56, 189, 248, 0.68)';
-    ctx.strokeStyle = '#e0f2fe';
-    ctx.lineWidth = isTidal ? 2.4 : 1.5;
-    const flapMult = (isTidal || isPunch) ? 2.1 : 1.0;
-    const wingFlap = Math.sin(Date.now() / 100) * (9 * flapMult);
-    const wingSize = isTidal ? 40 : (this.isPinkOverdrive ? 26 : (isPunch ? 20 : 14));
+    const wingFlap = Math.sin(Date.now() / 110) * (isTidal ? 10 : 5);
+    const wingScale = isTidal ? 1.6 : (this.isPinkOverdrive ? 1.3 : 1.0);
+    const bladeSpecs = [
+      { len: 44, lift: -52, tint: 'rgba(14, 165, 233, 0.55)', edge: '#7dd3fc' },
+      { len: 58, lift: -38, tint: 'rgba(56, 189, 248, 0.65)', edge: '#bae6fd' },
+      { len: 48, lift: -22, tint: 'rgba(125, 211, 252, 0.55)', edge: '#e0f2fe' }
+    ];
 
-    // Back/Left Wing
-    ctx.beginPath();
-    ctx.moveTo(-6, -56 + bob);
-    ctx.bezierCurveTo(-34 - wingSize, -94 - wingSize * 0.7 + wingFlap, -54 - wingSize, -74 + wingFlap, -44 - wingSize * 0.7, -50 + wingFlap);
-    ctx.quadraticCurveTo(-28, -42, -6, -50 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    const drawWaterWing = (dir, phase) => {
+      ctx.save();
+      ctx.scale(dir, 1);
+      bladeSpecs.forEach((b, i) => {
+        const len = b.len * wingScale;
+        const sway = wingFlap * (0.4 + i * 0.30) + phase;
+        const rootY = -52 + bob + i * 5;
+        ctx.beginPath();
+        ctx.moveTo(3, rootY);
+        ctx.bezierCurveTo(
+          -len * 0.40, rootY + b.lift * 0.45 + sway,
+          -len * 0.82, rootY + b.lift * 0.25 + sway * 1.5,
+          -len, rootY + b.lift * 0.10 + sway
+        );
+        ctx.bezierCurveTo(
+          -len * 0.62, rootY + b.lift * 0.02 + sway * 0.7,
+          -len * 0.28, rootY + 4,
+          3, rootY + 4
+        );
+        ctx.closePath();
+        ctx.fillStyle = b.tint;
+        ctx.fill();
+        ctx.strokeStyle = b.edge;
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+      });
+      // Bright spine of the nearest blade
+      ctx.strokeStyle = 'rgba(240, 249, 255, 0.85)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(2, -44 + bob);
+      ctx.quadraticCurveTo(-30 * wingScale, -60 + bob + wingFlap, -52 * wingScale, -48 + bob + wingFlap);
+      ctx.stroke();
+      ctx.restore();
+    };
 
-    // Front/Right Wing
-    ctx.beginPath();
-    ctx.moveTo(4, -56 + bob);
-    ctx.bezierCurveTo(28 + wingSize * 0.7, -92 - wingSize * 0.6 - wingFlap, 44 + wingSize * 0.8, -72 - wingFlap, 34 + wingSize * 0.6, -50 - wingFlap);
-    ctx.quadraticCurveTo(20, -42, 4, -50 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    drawWaterWing(-1, 0);
+    drawWaterWing(1, Math.PI);
     ctx.restore();
 
     // 1. Articulated Cerulean Bare Legs
@@ -10671,7 +10840,7 @@ class PlayerHero {
       ctx.save();
       ctx.translate(lx, -26 + bob + ly);
       ctx.rotate(rot);
-      ctx.fillStyle = darken ? '#0ea5e9' : '#38bdf8';
+      ctx.fillStyle = darken ? '#4f97bd' : '#7cc7e8';
       ctx.fillRect(-3, 0, 6, 26);
       ctx.beginPath();
       ctx.ellipse(1.5, 25, 4.5, 2, 0, 0, Math.PI * 2);
@@ -10739,8 +10908,8 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 6. Pale Cerulean Blue Skin Neck & Face
-    ctx.fillStyle = '#38bdf8';
+    // 6. Pale cerulean skin (canon Lapis is soft blue, not neon cyan)
+    ctx.fillStyle = '#7cc7e8';
     ctx.fillRect(-3.5, -66 + bob, 7, 10);
     ctx.beginPath();
     ctx.ellipse(0, -74 + bob, 12.8, 14, 0, 0, Math.PI * 2);
@@ -15656,15 +15825,32 @@ class EnemyManager {
   drawWingedCentipeetle(ctx, e) {
     const wingFlap = Math.sin(e.animTime * 24) * 14;
 
-    // Fluttering Translucent Emerald Insect Wings
-    ctx.fillStyle = 'rgba(74, 222, 128, 0.65)';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(-4, -36, 22, 9, -0.3 + wingFlap * 0.02, 0, Math.PI * 2);
-    ctx.ellipse(8, -38, 20, 8, 0.3 - wingFlap * 0.02, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // Two pairs of veined emerald insect wings, beating out of phase
+    const drawWing = (rootX, rootY, dir, len, alpha) => {
+      ctx.save();
+      ctx.translate(rootX, rootY);
+      ctx.rotate(dir * (0.35 + wingFlap * 0.012));
+      ctx.fillStyle = `rgba(74, 222, 128, ${alpha})`;
+      ctx.strokeStyle = '#dcfce7';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(dir * len * 0.55, -len * 0.55, dir * len, -len * 0.12);
+      ctx.quadraticCurveTo(dir * len * 0.62, len * 0.16, 0, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Wing vein
+      ctx.strokeStyle = 'rgba(240, 253, 244, 0.75)';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(dir * len * 0.5, -len * 0.3, dir * len * 0.95, -len * 0.1);
+      ctx.stroke();
+      ctx.restore();
+    };
+    drawWing(-2, -34, -1, 30, 0.60);
+    drawWing(6, -36, 1, 28, 0.52);
 
     // Segmented Centipede Body
     ctx.fillStyle = '#14532d';
@@ -15738,28 +15924,81 @@ class EnemyManager {
   }
 
   drawVolcanicFirebird(ctx, e) {
-    const wingFlap = Math.sin(e.animTime * 22) * 15;
+    const flap = Math.sin(e.animTime * 12) * 0.45;
+    const gy = -30 + Math.sin(e.animTime * 3) * 2;
 
-    ctx.fillStyle = 'rgba(234, 88, 12, 0.85)';
-    ctx.strokeStyle = '#fef08a';
-    ctx.lineWidth = 2;
+    // Tail feathers (molten)
+    ctx.fillStyle = '#c2410c';
+    for (let i = -1; i <= 1; i++) {
+      ctx.save();
+      ctx.translate(-14, gy + 4);
+      ctx.rotate(0.5 + i * 0.28);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(-18, -3 + i * 2);
+      ctx.lineTo(-2, 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Wings
+    ctx.save();
+    ctx.translate(-4, gy - 2);
+    ctx.rotate(-0.3 + flap);
+    ctx.fillStyle = '#ea580c';
     ctx.beginPath();
-    ctx.moveTo(0, -20);
-    ctx.lineTo(-30, -50 + wingFlap);
-    ctx.lineTo(-20, -15);
-    ctx.lineTo(30, -50 - wingFlap);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-16, -16);
+    ctx.lineTo(-4, -4);
+    ctx.lineTo(-12, 4);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
+    ctx.restore();
 
+    ctx.save();
+    ctx.translate(4, gy - 4);
+    ctx.rotate(0.25 - flap);
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(18, -14);
+    ctx.lineTo(6, -2);
+    ctx.lineTo(16, 5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // Body + head
     ctx.fillStyle = '#7c2d12';
     ctx.beginPath();
-    ctx.arc(0, -16, 13, 0, Math.PI * 2);
+    ctx.ellipse(0, gy + 6, 12, 9, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(9, gy - 4, 6.5, 0, Math.PI * 2);
     ctx.fill();
 
+    // Molten chest glow
+    ctx.fillStyle = `rgba(251, 191, 36, ${0.55 + 0.35 * Math.abs(Math.sin(e.animTime * 6))})`;
+    ctx.beginPath();
+    ctx.ellipse(1, gy + 6, 6, 5, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Beak + eye
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
-    ctx.arc(6, -18, 4, 0, Math.PI * 2);
+    ctx.moveTo(14, gy - 6);
+    ctx.lineTo(20, gy - 3);
+    ctx.lineTo(14, gy - 1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath();
+    ctx.arc(10, gy - 6, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1c1917';
+    ctx.beginPath();
+    ctx.arc(10.6, gy - 6, 1, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -15939,22 +16178,60 @@ class EnemyManager {
   }
 
   drawClusterMutant(ctx, e) {
-    const wiggle = Math.sin(e.animTime * 10) * 5;
+    const wob = Math.sin(e.animTime * 9) * 3;
+    const wob2 = Math.cos(e.animTime * 7) * 2;
 
-    ctx.fillStyle = '#881337';
-    ctx.fillRect(-22, -35 + wiggle, 14, 35);
-
-    ctx.fillStyle = '#1e3a8a';
-    ctx.fillRect(-6, -42 - wiggle, 14, 42);
-
-    ctx.fillStyle = '#6b21a8';
-    ctx.fillRect(10, -32 + wiggle, 14, 32);
-
-    ctx.fillStyle = '#fbbf24';
+    // Knotted mass of fused limbs that never settled into one shape
+    ctx.fillStyle = '#4c1d95';
     ctx.beginPath();
-    ctx.moveTo(-10, -42);
-    ctx.lineTo(-5, -55);
-    ctx.lineTo(0, -42);
+    ctx.moveTo(-24, 0);
+    ctx.bezierCurveTo(-28, -14 + wob, -18, -26 - wob2, -4, -28 + wob);
+    ctx.bezierCurveTo(10, -30 - wob, 24, -20 + wob2, 25, -6);
+    ctx.bezierCurveTo(26, 0, 18, 2, -24, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Shoulder lumps
+    ctx.fillStyle = '#6d28d9';
+    ctx.beginPath();
+    ctx.ellipse(-12, -22 + wob, 9, 7, -0.3, 0, Math.PI * 2);
+    ctx.ellipse(11, -20 - wob2, 8, 6, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Three mismatched gems embedded in the cluster
+    const gems = [
+      { x: -14, y: -12 + wob, c: '#f43f5e' },
+      { x: 2, y: -18 + wob2, c: '#38bdf8' },
+      { x: 15, y: -9 - wob, c: '#fbbf24' }
+    ];
+    gems.forEach(g => {
+      ctx.fillStyle = g.c;
+      ctx.beginPath();
+      ctx.moveTo(g.x, g.y - 4);
+      ctx.lineTo(g.x + 4, g.y);
+      ctx.lineTo(g.x, g.y + 4);
+      ctx.lineTo(g.x - 4, g.y);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // Two eyes from two different gems, both staring the wrong way
+    ctx.fillStyle = '#fef9c3';
+    ctx.beginPath();
+    ctx.arc(-7, -24 + wob, 3.2, 0, Math.PI * 2);
+    ctx.arc(7, -25 - wob2, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#1e1b4b';
+    ctx.beginPath();
+    ctx.arc(-6, -24 + wob, 1.5, 0, Math.PI * 2);
+    ctx.arc(8, -25 - wob2, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Stubby fused leg
+    ctx.fillStyle = '#3b0764';
+    ctx.beginPath();
+    ctx.roundRect(-9, -2 + wob, 7, 10, 3);
+    ctx.roundRect(6, -2, 6, 10, 3);
     ctx.fill();
   }
 
@@ -16020,41 +16297,131 @@ class EnemyManager {
   }
 
   drawBladeQuartz(ctx, e) {
-    ctx.fillStyle = '#9f1239';
-    ctx.fillRect(-28, -36, 56, 32);
+    const bob = Math.sin(e.animTime * 5) * 2;
+    const lean = Math.sin(e.animTime * 3) * 1.5;
 
-    ctx.fillStyle = '#fb7185';
-    for (let x = -22; x <= 20; x += 12) {
+    // Stumpy legs
+    ctx.fillStyle = '#3f0d1a';
+    ctx.beginPath();
+    ctx.roundRect(-13, -18 + bob, 10, 18, 3);
+    ctx.roundRect(4, -18 + bob, 10, 18, 3);
+    ctx.fill();
+
+    // Hunched, corrupted quartz torso
+    ctx.fillStyle = '#7f1d1d';
+    ctx.beginPath();
+    ctx.moveTo(-16, -18 + bob);
+    ctx.lineTo(-13, -40 + bob + lean);
+    ctx.quadraticCurveTo(0, -47 + bob + lean, 14, -41 + bob + lean);
+    ctx.lineTo(17, -18 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ribbed chest plates
+    ctx.strokeStyle = '#450a0a';
+    ctx.lineWidth = 1.6;
+    for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.moveTo(x, -36);
-      ctx.lineTo(x + 6, -54);
-      ctx.lineTo(x + 12, -36);
-      ctx.fill();
+      ctx.moveTo(-11, -33 + bob + i * 5);
+      ctx.quadraticCurveTo(1, -30 + bob + i * 5, 12, -33 + bob + i * 5);
+      ctx.stroke();
     }
+
+    // Corrupted gem shard in the chest
+    ctx.fillStyle = '#f43f5e';
+    ctx.strokeStyle = '#fecdd3';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(1, -36 + bob); ctx.lineTo(6, -31 + bob); ctx.lineTo(2, -25 + bob);
+    ctx.lineTo(-4, -30 + bob); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Angular head with a single glowing eye
+    ctx.fillStyle = '#9f1239';
+    ctx.beginPath();
+    ctx.moveTo(-9, -44 + bob + lean);
+    ctx.lineTo(6, -50 + bob + lean);
+    ctx.lineTo(13, -43 + bob + lean);
+    ctx.lineTo(4, -38 + bob + lean);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.arc(4, -44 + bob + lean, 2.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Massive crystal blade arm (the thing the type is named for)
+    ctx.fillStyle = '#be123c';
+    ctx.beginPath();
+    ctx.moveTo(13, -38 + bob);
+    ctx.lineTo(26, -34 + bob);
+    ctx.lineTo(38, -52 + bob);
+    ctx.lineTo(30, -30 + bob);
+    ctx.lineTo(17, -26 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#fda4af';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(26, -34 + bob);
+    ctx.lineTo(38, -52 + bob);
+    ctx.stroke();
   }
 
   drawIceMonster(ctx, e) {
     const bob = Math.sin(e.animTime * 6) * 3;
-    ctx.fillStyle = '#0284c7';
+    const pulse = 0.5 + 0.5 * Math.sin(e.animTime * 4);
+
+    // Jagged ice shoulders
+    ctx.fillStyle = '#7dd3fc';
     ctx.beginPath();
-    ctx.arc(0, -32 + bob, 22, 0, Math.PI * 2);
+    ctx.moveTo(-18, -26 + bob);
+    ctx.lineTo(-24, -46 + bob);
+    ctx.lineTo(-8, -36 + bob);
+    ctx.closePath();
+    ctx.moveTo(10, -34 + bob);
+    ctx.lineTo(20, -52 + bob);
+    ctx.lineTo(24, -30 + bob);
+    ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = '#bae6fd';
-    for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
-      const sx = Math.cos(angle) * 26;
-      const sy = -32 + bob + Math.sin(angle) * 26;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(angle - 0.2) * 20, -32 + bob + Math.sin(angle - 0.2) * 20);
-      ctx.lineTo(sx * 1.3, sy * 1.3);
-      ctx.lineTo(Math.cos(angle + 0.2) * 20, -32 + bob + Math.sin(angle + 0.2) * 20);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    ctx.fillStyle = '#38bdf8';
+    // Crystalline body
+    const bodyGrad = ctx.createLinearGradient(0, -46 + bob, 0, -6 + bob);
+    bodyGrad.addColorStop(0, '#bae6fd');
+    bodyGrad.addColorStop(0.55, '#38bdf8');
+    bodyGrad.addColorStop(1, '#0369a1');
+    ctx.fillStyle = bodyGrad;
     ctx.beginPath();
-    ctx.arc(6, -32 + bob, 7, 0, Math.PI * 2);
+    ctx.moveTo(-20, -8 + bob);
+    ctx.lineTo(-24, -30 + bob);
+    ctx.lineTo(-6, -44 + bob);
+    ctx.lineTo(12, -42 + bob);
+    ctx.lineTo(24, -24 + bob);
+    ctx.lineTo(18, -6 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Frozen core
+    ctx.fillStyle = `rgba(240, 249, 255, ${0.55 + 0.3 * pulse})`;
+    ctx.beginPath();
+    ctx.ellipse(-2, -24 + bob, 7, 9, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#082f49';
+    ctx.beginPath();
+    ctx.arc(2, -34 + bob, 2.6, 0, Math.PI * 2);
+    ctx.arc(11, -32 + bob, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Icicle legs
+    ctx.fillStyle = '#0c4a6e';
+    ctx.beginPath();
+    ctx.moveTo(-14, -6 + bob); ctx.lineTo(-9, 0); ctx.lineTo(-6, -6 + bob); ctx.closePath();
+    ctx.moveTo(8, -6 + bob); ctx.lineTo(13, 0); ctx.lineTo(16, -6 + bob); ctx.closePath();
     ctx.fill();
   }
 
@@ -16352,21 +16719,111 @@ class EnemyManager {
   }
 
   drawRobonoidScout(ctx, e) {
+    const hover = Math.sin(e.animTime * 3.4) * 4;
+
+    // Three dangling manipulator legs
+    ctx.strokeStyle = '#065f46';
+    ctx.lineWidth = 2;
+    for (const dx of [-8, 0, 8]) {
+      ctx.beginPath();
+      ctx.moveTo(dx * 0.6, -20 + hover);
+      ctx.quadraticCurveTo(dx, -12 + hover, dx * 1.2, -6 + hover);
+      ctx.stroke();
+    }
+
+    // Floating lime shell
     ctx.fillStyle = '#84cc16';
     ctx.beginPath();
-    ctx.arc(0, -22, 14, 0, Math.PI * 2);
+    ctx.ellipse(0, -30 + hover, 16, 14, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4d7c0f';
+    ctx.beginPath();
+    ctx.ellipse(0, -24 + hover, 15, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Big glass eye
+    ctx.fillStyle = '#ecfccb';
+    ctx.beginPath();
+    ctx.arc(3, -32 + hover, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#065f46';
     ctx.beginPath();
-    ctx.arc(4, -22, 5, 0, Math.PI * 2);
+    ctx.arc(4.5, -32 + hover, 3.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(5.5, -34 + hover, 1.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Antenna blinker
+    ctx.strokeStyle = '#a3e635';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(-6, -42 + hover);
+    ctx.lineTo(-9, -50 + hover);
+    ctx.stroke();
+    ctx.fillStyle = Math.sin(e.animTime * 8) > 0 ? '#f43f5e' : '#7f1d1d';
+    ctx.beginPath();
+    ctx.arc(-9, -51 + hover, 2, 0, Math.PI * 2);
     ctx.fill();
   }
 
   drawForgeAutomaton(ctx, e) {
-    ctx.fillStyle = '#b45309';
-    ctx.fillRect(-18, -48, 36, 48);
-    ctx.fillStyle = '#f97316';
-    ctx.fillRect(-10, -42, 20, 8);
+    const bob = Math.sin(e.animTime * 4) * 1.5;
+    const piston = Math.sin(e.animTime * 8) * 3;
+
+    // Legs
+    ctx.fillStyle = '#7c2d12';
+    ctx.fillRect(-12, -14 + bob, 8, 14);
+    ctx.fillRect(5, -14 + bob, 8, 14);
+
+    // Riveted iron torso
+    ctx.fillStyle = '#92400e';
+    ctx.beginPath();
+    ctx.roundRect(-18, -46 + bob, 36, 34, 6);
+    ctx.fill();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    // Furnace grate with live fire
+    const glow = 0.55 + 0.45 * Math.abs(Math.sin(e.animTime * 6));
+    ctx.fillStyle = `rgba(249, 115, 22, ${glow})`;
+    ctx.beginPath();
+    ctx.roundRect(-9, -40 + bob, 18, 14, 3);
+    ctx.fill();
+    ctx.strokeStyle = '#451a03';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-9, -36 + bob + i * 4);
+      ctx.lineTo(9, -36 + bob + i * 4);
+      ctx.stroke();
+    }
+
+    // Piston arms
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(-26, -44 + bob + piston, 8, 20);
+    ctx.fillRect(18, -44 + bob - piston, 8, 20);
+    ctx.fillStyle = '#f59e0b';
+    ctx.fillRect(-28, -47 + bob + piston, 12, 6);
+    ctx.fillRect(16, -47 + bob - piston, 12, 6);
+
+    // Single amber sensor eye
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath();
+    ctx.arc(0, -54 + bob, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#7c2d12';
+    ctx.beginPath();
+    ctx.arc(1, -54 + bob, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Smokestack puff
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+    ctx.beginPath();
+    ctx.arc(10 + Math.sin(e.animTime * 2) * 3, -62 + bob, 4, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   drawDestabilizerSoldier(ctx, e) {
@@ -17877,7 +18334,7 @@ class StevenUniverseGame {
     if (bossHud) bossHud.style.display = 'none';
 
     this.hideAllScreens();
-    document.getElementById('hud').style.display = 'flex';
+    document.getElementById('hud').style.display = 'grid';
     const actionBars = document.getElementById('actionBarsContainer') || document.getElementById('actionBar');
     if (actionBars) actionBars.style.display = this.isRealMobile ? 'none' : 'flex';
 
@@ -21223,6 +21680,9 @@ class StevenUniverseGame {
       if (selectBgm) selectBgm.value = cur;
       if (pauseSelectBgm) pauseSelectBgm.value = cur;
       if (lobbySelectBgm) lobbySelectBgm.value = cur;
+      [selectBgm, pauseSelectBgm, lobbySelectBgm].forEach(el => {
+        if (el && typeof el.syncDropdownLabel === 'function') el.syncDropdownLabel();
+      });
       if (this.updateLobbyMusicButton) {
         this.updateLobbyMusicButton(!!this.audio.musicInterval && !this.audio.isManuallyPaused);
       }
@@ -21527,12 +21987,114 @@ class StevenUniverseGame {
   }
 }
 // Bulletproof Game Bootstrapper (works whether DOM is loading, interactive, or complete)
+// ---------------------------------------------------------------------------
+// RESPONSIVE STAGE SCALING
+// The game is authored at a fixed 1280x720. Scaling the whole stage (canvas, HUD,
+// menus) as one unit makes the native window and every browser behave identically
+// at any window size, with no HUD overflow on letterboxed viewports.
+// ---------------------------------------------------------------------------
+function fitGameToViewport() {
+  const w = window.innerWidth || 1280;
+  const h = window.innerHeight || 720;
+  const scale = Math.max(0.35, Math.min(w / 1280, h / 720));
+  document.documentElement.style.setProperty('--gc-scale', String(scale));
+}
+
+// ---------------------------------------------------------------------------
+// THEMED DROPDOWNS
+// Native <select> widgets are painted by the platform (WebKitGTK ignores most CSS on
+// them, which is why the jukebox turned white-on-white in the desktop window). Each
+// select is kept in the DOM for its value/change API, but hidden behind a fully
+// styled dropdown so the control looks identical in every browser and native shell.
+// ---------------------------------------------------------------------------
+function enhanceSelect(select) {
+  if (!select || select.dataset.suEnhanced === 'true') return;
+  select.dataset.suEnhanced = 'true';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'su-dropdown';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'su-dropdown-btn';
+
+  const label = document.createElement('span');
+  label.className = 'su-dropdown-label';
+
+  const chevron = document.createElement('span');
+  chevron.className = 'su-dropdown-chevron';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.textContent = '▾';
+
+  btn.appendChild(label);
+  btn.appendChild(chevron);
+
+  const list = document.createElement('div');
+  list.className = 'su-dropdown-list';
+  list.setAttribute('role', 'listbox');
+
+  wrap.appendChild(btn);
+  wrap.appendChild(list);
+  select.parentNode.insertBefore(wrap, select);
+  select.classList.add('su-native-hidden');
+
+  const close = () => wrap.classList.remove('open');
+  const isOpen = () => wrap.classList.contains('open');
+
+  const syncLabel = () => {
+    const opt = select.options[select.selectedIndex];
+    label.textContent = opt ? opt.textContent : '';
+    list.querySelectorAll('.su-dropdown-item').forEach((item, i) => {
+      item.classList.toggle('selected', i === select.selectedIndex);
+    });
+  };
+
+  const rebuild = () => {
+    list.innerHTML = '';
+    Array.from(select.options).forEach((opt, index) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'su-dropdown-item';
+      item.textContent = opt.textContent;
+      item.setAttribute('role', 'option');
+      if (index === select.selectedIndex) item.classList.add('selected');
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        select.selectedIndex = index;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        syncLabel();
+        close();
+      });
+      list.appendChild(item);
+    });
+  };
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (isOpen()) { close(); return; }
+    rebuild();
+    wrap.classList.add('open');
+  });
+
+  document.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  select.addEventListener('change', syncLabel);
+
+  select.syncDropdownLabel = syncLabel;
+  syncLabel();
+}
+
+function enhanceAllSelects() {
+  document.querySelectorAll('select.su-select').forEach(enhanceSelect);
+}
+
 function bootStevenUniverseGame() {
   if (window.__suGameInitialized) return;
   window.__suGameInitialized = true;
 
   try {
     const game = new StevenUniverseGame();
+    enhanceAllSelects();
     game.start();
     window.game = game;
     console.log('⭐ Steven Universe: Crystal Guardians Unleashed initialized successfully!');
@@ -21552,6 +22114,14 @@ function bootStevenUniverseGame() {
       console.warn('ServiceWorker registration error:', err);
     });
   }
+}
+
+window.addEventListener('resize', fitGameToViewport);
+window.addEventListener('orientationchange', fitGameToViewport);
+window.addEventListener('fullscreenchange', fitGameToViewport);
+fitGameToViewport();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', fitGameToViewport);
 }
 
 if (document.readyState === 'loading') {

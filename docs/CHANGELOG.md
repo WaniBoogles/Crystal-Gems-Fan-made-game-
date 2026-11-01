@@ -1,5 +1,49 @@
 # Changelog
 
+## 2025-11-01 — "Widescreen" revision
+
+Fixes the two things that were still off in the desktop window, plus another art pass.
+
+### Fixed — the whole stage now scales, everywhere
+* The game is authored at a fixed **1280×720** and `#game-container` is scaled as one unit
+  (`transform: translate(-50%,-50%) scale(...)`, recomputed on resize/fullscreen/orientation).
+  The browser build is now pixel-identical to the native window at any size — no more letterboxed
+  viewport with the HUD poking outside it.
+* Centring no longer uses flex `margin:auto` (which pinned the oversized stage to the top and
+  clipped the hotbar when the window was shorter than 720px).
+* **2-player HUD fixed**: `.hud-overlay` is a 3-column grid (P1 | centre | P2) with the quick-action
+  pill on a second row. Previously P1 + centre + actions + P2 = ~1350px inside a 1252px bar, so the
+  P2 panel was cut off at the right edge even in fullscreen.
+
+### Fixed — the music player was unreadable in the native window
+* Native `<select>` widgets are painted by WebKitGTK and ignored the dark theme, so the jukebox
+  rendered white-on-white. All three BGM pickers are now a **custom themed dropdown**
+  (`enhanceSelect()`), keeping the `<select>` in the DOM for its value/`change` API while hiding it
+  behind a styled button + list. Identical in Firefox, Chromium and the GTK shell.
+
+### Fixed — desktop shortcut icon
+* `Crystal Gems!.desktop` pointed at a `crystal-gems.png` that no longer exists at the repo root, so
+  Nemo showed a generic text-file icon. The shortcut now uses the pink star icon
+  (`assets/images/crystal-gems.png`), and a copy was installed to `~/Desktop` and
+  `~/.local/share/applications`.
+
+### Art
+* **Pearl**: rebuilt hair as her canon short back-swept bob with a forehead curl (was a long conical
+  fin), and slimmed the spear from a gold-wrapped lance to an elegant shaft with a smaller
+  leaf-shaped head.
+* **Lapis**: water wings are now three tapered, veined hydro blades per side with a bright leading
+  edge (were two flat balloons); skin is soft periwinkle instead of neon cyan.
+* **Monsters redrawn**: `blade_quartz` (hunched quartz with a crystal blade arm and chest gem),
+  `cluster` (knotted mound of limbs, gems and mismatched eyes), `forge_automaton` (iron body with a
+  glowing furnace and piston arms), `robonoid_scout` (floating drone with a glass eye and antenna),
+  `ice_monster` (crystalline beast with jagged shoulders), `winged_centipeetle` (two pairs of veined
+  wings), `volcanic_firebird` (an actual bird silhouette instead of a triangle).
+* New `tools/monster-sheet.html` renders the basic corruptions at ×2.6 for review.
+
+### Tooling / docs
+* `tools/preview.sh` still renders the game headlessly; screenshots in `docs/` refreshed.
+* Bundle rebuilt (2.17 MB), 126 type tests still green.
+
 ## 2025-11-01 — "Gem Types" revision
 
 A systems + polish pass focused on the PC build.

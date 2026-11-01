@@ -24,8 +24,8 @@ game code**. Every character, enemy, boss, platform and effect is drawn with Can
 
 | Type | Files | Lines | What it is |
 | :--- | ---: | ---: | :--- |
-| `.js` | 1 (+1 test) | 17,154 | `src/game.js` — the whole game; `tools/test-types.js` — 126 type-engine tests |
-| `.css` | 1 | 3,221 | `src/game.css` — HUD, menus, responsive rules |
+| `.js` | 1 (+1 test) | 17,576 | `src/game.js` — the whole game; `tools/test-types.js` — 126 type-engine tests |
+| `.css` | 1 | 3,372 | `src/game.css` — HUD, menus, responsive rules |
 | `.html` | 1 (+1 tool) | 1,180 | `src/game.html` — screens and overlays; `tools/character-sheet.html` |
 | `.py` | 1 | 124 | `tools/build.py` — the single-file bundler |
 | `.sh` | 2 | 254 | `crystal-gems.sh` launcher, `tools/preview.sh` headless smoke test |
@@ -33,7 +33,7 @@ game code**. Every character, enemy, boss, platform and effect is drawn with Can
 | `.jpg` / `.png` | 7 + 3 | — | Lobby landscapes + icons (`assets/images`), raw references in `assets/source-art` |
 | `.cs` | 1 | 346 | `tools/windows-launcher/CrystalGemsLauncher.cs` |
 
-**Hand-written game code: 21,555 lines** (17,154 + 3,221 + 1,180).
+**Hand-written game code: 22,128 lines** (17,576 + 3,372 + 1,180).
 
 ---
 
@@ -63,6 +63,8 @@ game code**. Every character, enemy, boss, platform and effect is drawn with Can
   (`.overlay-screen`); the canvas keeps rendering behind them.
 * The loop is delta-time driven, so background-tab throttling doesn't warp timers.
 * Camera tracks the midpoint of both players across a 2,600 px arena; the canvas is 1280×720.
+* The whole stage (canvas + HUD + menus) lives in a fixed 1280×720 `#game-container` that is
+  scaled to the window (`--gc-scale`), so layout is identical in the native shell and any browser.
 
 ---
 
@@ -157,3 +159,5 @@ with his **saliva** (not a Cookie Cat), and his shirt is coral-red, not pink.
    the next priority, those ~25 draw methods in `EnemyManager` are the place to work.
 6. **Practice Dojo** keeps infinite hearts and instant Overdrive by design — handy for testing
    type matchups.
+7. **Native `<select>` widgets are untrustworthy.** WebKitGTK paints its own chrome over them, which
+   is why the jukebox is now a custom dropdown (`enhanceSelect()` in `game.js`).
