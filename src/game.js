@@ -18,6 +18,7 @@ class GemAudioEngine {
     this.musicEnabled = getVal('su_musicEnabled', 'true') !== 'false';
     this.sfxVolume = parseFloat(getVal('su_sfxVol', '0.8'));
     this.musicVolume = parseFloat(getVal('su_musicVol', '0.7'));
+    this.bgmOverrideManual = getVal('su_bgmManual', 'false') === 'true';
     let storedBgm = getVal('su_selectedBgm', 'distant_shore');
     if (!storedBgm || storedBgm === 'auto' || storedBgm === 'menu') storedBgm = 'distant_shore';
     this.selectedBgm = storedBgm;
@@ -141,6 +142,10 @@ class GemAudioEngine {
 
   setBgmOverride(trackId) {
     this.selectedBgm = trackId || 'auto';
+    this.bgmOverrideManual = true;
+    if (typeof SafeStorage !== 'undefined' && SafeStorage.setItem) {
+      SafeStorage.setItem('su_bgmManual', 'true');
+    }
     this.isManuallyPaused = false;
     if (typeof SafeStorage !== 'undefined' && SafeStorage.setItem) {
       SafeStorage.setItem('su_selectedBgm', this.selectedBgm);
@@ -764,9 +769,9 @@ class GemAudioEngine {
 
       // Stage Themes 3..7, 9, 10
       'stage_3': {
-        tempo: 112,
-        leadType: 'sawtooth',
-        bassType: 'square',
+        tempo: 92,
+        leadType: 'sine',
+        bassType: 'triangle',
         harmType: 'sine',
         leadVol: 0.042,
         bassVol: 0.075,
@@ -778,9 +783,9 @@ class GemAudioEngine {
         harmonics: [392.0, 466.16, 523.25, 622.25]
       },
       'stage_4': {
-        tempo: 134,
+        tempo: 76,
         leadType: 'sawtooth',
-        bassType: 'sawtooth',
+        bassType: 'sine',
         harmType: 'square',
         leadVol: 0.042,
         bassVol: 0.075,
@@ -792,9 +797,9 @@ class GemAudioEngine {
         harmonics: [369.99, 440.0, 554.37, 739.99]
       },
       'stage_5': {
-        tempo: 130,
+        tempo: 124,
         leadType: 'square',
-        bassType: 'triangle',
+        bassType: 'square',
         harmType: 'sawtooth',
         leadVol: 0.044,
         bassVol: 0.075,
@@ -806,9 +811,9 @@ class GemAudioEngine {
         harmonics: [493.88, 659.25, 783.99, 987.77]
       },
       'stage_6': {
-        tempo: 138,
-        leadType: 'sawtooth',
-        bassType: 'sawtooth',
+        tempo: 84,
+        leadType: 'sine',
+        bassType: 'sine',
         harmType: 'triangle',
         leadVol: 0.046,
         bassVol: 0.080,
@@ -833,8 +838,26 @@ class GemAudioEngine {
         bass: [196.0, 174.61, 155.56, 196.0],
         harmonics: [587.33, 783.99, 932.33, 1174.66]
       },
+      // Episode 8: the Homeworld abduction shore — imperial, marching, cold
+      'stage_8': {
+        tempo: 112,
+        leadType: 'sawtooth',
+        bassType: 'square',
+        harmType: 'triangle',
+        leadVol: 0.046,
+        bassVol: 0.082,
+        harmVol: 0.024,
+        harmStep: 3,
+        bassStep: 2,
+        melody: [261.63, 311.13, 349.23, 311.13, 261.63, 233.08, 220.0, 233.08,
+                 261.63, 311.13, 392.0, 349.23, 311.13, 261.63, 233.08, 220.0,
+                 207.65, 233.08, 261.63, 311.13, 349.23, 392.0, 349.23, 311.13,
+                 261.63, 293.66, 311.13, 349.23, 392.0, 349.23, 311.13, 261.63],
+        bass: [130.81, 130.81, 116.54, 110.0, 130.81, 146.83, 130.81, 116.54],
+        harmonics: [523.25, 622.25, 698.46, 783.99]
+      },
       'stage_9': {
-        tempo: 142,
+        tempo: 140,
         leadType: 'sawtooth',
         bassType: 'square',
         harmType: 'sawtooth',
@@ -848,7 +871,7 @@ class GemAudioEngine {
         harmonics: [466.16, 554.37, 698.46, 932.33]
       },
       'stage_10': {
-        tempo: 152,
+        tempo: 156,
         leadType: 'sawtooth',
         bassType: 'sawtooth',
         harmType: 'square',
@@ -984,18 +1007,30 @@ class GemAudioEngine {
 
     const stageNum = Math.max(1, Math.min(10, parseInt(stageIndex, 10) || 1));
     this.lastStageIndex = stageNum;
-    this.currentTrack = isBoss ? `boss_${stageNum}` : `stage_${stageNum}`;
 
-    if (this.selectedBgm && this.selectedBgm !== 'auto') {
+    // One track per episode, picked for that map's atmosphere. (The old code asked
+    // for 'boss_N' and 'stage_8' profiles that never existed, so boss fights and
+    // the Homeworld shore silently fell back to the menu theme.)
+    const STAGE_TRACKS = {
+      1: 'defenders_deep',   // Beach City — bright, heroic boardwalk skirmish
+      2: 'lapis_tower',      // Galaxy Warp — vast, drifting, ancient
+      3: 'stage_3',          // Kindergarten — hollow, eerie, slow
+      4: 'stage_4',          // The Cluster — deep, heavy, ominous
+      5: 'stage_5',          // Forge — industrial, hammering, hot
+      6: 'stage_6',          // Frozen North — icy, sparse, glassy
+      7: 'stage_7',          // Space Zoo — elegant, lilting waltz
+      8: 'stage_8',          // Homeworld shore — imperial, marching
+      9: 'stage_9',          // Trial / Off-Colors — tense, chromatic
+      10: 'stage_10'         // Change Your Mind — full heroic finale
+    };
+    const trackId = STAGE_TRACKS[stageNum] || 'defenders_deep';
+    this.currentTrack = trackId;
+
+    // Only an explicit jukebox pick overrides the level's own theme.
+    if (this.bgmOverrideManual && this.selectedBgm && this.selectedBgm !== 'auto') {
       return this.playTrackById(this.selectedBgm, isBoss);
     }
-
-    // Auto Canon Progression
-    if (stageNum === 1) return this.playTrackById('defenders_deep', isBoss);
-    if (stageNum === 2) return this.playTrackById('lapis_tower', isBoss);
-    if (stageNum === 8) return this.playTrackById('mirror_gem', isBoss);
-
-    return this.playTrackById(`stage_${stageNum}`, isBoss);
+    return this.playTrackById(trackId, isBoss);
   }
 
   playMusic(trackName) {
@@ -13143,17 +13178,17 @@ const STORY_SCRIPT = {
     map: 'Beach City Boardwalk',
     waves: [
       [{ w: 'garnet', t: "Centipeetles. Three of them, right on the boardwalk." },
-       { w: 'party',  t: "Three?! Okay. Okay okay okay. I can do three." },
+       { w: 'steven',  t: "Three?! Okay. Okay okay okay. I can do three." },
        { w: 'amethyst', t: "You can do one. We'll take the other two." }],
       [{ w: 'pearl', t: "They're nesting behind the fry stand — mind the civilians!" },
        { w: 'amethyst', t: "Ohhh, so THAT'S why we don't just smash everything." },
        { w: 'pearl', t: "It has literally always been why, Amethyst." }],
-      [{ w: 'party', t: "Hey... that little one isn't attacking. It's guarding something." },
+      [{ w: 'steven', t: "Hey... that little one isn't attacking. It's guarding something." },
        { w: 'garnet', t: "Corrupted gems aren't evil, Steven. They're frightened." },
-       { w: 'party', t: "Then we bubble them gently. Nobody gets hurt." }],
+       { w: 'steven', t: "Then we bubble them gently. Nobody gets hurt." }],
       [{ w: 'amethyst', t: "Uh, guys? The big one's awake. Like, tower-of-mother big." },
        { w: 'pearl', t: "Formation! Backs to the water!" },
-       { w: 'party', t: "I've got the shield — let's finish this on the sand!" }]
+       { w: 'steven', t: "I've got the shield — let's finish this on the sand!" }]
     ],
     boss: [
       { w: 'villain', n: 'MOTHER CENTIPEETLE', i: '🐛', t: 'SCREEEEEE!' },
@@ -13167,40 +13202,40 @@ const STORY_SCRIPT = {
       [{ w: 'pearl', t: "The Galaxy Warp is cracked. Every pad we cross could fling us anywhere in the galaxy." },
        { w: 'garnet', t: "Then we walk. Slowly." },
        { w: 'amethyst', t: "Booooring. I vote fling." }],
-      [{ w: 'party', t: "This place is ancient. Like, before-Beach-City ancient." },
+      [{ w: 'steven', t: "This place is ancient. Like, before-Beach-City ancient." },
        { w: 'garnet', t: "Older than the town. Older than the coastline. Older than me." }],
       [{ w: 'pearl', t: "Blade Quartzes. They were soldiers once — Rose's own allies." },
-       { w: 'party', t: "Do they remember her?" },
+       { w: 'steven', t: "Do they remember her?" },
        { w: 'pearl', t: "...I don't think they remember anything at all." }],
       [{ w: 'amethyst', t: "Spire's waking up. That's a LOT of stairs, even for me." },
-       { w: 'party', t: "Race you to the top?" },
+       { w: 'steven', t: "Race you to the top?" },
        { w: 'amethyst', t: "You're on, chubs. Loser buys Cookie Cats." }]
     ],
     boss: [
       { w: 'villain', n: 'ANCIENT SPIRE GIANT BIRD', i: '🦅', t: 'KRAAAAA!' },
       { w: 'garnet', t: "It slept through the war. It doesn't even know it lost." },
-      { w: 'party', t: "Then let's put it back to sleep. Gently this time." }
+      { w: 'steven', t: "Then let's put it back to sleep. Gently this time." }
     ]
   },
   3: {
     map: 'The Prime Kindergarten',
     waves: [
       [{ w: 'amethyst', t: "Welcome to my birthplace. Home sweet hole." },
-       { w: 'party', t: "You were... made here? Out of that wall?" },
+       { w: 'steven', t: "You were... made here? Out of that wall?" },
        { w: 'amethyst', t: "Every hole is a gem. One of 'em's me." }],
       [{ w: 'pearl', t: "The injectors are still humming. This place should have died a thousand years ago." },
        { w: 'amethyst', t: "It's not dead, P. It's just empty. There's a difference." }],
       [{ w: 'amethyst', t: "Homeworld used this place up, then left it to rot — with us inside." },
-       { w: 'party', t: "That's horrible." },
+       { w: 'steven', t: "That's horrible." },
        { w: 'amethyst', t: "Yeah. But I got you guys out of it. So. There's that." }],
       [{ w: 'amethyst', t: "Cluster mutants. Gems that didn't make it out of the ground right." },
-       { w: 'party', t: "Then we bubble every single one of them." },
+       { w: 'steven', t: "Then we bubble every single one of them." },
        { w: 'amethyst', t: "Now you're talking like a Crystal Gem." }]
     ],
     boss: [
       { w: 'villain', n: 'KINDERGARTEN AMALGAM TITAN', i: '🪨', t: 'GRRRRAAAH!' },
       { w: 'amethyst', t: "That titan's the Kindergarten's last tantrum." },
-      { w: 'party', t: "Then let's give it a hug." },
+      { w: 'steven', t: "Then let's give it a hug." },
       { w: 'amethyst', t: "A punch-hug. My favourite kind." }
     ]
   },
@@ -13208,12 +13243,12 @@ const STORY_SCRIPT = {
     map: "Earth's Mantle — The Cluster",
     waves: [
       [{ w: 'peridot', t: "The Cluster is gestating at the planet's core. We have HOURS, not days!" },
-       { w: 'party', t: "Then we drill. Right now." },
+       { w: 'steven', t: "Then we drill. Right now." },
        { w: 'peridot', t: "I hate that that's the plan. I hate that it's a GOOD plan!" }],
       [{ w: 'peridot', t: "Warning: mantle unstable. Also warning: I am extremely not built for this!" },
-       { w: 'party', t: "You're doing amazing, Peridot." },
+       { w: 'steven', t: "You're doing amazing, Peridot." },
        { w: 'peridot', t: "I know! Keep saying it!" }],
-      [{ w: 'party', t: "They're all fused together down here. Millions of them." },
+      [{ w: 'steven', t: "They're all fused together down here. Millions of them." },
        { w: 'peridot', t: "They didn't choose it. Nobody asked them. That's what Homeworld DOES." }],
       [{ w: 'peridot', t: "If the Cluster wakes, Earth cracks like an egg and we are the YOLK!" },
        { w: 'garnet', t: "Then it stays asleep. Permanently." },
@@ -13222,20 +13257,20 @@ const STORY_SCRIPT = {
     boss: [
       { w: 'villain', n: 'GEO-WEAPON CLUSTER CORE', i: '🌋', t: '...who... am... I...' },
       { w: 'peridot', t: "It's aware! It's confused! It's ALSO enormous!" },
-      { w: 'party', t: "Then we talk to it. Gems can be talked to." }
+      { w: 'steven', t: "Then we talk to it. Gems can be talked to." }
     ]
   },
   5: {
     map: "Bismuth's Burning Forge",
     waves: [
       [{ w: 'bismuth', t: "Welcome to my workshop! Best forge on Earth — mind the lava, it bites." },
-       { w: 'party', t: "You made ALL of Rose's weapons here?" },
+       { w: 'steven', t: "You made ALL of Rose's weapons here?" },
        { w: 'bismuth', t: "Every last one. Even the ones she never used." }],
       [{ w: 'bismuth', t: "Rose's sword? My finest work. Built it to cut anything except a gem." },
        { w: 'pearl', t: "We agreed never to speak about the Breaking Point." },
        { w: 'bismuth', t: "Yeah, well. We agreed a lot of things, Pearl." }],
       [{ w: 'bismuth', t: "These automatons were mine — turned on us the day Homeworld took the forge." },
-       { w: 'party', t: "Can you fix them?" },
+       { w: 'steven', t: "Can you fix them?" },
        { w: 'bismuth', t: "Fix? Buddy, I'm gonna BREAK 'em." }],
       [{ w: 'garnet', t: "Bismuth, focus. The forge is fighting back." },
        { w: 'bismuth', t: "Forge is MINE. It knows better than to fight me." },
@@ -13244,7 +13279,7 @@ const STORY_SCRIPT = {
     boss: [
       { w: 'villain', n: 'ANCIENT FORGE SENTINEL', i: '🔥', t: 'SYSTEM: INTRUDER.' },
       { w: 'bismuth', t: "Big, hot, ugly. My specialty." },
-      { w: 'party', t: "Together?" },
+      { w: 'steven', t: "Together?" },
       { w: 'bismuth', t: "Always, little man." }
     ]
   },
@@ -13252,34 +13287,34 @@ const STORY_SCRIPT = {
     map: 'The Frozen North',
     waves: [
       [{ w: 'lapis', t: "I can feel him under the ice. Jasper." },
-       { w: 'party', t: "You don't have to do this." },
+       { w: 'steven', t: "You don't have to do this." },
        { w: 'lapis', t: "I know. That's exactly why I'm doing it." }],
       [{ w: 'lapis', t: "When we were Malachite, I held us both at the bottom of the ocean. For months." },
-       { w: 'party', t: "Lapis..." },
+       { w: 'steven', t: "Lapis..." },
        { w: 'lapis', t: "I'm not that person anymore. I need him to know that." }],
       [{ w: 'garnet', t: "The corruption is eating him alive." },
        { w: 'lapis', t: "He asked for power. He got it." },
        { w: 'garnet', t: "Nobody deserves this. Not even him." }],
       [{ w: 'jasper', t: "You think you can beat me, runt?!" },
-       { w: 'party', t: "I think we can SAVE you!" },
+       { w: 'steven', t: "I think we can SAVE you!" },
        { w: 'jasper', t: "SAVE THIS!" }]
     ],
     boss: [
       { w: 'villain', n: 'CORRUPTED JASPER', i: '🐯', t: "BETA'S FINEST DOESN'T LOSE!" },
       { w: 'garnet', t: "You already did, Jasper. You lost yourself." },
-      { w: 'party', t: "But you can still come back. I've seen it." }
+      { w: 'steven', t: "But you can still come back. I've seen it." }
     ]
   },
   7: {
     map: "Pink Diamond's Space Zoo",
     waves: [
       [{ w: 'pearl', t: "A Human Zoo. They kept people in here. Like collectibles." },
-       { w: 'party', t: "That's... really messed up." },
+       { w: 'steven', t: "That's... really messed up." },
        { w: 'pearl', t: "Yes. That's one word for it." }],
       [{ w: 'garnet', t: "Blue Diamond's gems still run this place." },
        { w: 'pearl', t: "Then we go quietly. Or loudly. I'm flexible." },
        { w: 'garnet', t: "You're never quiet." }],
-      [{ w: 'party', t: "These Zoomans are happy. They don't know anything else exists." },
+      [{ w: 'steven', t: "These Zoomans are happy. They don't know anything else exists." },
        { w: 'lapis', t: "Freedom you don't know you're missing isn't freedom. It's a cage with nice wallpaper." }],
       [{ w: 'garnet', t: "Agate's wardens hold the control room." },
        { w: 'pearl', t: "I'll take the controls. You take the smashy part." },
@@ -13294,69 +13329,69 @@ const STORY_SCRIPT = {
   8: {
     map: 'Homeworld Abduction Shore',
     waves: [
-      [{ w: 'party', t: "They're taking humans. Like they took Dad." },
+      [{ w: 'steven', t: "They're taking humans. Like they took Dad." },
        { w: 'connie', t: "Not on our beach. Not today." },
-       { w: 'party', t: "Connie, you're terrifying." },
+       { w: 'steven', t: "Connie, you're terrifying." },
        { w: 'connie', t: "Thank you!" }],
       [{ w: 'connie', t: "Pearl taught me to hold a sword. She didn't teach me to lose." },
-       { w: 'party', t: "That's... actually a little scary, Connie." },
+       { w: 'steven', t: "That's... actually a little scary, Connie." },
        { w: 'connie', t: "Good!" }],
       [{ w: 'garnet', t: "Topaz fusion. Two gems, one body, and no choice in the matter." },
-       { w: 'party', t: "That's not a fusion. That's a prison." },
+       { w: 'steven', t: "That's not a fusion. That's a prison." },
        { w: 'garnet', t: "Exactly." }],
-      [{ w: 'party', t: "Aquamarine's ship is lifting! If it clears the beach, those people are gone!" },
+      [{ w: 'steven', t: "Aquamarine's ship is lifting! If it clears the beach, those people are gone!" },
        { w: 'connie', t: "Then it doesn't clear the beach." },
-       { w: 'party', t: "I love it when you say things like that!" }]
+       { w: 'steven', t: "I love it when you say things like that!" }]
     ],
     boss: [
       { w: 'villain', n: 'FUSED TOPAZ ENFORCER', i: '💛', t: 'ORDERS ARE ORDERS.' },
       { w: 'connie', t: "They're not evil. They're scared." },
-      { w: 'party', t: "Then let's be brave enough for both of them!" }
+      { w: 'steven', t: "Then let's be brave enough for both of them!" }
     ]
   },
   9: {
     map: 'Homeworld Trial & Off-Colors',
     waves: [
-      [{ w: 'party', t: "The courtroom. Last time I stood here, I was on trial for Mom's murder." },
+      [{ w: 'steven', t: "The courtroom. Last time I stood here, I was on trial for Mom's murder." },
        { w: 'connie', t: "And this time?" },
-       { w: 'party', t: "This time I brought backup." }],
-      [{ w: 'party', t: "I'm not alone anymore." },
+       { w: 'steven', t: "This time I brought backup." }],
+      [{ w: 'steven', t: "I'm not alone anymore." },
        { w: 'pearl', t: "You never were, Steven." },
        { w: 'garnet', t: "We're right here." }],
       [{ w: 'garnet', t: "Off-Colors. Rhodonite, Padparadscha, Fluorite. Gems Homeworld threw away." },
-       { w: 'party', t: "Then they're Crystal Gems now." },
+       { w: 'steven', t: "Then they're Crystal Gems now." },
        { w: 'garnet', t: "That's the whole idea, yes." }],
       [{ w: 'garnet', t: "The Robonoid Hunter was built to find runaway gems." },
-       { w: 'party', t: "Good! Let it find us!" },
+       { w: 'steven', t: "Good! Let it find us!" },
        { w: 'pearl', t: "Steven, that is NOT a strategy!" },
-       { w: 'party', t: "It's a LITTLE bit of a strategy!" }]
+       { w: 'steven', t: "It's a LITTLE bit of a strategy!" }]
     ],
     boss: [
       { w: 'villain', n: 'ROBONOID HUNTER COLOSSUS', i: '🤖', t: 'TARGETS ACQUIRED.' },
       { w: 'pearl', t: "Aim for the core!" },
-      { w: 'party', t: "Every gem deserves a chance. Even the one hunting us." }
+      { w: 'steven', t: "Every gem deserves a chance. Even the one hunting us." }
     ]
   },
   10: {
     map: 'Change Your Mind — Era 3',
     waves: [
-      [{ w: 'party', t: "White Diamond's mecha is the size of a CITY." },
+      [{ w: 'steven', t: "White Diamond's mecha is the size of a CITY." },
        { w: 'garnet', t: "Then we make ourselves the size of a problem." },
        { w: 'amethyst', t: "Now THAT I can work with!" }],
       [{ w: 'connie', t: "Everyone's here. All of us." },
        { w: 'bismuth', t: "All of us is what Homeworld is afraid of." },
-       { w: 'party', t: "Then let's give them something to be afraid of!" }],
+       { w: 'steven', t: "Then let's give them something to be afraid of!" }],
       [{ w: 'pearl', t: "White Diamond believes she is perfect. Perfection doesn't bend." },
-       { w: 'party', t: "Then I'll bend it." },
+       { w: 'steven', t: "Then I'll bend it." },
        { w: 'pearl', t: "...That's either very brave or very stupid." },
-       { w: 'party', t: "Both! It's both!" }],
-      [{ w: 'party', t: "I'm not Rose Quartz. I'm not Pink Diamond. I'm Steven." },
+       { w: 'steven', t: "Both! It's both!" }],
+      [{ w: 'steven', t: "I'm not Rose Quartz. I'm not Pink Diamond. I'm Steven." },
        { w: 'garnet', t: "And that's enough." },
        { w: 'amethyst', t: "Yeah it is!" }]
     ],
     boss: [
       { w: 'villain', n: 'WHITE DIAMOND SUPREME MECHA', i: '💎', t: 'I AM PERFECTION.' },
-      { w: 'party', t: "No. You're just scared of being wrong." },
+      { w: 'steven', t: "No. You're just scared of being wrong." },
       { w: 'garnet', t: "Era 3 starts here." }
     ]
   }
@@ -14057,6 +14092,8 @@ class StevenUniverseGame {
 
     const hudP2 = document.getElementById('hudP2Panel');
     if (this.playerMode === '2p') {
+      const hudEl = document.getElementById('hud');
+      if (hudEl) hudEl.classList.add('two-player');
       this.player2 = new PlayerHero(this.groundY, 'p2', this.stageWidth);
       this.player2.x = 340;
       this.player2.y = this.groundY;
@@ -14067,6 +14104,8 @@ class StevenUniverseGame {
     } else {
       this.player2 = null;
       if (hudP2) hudP2.style.display = 'none';
+      const hudEl = document.getElementById('hud');
+      if (hudEl) hudEl.classList.remove('two-player');
     }
     this.updateFusionHUD();
 
@@ -14209,7 +14248,10 @@ class StevenUniverseGame {
   // ======================================================================
   resolveStorySpeaker(line) {
     let who = line.w;
-    if (who === 'party') who = this.player ? this.player.activeChar : 'steven';
+    // Story dialogue is always spoken by the canonical character for that scene —
+    // whoever the player picked is irrelevant (the box must never put Steven's line
+    // in, say, Lapis' mouth).
+    if (who === 'party') who = 'steven';
     if (who === 'partner') who = (this.player2 && this.player2.activeChar) ? this.player2.activeChar : 'garnet';
     if (who === 'villain') {
       return {

@@ -1,5 +1,28 @@
 # Changelog
 
+## 2025-11-01 — "Voice & Sound" revision
+
+### Fixed — dialogue no longer puts lines in the wrong mouth
+* All 45 story lines that resolved to "whoever the player picked" are now written for their
+  **canonical speaker** (almost all of them Steven). Playing Lapis no longer makes Lapis say
+  "I'm not Rose Quartz. I'm not Pink Diamond. I'm Steven."
+
+### Changed — HUD controls
+* The quick-action pill now contains **only the pause button** (mobile / sound / screenshot
+  removed). It sits at the **top-right** in 1-player and returns to the **centre** in 2-player.
+* Settings modal: the "CONTROLS & DISPLAY / Mobile Controls" row is gone.
+
+### Fixed — every episode now has its own soundtrack
+* `playStageMusic()` asked for `stage_8` and `boss_N` profiles that never existed, so those
+  fights fell back to the menu theme — and the saved jukebox track silently overrode **every**
+  level.
+* Added an explicit episode → track map plus a new `stage_8` (Homeworld, imperial march), and
+  retuned each theme to its setting: Kindergarten 92 BPM hollow, Cluster 76 BPM heavy, Forge
+  124 BPM industrial, Frozen North 84 BPM glassy, Trial 140 BPM tense, Finale 156 BPM epic.
+* Boss fights now use the episode's theme at boss tempo instead of the menu track.
+* The jukebox only overrides level music when **you** pick a track; otherwise the level's own
+  atmosphere plays.
+
 ## 2025-11-01 — "Flow" revision
 
 ### Changed — waves no longer walk you off screen
