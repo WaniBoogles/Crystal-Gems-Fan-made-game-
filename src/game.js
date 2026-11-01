@@ -71,16 +71,26 @@ class GemAudioEngine {
   }
 
   onAudioRunning() {
-    if (!this.hasAwakened) {
-      this.hasAwakened = true;
+    const firstTime = !this.hasAwakened;
+    this.hasAwakened = true;
+
+    if (this.sfxGainNode && this.ctx) {
+      try {
+        this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
+      } catch (e) {}
+    }
+    if (!this.ctx || !this.musicGainNode || !this.musicEnabled) return;
+
+    if (firstTime) {
+      // First play of the session: nice 1s fade-in from silence.
       this.fadeInMusic(1.0);
-      if (this.sfxGainNode && this.ctx) {
-        try {
-          this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
-        } catch (e) {}
-      }
-    } else {
-      this.fadeInMusic(0.8);
+    } else if (this.musicGainNode.gain.value < this.musicVolume * 0.98) {
+      // Woken up again (tab focus, suspended context): top the track straight back up.
+      // Never call fadeInMusic() here — that restarts from ~0 and ducks the music on
+      // every single keypress, which is exactly what players were hearing.
+      try {
+        this.musicGainNode.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
+      } catch (e) {}
     }
   }
 
@@ -13576,8 +13586,24 @@ class StevenUniverseGame {
       }
     };
 
-    // Immediate attempt on boot
+    // Immediate attempt on boot. If the engine allows audio right away, the lobby
+    // track starts on its own; otherwise the first click/keypress unlocks it.
     tryAutoPlay();
+    const ensureLobbyMusic = () => {
+      if (this.state !== 'title' || this.audio.isManuallyPaused) return;
+      if (!this.audio.ctx || this.audio.ctx.state !== 'running') return;
+      if (!this.audio.musicInterval) {
+        const trk = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
+        this.audio.playTrackById(trk, false);
+      }
+      if (this.audio.musicGainNode) {
+        try { this.audio.musicGainNode.gain.setValueAtTime(this.audio.musicVolume, this.audio.ctx.currentTime); } catch (e) {}
+      }
+    };
+    window.addEventListener('pointerdown', ensureLobbyMusic, { passive: true });
+    window.addEventListener('keydown', ensureLobbyMusic, { passive: true });
+    setTimeout(ensureLobbyMusic, 600);
+    setTimeout(ensureLobbyMusic, 2500);
 
     // Polling auto-resume interval during first 10 seconds of boot
     let autoAttempts = 0;
@@ -13968,6 +13994,7 @@ class StevenUniverseGame {
     this.isTransitioning = false;
     this.transitionTimer = 0;
     this.lastStoryBeat = null;
+    this.releaseAllInputs();
     this.dialogueActive = false;
     this.dialogueOnDone = null;
     this.screenTransition = null;
@@ -14161,6 +14188,34 @@ class StevenUniverseGame {
       name: data.name,
       color: (OVERDRIVE_THEMES[who] || OVERDRIVE_THEMES.steven).color
     };
+  }
+
+  // Zero every held input. Called on blur, tab hide, pause and menu changes so a
+  // missed keyup can never leave the hero sliding on their own.
+  releaseAllInputs() {
+    const blank = { left: false, right: false, jump: false, down: false, shield: false, dodge: false, attack: false, special: false, skill: false, overdrive: false };
+    this.keysP1 = Object.assign(this.keysP1 || {}, blank);
+    this.keysP2 = Object.assign(this.keysP2 || {}, blank);
+    for (const hero of [this.player, this.player2]) {
+      if (!hero) continue;
+      hero.vx = 0;
+      hero.isShielding = false;
+      hero.isDodging = false;
+    }
+    // Release any on-screen touch buttons stuck in the pressed state
+    document.querySelectorAll('.touch-btn.pressed, .touch-btn.active').forEach(el => el.classList.remove('pressed', 'active'));
+  }
+
+  releaseStuckTouchKeys() {
+    // Only clears when no pointer is still down (multi-touch friendly)
+    for (const hero of [this.player, this.player2]) {
+      if (hero && hero.isDodging) hero.isDodging = false;
+    }
+  }
+
+  releaseKeysOnModifierChange(e) {
+    // Alt-Tab / Cmd-Tab / focus switches can swallow the keyup for a held key.
+    if (e.key === 'Alt' || e.key === 'Meta' || e.key === 'OS') this.releaseAllInputs();
   }
 
   bindDialogueInput() {
@@ -17085,9 +17140,18 @@ class StevenUniverseGame {
   showTitleScreen() {
     this.hideAllScreens();
     this.state = 'title';
+    this.releaseAllInputs();
     this.audio.isManuallyPaused = false;
+    this.audio.init();
+    if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
+      this.audio.ctx.resume().catch(() => {});
+    }
     const lobbyTrack = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
     this.audio.playTrackById(lobbyTrack, false);
+    // A returning player should always land on music, not silence.
+    if (this.audio.ctx && this.audio.ctx.state === 'running' && this.audio.musicGainNode) {
+      try { this.audio.musicGainNode.gain.setValueAtTime(this.audio.musicVolume, this.audio.ctx.currentTime); } catch (e) {}
+    }
     if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(true);
 
     // Reset Fusion state cleanly without spawning in-game unfuse poofs/particles
@@ -17229,7 +17293,9 @@ class StevenUniverseGame {
 
     // Keyboard Handling for 1P and 2P modes (Strict Separation of Controls!)
     window.addEventListener('keydown', (e) => {
-      this.audio.init();
+      // Only touch the audio graph when it actually needs unlocking.
+      if (!this.audio.ctx || this.audio.ctx.state !== 'running') this.audio.init();
+      this.releaseKeysOnModifierChange(e);
 
       // Screenshot hotkey: PrintScreen (or [P] in Solo Mode)
       if (e.code === 'PrintScreen' || (e.code === 'KeyP' && this.playerMode !== '2p')) {
@@ -17342,12 +17408,14 @@ class StevenUniverseGame {
         // In-game Pause Toggle with clean lastTime synchronization
         if (this.state === 'playing') {
           this.state = 'paused';
+          this.releaseAllInputs();
           if (this.syncVolumeUI) this.syncVolumeUI();
           document.getElementById('pauseScreen').style.display = 'flex';
           const touchBox = document.getElementById('touchControls');
           if (touchBox) touchBox.style.display = 'none';
         } else if (this.state === 'paused') {
           this.state = 'playing';
+          this.releaseAllInputs();
           this.lastTime = performance.now();
           document.getElementById('pauseScreen').style.display = 'none';
           const touchBox = document.getElementById('touchControls');
@@ -17358,6 +17426,15 @@ class StevenUniverseGame {
         }
       }
     });
+
+    // If the window loses focus, the keyup never arrives and the hero would keep
+    // walking forever ("it moves by itself"). Release everything on blur/hide.
+    window.addEventListener('blur', () => this.releaseAllInputs());
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this.releaseAllInputs();
+    });
+    window.addEventListener('pointerup', () => this.releaseStuckTouchKeys());
+    window.addEventListener('pointercancel', () => this.releaseAllInputs());
 
     window.addEventListener('keyup', (e) => {
       if (this.playerMode === '2p') {
@@ -17820,6 +17897,7 @@ class StevenUniverseGame {
     safeClick('btnPause', () => {
       if (this.state === 'playing') {
         this.state = 'paused';
+        this.releaseAllInputs();
         syncVolumeUI();
         const ps = document.getElementById('pauseScreen');
         if (ps) ps.style.display = 'flex';

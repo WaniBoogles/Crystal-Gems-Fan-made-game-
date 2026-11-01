@@ -1,5 +1,37 @@
 # Changelog
 
+## 2025-11-01 — "Control fixes" revision
+
+Three reported bugs, plus the desktop wrapper that caused the worst of them.
+
+### Fixed — pause was quitting the desktop app
+* The GTK launcher bound **Escape to `Gtk.main_quit()`**, so the pause key closed the window
+  instead of opening the pause menu. Escape now belongs to the game; **F11** toggles fullscreen
+  and **Ctrl+Q** quits. The WebView also grabs keyboard focus on load.
+* Pausing (Escape or the ⏸ button) now also releases every held key, so nothing stays pressed
+  while the menu is open.
+
+### Fixed — music dropped every time a key was pressed
+* `onAudioRunning()` called `fadeInMusic()`, which ramps from 0.0001 — and the keydown handler
+  called `audio.init()` on **every** keypress, so the whole soundtrack was re-ducked to near
+  silence dozens of times a second while moving.
+* The fade now runs exactly once per session; later wake-ups just restore the slider volume.
+  `init()` is only called when the audio context is missing or suspended.
+* Menu music: returning from a run to the title screen resumes the context and restarts the
+  lobby track, and a boot-time helper retries the lobby track on the first click/keypress
+  (browser autoplay rules still require that first gesture; the native window usually starts
+  on its own).
+
+### Fixed — the hero kept walking after the keys were released
+* Missing `keyup` events (window blur, Alt-Tab, tab hide, lost focus in the desktop wrapper)
+  left `keysP1.right/left` stuck true forever.
+* Added `releaseAllInputs()` on `blur`, `visibilitychange`, pointer cancel, pause, resume, menu
+  return and every new game, plus a modifier-key guard. Verified: hold D, fire `blur`, let go →
+  drift is now exactly 0.00 px over 1.5 s.
+
+### Rebuilt
+* `Crystal-Gems.html` and `build/Crystal Gems.exe` regenerated from the fixed source.
+
 ## 2025-11-01 — "Story" revision
 
 ### Added — story mode with Stardew-style dialogue

@@ -123,16 +123,22 @@ class CrystalGemsWindow(Gtk.Window):
 
         self.show_all()
         self.webview.load_uri("file://" + html_path)
+        # Keyboard focus on the page, not the window chrome.
+        self.webview.grab_focus()
 
     def on_key_press(self, _widget, event):
-        # Esc quits the kiosk window (F11 toggles fullscreen)
-        if event.keyval == Gdk.KEY_Escape:
-            Gtk.main_quit()
-        elif event.keyval == Gdk.KEY_F11:
+        # Esc belongs to the GAME (it opens the pause menu), so it must never quit the
+        # window — that was the "pause closes the game" bug in the desktop launcher.
+        ctrl = bool(event.state & Gdk.ModifierType.CONTROL_MASK)
+        if event.keyval == Gdk.KEY_F11:
             if self.get_window() and self.get_window().get_state() & Gdk.WindowState.FULLSCREEN:
                 self.unfullscreen()
             else:
                 self.fullscreen()
+            return True
+        if ctrl and event.keyval in (Gdk.KEY_q, Gdk.KEY_Q, Gdk.KEY_w, Gdk.KEY_W):
+            Gtk.main_quit()
+            return True
         return False
 
 window = CrystalGemsWindow()
