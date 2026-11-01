@@ -11173,6 +11173,31 @@ class EnemyManager {
       ctx.translate(e.x, e.y);
       ctx.scale(e.facing, 1);
 
+      // Boss on its last legs: light bleeds out of the cracks before it breaks.
+      if (e.isBoss && !e.isImmortalDummy && e.maxHp > 0 && e.hp / e.maxHp < 0.3) {
+        const pulse = 0.5 + 0.5 * Math.sin(e.animTime * 10);
+        const r = Math.max(e.width, e.height) * 1.0;
+        ctx.save();
+        ctx.globalAlpha = 0.26 + 0.30 * pulse;
+        const glow = ctx.createRadialGradient(0, -e.height * 0.5, 4, 0, -e.height * 0.5, r);
+        glow.addColorStop(0, 'rgba(255,255,255,0.95)');
+        glow.addColorStop(0.45, `rgba(248,113,113,${0.5 + 0.3 * pulse})`);
+        glow.addColorStop(1, 'rgba(239,68,68,0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, -e.height * 0.5, r, 0, Math.PI * 2);
+        ctx.fill();
+        for (let i = 0; i < 6; i++) {
+          const rise = ((e.animTime * 0.7 + i * 1.63) % 1);
+          ctx.globalAlpha = (1 - rise) * 0.9;
+          ctx.fillStyle = i % 2 ? '#fde68a' : '#ffffff';
+          ctx.beginPath();
+          ctx.arc(Math.sin(i * 2.3 + e.animTime * 1.4) * r * 0.55, -rise * e.height - 4, 1.8 + (1 - rise) * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
       if (e.hurtTimer > 0) {
         ctx.fillStyle = '#ffffff';
       }
@@ -12708,7 +12733,7 @@ const GUARDIAN_DATA = {
     lore: 'Earth-born warrior from Prime Kindergarten. Attacks with spiked dual whips, curls into a high-speed rotating Quartz Buzzsaw ball, and erupts 4 rising violet volcanic energy geysers!',
     j: { name: 'Whip Flurry', icon: '🟣', desc: 'Dual whip slashing combo sweeping through nearby enemies' },
     k: { name: 'Sonic Spin Dash', icon: '🌀', desc: 'Authentic Quartz Buzzsaw roll charging through enemy ranks at high speed (45 DMG)' },
-    l: { name: 'Violet Geysers', icon: '🔥', desc: 'Dual whip ground slam erupting 4 consecutive rising purple energy flame geysers (40 DMG each)' }
+    l: { name: 'Whip Quake', icon: '🔥', desc: 'Slams both whips into the ground, cracking the arena in four violet shockwaves (40 DMG each)' }
   },
   pearl: {
     id: 'pearl',
@@ -12719,7 +12744,7 @@ const GUARDIAN_DATA = {
     desc: 'Spear Flurry • Laser Blast • Holo-Pearl Training Clone',
     lore: 'Graceful swordmaster and spear prodigy. Summons holographic Holo-Pearl sparring clones and pierces corruptions with laser beams!',
     j: { name: 'Spear Flurry', icon: '🗡️', desc: 'Rapid thrusting spear combo piercing enemy defenses' },
-    k: { name: 'Spear Laser', icon: '✨', desc: 'Fires a high-velocity piercing cyan laser projectile (35 DMG)' },
+    k: { name: 'Holo-Spear Volley', icon: '✨', desc: 'Projects three hard-light Holo-Pearl spears that pierce through the corruption (35 DMG)' },
     l: { name: 'Holo-Pearl Clone', icon: '🤺', desc: 'Summons an animated holographic sparring clone that dashes forward lunging with fencing thrusts (55 DMG)' }
   },
   bismuth: {
@@ -12779,8 +12804,8 @@ const GUARDIAN_DATA = {
     desc: 'Knight Fencing Flurry • Pink Sword Flying Arc • Shadow Step Blade Dash',
     lore: 'Human sword prodigy trained in classical fencing and combat choreography by Pearl. Armed with the custom Pink Sword forged by Bismuth, Connie dashes swiftly across battlefields, parrying corruptions and executing high-velocity sword flurries!',
     j: { name: 'Knight\'s Flurry', icon: '⚔️', desc: 'Rapid 3-hit fencing thrust and crescent slash combo (En Garde!)' },
-    k: { name: 'Sword Flying Arc', icon: '💫', desc: 'Hurls a glowing pink crescent sword shockwave cutting through foes (42 DMG)' },
-    l: { name: 'Shadow Step Dash', icon: '⚡', desc: 'Instant invulnerable flash-step slashing all enemies across the arena (60 DMG)' }
+    k: { name: 'Sword Dash Slash', icon: '💫', desc: "Rose's sword carves a crescent of air as Connie lunges through the enemy line (42 DMG)" },
+    l: { name: 'Tactical Parry', icon: '⚡', desc: 'The guard stance Pearl drilled into her — slips through every strike, then answers it (60 DMG)' }
   },
   jasper: {
     id: 'jasper',
@@ -13097,6 +13122,207 @@ function getCompatibleFusionPartners(charId) {
 // ============================================================================
 // 6.5. BULLETPROOF PERSISTENT STORAGE (FALLS BACK TO MEMORY ON file:/// ORIGIN)
 // ============================================================================
+// ============================================================================
+// 6.2. STORY SCRIPT — one beat per wave, following the show's own arc.
+// Episodes 1-10 map onto Seasons 1-5, so the cast talks about what they are
+// actually going through in that part of the story. `party` / `partner` resolve
+// to whoever the player brought, so the lines stay in character for any roster.
+// ============================================================================
+const STORY_SCRIPT = {
+  1: {
+    map: 'Beach City Boardwalk',
+    waves: [
+      [{ w: 'garnet', t: "Centipeetles on the boardwalk. Stay behind us, Steven." },
+       { w: 'party', t: "I can help! I've been practising with my shield!" }],
+      [{ w: 'pearl', t: "They're nesting by the fry stand. Keep the civilians clear." },
+       { w: 'amethyst', t: "Relax, P. I'll smash 'em before they even— oops." }],
+      [{ w: 'party', t: "That one's scared, not evil. Corrupted gems are just... hurt." },
+       { w: 'garnet', t: "Then we bubble them gently. That is the whole point." }],
+      [{ w: 'amethyst', t: "Big one's coming. Like, really big." },
+       { w: 'pearl', t: "Formation! Shield up — we finish this on the sand." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'MOTHER CENTIPEETLE', i: '🐛', t: 'SCREEEEEE!' },
+      { w: 'steven', t: "She's protecting her hatchlings. So we show her we're not the enemy." }
+    ]
+  },
+  2: {
+    map: 'Galaxy Warp & Spire',
+    waves: [
+      [{ w: 'pearl', t: "The Galaxy Warp is cracked. Every pad we cross could send us anywhere." },
+       { w: 'garnet', t: "Then we walk." }],
+      [{ w: 'party', t: "This place is old. Like, before-Beach-City old." },
+       { w: 'garnet', t: "Older than the town. Older than the coastline." }],
+      [{ w: 'pearl', t: "Blade Quartzes. They were soldiers once — Rose's own allies." },
+       { w: 'party', t: "Do they remember her?" },
+       { w: 'pearl', t: "I don't think they remember anything." }],
+      [{ w: 'amethyst', t: "Spire's waking up. That's a lot of stairs, even for me." },
+       { w: 'party', t: "Race you to the top?" },
+       { w: 'amethyst', t: "You're on, chubs." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'ANCIENT SPIRE GIANT BIRD', i: '🦅', t: 'KRAAAAA!' },
+      { w: 'garnet', t: "It slept through the war. Let's put it back to sleep." }
+    ]
+  },
+  3: {
+    map: 'The Prime Kindergarten',
+    waves: [
+      [{ w: 'amethyst', t: "Welcome to my birthplace. Home sweet hole." },
+       { w: 'party', t: "You were... made here?" },
+       { w: 'amethyst', t: "Every hole in that wall is a gem. One of 'em's me." }],
+      [{ w: 'pearl', t: "The injectors are still humming. This place should be dead." },
+       { w: 'amethyst', t: "It's not dead. It's just empty." }],
+      [{ w: 'amethyst', t: "Homeworld used this place up, then left." },
+       { w: 'party', t: "That's awful." },
+       { w: 'amethyst', t: "Yeah. But I got you guys out of it." }],
+      [{ w: 'amethyst', t: "Cluster mutants — gems that didn't make it out." },
+       { w: 'party', t: "Then we bubble them. All of them." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'KINDERGARTEN AMALGAM TITAN', i: '🪨', t: 'GRRRRAAAH!' },
+      { w: 'amethyst', t: "That titan's the Kindergarten's last tantrum." },
+      { w: 'party', t: "Then let's give it a hug." },
+      { w: 'amethyst', t: "A punch-hug." }
+    ]
+  },
+  4: {
+    map: "Earth's Mantle — The Cluster",
+    waves: [
+      [{ w: 'peridot', t: "The Cluster is gestating at the planet's core. We have hours, not days." },
+       { w: 'party', t: "Then we drill." }],
+      [{ w: 'peridot', t: "Warning: the mantle is unstable and I am extremely not built for this." },
+       { w: 'party', t: "You're doing great, Peridot." }],
+      [{ w: 'party', t: "They're all fused together down here. Millions of gems." },
+       { w: 'peridot', t: "They didn't choose it. Nobody asked them." }],
+      [{ w: 'peridot', t: "If the Cluster wakes, Earth cracks like an egg." },
+       { w: 'garnet', t: "Then it stays asleep. Permanently." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'GEO-WEAPON CLUSTER CORE', i: '🌋', t: '...who... am... I...' },
+      { w: 'peridot', t: "It's aware. It's confused." },
+      { w: 'party', t: "Then we talk to it. Gems can be talked to." }
+    ]
+  },
+  5: {
+    map: "Bismuth's Burning Forge",
+    waves: [
+      [{ w: 'bismuth', t: "Welcome to my workshop! Best forge on Earth. Mind the lava." },
+       { w: 'party', t: "You made all of Rose's weapons here?" }],
+      [{ w: 'bismuth', t: "Rose's sword? My finest work. Built it to cut anything but a gem." },
+       { w: 'pearl', t: "We agreed never to speak of the Breaking Point." }],
+      [{ w: 'bismuth', t: "Those automatons were mine — turned on us when Homeworld took the forge." },
+       { w: 'party', t: "Can you fix them?" },
+       { w: 'bismuth', t: "Fix? I'm gonna break 'em." }],
+      [{ w: 'garnet', t: "Bismuth, focus. The forge is fighting back." },
+       { w: 'bismuth', t: "Forge is mine. It knows better." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'ANCIENT FORGE SENTINEL', i: '🔥', t: 'SYSTEM: INTRUDER.' },
+      { w: 'bismuth', t: "Big, hot and ugly — my specialty." },
+      { w: 'party', t: "Together?" },
+      { w: 'bismuth', t: "Always, little man." }
+    ]
+  },
+  6: {
+    map: 'The Frozen North',
+    waves: [
+      [{ w: 'lapis', t: "I can feel him under the ice. Jasper." },
+       { w: 'party', t: "You don't have to fight him." },
+       { w: 'lapis', t: "I know. I want to." }],
+      [{ w: 'lapis', t: "When we were Malachite, I held us both at the bottom of the ocean." },
+       { w: 'party', t: "You're not that person anymore." }],
+      [{ w: 'garnet', t: "The corruption is eating him alive." },
+       { w: 'lapis', t: "He asked for power. He got it." }],
+      [{ w: 'jasper', t: "You think you can beat me, runt?" },
+       { w: 'party', t: "I think we can save you." },
+       { w: 'jasper', t: "SAVE THIS!" }]
+    ],
+    boss: [
+      { w: 'villain', n: 'CORRUPTED JASPER', i: '🐯', t: "BETA'S FINEST DOESN'T LOSE!" },
+      { w: 'garnet', t: "You already did, Jasper. You lost yourself." }
+    ]
+  },
+  7: {
+    map: "Pink Diamond's Space Zoo",
+    waves: [
+      [{ w: 'pearl', t: "A Human Zoo. They kept people in here like collectibles." },
+       { w: 'party', t: "That's... really messed up." }],
+      [{ w: 'garnet', t: "Blue Diamond's gems still run this place." },
+       { w: 'pearl', t: "Then we go quietly. Or loudly. I'm flexible." }],
+      [{ w: 'party', t: "These Zoomans are happy. They don't know anything else." },
+       { w: 'lapis', t: "Freedom you don't know you're missing isn't freedom." }],
+      [{ w: 'garnet', t: "Agate's wardens hold the control room." },
+       { w: 'pearl', t: "I'll take the controls. You take the smashy part." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'HOLY BLUE AGATE WARDEN', i: '🔷', t: 'HOW DARE YOU TOUCH MY ZOO!' },
+      { w: 'pearl', t: "Cruel, petty and loud." },
+       { w: 'garnet', t: "Then she'll be loud when she loses." }
+    ]
+  },
+  8: {
+    map: 'Homeworld Abduction Shore',
+    waves: [
+      [{ w: 'party', t: "They're taking humans. Like they took Dad." },
+       { w: 'connie', t: "Not on our beach they're not." }],
+      [{ w: 'connie', t: "Pearl taught me to hold a sword. She didn't teach me to lose." },
+       { w: 'party', t: "That's... actually terrifying, Connie." }],
+      [{ w: 'garnet', t: "Topaz fusion. Two gems, one body, no choice in the matter." },
+       { w: 'party', t: "That's not a fusion. That's a prison." }],
+      [{ w: 'party', t: "Aquamarine's ship is lifting. If it clears, those people are gone." },
+       { w: 'connie', t: "Then we don't let it lift." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'FUSED TOPAZ ENFORCER', i: '💛', t: 'ORDERS ARE ORDERS.' },
+      { w: 'connie', t: "They're not evil — they're scared." },
+       { w: 'party', t: "Then let's be brave enough for both of them." }
+    ]
+  },
+  9: {
+    map: 'Homeworld Trial & Off-Colors',
+    waves: [
+      [{ w: 'party', t: "The courtroom. Last time I stood here, I was on trial for Mom's murder." },
+       { w: 'connie', t: "And this time?" }],
+      [{ w: 'party', t: "This time I'm not alone." },
+       { w: 'pearl', t: "You never were." }],
+      [{ w: 'garnet', t: "Off-Colors — Rhodonite, Padparadscha, Fluorite. Gems Homeworld threw away." },
+       { w: 'party', t: "Then they're Crystal Gems now." }],
+      [{ w: 'garnet', t: "The Robonoid Hunter was built to find runaway gems." },
+       { w: 'party', t: "Good. Let it find us." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'ROBONOID HUNTER COLOSSUS', i: '🤖', t: 'TARGETS ACQUIRED.' },
+      { w: 'pearl', t: "Aim for the core!" },
+       { w: 'party', t: "Every gem deserves a chance. Even the one hunting us." }
+    ]
+  },
+  10: {
+    map: 'Change Your Mind — Era 3',
+    waves: [
+      [{ w: 'party', t: "White Diamond's mecha is the size of a city." },
+       { w: 'garnet', t: "Then we make ourselves the size of a problem." }],
+      [{ w: 'connie', t: "Everyone's here. All of us." },
+       { w: 'bismuth', t: "All of us is what Homeworld is afraid of." }],
+      [{ w: 'pearl', t: "White Diamond believes she is perfect. Perfection doesn't bend." },
+       { w: 'party', t: "Then I'll bend it." }],
+      [{ w: 'party', t: "I'm not Rose Quartz. I'm not Pink Diamond. I'm Steven." },
+       { w: 'garnet', t: "And that's enough." }]
+    ],
+    boss: [
+      { w: 'villain', n: 'WHITE DIAMOND SUPREME MECHA', i: '💎', t: 'I AM PERFECTION.' },
+      { w: 'party', t: "No. You're just scared of being wrong." },
+       { w: 'garnet', t: "Era 3 starts here." }
+    ]
+  }
+};
+
+// Boss portraits we do not have art for are represented by an emoji crest.
+const STORY_VILLAIN_COLORS = {
+  1: '#22c55e', 2: '#06b6d4', 3: '#a855f7', 4: '#f97316', 5: '#ef4444',
+  6: '#ea580c', 7: '#3b82f6', 8: '#eab308', 9: '#94a3b8', 10: '#f8fafc'
+};
+
 const SafeStorage = {
   _mem: {},
   getItem(key) {
@@ -13741,6 +13967,15 @@ class StevenUniverseGame {
 
     this.isTransitioning = false;
     this.transitionTimer = 0;
+    this.lastStoryBeat = null;
+    this.dialogueActive = false;
+    this.dialogueOnDone = null;
+    this.screenTransition = null;
+    this.cutinActive = false;
+    this.cutinFreeze = 0;
+    if (document.getElementById('dialogueBox')) document.getElementById('dialogueBox').style.display = 'none';
+    if (document.getElementById('portraitCutin')) document.getElementById('portraitCutin').style.display = 'none';
+    this.setVeil(false);
 
     const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
     this.maxHearts = diff.hearts;
@@ -13905,6 +14140,257 @@ class StevenUniverseGame {
     }
   }
 
+  // ======================================================================
+  // STORY DIALOGUE (Stardew-style box with a portrait)
+  // ======================================================================
+  resolveStorySpeaker(line) {
+    let who = line.w;
+    if (who === 'party') who = this.player ? this.player.activeChar : 'steven';
+    if (who === 'partner') who = (this.player2 && this.player2.activeChar) ? this.player2.activeChar : 'garnet';
+    if (who === 'villain') {
+      return {
+        villain: true,
+        name: line.n || 'CORRUPTED GEM',
+        icon: line.i || '💎',
+        color: STORY_VILLAIN_COLORS[this.stageIndex] || '#ef4444'
+      };
+    }
+    const data = GUARDIAN_DATA[who] || GUARDIAN_DATA.steven;
+    return {
+      id: who,
+      name: data.name,
+      color: (OVERDRIVE_THEMES[who] || OVERDRIVE_THEMES.steven).color
+    };
+  }
+
+  bindDialogueInput() {
+    if (this._dialogueBound) return;
+    this._dialogueBound = true;
+    document.addEventListener('keydown', (e) => {
+      if (!this.dialogueActive) return;
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'KeyE') {
+        e.preventDefault();
+        e.stopPropagation(); // keep the game's own key handling out of it
+        if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+        this.advanceDialogue();
+      }
+    }, true);
+    const box = document.getElementById('dialogueBox');
+    if (box) box.addEventListener('click', () => this.advanceDialogue());
+  }
+
+  showDialogue(lines, onDone) {
+    if (!lines || !lines.length) { if (onDone) onDone(); return; }
+    this.bindDialogueInput();
+    this.dialogueLines = lines.slice();
+    this.dialogueIndex = 0;
+    this.dialogueOnDone = onDone || null;
+    this.dialogueActive = true;
+    this.dialogueTimer = 0;
+    this.dialogueAutoTimer = 0;
+    const box = document.getElementById('dialogueBox');
+    if (box) {
+      box.style.display = 'flex';
+      box.classList.remove('dialogue-in');
+      void box.offsetWidth;
+      box.classList.add('dialogue-in');
+    }
+    this.renderDialogueLine();
+    this.audio.playSfx('menuTap');
+  }
+
+  renderDialogueLine() {
+    const line = this.dialogueLines[this.dialogueIndex];
+    if (!line) { this.closeDialogue(); return; }
+    const speaker = this.resolveStorySpeaker(line);
+    const nameEl = document.getElementById('dialogueName');
+    const textEl = document.getElementById('dialogueText');
+    const portraitEl = document.getElementById('dialoguePortrait');
+    if (nameEl) {
+      nameEl.textContent = speaker.name;
+      nameEl.parentElement.style.background = `linear-gradient(135deg, ${speaker.color}, #7c1533)`;
+    }
+    if (textEl) textEl.textContent = line.t;
+    if (portraitEl) {
+      if (speaker.villain) {
+        portraitEl.innerHTML = `<div style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;background:radial-gradient(circle, ${speaker.color}55, #0b0714);border:2px solid ${speaker.color};box-shadow:0 0 22px ${speaker.color}88">${speaker.icon}</div>`;
+      } else {
+        portraitEl.innerHTML = (typeof getGuardianSvg === 'function')
+          ? getGuardianSvg(speaker.id, 88)
+          : ((GUARDIAN_PORTRAITS && GUARDIAN_PORTRAITS[speaker.id]) || '');
+      }
+    }
+  }
+
+  advanceDialogue() {
+    if (!this.dialogueActive) return;
+    this.dialogueIndex++;
+    this.dialogueAutoTimer = 0;
+    if (this.dialogueIndex >= this.dialogueLines.length) {
+      this.closeDialogue();
+    } else {
+      this.renderDialogueLine();
+      this.audio.playSfx('menuTap');
+    }
+  }
+
+  closeDialogue() {
+    this.dialogueActive = false;
+    const box = document.getElementById('dialogueBox');
+    if (box) {
+      box.classList.remove('dialogue-in');
+      setTimeout(() => { if (!this.dialogueActive) box.style.display = 'none'; }, 200);
+    }
+    const cb = this.dialogueOnDone;
+    this.dialogueOnDone = null;
+    if (cb) cb();
+  }
+
+  // ======================================================================
+  // PORTRAIT CUT-IN (hitstop super-move intro)
+  // ======================================================================
+  startCutin(opts) {
+    if (this.cutinActive) return;
+    const o = opts || {};
+    this.cutinActive = true;
+    this.cutinTimer = o.duration || 1.9;
+    this.cutinFreeze = o.freeze != null ? o.freeze : this.cutinTimer;
+    this.cutinOnDone = o.onDone || null;
+
+    const root = document.getElementById('portraitCutin');
+    const wrap = document.getElementById('cutinPortraitWrap');
+    const portrait = document.getElementById('cutinPortrait');
+    const kicker = document.getElementById('cutinKicker');
+    const nameEl = document.getElementById('cutinName');
+    const quoteEl = document.getElementById('cutinQuote');
+    const flash = document.getElementById('cutinFlash');
+
+    if (wrap) wrap.className = 'cutin-portrait-wrap ' + (o.side === 'right' ? 'from-right' : 'from-left');
+    if (portrait) {
+      portrait.innerHTML = o.charId
+        ? ((typeof getGuardianSvg === 'function') ? getGuardianSvg(o.charId, 340) : '')
+        : `<div style="font-size:190px;line-height:1;filter:drop-shadow(0 0 26px rgba(255,255,255,.85))">${o.icon || '💎'}</div>`;
+    }
+    if (kicker) { kicker.textContent = o.kicker || 'PINK OVERDRIVE'; kicker.style.color = o.kickerColor || '#ffd700'; }
+    if (nameEl) nameEl.textContent = o.name || '';
+    if (quoteEl) quoteEl.textContent = o.quote || '';
+    if (flash) { flash.classList.remove('flash'); void flash.offsetWidth; }
+    if (root) root.style.display = 'flex';
+
+    setTimeout(() => { if (flash) flash.classList.add('flash'); }, 260);
+    this.audio.playSfx('overdrive');
+  }
+
+  endCutin() {
+    this.cutinActive = false;
+    this.cutinFreeze = 0;
+    const root = document.getElementById('portraitCutin');
+    if (root) root.style.display = 'none';
+    const cb = this.cutinOnDone;
+    this.cutinOnDone = null;
+    if (cb) cb();
+  }
+
+  // ======================================================================
+  // SCREEN TRANSITIONS (walk out right -> black veil -> next wave/level)
+  // ======================================================================
+  setVeil(on) {
+    const veil = document.getElementById('stageVeil');
+    if (!veil) return;
+    if (on) {
+      veil.style.display = 'block';
+      void veil.offsetWidth;
+      veil.classList.add('veil-in');
+    } else {
+      veil.classList.remove('veil-in');
+      setTimeout(() => { if (!veil.classList.contains('veil-in')) veil.style.display = 'none'; }, 430);
+    }
+  }
+
+  beginWaveExit(nextWaveIdx) {
+    if (this.screenTransition) return;
+    this.isWaitingForWaveClear = false;
+    this.screenTransition = { kind: 'wave', phase: 'walk', timer: 0, nextWaveIdx };
+  }
+
+  beginStageExit() {
+    if (this.screenTransition) return;
+    this.isTransitioning = false;
+    this.screenTransition = { kind: 'stage', phase: 'walk', timer: 0 };
+  }
+
+  performStageAdvance() {
+    const banner = document.getElementById('stageClearBanner');
+    if (banner) banner.style.display = 'none';
+    this.stageIndex++;
+    const stageHeal = (this.enemyManager.stageHeal ?? -1);
+    if (stageHeal < 0) {
+      this.currentHearts = this.maxHearts;
+      this.currentHeartsP2 = this.maxHearts;
+    } else {
+      this.currentHearts = Math.min(this.maxHearts, this.currentHearts + stageHeal);
+      this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + stageHeal);
+    }
+    this.player.revive(this.audio, this.particles);
+    if (this.player2) this.player2.revive(this.audio, this.particles);
+    this.isTransitioning = false;
+    this.updateHUD();
+    this.startStageWave();
+  }
+
+  updateScreenTransition(dt) {
+    const t = this.screenTransition;
+    if (!t) return;
+    const players = [this.player];
+    if (this.playerMode === '2p' && this.player2) players.push(this.player2);
+
+    if (t.phase === 'walk') {
+      let allGone = true;
+      for (const p of players) {
+        p.facing = 1;
+        p.vx = 260;
+        p.x += 260 * dt;
+        p.walkAnim = (p.walkAnim || 0) + dt * 12;
+        p.isAttacking = false;
+        p.isShielding = false;
+        p.actionTimer = 0;
+        if (p.x < this.stageWidth + 60) allGone = false;
+      }
+      if (allGone) {
+        this.setVeil(true);
+        t.phase = 'veil';
+        t.timer = 0.45;
+      }
+    } else if (t.phase === 'veil') {
+      t.timer -= dt;
+      if (t.timer <= 0) {
+        for (const p of players) { p.x = -60; p.vx = 0; p.vy = 0; p.walkAnim = 0; }
+        t.phase = 'enter';
+      }
+    } else if (t.phase === 'enter') {
+      let settled = true;
+      for (const p of players) {
+        if (p.x < 230) {
+          p.x += 320 * dt;
+          p.walkAnim += dt * 12;
+          p.facing = 1;
+          settled = false;
+        } else {
+          p.vx = 0;
+        }
+      }
+      if (settled) {
+        this.setVeil(false);
+        this.screenTransition = null;
+        if (t.kind === 'wave') {
+          this.prepareWave(t.nextWaveIdx);
+        } else {
+          this.performStageAdvance();
+        }
+      }
+    }
+  }
+
   startStageWave() {
     const titles = [
       'EPISODE 1: BEACH CITY BOARDWALK',
@@ -13984,6 +14470,16 @@ class StevenUniverseGame {
       return;
     }
 
+    // Story beat for this wave (plays once, before the enemies arrive)
+    const story = STORY_SCRIPT[this.stageIndex];
+    const beatKey = `${this.stageIndex}:w${waveIdx}`;
+    if (story && story.waves && story.waves[waveIdx] && this.lastStoryBeat !== beatKey) {
+      this.lastStoryBeat = beatKey;
+      this.waveIndex = waveIdx;
+      this.showDialogue(story.waves[waveIdx], () => this.prepareWave(waveIdx));
+      return;
+    }
+
     this.waveIndex = waveIdx;
     const currentWaveData = epData.waves[waveIdx];
     this.enemyManager.wave = waveIdx + 1;
@@ -14027,6 +14523,14 @@ class StevenUniverseGame {
   prepareBossWave() {
     const epData = EPISODE_WAVES[this.stageIndex];
     if (!epData) return;
+
+    const story = STORY_SCRIPT[this.stageIndex];
+    const beatKey = `${this.stageIndex}:boss`;
+    if (story && story.boss && this.lastStoryBeat !== beatKey) {
+      this.lastStoryBeat = beatKey;
+      this.showDialogue(story.boss, () => this.prepareBossWave());
+      return;
+    }
 
     this.waveIndex = epData.waves.length;
     this.waveSpawnQueue = [];
@@ -14175,6 +14679,22 @@ class StevenUniverseGame {
     this.environment.update();
     this.particles.update();
 
+    // Hitstop for the portrait cut-in, plus dialogue / walk-out transitions.
+    if (this.cutinActive) {
+      this.cutinTimer -= dt;
+      if (this.cutinTimer <= 0) this.endCutin();
+      return;
+    }
+    if (this.dialogueActive) {
+      this.dialogueAutoTimer = (this.dialogueAutoTimer || 0) + dt;
+      if (this.dialogueAutoTimer > 7) this.advanceDialogue();
+      return;
+    }
+    if (this.screenTransition) {
+      this.updateScreenTransition(dt);
+      return;
+    }
+
     if (this.isTransitioning) {
       // Delta-time driven stage transition: Immune to browser background throttling & inactivity!
       if (this.transitionTimer > 0) {
@@ -14322,7 +14842,7 @@ class StevenUniverseGame {
               this.waveClearTimer -= dt;
               if (this.waveClearTimer <= 0) {
                 this.isWaitingForWaveClear = false;
-                this.prepareWave(this.waveIndex + 1);
+                this.beginWaveExit(this.waveIndex + 1);
               }
             }
           } else {
@@ -14487,7 +15007,31 @@ class StevenUniverseGame {
 
   activatePinkOverdrive(playerId = 'p1') {
     if (this.state !== 'playing') return;
+    const hero = playerId === 'p2' ? this.player2 : this.player;
+    if (!hero) return;
 
+    const alreadyActive = playerId === 'p2' ? this.isOverdriveActiveP2 : this.isOverdriveActive;
+    const meter = playerId === 'p2' ? (this.starPowerMeterP2 || 0) : this.starPowerMeter;
+    if (alreadyActive) return;
+    if (this.gameMode !== 'practice' && meter < 100) return;
+    if (this.cutinActive || this.dialogueActive || this.screenTransition) return;
+
+    const theme = OVERDRIVE_THEMES[hero.activeChar] || OVERDRIVE_THEMES.steven;
+    this.startCutin({
+      kicker: 'PINK OVERDRIVE',
+      kickerColor: theme.color,
+      charId: hero.activeChar,
+      name: theme.name,
+      quote: 'PINK STATE · 2× POWER · 12 SECONDS',
+      side: playerId === 'p2' ? 'right' : 'left',
+      duration: 1.9,
+      freeze: 1.9,
+      onDone: () => this.applyOverdrive(playerId)
+    });
+  }
+
+  // The actual power-up, played after the portrait cut-in finishes.
+  applyOverdrive(playerId = 'p1') {
     if (playerId === 'p1') {
       if (this.isOverdriveActive) return;
       if (this.gameMode !== 'practice' && this.starPowerMeter < 100) return;
@@ -14566,9 +15110,9 @@ class StevenUniverseGame {
   }
 
   advanceToNextStage() {
-    if (this.isTransitioning) return;
-    this.isTransitioning = true;
-    this.transitionTimer = 2.4;
+    if (this.isTransitioning || this.screenTransition) return;
+    this.isTransitioning = false;
+    this.beginStageExit();
     this.isBossSpawning = false;
     this.bossSpawnTimer = 0;
     this.waveSpawnQueue = [];
@@ -14684,6 +15228,20 @@ class StevenUniverseGame {
   }
 
   render() {
+    // Low-health boss: the whole arena trembles while it is about to break.
+    const boss = this.enemyManager.enemies.find(en => en.isBoss && !en.isPoofed && !en.isImmortalDummy);
+    let shakeX = 0;
+    let shakeY = 0;
+    if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
+      const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
+      const amp = 1.4 + 4.2 * frac;
+      const t = Date.now() / 42;
+      shakeX = Math.sin(t) * amp;
+      shakeY = Math.cos(t * 1.7) * amp * 0.7;
+    }
+    this.ctx.save();
+    this.ctx.translate(shakeX, shakeY);
+
     // 1. Far Parallax Background (Screen Space)
     this.environment.drawBackground(this.ctx, this.stageIndex, this.cameraX, this.gameMode === 'practice');
 
@@ -14717,6 +15275,7 @@ class StevenUniverseGame {
     this.particles.draw(this.ctx);
 
     this.ctx.restore();
+    this.ctx.restore(); // screen-shake transform
   }
 
   drawPickup(p) {
@@ -15784,6 +16343,17 @@ class StevenUniverseGame {
 
     // Pair-specific fusion identity (Sugilite is short and brutal, Sardonyx is long)
     const power = FUSION_POWER[fusion.id] || { nuke: 1.0, duration: 4.0, heal: 1, title: 'GEM FUSION' };
+
+    this.startCutin({
+      kicker: 'GEM FUSION',
+      kickerColor: fusion.color || '#f472b6',
+      icon: fusion.icon || '💎',
+      name: fusion.name.toUpperCase(),
+      quote: `${fusion.weapon} · ${power.title}`,
+      side: 'left',
+      duration: 1.6,
+      freeze: 1.0
+    });
     const overcharge = Math.max(0, (this.fusionEnergy || 0) - 100);
     const duration = power.duration + Math.min(1.2, overcharge * 0.05);
     this.activeFusionNukeMult = power.nuke * (1 + Math.min(0.3, overcharge * 0.008));

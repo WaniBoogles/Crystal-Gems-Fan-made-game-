@@ -20,6 +20,19 @@ HOW TO LAUNCH
  100% offline. No account, no internet needed (fonts fall back offline).
 
 ------------------------------------------------------------------------
+STORY DIALOGUE
+------------------------------------------------------------------------
+ Before every wave and every boss, the guardians talk about where they are in
+ the story. A portrait box appears at the bottom of the screen.
+
+   • Advance a line : CLICK the box, or press SPACE / ENTER
+   • Auto-advance   : after 7 seconds if you do nothing
+   • The fight pauses while anyone is talking — you will not get hit.
+
+ Between waves your characters run off the right side, the screen blurs to
+ black, and the next wave starts with them walking in from the left.
+
+------------------------------------------------------------------------
 CONTROLS
 ------------------------------------------------------------------------
  [ 1-PLAYER ]
@@ -100,7 +113,9 @@ HEALING & POWER-UPS
  • Steven's healing saliva restores +1 heart (his canon healing power).
  • Collecting a bubbled gem grants +25% Overdrive and +500 points.
  • Pink Overdrive (100%) = 12s of +85% speed, 2x damage, faster cooldowns and
-   50% damage resistance.
+   50% damage resistance. Activating it freezes the fight for a portrait
+   cut-in — P1 sweeps in from the left, P2 mirrored from the right — then the
+   buff lands. Fusions get the same cut-in card.
 
 ------------------------------------------------------------------------
 TIPS

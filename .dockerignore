@@ -1,0 +1,9 @@
+.git
+.freebuff
+build
+dev-history
+tools
+node_modules
+*.exe
+*.apk
+*.zip

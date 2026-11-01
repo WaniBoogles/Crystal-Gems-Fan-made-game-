@@ -1,5 +1,41 @@
 # Changelog
 
+## 2025-11-01 — "Story" revision
+
+### Added — story mode with Stardew-style dialogue
+* `STORY_SCRIPT`: **50 hand-written beats** (4 per episode + a boss intro), each rooted in the
+  season that episode adapts — Centipeetles on the boardwalk, Amethyst's Kindergarten, Peridot's
+  Cluster warning, Bismuth and the Breaking Point, Jasper under the ice, the Human Zoo, Topaz and
+  Aquamarine, the Off-Colors, White Diamond.
+* Dialogue box with the character's main-menu portrait, nameplate, typed line and a continue
+  hint. Advance with click / Space / Enter, or wait 7 seconds. The fight is paused while it plays.
+* `party` / `partner` speakers resolve to the guardians you actually picked.
+
+### Added — portrait cut-ins (hitstop super-move intro)
+* Overdrive now freezes the game for ~1.9 s and plays a full-screen portrait cut-in: hero
+  portrait sweeps in from the left (P1) or mirrored from the right (P2), rotating light rays,
+  speed lines, name in display type, quote line and a white flash.
+* Fusions get a cut-in card with the fusion crest, name and weapon line.
+* Damage, projectiles and timers are all paused during the sequence.
+
+### Added — transitions & boss drama
+* Wave clear now plays a **run-off-right** exit, a blurred fade to black, then the guardians
+  enter from the left before the next wave spawns. Episode clear does the same before the next
+  map fades in.
+* Bosses below 30% HP pulse with a light-bleed aura and rising embers, and the whole arena
+  trembles harder as their health drops.
+
+### Changed — canon accuracy
+* Pearl's `Spear Laser` → **Holo-Spear Volley** (hard-light holography is her canon gimmick;
+  she has never fired a laser).
+* Amethyst's `Violet Geysers` → **Whip Quake** (whip work + shapeshifting, not energy geysers).
+* Connie's `Sword Flying Arc` → **Sword Dash Slash** and `Shadow Step Dash` → **Tactical Parry**
+  (she was trained by Pearl; no energy projection in canon).
+
+### Added — Docker
+* `Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/DOCKER.md`: the single-file build
+  served by nginx:alpine on port 8080, identical on Windows, macOS and Linux.
+
 ## 2025-11-01 — "Widescreen" revision
 
 Fixes the two things that were still off in the desktop window, plus another art pass.
