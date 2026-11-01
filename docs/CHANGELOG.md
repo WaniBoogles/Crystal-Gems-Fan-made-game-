@@ -1,5 +1,22 @@
 # Changelog
 
+## 2025-11-01 — "Reference art" revision
+
+### Replaced — portraits now use the official renders
+* The cut-ins no longer use hand-drawn vector busts. `tools/make_portraits.py` reads the
+  19 files in `Character reference/`, keys out the white backdrop, crops a head-and-shoulders
+  bust, adds a soft colour halo and writes `assets/portraits/*.png` plus `src/portraits-data.js`.
+* Those images are painted into the cut-in canvas for both Overdrive sides and both fusion
+  partners — the characters now look like themselves.
+* The vector portraits remain as an automatic fallback if an image fails to load.
+
+### Notes / known limits
+* Several references are JPEGs with white backdrops; the flood-fill key is good but not perfect,
+  so a faint light panel can remain behind those characters.
+* Crops vary in zoom between characters because the source renders are framed differently.
+* Dropping transparent PNG/WebP renders into `Character reference/` and re-running
+  `python3 tools/make_portraits.py` would make them pixel-perfect.
+
 ## 2025-11-01 — "Cut-in" revision
 
 ### Rebuilt — super-move portraits, Unleash-the-Light style

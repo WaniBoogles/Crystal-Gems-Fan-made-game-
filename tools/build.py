@@ -74,6 +74,12 @@ def build() -> str:
 
     css = inline_css(css)
     html = html.replace('<link rel="stylesheet" href="game.css">', f"<style>\n{css}\n</style>")
+    # Optional pre-generated portrait data must be inlined before the game script.
+    portraits_path = SRC / "portraits-data.js"
+    if portraits_path.exists():
+        portraits = portraits_path.read_text(encoding="utf-8")
+        html = html.replace('<script src="portraits-data.js"></script>', f"<script>\n{portraits}\n</script>")
+
     html = html.replace('<script src="game.js"></script>', f"<script>\n{js}\n</script>")
     html = inline_icons(html)
 
