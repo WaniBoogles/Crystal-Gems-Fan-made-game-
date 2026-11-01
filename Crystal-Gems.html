@@ -4750,17 +4750,16 @@ option {
                 <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
               </select>
               <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
-                💡 Changing track previews it instantly and plays it during combat!
+                Pick a track and it starts right away — it keeps playing through fights.
               </p>
             </div>
           </div>
           <div class="settings-section" style="margin-top: 18px;">
             <h3 class="settings-subtitle">⚡ GRAPHICS & PERFORMANCE</h3>
             <div class="settings-toggles">
-              <button class="toggle-btn" id="btnSettingPerf">⚡ Fast Performance Mode: OFF</button>
               <button class="toggle-btn" id="btnSettingShake">📳 Screen Shake: ON</button>
             </div>
-            <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">💡 Enable "Fast Performance Mode" if you experience any lag or frame drops on mobile devices.</p>
+            <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">Turn the shake off if the boss fights get too bumpy for you.</p>
           </div>
         </div>
         <div class="modal-footer">
@@ -4830,7 +4829,7 @@ option {
           <div class="guide-grid">
             <div class="guide-item">
               <h3>⚔️ Primary Controls</h3>
-              <p>Move with <b>A / D</b> (or Touch ◀ ▶) and jump with <b>W / Space</b> (or Touch ▲). Attack with <b>[J]</b>, Special weapon with <b>[K]</b>, Signature Gem Skill / Ultimate with <b>[L]</b>!</p>
+              <p><b>A</b> and <b>D</b> to move, <b>W</b> or <b>Space</b> to jump (twice for a double jump). <b>J</b> throws your combo, <b>K</b> fires your special, <b>L</b> calls up your signature move. Hold <b>S</b> to guard.</p>
             </div>
             <div class="guide-item" style="border-color: #ff6097; background: rgba(255, 20, 147, 0.12);">
               <h3 style="color: #ff6097;">⚡ Pink Overdrive Power-Up (Future State)</h3>
@@ -7128,6 +7127,9 @@ class PlayerHero {
     this.stageWidth = stageWidth;
     this.x = (playerId === 'p2') ? 340 : 200;
     this.currentPlatform = null;
+    this.landSquash = 0;      // 1 right after a fall, decays into a squash/stretch
+    this.runDustTimer = 0;
+    this.wasGrounded = true;
     this.dropThroughTimer = 0;
     this.y = groundY;
     this.vx = 0;
@@ -7465,6 +7467,26 @@ class PlayerHero {
     if (this.isPinkOverdrive) speed *= 1.85;
     if (this.hasSynergyBuff) speed *= 1.25;
     if (this.isSpinDashing) speed = 520;
+
+    // Footfall dust while running, and a landing squash when we hit the floor.
+    if (this.isGrounded && Math.abs(this.vx) > 40) {
+      this.runDustTimer -= dt;
+      if (this.runDustTimer <= 0) {
+        this.runDustTimer = 0.16;
+        if (particles && particles.addSparkle) {
+          particles.addSparkle(this.x - this.facing * 9, this.y - 3, '#cbd5e1', 2, 1.4);
+        }
+      }
+    } else {
+      this.runDustTimer = 0;
+    }
+    if (!this.wasGrounded && this.isGrounded) {
+      this.landSquash = 1;
+      if (particles && particles.addSparkle) {
+        particles.addSparkle(this.x, this.y - 4, '#e2e8f0', 6, 2.2);
+      }
+    }
+    this.wasGrounded = this.isGrounded;
 
     // Fluid Horizontal Movement (NEVER AUTO-RUNS: STRICT ZERO VELOCITY WHEN IDLE!)
     if (this.isDodging) {
@@ -8825,7 +8847,25 @@ class PlayerHero {
 
     ctx.save();
     ctx.translate(this.x + actionLunge * this.facing, this.y + actionLiftY + dodgeLiftY);
-    ctx.scale(this.facing * dodgeScaleX * actionScaleX, dodgeScaleY * actionScaleY);
+    // Landing squash & stretch: wide and low on impact, springing back
+    this.landSquash = Math.max(0, (this.landSquash || 0) - 0.055);
+    const sq = this.landSquash;
+    const landX = 1 + 0.18 * sq;
+    const landY = 1 - 0.20 * sq;
+    ctx.scale(this.facing * dodgeScaleX * actionScaleX * landX, dodgeScaleY * actionScaleY * landY);
+
+    // Dodge ghost trail
+    if (this.isDodging) {
+      for (let gI = 1; gI <= 3; gI++) {
+        ctx.save();
+        ctx.globalAlpha = 0.20 - gI * 0.05;
+        ctx.fillStyle = '#a5f3fc';
+        ctx.beginPath();
+        ctx.ellipse(-this.facing * gI * 16, -38, 16, 34, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
     ctx.rotate(actionTorsoTilt + dodgeTilt);
 
     if (this.isDodging && this.activeChar === 'lapis') {

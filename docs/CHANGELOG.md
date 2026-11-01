@@ -1,5 +1,23 @@
 # Changelog
 
+## 2025-11-01 — "Polish" revision
+
+### Removed
+* **Fast Performance Mode** is gone from Settings — it only ever mattered on phones, and the
+  button sat next to the screen-shake toggle confusingly. Settings keeps the shake switch.
+
+### Animation
+* **Running** kicks up a small dust puff at each footfall (every 0.16 s while grounded and moving).
+* **Landing** now squashes the hero wide-and-low for a beat and springs back, with a dust burst —
+  jumps finally have weight instead of snapping to the floor.
+* **Dodge** leaves a three-frame cyan ghost trail behind the roll.
+
+### Copy
+* Rewrote the machine-sounding instruction lines: the jukebox hint now reads
+  "Pick a track and it starts right away — it keeps playing through fights.", the controls
+  paragraph is plain human instructions, and the graphics hint talks like a person
+  ("Turn the shake off if the boss fights get too bumpy for you.").
+
 ## 2025-11-01 — "Hotfix" revision
 
 ### Fixed — the hero could not move (all modes)

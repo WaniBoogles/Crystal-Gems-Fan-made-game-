@@ -2072,6 +2072,9 @@ class PlayerHero {
     this.stageWidth = stageWidth;
     this.x = (playerId === 'p2') ? 340 : 200;
     this.currentPlatform = null;
+    this.landSquash = 0;      // 1 right after a fall, decays into a squash/stretch
+    this.runDustTimer = 0;
+    this.wasGrounded = true;
     this.dropThroughTimer = 0;
     this.y = groundY;
     this.vx = 0;
@@ -2409,6 +2412,26 @@ class PlayerHero {
     if (this.isPinkOverdrive) speed *= 1.85;
     if (this.hasSynergyBuff) speed *= 1.25;
     if (this.isSpinDashing) speed = 520;
+
+    // Footfall dust while running, and a landing squash when we hit the floor.
+    if (this.isGrounded && Math.abs(this.vx) > 40) {
+      this.runDustTimer -= dt;
+      if (this.runDustTimer <= 0) {
+        this.runDustTimer = 0.16;
+        if (particles && particles.addSparkle) {
+          particles.addSparkle(this.x - this.facing * 9, this.y - 3, '#cbd5e1', 2, 1.4);
+        }
+      }
+    } else {
+      this.runDustTimer = 0;
+    }
+    if (!this.wasGrounded && this.isGrounded) {
+      this.landSquash = 1;
+      if (particles && particles.addSparkle) {
+        particles.addSparkle(this.x, this.y - 4, '#e2e8f0', 6, 2.2);
+      }
+    }
+    this.wasGrounded = this.isGrounded;
 
     // Fluid Horizontal Movement (NEVER AUTO-RUNS: STRICT ZERO VELOCITY WHEN IDLE!)
     if (this.isDodging) {
@@ -3769,7 +3792,25 @@ class PlayerHero {
 
     ctx.save();
     ctx.translate(this.x + actionLunge * this.facing, this.y + actionLiftY + dodgeLiftY);
-    ctx.scale(this.facing * dodgeScaleX * actionScaleX, dodgeScaleY * actionScaleY);
+    // Landing squash & stretch: wide and low on impact, springing back
+    this.landSquash = Math.max(0, (this.landSquash || 0) - 0.055);
+    const sq = this.landSquash;
+    const landX = 1 + 0.18 * sq;
+    const landY = 1 - 0.20 * sq;
+    ctx.scale(this.facing * dodgeScaleX * actionScaleX * landX, dodgeScaleY * actionScaleY * landY);
+
+    // Dodge ghost trail
+    if (this.isDodging) {
+      for (let gI = 1; gI <= 3; gI++) {
+        ctx.save();
+        ctx.globalAlpha = 0.20 - gI * 0.05;
+        ctx.fillStyle = '#a5f3fc';
+        ctx.beginPath();
+        ctx.ellipse(-this.facing * gI * 16, -38, 16, 34, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
     ctx.rotate(actionTorsoTilt + dodgeTilt);
 
     if (this.isDodging && this.activeChar === 'lapis') {
