@@ -2423,6 +2423,7 @@ class PlayerHero {
     // Pink Overdrive accelerates speed by 1.85x! (Harmony Synergy grants +25%!)
     if (this.isPinkOverdrive) speed *= 1.85;
     if (this.hasSynergyBuff) speed *= 1.25;
+    if (this.isFusion) speed *= 1.12;   // a fusion moves with both partners' weight
     if (this.isSpinDashing) speed = 520;
 
     // Footfall dust while running, and a landing squash when we hit the floor.
@@ -13877,10 +13878,62 @@ function drawPortraitCard(ctx, id, size = 512) {
     ctx.fillStyle = glow;
     ctx.fillRect(0, 0, size, size);
 
+    // Radiating energy rays behind the character
+    ctx.save();
+    ctx.translate(size / 2, size * 0.52);
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 22; i++) {
+      ctx.rotate((Math.PI * 2) / 22);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(size * 0.022, -size * 0.85);
+      ctx.lineTo(-size * 0.022, -size * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
     const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * 0.98;
     const w = img.naturalWidth * scale;
     const h = img.naturalHeight * scale;
     ctx.drawImage(img, (size - w) / 2, size - h, w, h);
+
+    // Warm rim sparkle haze over the silhouette edges
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const haze = ctx.createRadialGradient(size / 2, size * 0.45, size * 0.18, size / 2, size * 0.5, size * 0.55);
+    haze.addColorStop(0, 'rgba(255, 240, 200, 0.10)');
+    haze.addColorStop(0.7, 'rgba(255, 180, 220, 0.06)');
+    haze.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = haze;
+    ctx.fillRect(0, 0, size, size);
+    ctx.restore();
+
+    // Bottom fade so the bust melts into the title band
+    const fade = ctx.createLinearGradient(0, size * 0.78, 0, size);
+    fade.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    fade.addColorStop(1, 'rgba(8, 4, 16, 0.75)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, size * 0.78, size, size * 0.22);
+
+    // Sparkles
+    const spark = (sx, sy, r, a) => {
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(sx, sy - r); ctx.quadraticCurveTo(sx + r * 0.2, sy - r * 0.2, sx + r, sy);
+      ctx.quadraticCurveTo(sx + r * 0.2, sy + r * 0.2, sx, sy + r);
+      ctx.quadraticCurveTo(sx - r * 0.2, sy + r * 0.2, sx - r, sy);
+      ctx.quadraticCurveTo(sx - r * 0.2, sy - r * 0.2, sx, sy - r);
+      ctx.fill();
+      ctx.restore();
+    };
+    spark(size * 0.16, size * 0.18, size * 0.045, 0.9);
+    spark(size * 0.85, size * 0.24, size * 0.032, 0.75);
+    spark(size * 0.11, size * 0.62, size * 0.026, 0.7);
+    spark(size * 0.90, size * 0.66, size * 0.03, 0.8);
     return true;
   }
   drawPortrait(ctx, id, size);
@@ -14896,11 +14949,15 @@ class StevenUniverseGame {
     const leftPortrait = document.getElementById('cutinPortraitLeft');
     const rightPortrait = document.getElementById('cutinPortraitRight');
 
-    // Partner A always takes the left slot, partner B the right (mirrored by CSS).
+    // Overdrive: one portrait on that player's side.
+    // Fusion: the fused gem takes the centre, both partners flank it as medallions.
     const primaryId = o.portraitId || o.charId;
     const partnerId = o.secondPortraitId || null;
-    const showLeft = partnerId ? true : (o.side !== 'right');
-    const showRight = partnerId ? true : (o.side === 'right');
+    const centerId = o.centerPortraitId || null;
+    const isFusionCard = !!centerId;
+    const showCenter = isFusionCard;
+    const showLeft = isFusionCard ? true : (o.side !== 'right');
+    const showRight = isFusionCard ? true : (o.side === 'right');
 
     // Painted straight into a <canvas>: a data-URL <img> can paint a frame late (and
     // showed up blank), while canvas output is synchronous.
@@ -14908,16 +14965,27 @@ class StevenUniverseGame {
       ? `<canvas class="cutin-portrait-canvas" data-portrait="${id}" width="512" height="512"></canvas>`
       : `<div style="font-size:170px;line-height:1">${o.icon || '💎'}</div>`;
 
-    if (leftWrap) leftWrap.classList.toggle('hidden', !showLeft);
-    if (rightWrap) rightWrap.classList.toggle('hidden', !showRight);
+    const centerWrap = document.getElementById('cutinCenterWrap');
+    const centerPortrait = document.getElementById('cutinPortraitCenter');
+
+    if (centerWrap) centerWrap.classList.toggle('hidden', !showCenter);
+    if (leftWrap) {
+      leftWrap.classList.toggle('hidden', !showLeft);
+      leftWrap.classList.toggle('is-partner', isFusionCard);
+    }
+    if (rightWrap) {
+      rightWrap.classList.toggle('hidden', !showRight);
+      rightWrap.classList.toggle('is-partner', isFusionCard);
+    }
+    if (centerPortrait) centerPortrait.innerHTML = showCenter ? portraitMarkup(centerId) : '';
     if (leftPortrait) leftPortrait.innerHTML = showLeft ? portraitMarkup(primaryId) : '';
     if (rightPortrait) rightPortrait.innerHTML = showRight ? portraitMarkup(partnerId || primaryId) : '';
 
-    [leftPortrait, rightPortrait].forEach(el => {
+    [centerPortrait, leftPortrait, rightPortrait].forEach(el => {
       if (!el) return;
       const cv = el.querySelector('canvas[data-portrait]');
       if (!cv) return;
-      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, 512); } catch (e) {}
+      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, cv.width); } catch (e) {}
     });
 
     // Restart the entrance animation on every activation
@@ -17153,6 +17221,7 @@ class StevenUniverseGame {
       kickerColor: fusion.color || '#f472b6',
       portraitId: (fusion.gems && fusion.gems[0]) || fusion.id,
       secondPortraitId: (fusion.gems && fusion.gems[1]) || null,
+      centerPortraitId: fusion.id,
       icon: fusion.icon || '💎',
       name: fusion.name.toUpperCase(),
       quote: `${fusion.weapon} · ${power.title}`,
@@ -17169,6 +17238,7 @@ class StevenUniverseGame {
     // ACTIVATE TAG-TEAM HYPER FUSION ATTACK (pair-tuned cinematic screen nuke!)
     this.isFused = true;
     this.isHyperAttack = true;
+    this.fusionPlayable = false;
     this.hyperAttackTimer = duration;
     this.hyperAttackFired = false;
     this.fusionTimer = duration;
@@ -17244,6 +17314,19 @@ class StevenUniverseGame {
       } else {
         this.particles.addDamageText(this.player.x, this.player.y - 120, '🌊 UNSTABLE FUSION: NO HEAL, PURE POWER!', false, '#2dd4bf');
       }
+    }
+
+    // Once the cinematic has had its moment, hand control back to the players while
+    // the fusion is still standing: from here the pair drives ONE body with the fused
+    // shared kit (J/K/L blend both partners' skills).
+    if (!this.fusionPlayable && this.hyperAttackTimer <= 2.6) {
+      this.fusionPlayable = true;
+      this.isHyperAttack = false;
+      this.fusionTimer = Math.max(1.4, this.hyperAttackTimer);
+      this.particles.addDamageText(this.player.x, this.player.y - 150, '💎 SHARED KIT UNLOCKED — PLAY AS THE FUSION!', true, '#f472b6');
+      this.audio.playSfx('powerup');
+      this.updateFusionHUD();
+      return;
     }
 
     // At T <= 0: Complete Tag-Team Hyper Attack and cleanly return to heroes!
@@ -17446,6 +17529,7 @@ class StevenUniverseGame {
   finishTagTeamHyperAttack() {
     this.isFused = false;
     this.isHyperAttack = false;
+    this.fusionPlayable = false;
     this.hyperAttackTimer = 0;
     this.hyperAttackFired = false;
     this.fusionTimer = 0;

@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REF = ROOT / "Character reference"
 OUT_DIR = ROOT / "assets" / "portraits"
 JS_OUT = ROOT / "src" / "portraits-data.js"
-SIZE = 384
+SIZE = 640
 
 FILES = {
     "steven": "Steven.png",
@@ -143,7 +143,8 @@ def build_portrait(src: Path) -> Image.Image:
 
     # Boost colour a touch so the cut-out reads on the dark cut-in backdrop
     canvas = ImageEnhance.Color(canvas).enhance(1.08)
-    canvas = ImageEnhance.Contrast(canvas).enhance(1.04)
+    canvas = ImageEnhance.Contrast(canvas).enhance(1.06)
+    canvas = canvas.filter(ImageFilter.UnsharpMask(radius=1.4, percent=110, threshold=2))
 
     # Soft coloured glow behind the bust
     glow = Image.new("RGBA", (side, side), (0, 0, 0, 0))
@@ -176,7 +177,7 @@ def main() -> int:
         path = OUT_DIR / f"{cid}.png"
         portrait.save(path, "PNG", optimize=True)
         webp = OUT_DIR / f"{cid}.webp"
-        portrait.save(webp, "WEBP", quality=84, method=6)
+        portrait.save(webp, "WEBP", quality=92, method=6)
         data[cid] = "data:image/webp;base64," + base64.b64encode(webp.read_bytes()).decode("ascii")
         print(f"  {cid:15s} ← {filename}")
 

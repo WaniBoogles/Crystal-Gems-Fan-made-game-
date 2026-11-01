@@ -1,5 +1,23 @@
 # Changelog
 
+## 2025-11-01 — "Centre card" revision
+
+### Portraits
+* Re-rendered at **640px, WebP q92 with an unsharp pass** for a much crisper cut-in.
+* Canvas treatment: radiating energy rays behind the character, warm rim haze, sparkling
+  highlights and a bottom fade that melts the bust into the title band.
+* Feathered mask on the portrait edges so any leftover white backdrop dissolves into the star.
+
+### Fusion card
+* Fusions now show the **fused gem in the centre** on a gold star, with the two partners as
+  smaller medallions on the wings of the screen.
+
+### Fusion is playable now
+* The tag fusion used to be a 4-second screen nuke and nothing else. After the cinematic
+  (~1.4s), control returns while the fusion is still standing: the pair drives **one body**
+  with the fused shared kit (J/K/L blend both partners' skills) for the remaining duration,
+  and the fusion also gets +12% movement speed from both partners.
+
 ## 2025-11-01 — "Reference art" revision
 
 ### Replaced — portraits now use the official renders
