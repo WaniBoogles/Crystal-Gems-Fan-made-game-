@@ -1,111 +1,116 @@
 ========================================================================
-   💎 CRYSTAL GEMS: CRYSTAL GUARDIANS UNLEASHED 💎
-   Portable USB Edition - Complete Multi-Platform Package
+   💎 CRYSTAL GEMS! — ACTION BATTLER 💎
+   Player's Quick Reference (PC edition)
 ========================================================================
 
-Welcome! This folder contains everything you need to play "Crystal Gems"
-directly from a USB flash drive on any Windows PC, Android device, or
-mobile phone/tablet!
+HOW TO LAUNCH
+------------------------------------------------------------------------
+ Linux Mint / Ubuntu / Debian
+   • Double-click "Crystal Gems!.desktop"
+   • or run:  ./crystal-gems.sh
+   • windowed mode:  ./crystal-gems.sh --windowed
+   • check your setup:  ./crystal-gems.sh --check
+
+ Windows
+   • Double-click "build/Crystal Gems.exe"
+
+ Any PC / no install
+   • Open "Crystal-Gems.html" in Chrome, Edge, Firefox or Brave
+
+ 100% offline. No account, no internet needed (fonts fall back offline).
 
 ------------------------------------------------------------------------
-📁 WHAT'S INSIDE THIS FOLDER:
+CONTROLS
 ------------------------------------------------------------------------
+ [ 1-PLAYER ]
+   Move Left / Right  : A / D
+   Jump / Double Jump : W or Space
+   Guard / Shield     : S
+   Primary Attack [J] : J
+   Special Weapon [K] : K
+   Signature Skill [L]: L
+   Dodge Dash [I]     : I   (brief invulnerability)
+   Pink Overdrive     : U or O   (when the meter hits 100%)
+   Pause / Settings   : Esc
 
-1. "Crystal Gems.exe"
-   - Native Windows standalone executable.
-   - Simply double-click to play!
-   - Self-contained with the entire game and star icon embedded inside.
-   - Automatically opens in dedicated clean app mode with 60 FPS hardware
-     acceleration and full stereo sound effects.
-   - 100% offline - no internet connection required.
-
-2. "Play-Crystal-Gems.bat"
-   - Quick 1-click launcher script for Windows.
-   - Great fallback if your computer restricts running third-party .exe files.
-
-3. "Play-Crystal-Gems-Linux.sh" / "Crystal Gems!.desktop"
-   - Native 1-click launcher for Linux Mint, Ubuntu, and Debian systems.
-   - Launches directly with full hardware acceleration and 100% zero-click
-     instant soundtrack playback on launch!
-   - Simply double-click "Crystal Gems!.desktop" or run "./Play-Crystal-Gems-Linux.sh".
-
-4. "Crystal-Gems.apk"
-   - Official Android Package for Android phones, tablets, and TV.
-   - 1-tap installation, offline gameplay with full on-screen touch controls.
-   - Aligned and cryptographically signed (v1 + v2 APK Signature Scheme).
-
-5. "Crystal-Gems-Mobile.html" / "Crystal-Gems.html"
-   - Complete single-file standalone web edition.
-   - Can be opened in ANY web browser on Windows, Mac, Linux, Android, or iOS.
-   - Includes on-screen touch joystick and action buttons for phones & tablets.
-
-6. "Crystal Gems.ico", "crystal-gems.png" & "autorun.inf"
-   - USB icon and autorun metadata so your USB drive displays the
-     Crystal Gems star icon in Windows Explorer and Linux file managers.
+ [ 2-PLAYER CO-OP ]
+   Player 1            Player 2
+   Move     A / D      Move     Left / Right Arrow
+   Jump     W          Jump     Up Arrow
+   Shield   S          Shield   Down Arrow
+   Attack   F          Attack   J
+   Special  G          Special  K
+   Skill    H          Skill    L
+   Dodge    E          Dodge    I
+   Overdrive R         Overdrive O
+   Tag Fusion: V   (needs 100% harmony; 4s cinematic + 8s synergy buff)
 
 ------------------------------------------------------------------------
-🎮 CONTROLS REFERENCE:
+GEM TYPES — WHO BEATS WHOM  (new)
 ------------------------------------------------------------------------
+ Every move has an element. Watch the coloured tag on the hotbar: it is the
+ element that J, K and L will use right now.
 
-[ 1-PLAYER SOLO MODE ]
-• Move Left / Right : [A] / [D]
-• Jump / Double Jump: [W] or [Space]
-• Shield / Crouch   : [S]
-• Attack Combo [J]  : [J]
-• Special Attack [K]: [K]
-• Skill / Ability[L]: [L]
-• Dodge Dash [I]    : [I]
-• Pink Overdrive [U]: [U] or [O] (when meter reaches 100%)
-• Note: Gem Fusion is canonically reserved for 2-Player Co-Op Mode!
+   FIGHT   ➔ beats STEEL, DARK, NORMAL      (staggers)
+   PSYCHIC ➔ beats FIGHT                     (dazes)   immune: DARK
+   FAIRY   ➔ beats FIGHT, DARK, DRAGON       (charms)
+   STEEL   ➔ beats FAIRY                     (armour crack)
+   ELECTR  ➔ beats WATER, FLYING             (0.9s stun)
+   WATER   ➔ beats FIRE                      (slows)
+   FIRE    ➔ beats STEEL                     (burn damage)
+   DARK    ➔ beats PSYCHIC                   (+10% damage taken)
+   DRAGON  ➔ beats DRAGON                    (+25% damage taken) immune: FAIRY
+   FLYING  ➔ beats FIGHT                     (launches)
+   NORMAL  ➔ nothing special, never resisted except by STEEL
 
-[ 2-PLAYER CO-OP MODE ]
-Player 1 (Left Side of Keyboard):
-• Move Left / Right : [A] / [D]
-• Jump / Double Jump: [W]
-• Shield / Crouch   : [S]
-• Primary Attack [F]: [F]
-• Special Attack [G]: [G]
-• Skill Ability [H] : [H]
-• Dodge Dash [E]    : [E]
-• Overdrive [R]     : [R]
-• Tag-Team Fusion   : [V] (Triggers 4s Cinematic Screen Nuke & Synergy Buff!)
+ • SUPER EFFECTIVE = 2x damage (dual-typed enemies can take 4x)
+ • RESISTED = 0.5x damage
+ • STAB: using your own guardian's typing adds +20%
+ • Landing a hit also applies that element's rider shown in brackets.
 
-Player 2 (Right Side / Arrow Keys):
-• Move Left / Right : [Left Arrow] / [Right Arrow]
-• Jump / Double Jump: [Up Arrow]
-• Shield / Crouch   : [Down Arrow]
-• Primary Attack [J]: [J]
-• Special Attack [K]: [K]
-• Skill Ability [L] : [L]
-• Dodge Dash [I]    : [I]
-• Overdrive [O]     : [O]
-
-[ MOBILE / TOUCH SCREEN CONTROLS ]
-• Left Virtual D-Pad: Slide left/right to move, tap up to jump
-• Right Action Buttons:
-  - 💥 Attack
-  - ✨ Special
-  - 🌟 Skill
-  - 💨 Dodge
-  - ⚡ Overdrive
-  - 💎 Tag Fuse
+ Guardian typings:
+   Steven  FAIRY/PSYCHIC      Garnet  FIGHT/PSYCHIC
+   Amethyst FIGHT/DARK        Pearl   PSYCHIC/FIGHT
+   Bismuth STEEL/FIGHT        Peridot STEEL/ELECTR
+   Lapis   WATER/FLYING       Rose    FIGHT/FAIRY
+   Connie  NORMAL/FIGHT       Jasper  FIGHT/DRAGON
 
 ------------------------------------------------------------------------
-✨ KEY GAME FEATURES IN THIS VERSION:
+DIFFICULTY
 ------------------------------------------------------------------------
-• 10 Fully Animated Crystal Gems & Guardians:
-  Steven, Garnet, Amethyst, Pearl, Bismuth, Peridot, Lapis Lazuli,
-  Rose Quartz, Connie Maheswaran, and Jasper!
-• 9 Canonical Steven Universe Fusions:
-  Stevonnie, Smoky Quartz, Rainbow Quartz 2.0, Sunstone, Sugilite,
-  Sardonyx, Opal, Malachite, and Rainbow Quartz (Classic).
-• Tag-Team Hyper Attack System:
-  4-second invulnerable screen-clearing cinematic blast, +1 Heart heal,
-  smooth side-by-side landing, and 8-second Gem Harmony Synergy Buff
-  (+25% Speed & Attack Power)!
-• 7 Canonical Background Landscapes with smooth sliding fade transitions.
-• 5-Zone Top HUD layout with dedicated Dual Action Bars (P1 Left, P2 Right).
-• Zero lingering bugs: perfectly clean resets across menus and restarts.
+   🟢 EASY    7 hearts   gentle story mode, full heal each episode
+   🟡 MEDIUM  5 hearts   the intended first run
+   🟠 HARD    4 hearts   1.4x HP, +1 enemy per wave, only +1 heart between episodes
+   🔴 EXTREME 3 hearts   1.9x HP, 4 attackers at once, half-length telegraphs,
+                        +2 enemies per wave, only +1 heart between episodes
+   💎 DIAMOND 2 hearts   2.5x HP, no snack drops, NO heal between episodes,
+                        +3 enemies per wave. White Diamond's chosen only.
 
-Enjoy the game! ⭐
+ Higher tiers also cut enemy attack cooldowns (down to 62%) and make enemies
+ resist knockback (up to 45%), so crowd-control stops carrying you.
+
+ Click "DIFFICULTY" on the title screen to open the tier panel, or click the
+ coloured difficulty pill for a quick cycle.
+
+------------------------------------------------------------------------
+HEALING & POWER-UPS
+------------------------------------------------------------------------
+ • Poofed corruptions drop hearts / Cookie Cats (rate depends on difficulty).
+ • Rose Quartz's healing tears restore hearts for the whole team.
+ • Steven's healing saliva restores +1 heart (his canon healing power).
+ • Collecting a bubbled gem grants +25% Overdrive and +500 points.
+ • Pink Overdrive (100%) = 12s of +85% speed, 2x damage, faster cooldowns and
+   50% damage resistance.
+
+------------------------------------------------------------------------
+TIPS
+------------------------------------------------------------------------
+ • Check a boss's typing before the fight: a FAIRY team melts DARK bosses,
+   but a STEEL boss will wall your FAIRY moves.
+ • Pair a physical damage-dealer with a different type so the tag team always
+   has an answer (e.g. Garnet FIGHT + Lapis WATER).
+ • EXTREME and DIAMOND punish chip damage: stack super-effective hits and
+   interrupt wind-ups with FIGHT staggers.
+
+ "Believe in Steven!" ⭐
 ========================================================================

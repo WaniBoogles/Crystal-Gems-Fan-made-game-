@@ -1784,6 +1784,138 @@ class EnvironmentRenderer {
 // Every Guardian keeps their canonical 3-hit chain, but each step now has its own
 // cadence, reach, damage curve and a unique finisher based on their real weapon.
 // ============================================================================
+// ============================================================================
+// 3.6. GEM COMBAT TYPES — Pokémon-style matchup engine with show-accurate types
+// ============================================================================
+// Every hero keeps the typing the roster already declares (Steven = FAIRY/PSYCHIC
+// because his powers are empathic/healing, Garnet = FIGHT/PSYCHIC because of Future
+// Vision, Lapis = WATER/FLYING because of hydrokinesis + water wings, and so on).
+// The chart below is the authentic Pokémon chart restricted to the 11 types used by
+// the Steven Universe cast, so matchups behave the way players already expect.
+const TYPE_META = {
+  normal:  { label: 'NORMAL',  color: '#a8a878', icon: '⭐' },
+  fight:   { label: 'FIGHT',   color: '#c03028', icon: '🥊' },
+  flying:  { label: 'FLYING',  color: '#a890f0', icon: '🪶' },
+  psychic: { label: 'PSYCHIC', color: '#f85888', icon: '🔮' },
+  fairy:   { label: 'FAIRY',   color: '#ee99ac', icon: '💗' },
+  steel:   { label: 'STEEL',   color: '#9fa8c7', icon: '⚙️' },
+  electr:  { label: 'ELECTR',  color: '#d9a800', icon: '⚡' },
+  water:   { label: 'WATER',   color: '#6890f0', icon: '💧' },
+  fire:    { label: 'FIRE',    color: '#e8762c', icon: '🔥' },
+  dark:    { label: 'DARK',    color: '#7c6250', icon: '🌑' },
+  dragon:  { label: 'DRAGON',  color: '#7038f8', icon: '🐉' }
+};
+
+// attacker -> { defender: multiplier }. Anything unspecified is 1x.
+const TYPE_CHART = {
+  normal:  { steel: 0.5 },
+  fight:   { normal: 2, steel: 2, dark: 2, flying: 0.5, psychic: 0.5, fairy: 0.5 },
+  flying:  { fight: 2, steel: 0.5, electr: 0.5 },
+  psychic: { fight: 2, steel: 0.5, psychic: 0.5, dark: 0 },
+  fairy:   { fight: 2, dragon: 2, dark: 2, steel: 0.5 },
+  steel:   { fairy: 2, steel: 0.5, water: 0.5, electr: 0.5, fire: 0.5 },
+  electr:  { water: 2, flying: 2, dragon: 0.5, electr: 0.5 },
+  water:   { fire: 2, water: 0.5, dragon: 0.5 },
+  fire:    { steel: 2, water: 0.5, fire: 0.5, dragon: 0.5 },
+  dark:    { psychic: 2, fight: 0.5, dark: 0.5, fairy: 0.5 },
+  dragon:  { dragon: 2, fairy: 0, steel: 0.5 }
+};
+
+// Canon-flavoured rider effects, one per damage type.
+const TYPE_STATUS = {
+  fight:   { id: 'stagger',  label: 'STAGGERED',   color: '#c03028' },
+  psychic: { id: 'dazed',    label: 'DAZED',       color: '#f85888' },
+  fairy:   { id: 'charmed',  label: 'CHARMED',     color: '#ee99ac' },
+  steel:   { id: 'cracked',  label: 'ARMOR CRACK', color: '#9fa8c7' },
+  electr:  { id: 'shocked',  label: 'OVERLOADED',  color: '#f8d030' },
+  water:   { id: 'soaked',   label: 'SOAKED',      color: '#6890f0' },
+  fire:    { id: 'scorched', label: 'SCORCHED',    color: '#f08030' },
+  dark:    { id: 'corrupted',label: 'CORRUPTED',   color: '#7c6250' },
+  dragon:  { id: 'shattered',label: 'SHATTERED',   color: '#7038f8' },
+  flying:  { id: 'launched', label: 'LAUNCHED',    color: '#a890f0' },
+  normal:  { id: 'focused',  label: 'FOCUSED',     color: '#a8a878' }
+};
+
+// Which element each of a hero's three moves actually channels.
+// J = primary weapon/combo, K = special, L = signature skill.
+const HERO_MOVE_TYPES = {
+  steven:   { j: 'fairy',   k: 'fairy',   l: 'psychic' }, // Rose's shield + empathic healing
+  garnet:   { j: 'fight',   k: 'fight',   l: 'electr'  }, // gauntlets + electrokinesis
+  amethyst: { j: 'fight',   k: 'fight',   l: 'dark'    }, // whips + Violet geysers
+  pearl:    { j: 'fight',   k: 'steel',   l: 'psychic' }, // spear thrust + Holo-Pearl
+  bismuth:  { j: 'steel',   k: 'steel',   l: 'fire'    }, // forge hammer + magma
+  peridot:  { j: 'steel',   k: 'electr',  l: 'steel'   }, // ferrokinesis + robonoid
+  lapis:    { j: 'water',   k: 'water',   l: 'flying'  }, // hydrokinesis + water wings
+  rose:     { j: 'fight',   k: 'fairy',   l: 'fairy'   }, // sword + bubble/healing tears
+  connie:   { j: 'normal',  k: 'fight',   l: 'normal'  }, // Rose's sword fencing
+  jasper:   { j: 'fight',   k: 'dragon',  l: 'fight'   }  // crash helmet + quartz fury
+};
+
+const FUSION_MOVE_TYPES = {
+  stevonnie:      { j: 'fight', k: 'fairy',   l: 'fairy'   },
+  smoky:          { j: 'fight', k: 'fairy',   l: 'dark'    },
+  rainbow2:       { j: 'fairy', k: 'psychic', l: 'psychic' },
+  sunstone:       { j: 'fight', k: 'fairy',   l: 'fire'    },
+  sugilite:       { j: 'fight', k: 'fight',   l: 'electr'  },
+  sardonyx:       { j: 'fight', k: 'steel',   l: 'psychic' },
+  opal:           { j: 'fight', k: 'psychic', l: 'fairy'   },
+  malachite:      { j: 'water', k: 'water',   l: 'dragon'  },
+  rainbowClassic: { j: 'fairy', k: 'fairy',   l: 'psychic' }
+};
+
+// Projectiles are tagged with the element of the move that spawned them.
+const PROJECTILE_TYPE_ELEMENTS = {
+  stevenShield: 'fairy', roseShield: 'fairy', roseShockwave: 'fairy',
+  garnetGauntlet: 'fight', giantGauntletSlam: 'fight', seismicShockwave: 'fight',
+  amethystSpinDashHit: 'fight', purpleGeyser: 'dark', magneticVortex: 'steel',
+  pearlLaser: 'steel', holoPearl: 'psychic', bismuthAnvil: 'steel', moltenShockwave: 'fire',
+  tidalWave: 'water', hydroFist: 'water', connieSwordBeam: 'fight', connieShadowSlash: 'normal',
+  jasperCrashHelmet: 'dragon', jasperSpinDashHit: 'fight',
+  comboRosePulse: 'fairy', comboGauntletQuake: 'fight', comboWhipCyclone: 'dark',
+  comboSpearFlurry: 'steel', comboAnvilEcho: 'steel', comboMagneticBurst: 'steel',
+  comboTidalLash: 'water', comboRoseThorn: 'fairy', comboCrescentSlash: 'fight',
+  comboSeismicSlam: 'fight', flaskRobonoid: 'steel'
+};
+
+// Enemy defensive typings (corrupted gems skew DARK; forged/robotic units skew STEEL).
+const ENEMY_TYPES = {
+  centipeetle: ['dark'], acid_centipeetle: ['dark'], winged_centipeetle: ['dark', 'flying'],
+  blade_quartz: ['fight'], cluster: ['dark'], ice_monster: ['water'], snow_monster: ['water'],
+  ice_gargoyle: ['water', 'flying'], spire_harpy: ['flying', 'dark'],
+  volcanic_firebird: ['fire', 'flying'], forge_automaton: ['steel'],
+  destabilizer_soldier: ['steel'], robonoid_scout: ['steel', 'electr'],
+  carnelian_enforcer: ['fight'], obsidian: ['dark'],
+  boss_spitter: ['dark'], boss_centipeetle: ['dark'], boss_ice_guardian: ['water', 'flying'],
+  boss_cluster_titan: ['dark'], boss_cluster_core: ['dark', 'steel'],
+  boss_forge_guardian: ['steel', 'fire'], boss_jasper: ['fight', 'dragon'],
+  boss_quartz_beast: ['fight'], boss_agate_warden: ['psychic', 'fight'],
+  boss_topaz_fusion: ['fight', 'steel'], boss_robonoid_titan: ['steel', 'electr'],
+  boss_white_diamond: ['psychic', 'fairy'], boss_giant_bird: ['flying', 'dark'],
+  boss_jasper_dummy: ['fight']
+};
+
+function getTypeMeta(type) {
+  return TYPE_META[(type || '').toLowerCase()] || TYPE_META.normal;
+}
+
+function typeMultiplier(attackType, defenderTypes) {
+  if (!attackType || !defenderTypes || !defenderTypes.length) return 1;
+  const row = TYPE_CHART[String(attackType).toLowerCase()] || {};
+  let mult = 1;
+  for (const def of defenderTypes) {
+    const key = String(def).toLowerCase();
+    mult *= (row[key] !== undefined ? row[key] : 1);
+  }
+  return mult;
+}
+
+function typeEffectLabel(mult) {
+  if (mult <= 0) return { text: 'IMMUNE!', color: '#94a3b8' };
+  if (mult >= 2) return { text: 'SUPER EFFECTIVE!', color: '#facc15' };
+  if (mult <= 0.5) return { text: 'RESISTED…', color: '#94a3b8' };
+  return null;
+}
+
 const HERO_COMBO_PROFILES = {
   steven: {
     label: 'Rose Punch Combo',
@@ -1992,6 +2124,31 @@ class PlayerHero {
         particles.addPoof(this.x, this.y - 35, '#ff94ba');
       }
     }
+  }
+
+  // --- GEM COMBAT TYPES -----------------------------------------------------
+  // The element channelled by a given move slot ('j' | 'k' | 'l').
+  getMoveType(slot = 'j') {
+    const key = String(slot || 'j').toLowerCase();
+    if (this.isFusion && this.fusionData) {
+      const fusionSet = FUSION_MOVE_TYPES[this.fusionData.id];
+      if (fusionSet && fusionSet[key]) return fusionSet[key];
+    }
+    const set = HERO_MOVE_TYPES[this.activeChar] || HERO_MOVE_TYPES.steven;
+    return set[key] || 'normal';
+  }
+
+  // Canonical typing from the roster dossier (lowercased for the matchup chart).
+  getTypeList() {
+    const data = (typeof GUARDIAN_DATA !== 'undefined' && GUARDIAN_DATA[this.activeChar]) || null;
+    const raw = (data && data.types) || ['FAIRY', 'PSYCHIC'];
+    return raw.map(t => String(t).toLowerCase());
+  }
+
+  // Same-type attack bonus, exactly like the games the chart comes from.
+  getStabMultiplier(slot = 'j') {
+    const moveType = this.getMoveType(slot);
+    return this.getTypeList().includes(moveType) ? 1.2 : 1.0;
   }
 
   activatePinkOverdrive(audioOrDuration = 12.0, particles = null) {
@@ -4207,7 +4364,7 @@ class PlayerHero {
   drawSteven(ctx, bob, animP = 0, actionType = '') {
     const isPink = this.isPinkOverdrive;
     const skinColor = isPink ? '#ff6097' : '#fde0d7';
-    const shirtColor = isPink ? '#ff1493' : '#ff6097';
+    const shirtColor = isPink ? '#ff1493' : '#e8453c';
     const pantsColor = isPink ? '#be185d' : '#2563eb';
     const cuffColor = isPink ? '#f43f5e' : '#93c5fd';
     const hairColor = isPink ? '#be123c' : '#26151c';
@@ -4282,11 +4439,23 @@ class PlayerHero {
     ctx.fillStyle = '#fde047';
     this.drawMiniStar(ctx, 1, -35 + bob, 8.5);
 
-    // Navel Rose Quartz Gem
-    ctx.fillStyle = '#f43f5e';
+    // Navel Rose Quartz gem — canon placement, faceted pentagon cut
+    ctx.save();
+    ctx.translate(1, -24 + bob);
+    ctx.fillStyle = '#f472b6';
     ctx.strokeStyle = '#fbcfe8';
-    ctx.lineWidth = 1.2;
-    this.drawMiniStar(ctx, 1, -23 + bob, 4.5);
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(0, -5); ctx.lineTo(4.6, -1.6); ctx.lineTo(2.8, 4); ctx.lineTo(-2.8, 4); ctx.lineTo(-4.6, -1.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.beginPath();
+    ctx.moveTo(0, -4); ctx.lineTo(2.2, -1.4); ctx.lineTo(0, 0.6); ctx.lineTo(-2.2, -1.4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     // 4. Unified Sculpted 5-Lobe Cloud-Curl Silhouette (Back Volume — ZERO disconnected circles!)
     const hx = hair.swayX * 0.45;
@@ -4530,6 +4699,7 @@ class PlayerHero {
       ctx.save();
       ctx.translate(gx, gy);
       ctx.rotate(angle);
+      ctx.scale(0.84, 0.84); // canon proportion: big gauntlets, not torso-sized
       // Armored forearm sleeve
       ctx.fillStyle = isRuby ? '#9f1239' : '#881337';
       ctx.strokeStyle = '#fbbf24';
@@ -4568,23 +4738,27 @@ class PlayerHero {
       ctx.restore();
     };
 
-    // 1. Articulated Split Bodysuit Legs (Crimson Left/Back, Navy Right/Front)
+    // 1. Articulated Bodysuit Legs (canon: one maroon suit, darker shading on the rear leg)
     ctx.save();
     ctx.translate(-9 + legs.backX, -36 + bob + legs.backY);
     ctx.rotate(legs.backRot);
-    ctx.fillStyle = '#881337';
+    ctx.fillStyle = '#5f1029';
     ctx.beginPath();
     ctx.roundRect(-6.5, 0, 13, 36, 4);
     ctx.fill();
+    ctx.fillStyle = '#f472b6';
+    ctx.fillRect(-6.5, 24, 13, 2.5);
     ctx.restore();
 
     ctx.save();
     ctx.translate(8 + legs.frontX, -36 + bob + legs.frontY);
     ctx.rotate(legs.frontRot);
-    ctx.fillStyle = '#1e1b4b';
+    ctx.fillStyle = '#7f1d3a';
     ctx.beginPath();
     ctx.roundRect(-6.5, 0, 13, 36, 4);
     ctx.fill();
+    ctx.fillStyle = '#f472b6';
+    ctx.fillRect(-6.5, 24, 13, 2.5);
     ctx.restore();
 
     // 2. Rear Left Ruby Arm (Chambered or Launching Hit 1 Straight Jab!)
@@ -4622,9 +4796,11 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Crimson/Pink Chest Star Cutout
+    // Crimson chest star with gold rim (canon emblem)
+    ctx.fillStyle = '#fbbf24';
+    this.drawMiniStar(ctx, 1, -56 + bob, 10);
     ctx.fillStyle = '#e11d48';
-    this.drawMiniStar(ctx, 1, -56 + bob, 8.5);
+    this.drawMiniStar(ctx, 1, -56 + bob, 8);
 
     // Cubic Shoulder Pads
     ctx.fillStyle = '#be123c';
@@ -4636,69 +4812,74 @@ class PlayerHero {
     ctx.moveTo(26, -73 + bob); ctx.lineTo(13, -73 + bob); ctx.lineTo(17, -61 + bob); ctx.closePath();
     ctx.fill();
 
-    // 4. Sculpted Geometric Cubic Afro (3D Beveled Volume + Crisp Magenta Sheen!)
+    // 4. Signature rounded-cube afro (canon silhouette: wraps the whole skull)
     const afroShift = hair.swayX * 0.35;
     ctx.save();
     ctx.translate(afroShift, hair.swayY * 0.25);
-    // Deep plum-black base cube with softened geometric corners
-    ctx.fillStyle = '#190624';
+    ctx.fillStyle = '#1b0d26';
     ctx.beginPath();
-    ctx.roundRect(-25, -112 + bob, 50, 33, 6);
+    ctx.roundRect(-23, -120 + bob, 46, 50, 15);
     ctx.fill();
-    // 3D Right/Top lighter plum geometric facet bevel
-    ctx.fillStyle = '#2d0c40';
+    // soft plum bevel on the upper-right volume of the cube
+    ctx.fillStyle = '#2a1238';
     ctx.beginPath();
-    ctx.moveTo(-21, -112 + bob);
-    ctx.lineTo(22, -112 + bob);
-    ctx.quadraticCurveTo(25, -112 + bob, 25, -108 + bob);
-    ctx.lineTo(25, -84 + bob);
-    ctx.lineTo(13, -84 + bob);
-    ctx.lineTo(13, -104 + bob);
-    ctx.lineTo(-21, -104 + bob);
-    ctx.closePath();
+    ctx.roundRect(-23, -115 + bob, 46, 15, 9);
     ctx.fill();
-    // Signature crisp angular magenta-violet specular sheen band across upper crown
-    ctx.fillStyle = '#a21caf';
+    // crisp violet specular band (studio-light reading of the cube)
+    ctx.fillStyle = '#7e22ce';
     ctx.beginPath();
-    ctx.moveTo(-20, -108 + bob);
-    ctx.lineTo(21, -108 + bob);
-    ctx.lineTo(18, -102.5 + bob);
-    ctx.lineTo(-22, -102.5 + bob);
-    ctx.closePath();
+    ctx.roundRect(-21, -112 + bob, 38, 3.5, 2);
     ctx.fill();
-    ctx.fillStyle = '#f0abfc';
-    ctx.fillRect(6, -107 + bob, 11, 2.2);
+    // sideburn locks framing the visor
+    ctx.fillStyle = '#1b0d26';
+    ctx.beginPath();
+    ctx.roundRect(-21, -88 + bob, 7, 20, 4);
+    ctx.roundRect(14, -88 + bob, 7, 20, 4);
+    ctx.fill();
     ctx.restore();
 
-    // 5. Mahogany Skin & Stoic Chin
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-11, -84 + bob, 22, 16);
-    ctx.fillStyle = '#be185d';
-    ctx.fillRect(-4, -73 + bob, 9, 2.5);
+    // 5. Deep umber skin, squared jaw & stoic mouth
+    ctx.fillStyle = '#8b4a42';
+    ctx.beginPath();
+    ctx.roundRect(-13, -86 + bob, 26, 20, 5);
+    ctx.fill();
+    ctx.fillStyle = '#5b2c28';
+    ctx.fillRect(-6, -71 + bob, 12, 2.4);
 
-    // 6. Iconic Wrap-Around Visor (Ruby/Sapphire Gradient + Star Glint)
-    const visorGrad = ctx.createLinearGradient(-16, -88 + bob, 16, -88 + bob);
-    visorGrad.addColorStop(0, '#f43f5e');
-    visorGrad.addColorStop(0.5, '#ec4899');
-    visorGrad.addColorStop(1, '#38bdf8');
+    // 6. Iconic wrap-around visor: dark lens, magenta rim light, star glint
+    const visorGrad = ctx.createLinearGradient(-17, -90 + bob, 17, -78 + bob);
+    visorGrad.addColorStop(0, '#2a1050');
+    visorGrad.addColorStop(0.55, '#3b1466');
+    visorGrad.addColorStop(1, '#1b0b33');
     ctx.fillStyle = visorGrad;
     ctx.beginPath();
-    ctx.moveTo(-17, -88 + bob);
-    ctx.lineTo(17, -88 + bob);
-    ctx.lineTo(11, -76 + bob);
-    ctx.lineTo(-11, -76 + bob);
+    ctx.moveTo(-14.5, -89 + bob);
+    ctx.lineTo(14.5, -89 + bob);
+    ctx.lineTo(10, -77 + bob);
+    ctx.lineTo(-10, -77 + bob);
     ctx.closePath();
     ctx.fill();
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#f472b6';
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(-14, -86 + bob);
-    ctx.lineTo(14, -86 + bob);
+    ctx.moveTo(-14, -88 + bob);
+    ctx.lineTo(-9.5, -77.5 + bob);
+    ctx.moveTo(14, -88 + bob);
+    ctx.lineTo(9.5, -77.5 + bob);
     ctx.stroke();
 
-    ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 2, -82 + bob, this.isAttacking ? 7.2 : 6);
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-14, -86.5 + bob);
+    ctx.lineTo(14, -86.5 + bob);
+    ctx.stroke();
+
+    ctx.globalAlpha = this.isAttacking ? 0.95 : 0.55;
+    ctx.fillStyle = this.isAttacking ? '#fde047' : '#ffffff';
+    this.drawMiniStar(ctx, 2, -82.5 + bob, this.isAttacking ? 6 : 4);
+    ctx.globalAlpha = 1;
 
     // 7. Kinetic Boxer Gauntlet Action Poses
     if (isSeismicSlam) {
@@ -5222,8 +5403,8 @@ class PlayerHero {
     ctx.stroke();
 
     // 5. Sculpted Layered Conical Peach-Blossom Hair (Sweeps Gracefully BACKWARD [-X]!)
-    const tipX = -27 + hair.swayX * 0.65;
-    const tipY = -85 + bob + hair.swayY * 0.5;
+    const tipX = -21 + hair.swayX * 0.65;
+    const tipY = -87 + bob + hair.swayY * 0.5;
     // Lower warm rose-peach shadow feather
     ctx.fillStyle = '#fda4af';
     ctx.beginPath();
@@ -9573,6 +9754,14 @@ class EnemyManager {
       this.evasionChance = difficultyConfig.enemyEvasion ?? 0;
       this.eliteChance = difficultyConfig.eliteChance ?? 0;
       this.aggression = difficultyConfig.enemyAggression ?? 1.0;
+
+      // Escalation knobs added with the harder difficulty pass
+      this.cooldownMult = difficultyConfig.attackCooldownMult ?? 1.0;
+      this.waveBonus = difficultyConfig.waveSizeBonus ?? 0;
+      this.bossHpMult = difficultyConfig.bossHpMult ?? 1.0;
+      this.eliteHpMult = difficultyConfig.eliteHpMult ?? 1.6;
+      this.stageHeal = difficultyConfig.stageHeal ?? -1;
+      this.knockbackResist = difficultyConfig.knockbackResist ?? 0;
     }
     // Later episodes quietly raise enemy durability so the curve keeps climbing
     this.stageHpScale = 1 + Math.max(0, stageIndex - 1) * 0.035;
@@ -9867,11 +10056,16 @@ class EnemyManager {
     // --- Freebuff AI profile: combat role, telegraph length, elite & stage scaling ---
     const ranged = ENEMY_RANGED_TYPES.has(type);
     enemy.hasRanged = ranged;
+    // Gem combat typing (drives the Pokémon-style damage chart)
+    enemy.types = (ENEMY_TYPES[type] || ['dark']).slice();
+    enemy.vulnMult = 1;
+    enemy.vulnTimer = 0;
+
     // Standoff: per-type map first (brawler vs spitter/flyer), bosses hold mid-arena range,
     // generic ranged fallback 95 / melee fallback 48 (both within the player's attack reach).
     enemy.preferredRange = isBoss ? 90 : (ENEMY_PREFERRED_RANGE[type] ?? (ranged ? 95 : 48));
     enemy.attackRange = isBoss ? 520 : (ranged ? 300 : 150);
-    enemy.attackCooldown = isBoss ? 2.0 : (ranged ? 1.7 : 1.55);
+    enemy.attackCooldown = (isBoss ? 2.0 : (ranged ? 1.7 : 1.55)) * (this.cooldownMult || 1.0);
     enemy.windup = 0;
     enemy.windupMax = 0;
     enemy.aiState = 'approach';
@@ -9882,11 +10076,18 @@ class EnemyManager {
     // Elite corrupted gems: rarer, gold-tinged, tougher versions at higher difficulty
     if (!isBoss && this.eliteChance > 0 && Math.random() < this.eliteChance * (1 + (this.wave - 1) * 0.12)) {
       enemy.isElite = true;
-      enemy.hp = Math.round(enemy.hp * 1.6);
-      enemy.maxHp = Math.round(enemy.maxHp * 1.6);
+      const eliteMult = this.eliteHpMult || 1.6;
+      enemy.hp = Math.round(enemy.hp * eliteMult);
+      enemy.maxHp = Math.round(enemy.maxHp * eliteMult);
       enemy.speed = Math.round(enemy.speed * 1.08);
       enemy.name = `Elite ${enemy.name}`;
       enemy.gemColor = '#fbbf24';
+    }
+
+    // Difficulty tier boss durability
+    if (isBoss && this.bossHpMult && this.bossHpMult !== 1) {
+      enemy.hp = Math.round(enemy.hp * this.bossHpMult);
+      enemy.maxHp = Math.round(enemy.maxHp * this.bossHpMult);
     }
 
     // Later episodes creep upward in durability (bosses scale at half rate)
@@ -9896,6 +10097,7 @@ class EnemyManager {
       enemy.maxHp = Math.round(enemy.maxHp * hpScale);
     }
 
+    enemy.baseSpeed = enemy.speed;
     this.enemies.push(enemy);
     return enemy;
   }
@@ -9924,6 +10126,37 @@ class EnemyManager {
       const e = this.enemies[i];
       e.animTime += dt;
       if (e.hurtTimer > 0) e.hurtTimer -= dt;
+
+      // --- GEM COMBAT TYPE STATUSES ----------------------------------------
+      if (e.vulnTimer > 0) { e.vulnTimer -= dt; if (e.vulnTimer <= 0) e.vulnMult = 1; }
+      if (e.charmTimer > 0) e.charmTimer -= dt;
+      if (e.dazeTimer > 0) { e.dazeTimer -= dt; e.windup = 0; }
+      if (e.stunTimer > 0) {
+        e.stunTimer -= dt;
+        e.hurtTimer = Math.max(e.hurtTimer, 0.16);
+        e.vx *= 0.85;
+        if (e.stunTimer <= 0) e.attackTimer = 0;
+      }
+      // Lapis waterlogging: a soaked corruption moves at 72% speed while it dries
+      if (e.soakTimer > 0) {
+        e.soakTimer -= dt;
+        e.speed = (e.baseSpeed ?? e.speed) * 0.72;
+      } else if (e.baseSpeed !== undefined && e.speed !== e.baseSpeed) {
+        e.speed = e.baseSpeed;
+      }
+      // Bismuth / Firebird scorch: burns for 3% max HP per second
+      if (e.scorchTimer > 0 && !e.isImmortalDummy) {
+        e.scorchTimer -= dt;
+        e.hp -= e.maxHp * 0.03 * dt;
+        if (Math.random() < dt * 6) {
+          particles.addSparkle(e.x + (Math.random() * 18 - 9), e.y - e.height * (0.35 + Math.random() * 0.4), '#f97316', 2, 2);
+        }
+        if (e.hp <= 0 && !e.isPoofed) {
+          e.isPoofed = true;
+          this.poofEnemy(e, i, particles, audioEngine, onPoofed);
+          continue;
+        }
+      }
 
       // Freebuff: clean hits interrupt a wind-up, rewarding aggressive play
       if (e.hurtTimer > 0 && e.windup > 0) {
@@ -10095,7 +10328,8 @@ class EnemyManager {
 
       const gapNow = Math.abs(dx);
       const inRange = gapNow < (e.attackRange || 280) && Math.abs(dy) < 280;
-      const readyToFire = e.hurtTimer <= 0 && inRange && e.attackTimer >= (e.attackCooldown / (this.aggression || 1));
+      const charmFactor = (e.charmTimer > 0) ? 1.45 : 1.0;
+      const readyToFire = e.hurtTimer <= 0 && inRange && e.attackTimer >= ((e.attackCooldown * charmFactor) / (this.aggression || 1));
 
       if (e.windup > 0) {
         // Telegraph window: readable, dodgeable and interruptible
@@ -10479,7 +10713,7 @@ class EnemyManager {
       const dist = Math.abs(player.x - e.x);
       if (dist < 65 && e.hurtTimer <= 0) {
         let dmg = (player.isPinkOverdrive ? 60 : 35) * (player.hasSynergyBuff ? 1.25 : 1.0);
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex);
+        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType('k'), player.getStabMultiplier('k'));
         e.vx = player.facing * 440;
         e.vy = -240;
         e.hurtTimer = 0.35;
@@ -10527,7 +10761,7 @@ class EnemyManager {
           dmg = Math.round(dmg * 1.25);
         }
 
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex);
+        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType));
 
         // ENEMY STAGGER & KNOCKBACK FOR CLOSE-RANGE / MELEE ATTACKS
         if (player.isFusion) {
@@ -10591,6 +10825,7 @@ class EnemyManager {
         }
         // Heavier chain steps launch further; finishers add extra lift
         e.vx *= (player.attackKnockMult || 1);
+        if (this.knockbackResist) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
         if (player.comboStep === 2 && e.vy) e.vy *= 1.15;
         e.attackTimer = 0;
 
@@ -10611,7 +10846,7 @@ class EnemyManager {
           const eKey = e.id || `${Math.round(e.x)}_${Math.round(e.y)}_${enemyIndex}`;
           if (!p.hitCooldowns[eKey] || p.hitCooldowns[eKey] <= 0) {
             p.hitCooldowns[eKey] = 0.35; // allow re-hit after 0.35s
-            this.damageEnemy(e, p.damage || 55, particles, audioEngine, onPoofed, enemyIndex);
+            this.damageEnemy(e, p.damage || 55, particles, audioEngine, onPoofed, enemyIndex, p.elementType || 'psychic', p.stabMult || 1);
             audioEngine.playSfx('laser');
             particles.addDamageText(e.x, e.y - e.height - 20, '🤺 PARRY! THRUST!', true, p.isOverdrive ? '#f472b6' : '#38bdf8');
             particles.addSparkle(e.x, e.y - 25, p.isOverdrive ? '#f472b6' : '#a5f3fc', 16, 5);
@@ -10670,7 +10905,7 @@ class EnemyManager {
       }
 
       // 3. Confirmed Hit! Apply damage, particle sparkle, and weapon knockback
-      this.damageEnemy(e, p.damage || 25, particles, audioEngine, onPoofed, enemyIndex);
+      this.damageEnemy(e, p.damage || 25, particles, audioEngine, onPoofed, enemyIndex, p.elementType || null, p.stabMult || 1);
       particles.addSparkle(p.x, p.y, p.color || '#fff', 12, 4);
 
       // Specific Knockbacks based on lore weapons
@@ -10776,24 +11011,77 @@ class EnemyManager {
     }
   }
 
-  damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex) {
+  // Type-status rider applied on every damaging hit.
+  applyTypeStatus(e, moveType, particles) {
+    const status = TYPE_STATUS[moveType];
+    if (!status || e.isImmortalDummy) return;
+    const already = (id) => {
+      if (id === 'soaked') return e.soakTimer > 0;
+      if (id === 'shocked') return e.stunTimer > 0;
+      if (id === 'dazed') return e.dazeTimer > 0;
+      if (id === 'charmed') return e.charmTimer > 0;
+      if (id === 'cracked' || id === 'corrupted' || id === 'shattered') return e.vulnTimer > 0;
+      if (id === 'scorched') return e.scorchTimer > 0;
+      return false;
+    };
+    const fresh = !already(status.id);
+
+    switch (status.id) {
+      case 'soaked':   e.soakTimer = 4.0; break;                                  // Lapis: waterlogged, slowed
+      case 'shocked':  e.stunTimer = Math.max(e.stunTimer || 0, 0.9); e.windup = 0; break; // Garnet/Peridot
+      case 'dazed':    e.dazeTimer = 3.0; e.windup = 0; break;                    // Future Vision scrambles aim
+      case 'charmed':  e.charmTimer = 5.0; break;                                 // Steven: empathy disarms
+      case 'cracked':  e.vulnTimer = 5.0; e.vulnMult = Math.max(e.vulnMult || 1, 1.18); break;
+      case 'shattered':e.vulnTimer = 4.0; e.vulnMult = Math.max(e.vulnMult || 1, 1.25); break;
+      case 'corrupted':e.vulnTimer = 5.0; e.vulnMult = Math.max(e.vulnMult || 1, 1.10); break;
+      case 'scorched': e.scorchTimer = 3.0; break;                                // Bismuth / firebird heat
+      case 'launched': e.launchBoost = 1.35; break;                               // water wings / pegasus
+      case 'stagger':  e.windup = 0; e.aiState = 'staggered'; break;              // quartz fists
+      default: break;
+    }
+
+    // Announce a rider only when it is fresh and not spamming (one label per 1.2 s per enemy)
+    if (fresh && status.id !== 'focused' && status.id !== 'stagger' &&
+        (e.animTime - (e.lastStatusFxAt ?? -9)) > 1.2) {
+      e.lastStatusFxAt = e.animTime;
+      particles.addDamageText(e.x + (Math.random() * 18 - 9), e.y - e.height - 40, status.label, false, status.color);
+    }
+  }
+
+  damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, attackType = null, stabMult = 1) {
     if (e.isPoofed) return;
+
+    const moveType = attackType ? String(attackType).toLowerCase() : null;
+    const typeMeta = getTypeMeta(moveType || 'normal');
+    const typeMult = typeMultiplier(moveType, e.types);
+    const vulnMult = (e.vulnTimer > 0 ? (e.vulnMult || 1) : 1);
+    const finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult));
+
     if (this.onComboHit) {
-      this.onComboHit(dmg);
+      this.onComboHit(finalDmg);
+    }
+
+    // Show the matchup verdict (throttled per enemy so it never floods the screen)
+    const effect = typeEffectLabel(typeMult);
+    if (effect && (e.animTime - (e.lastTypeFxAt ?? -9)) > 0.55) {
+      e.lastTypeFxAt = e.animTime;
+      particles.addDamageText(e.x, e.y - e.height - 26, effect.text, typeMult >= 2, effect.color);
     }
 
     // Tekken Practice Dojo: Training dummy takes zero permanent damage!
     if (e.isImmortalDummy) {
       e.hp = e.maxHp;
       e.hurtTimer = 0.28;
-      particles.addDamageText(e.x, e.y - e.height - 14, `${dmg}`, dmg >= 30, '#ffd700');
+      particles.addDamageText(e.x, e.y - e.height - 14, `${finalDmg}`, finalDmg >= 30, typeMeta.color);
+      this.applyTypeStatus(e, moveType, particles);
       audioEngine.playSfx('hit');
       return;
     }
 
-    e.hp -= dmg;
+    e.hp -= finalDmg;
     e.hurtTimer = 0.35;
-    particles.addDamageText(e.x, e.y - e.height - 12, `${dmg}`, dmg >= 30, '#ffcf33');
+    particles.addDamageText(e.x, e.y - e.height - 12, `${finalDmg}`, finalDmg >= 30 || typeMult >= 2, typeMeta.color);
+    this.applyTypeStatus(e, moveType, particles);
     audioEngine.playSfx('hit');
 
     if (e.hp <= 0) {
@@ -11716,14 +12004,20 @@ const DIFFICULTY_CONFIG = {
   easy: {
     name: 'EASY',
     hearts: 7,
-    enemyHpMultiplier: 0.75,
+    enemyHpMultiplier: 0.70,
     enemySpeedMult: 0.85,
     cookieDropRate: 0.50,
-    enemyTelegraphMult: 1.45,
+    enemyTelegraphMult: 1.55,
     maxConcurrentAttackers: 1,
     enemyEvasion: 0,
     eliteChance: 0,
-    enemyAggression: 0.92,
+    enemyAggression: 0.90,
+    attackCooldownMult: 1.25,
+    waveSizeBonus: 0,
+    bossHpMult: 0.90,
+    eliteHpMult: 1.30,
+    stageHeal: -1,          // -1 = restore every heart on stage clear
+    knockbackResist: 0,
     pillColor: '#22c55e'
   },
   medium: {
@@ -11731,41 +12025,81 @@ const DIFFICULTY_CONFIG = {
     hearts: 5,
     enemyHpMultiplier: 1.0,
     enemySpeedMult: 1.0,
-    cookieDropRate: 0.38,
+    cookieDropRate: 0.34,
     enemyTelegraphMult: 1.0,
     maxConcurrentAttackers: 2,
     enemyEvasion: 0.03,
     eliteChance: 0.06,
     enemyAggression: 1.0,
+    attackCooldownMult: 1.0,
+    waveSizeBonus: 0,
+    bossHpMult: 1.0,
+    eliteHpMult: 1.60,
+    stageHeal: -1,
+    knockbackResist: 0,
     pillColor: '#eab308'
   },
   hard: {
     name: 'HARD',
     hearts: 4,
-    enemyHpMultiplier: 1.35,
-    enemySpeedMult: 1.15,
-    cookieDropRate: 0.28,
-    enemyTelegraphMult: 0.78,
+    enemyHpMultiplier: 1.40,
+    enemySpeedMult: 1.18,
+    cookieDropRate: 0.20,
+    enemyTelegraphMult: 0.72,
     maxConcurrentAttackers: 3,
-    enemyEvasion: 0.07,
-    eliteChance: 0.14,
-    enemyAggression: 1.1,
+    enemyEvasion: 0.09,
+    eliteChance: 0.18,
+    enemyAggression: 1.15,
+    attackCooldownMult: 0.88,
+    waveSizeBonus: 1,
+    bossHpMult: 1.20,
+    eliteHpMult: 1.80,
+    stageHeal: 1,
+    knockbackResist: 0.15,
     pillColor: '#f97316'
   },
   extreme: {
     name: 'EXTREME',
     hearts: 3,
-    enemyHpMultiplier: 1.7,
-    enemySpeedMult: 1.3,
-    cookieDropRate: 0.20,
-    enemyTelegraphMult: 0.62,
-    maxConcurrentAttackers: 3,
-    enemyEvasion: 0.12,
-    eliteChance: 0.22,
-    enemyAggression: 1.25,
+    enemyHpMultiplier: 1.90,
+    enemySpeedMult: 1.40,
+    cookieDropRate: 0.09,
+    enemyTelegraphMult: 0.48,
+    maxConcurrentAttackers: 4,
+    enemyEvasion: 0.16,
+    eliteChance: 0.34,
+    enemyAggression: 1.38,
+    attackCooldownMult: 0.74,
+    waveSizeBonus: 2,
+    bossHpMult: 1.45,
+    eliteHpMult: 2.00,
+    stageHeal: 1,
+    knockbackResist: 0.30,
     pillColor: '#ef4444'
+  },
+  diamond: {
+    name: 'DIAMOND',
+    hearts: 2,
+    enemyHpMultiplier: 2.50,
+    enemySpeedMult: 1.55,
+    cookieDropRate: 0.03,
+    enemyTelegraphMult: 0.36,
+    maxConcurrentAttackers: 4,
+    enemyEvasion: 0.24,
+    eliteChance: 0.55,
+    enemyAggression: 1.60,
+    attackCooldownMult: 0.62,
+    waveSizeBonus: 3,
+    bossHpMult: 1.80,
+    eliteHpMult: 2.20,
+    stageHeal: 0,           // no recovery between episodes
+    knockbackResist: 0.45,
+    pillColor: '#a855f7'
   }
 };
+
+// Canonical order used by the quick-cycle button and the difficulty panel.
+const DIFFICULTY_ORDER = ['easy', 'medium', 'hard', 'extreme', 'diamond'];
 
 // ============================================================================
 // 6.1. CANONICAL SAVE THE LIGHT / UNLEASH THE LIGHT CHARACTER PORTRAITS (SVG)
@@ -12040,11 +12374,11 @@ const GUARDIAN_DATA = {
     icon: '⭐',
     types: ['FAIRY', 'PSYCHIC'],
     title: 'The Heart of the Crystal Gems',
-    desc: 'Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Cookie Cat (+1 Heart)',
-    lore: 'Half-human, half-gem hero. Uses Rose Quartz\'s magical shield, soothing Cookie Cat healing powers, and channels his terrifying Pink Overdrive state!',
+    desc: 'Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Healing Saliva (+1 Heart)',
+    lore: 'Half-human, half-gem hero. Uses Rose Quartz\'s magical shield, his canon healing saliva, and channels his terrifying Pink Overdrive state — plus a well-earned Cookie Cat snack when things get rough!',
     j: { name: 'Shield Strike', icon: '🛡️', desc: 'Fast shield bash and punch combo with pink star sparks' },
     k: { name: 'Shield Throw', icon: '💫', desc: 'Bouncing Rose Shield projectile ricocheting off foes (35 DMG)' },
-    l: { name: 'Bubble & Heal', icon: '🫧', desc: 'Spawns crystalline Bubble Shield shockwave and restores +1 Heart via Cookie Cat' }
+    l: { name: 'Bubble & Heal', icon: '🫧', desc: 'Spawns a crystalline Bubble Shield shockwave and restores +1 Heart with his healing saliva (canon power)' }
   },
   garnet: {
     id: 'garnet',
@@ -12819,8 +13153,38 @@ class StevenUniverseGame {
     }
   }
 
+  openDifficultyScreen() {
+    const screen = document.getElementById('difficultyScreen');
+    if (!screen) return;
+    this.syncDifficultyPanel();
+    screen.style.display = 'flex';
+    this.audio.playSfx('menuTap');
+  }
+
+  closeDifficultyScreen() {
+    const screen = document.getElementById('difficultyScreen');
+    if (screen) screen.style.display = 'none';
+  }
+
+  setDifficulty(key) {
+    if (!DIFFICULTY_CONFIG[key]) return;
+    this.difficulty = key;
+    SafeStorage.setItem('su_difficulty', key);
+    const cfg = DIFFICULTY_CONFIG[key];
+    this.enemyManager.diffMult = cfg.enemyHpMultiplier || 1.0;
+    this.updateLobbyDifficulty();
+    this.syncDifficultyPanel();
+    this.audio.playSfx('menuTap');
+  }
+
+  syncDifficultyPanel() {
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diff === this.difficulty);
+    });
+  }
+
   cycleDifficulty() {
-    const diffs = ['easy', 'medium', 'hard', 'extreme'];
+    const diffs = DIFFICULTY_ORDER;
     const idx = diffs.indexOf(this.difficulty);
     this.difficulty = diffs[(idx + 1) % diffs.length];
     SafeStorage.setItem('su_difficulty', this.difficulty);
@@ -12979,6 +13343,21 @@ class StevenUniverseGame {
 
   start() {
     requestAnimationFrame((t) => this.gameLoop(t));
+  }
+
+  // Stamp every freshly-spawned player projectile with the element of the move that
+  // fired it, plus that move's same-type attack bonus. Runs the frame the shot appears.
+  tagPlayerProjectiles(owner) {
+    if (!owner || !owner.getMoveType) return;
+    const ownerTypes = owner.getTypeList();
+    const slotElement = owner.getMoveType(owner.attackType);
+    for (const p of this.projectiles) {
+      if (!p || p.elementType) continue;
+      if (typeof p.type === 'string' && p.type.startsWith('enemy')) continue;
+      const el = PROJECTILE_TYPE_ELEMENTS[p.type] || slotElement;
+      p.elementType = el;
+      p.stabMult = ownerTypes.includes(el) ? 1.2 : 1.0;
+    }
   }
 
   registerComboHit(dmg) {
@@ -13323,6 +13702,18 @@ class StevenUniverseGame {
       });
     });
 
+    // Harder tiers flood the arena with reinforcements from the far edge
+    const bonus = this.enemyManager.waveBonus || 0;
+    for (let b = 0; b < bonus; b++) {
+      const pool = enemies && enemies.length ? enemies : ['centipeetle'];
+      const extraType = pool[Math.floor(Math.random() * pool.length)];
+      this.waveSpawnQueue.push({
+        type: extraType,
+        timer: enemies.length * 0.65 + b * 0.9,
+        spawnX: 2200 + Math.random() * 320
+      });
+    }
+
     this.isWaitingForWaveClear = false;
     this.waveClearTimer = 0;
   }
@@ -13486,8 +13877,14 @@ class StevenUniverseGame {
           const banner = document.getElementById('stageClearBanner');
           if (banner) banner.style.display = 'none';
           this.stageIndex++;
-          this.currentHearts = this.maxHearts;
-          this.currentHeartsP2 = this.maxHearts;
+          const stageHeal = (this.enemyManager.stageHeal ?? -1);
+          if (stageHeal < 0) {
+            this.currentHearts = this.maxHearts;
+            this.currentHeartsP2 = this.maxHearts;
+          } else {
+            this.currentHearts = Math.min(this.maxHearts, this.currentHearts + stageHeal);
+            this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + stageHeal);
+          }
           this.player.revive(this.audio, this.particles);
           if (this.player2) this.player2.revive(this.audio, this.particles);
           this.isTransitioning = false;
@@ -13634,9 +14031,11 @@ class StevenUniverseGame {
       this.updateHyperAttack(dt, platforms);
     } else {
       this.player.update(dt, this.keysP1, this.audio, this.particles, this.projectiles, this.pickups, platforms);
+      this.tagPlayerProjectiles(this.player);
 
       if (this.playerMode === '2p' && this.player2) {
         this.player2.update(dt, this.keysP2, this.audio, this.particles, this.projectiles, this.pickups, platforms);
+        this.tagPlayerProjectiles(this.player2);
       }
     }
 
@@ -15550,7 +15949,33 @@ class StevenUniverseGame {
     }
   }
 
+  // Paint the gem-type of each hotbar move (J / K / L) with its matchup colour.
+  syncMoveTypeChips() {
+    const paint = (owner, ids) => {
+      ['j', 'k', 'l'].forEach((slot, idx) => {
+        const el = document.getElementById(ids[idx]);
+        if (!el) return;
+        const typeEl = el.querySelector('.action-type');
+        if (!owner) {
+          if (typeEl) { typeEl.textContent = ['ATTACK', 'SPECIAL', 'SKILL'][idx]; typeEl.style.color = ''; }
+          return;
+        }
+        const type = owner.getMoveType(slot);
+        const meta = getTypeMeta(type);
+        if (typeEl) {
+          typeEl.textContent = `${meta.icon} ${meta.label}`;
+          typeEl.style.color = meta.color;
+        }
+        const stab = owner.getStabMultiplier(slot) > 1 ? ' (STAB +20%)' : '';
+        el.title = `${meta.label} move${stab}`;
+      });
+    };
+    paint(this.player, ['slotJ', 'slotK', 'slotL']);
+    paint(this.playerMode === '2p' ? this.player2 : null, ['slotP2_J', 'slotP2_K', 'slotP2_L']);
+  }
+
   updateActionBar() {
+    this.syncMoveTypeChips();
     const active = this.player.activeChar;
     const isHyper = (this.isHyperAttack || this.isFused) && this.player.fusionData;
     const current = isHyper ? this.player.fusionData : (GUARDIAN_DATA[active] || GUARDIAN_DATA.steven);
@@ -16139,9 +16564,18 @@ class StevenUniverseGame {
       this.audio.playSfx('menuTap');
       this.togglePlayerMode();
     });
-    safeClick('btnOpenDifficulty', () => {
-      this.audio.playSfx('menuTap');
-      this.cycleDifficulty();
+    safeClick('btnOpenDifficulty', () => this.openDifficultyScreen());
+    safeClick('btnCloseDifficulty', () => this.closeDifficultyScreen());
+    safeClick('btnConfirmDifficulty', () => {
+      this.audio.playSfx('warpPad');
+      this.closeDifficultyScreen();
+      this.updateLobbyDifficulty();
+    });
+    // Quick-cycle from the difficulty pill in the lobby
+    safeClick('lobbyDifficultyPill', () => this.cycleDifficulty());
+    // The five tier cards
+    document.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => this.setDifficulty(btn.dataset.diff));
     });
     safeClick('btnQuitGame', () => this.quitGame());
     safeClick('btnCancelQuit', () => {

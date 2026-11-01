@@ -1318,31 +1318,31 @@ body.mobile-device .touch-controls.active {
 
 /* Individual 7 Steven Universe Canonical Landscape Backdrops with Continuous Silky Pan (No snap or revert!) */
 .lobby-slide.slide-1 {
-  background-image: url('bg-landscape-1.jpg');
+  background-image: url('../assets/images/bg-landscape-1.jpg');
   animation: l4dPan1 24s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-2 {
-  background-image: url('bg-landscape-2.jpg');
+  background-image: url('../assets/images/bg-landscape-2.jpg');
   animation: l4dPan2 26s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-3 {
-  background-image: url('bg-landscape-3.jpg');
+  background-image: url('../assets/images/bg-landscape-3.jpg');
   animation: l4dPan3 28s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-4 {
-  background-image: url('bg-landscape-4.jpg');
+  background-image: url('../assets/images/bg-landscape-4.jpg');
   animation: l4dPan4 24s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-5 {
-  background-image: url('bg-landscape-5.jpg');
+  background-image: url('../assets/images/bg-landscape-5.jpg');
   animation: l4dPan5 26s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-6 {
-  background-image: url('bg-landscape-6.jpg');
+  background-image: url('../assets/images/bg-landscape-6.jpg');
   animation: l4dPan6 25s ease-in-out infinite alternate;
 }
 .lobby-slide.slide-7 {
-  background-image: url('bg-landscape-7.jpg');
+  background-image: url('../assets/images/bg-landscape-7.jpg');
   animation: l4dPan7 27s ease-in-out infinite alternate;
 }
 

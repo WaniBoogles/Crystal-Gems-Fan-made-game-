@@ -10,11 +10,10 @@
   <title>Crystal Gems! — Action Battler</title>
   <meta name="apple-mobile-web-app-title" content="Crystal Gems!">
   <meta name="application-name" content="Crystal Gems!">
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
-  <link rel="shortcut icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="../assets/images/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="../assets/images/icon-512.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="../assets/images/icon-192.png">
+  <link rel="shortcut icon" href="../assets/images/icon-192.png">
   <link rel="stylesheet" href="game.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -842,19 +841,23 @@
           <div class="difficulty-grid">
             <button class="diff-btn" data-diff="easy">
               <span class="diff-name">🟢 EASY</span>
-              <span class="diff-info">7 Hearts • 0.75x Monster HP • 45% Cookie Snack Drops • Relaxed Story</span>
+              <span class="diff-info">7 Hearts • 0.70x Monster HP • 50% Snack Drops • Full Heal Each Episode</span>
             </button>
             <button class="diff-btn active" data-diff="medium">
               <span class="diff-name">🟡 MEDIUM</span>
-              <span class="diff-info">5 Hearts • Standard Combat Multipliers • 30% Cookie Drops</span>
+              <span class="diff-info">5 Hearts • Standard HP &amp; Speed • 34% Snack Drops • Two Attackers At Once</span>
             </button>
             <button class="diff-btn" data-diff="hard">
               <span class="diff-name">🟠 HARD</span>
-              <span class="diff-info">4 Hearts • Tougher Monsters • 18% Cookie Drops • High Intensity</span>
+              <span class="diff-info">4 Hearts • 1.4x HP • Faster Attacks • +1 Enemy Per Wave • +1 Heart Between Episodes</span>
             </button>
             <button class="diff-btn" data-diff="extreme">
               <span class="diff-name">🔴 EXTREME</span>
-              <span class="diff-info">3 Hearts • Fast Ruthless Enemies • 10% Cookie Drops • True Gem Hero</span>
+              <span class="diff-info">3 Hearts • 1.9x HP • 4 Attackers • Half-Length Telegraphs • +2 Enemies • Only 1 Heart Between Episodes</span>
+            </button>
+            <button class="diff-btn" data-diff="diamond">
+              <span class="diff-name">💎 DIAMOND</span>
+              <span class="diff-info">2 Hearts • 2.5x HP • No Snack Drops • No Heal Between Episodes • For White Diamond's chosen only</span>
             </button>
           </div>
         </div>
@@ -958,7 +961,7 @@
             <div class="guide-item">
               <h3>🥊 Top Row Guardians</h3>
               <ul>
-                <li><b>Steven:</b> [J] Shield Bash Combo, [K] Bouncing Ricochet Shield (3 bounces), [L] Rose's Protective Bubble & Cookie Cat Snack (+1 Full Heart)! Hold [S] / Down to Guard!</li>
+                <li><b>Steven:</b> [J] Shield Bash Combo, [K] Bouncing Ricochet Shield (3 bounces), [L] Rose's Bubble Shield & Healing Saliva (+1 Heart — his canon healing power)! Hold [S] / Down to Guard!</li>
                 <li><b>Garnet:</b> [J] Gauntlet 1-2 Flurry (POW!), [K] Jet Rocket Gauntlet Launch, [L] <b>Giant Gauntlets Seismic Slam</b> (enlarges gauntlets to titanic size and slams both giant fists down in an earthquake)!</li>
                 <li><b>Amethyst:</b> [J] Dual Spiked Whip Flurry, [K] <b>Sonic Spin Dash (Quartz Buzzsaw)</b> (complete damage immunity while rolling through ranks!), [L] Dual Whip Violet Energy Geysers (4 rising purple flame plumes)!</li>
                 <li><b>Pearl:</b> [J] Piercing Spear Flurry, [K] Triple Laser Spear Beam spread, [L] Holo-Pearl Clone Duelist (autonomous fencing ally)!</li>
@@ -972,6 +975,11 @@
                 <li><b>Lapis Lazuli:</b> [J] Liquid Water Scythe Slashes, [K] Surging Hydro-Fist projectile, [L] Oceanic Tidal Wave Surge (towering ocean tsunami)!</li>
                 <li><b>Rose Quartz:</b> [J] Rose Broadsword Crescent Slashes, [K] Thorny Rose Crest Shield, [L] <b>Sacred Tears of Resurrection</b> (blooming 8-petaled Rose mandala, celestial light rays, +2 Full Hearts heal)!</li>
               </ul>
+            </div>
+            <div class="guide-item" style="border-color: #38bdf8; background: rgba(56, 189, 248, 0.10);">
+              <h3 style="color: #38bdf8;">🔮 Gem Typing &amp; Matchups (New)</h3>
+              <p>Every guardian channels a <b>gem type</b> on each move — the same matchup chart as the classic monster RPGs, using the real Steven Universe typings. <b>Super effective</b> hits deal double damage and flash "SUPER EFFECTIVE!", resisted hits deal half. Landing a move that matches the guardian's own typing adds <b>STAB +20%</b>. Riders: <b>WATER</b> soaks (slows), <b>ELECTR</b> overloads (stuns), <b>FIGHT</b> staggers, <b>FAIRY</b> charms (slower attacks), <b>STEEL/DRAGON</b> shatter armour (+damage taken), <b>FIRE</b> scorches (damage over time), <b>FLYING</b> launches, <b>DARK</b> corrupts.</p>
+              <p style="margin-top:6px;font-size:11px;opacity:0.9;">FIGHT ➔ STEEL / DARK / NORMAL · PSYCHIC ➔ FIGHT · FAIRY ➔ FIGHT / DARK / DRAGON · ELECTR ➔ WATER / FLYING · WATER ➔ FIRE · FIRE ➔ STEEL · DARK ➔ PSYCHIC · DRAGON ➔ DRAGON · FLYING ➔ FIGHT · STEEL ➔ FAIRY · NORMAL ➔ nothing (reliable)</p>
             </div>
             <div class="guide-item">
               <h3>💎 Gem Power-Ups & Healing Hearts</h3>
@@ -1015,7 +1023,7 @@
       <div class="modal-card install-card">
         <div class="modal-header">
           <div style="display: flex; align-items: center; gap: 12px;">
-            <img src="icon-192.png" alt="Steven Universe Star Icon" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(255,96,151,0.6);">
+            <img src="../assets/images/icon-192.png" alt="Steven Universe Star Icon" style="width: 48px; height: 48px; border-radius: 12px; box-shadow: 0 4px 12px rgba(255,96,151,0.6);">
             <div>
               <h2 style="font-size: 17px; margin: 0; color: #ff6097;">ADD TO PHONE HOME SCREEN</h2>
               <div style="font-size: 12px; color: #cbd5e1;">Play fullscreen with the Pink Star app icon!</div>

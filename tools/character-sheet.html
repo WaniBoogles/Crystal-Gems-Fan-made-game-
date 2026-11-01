@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crystal Gems — Character Sheet (dev tool)</title>
+<style>
+  html, body { margin: 0; background: #10081d; color: #fff; font-family: monospace; }
+  #sheet { display: block; margin: 0 auto; }
+  h1 { font: 700 18px monospace; text-align: center; padding: 10px; color: #ffcf33; }
+</style>
+</head>
+<body>
+<h1>Crystal Gems! — canonical character sheet (×3.4 zoom)</h1>
+<canvas id="sheet" width="1400" height="760"></canvas>
+<script src="../src/game.js"></script>
+<script>
+// Dev-only harness: instantiate each hero and paint it large for art review.
+window.addEventListener('load', () => {
+  const HEROES = ['steven', 'garnet', 'amethyst', 'pearl', 'bismuth', 'peridot', 'lapis', 'rose', 'connie', 'jasper'];
+  const ctx = document.getElementById('sheet').getContext('2d');
+  const hero = new PlayerHero(600, 'p1', 2600);
+  ctx.fillStyle = '#10081d';
+  ctx.fillRect(0, 0, 1400, 760);
+  const COLS = 5, CELL_W = 276, CELL_H = 360;
+  HEROES.forEach((id, i) => {
+    const cx = (i % COLS) * CELL_W + CELL_W / 2;
+    const cy = Math.floor(i / COLS) * CELL_H + 300;
+    // stage plate
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    ctx.roundRect(cx - 128, cy - 300, 256, 340, 14);
+    ctx.fill();
+    ctx.restore();
+
+    hero.switchCharacter(id);
+    hero.walkAnim = 0;
+    hero.attackCombo = 0;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(3.4, 3.4);
+    const fn = 'draw' + id.charAt(0).toUpperCase() + id.slice(1);
+    try { hero[fn](ctx, 0, 0.5, ''); } catch (e) { console.error(id, e); }
+    ctx.restore();
+
+    ctx.fillStyle = '#ffcf33';
+    ctx.font = 'bold 15px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(id.toUpperCase(), cx, cy + 34);
+  });
+});
+</script>
+</body>
+</html>

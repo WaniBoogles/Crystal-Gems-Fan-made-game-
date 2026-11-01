@@ -10,15 +10,13 @@ env/
 .DS_Store
 Thumbs.db
 
-# Build artifacts
+# Build artifacts (rebuild with tools/build.py / the mcs command in README)
 *.apk
 *.exe
 
-# Freebuff specific
+# Freebuff tool metadata
 .freebuff/
 
-# Logs
+# Logs / environment
 *.log
-
-# Environment
 .env*
