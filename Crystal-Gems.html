@@ -6338,6 +6338,10 @@ class ParticleSystem {
   }
 
   update() {
+    // Keep max active particles reasonable to ensure buttery smooth 60 FPS
+    if (this.particles.length > 160) {
+      this.particles.splice(0, this.particles.length - 160);
+    }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.x += p.vx;
@@ -6355,6 +6359,9 @@ class ParticleSystem {
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
+    if (this.texts.length > 25) {
+      this.texts.splice(0, this.texts.length - 25);
+    }
     for (let i = this.texts.length - 1; i >= 0; i--) {
       const t = this.texts[i];
       t.y += t.vy;
@@ -7239,15 +7246,15 @@ const FUSION_COMBO_PROFILE = {
 // Per-fusion power identity: Sugilite hits hardest but shortest, Sardonyx lasts
 // longest, Malachite trades the heal for raw damage (canon: an unstable fusion).
 const FUSION_POWER = {
-  stevonnie: { nuke: 1.0, duration: 4.0, heal: 1, title: 'SWORD & SHIELD' },
-  smoky: { nuke: 1.05, duration: 4.0, heal: 1, title: 'YO-YO TEMPEST' },
-  rainbow2: { nuke: 0.95, duration: 4.3, heal: 1, title: 'PARASOL PRISM' },
-  sunstone: { nuke: 1.05, duration: 4.0, heal: 1, title: 'SOLAR GAUNTLET' },
-  sugilite: { nuke: 1.25, duration: 3.5, heal: 1, title: 'FLAIL CATACLYSM' },
-  sardonyx: { nuke: 1.0, duration: 4.4, heal: 1, title: 'SHOWSTOPPER' },
-  opal: { nuke: 0.95, duration: 4.2, heal: 1, title: 'ARROW RAIN' },
-  malachite: { nuke: 1.3, duration: 3.4, heal: 0, title: 'GLACIAL TIDE' },
-  rainbowClassic: { nuke: 1.0, duration: 4.2, heal: 1, title: 'ROSE MANDALA' }
+  stevonnie: { nuke: 1.0, duration: 12.0, heal: 1, title: 'SWORD & SHIELD' },
+  smoky: { nuke: 1.05, duration: 12.0, heal: 1, title: 'YO-YO TEMPEST' },
+  rainbow2: { nuke: 0.95, duration: 12.5, heal: 1, title: 'PARASOL PRISM' },
+  sunstone: { nuke: 1.05, duration: 12.0, heal: 1, title: 'SOLAR GAUNTLET' },
+  sugilite: { nuke: 1.25, duration: 11.5, heal: 1, title: 'FLAIL CATACLYSM' },
+  sardonyx: { nuke: 1.0, duration: 12.8, heal: 1, title: 'SHOWSTOPPER' },
+  opal: { nuke: 0.95, duration: 12.2, heal: 1, title: 'ARROW RAIN' },
+  malachite: { nuke: 1.3, duration: 11.5, heal: 0, title: 'GLACIAL TIDE' },
+  rainbowClassic: { nuke: 1.0, duration: 12.2, heal: 1, title: 'ROSE MANDALA' }
 };
 
 class PlayerHero {
@@ -15420,23 +15427,34 @@ class EnemyManager {
   }
 
   update(dt, player, audioEngine, particles, projectiles, onPoofed, platforms = [], player2 = null) {
-    // Top-Center Boss Bar Synchronization
-    const bossHud = document.getElementById('bossHud');
+    // Top-Center Boss Bar Synchronization (Cached DOM references for zero frame hitches)
+    if (!this.domBoss && typeof document !== 'undefined') {
+      this.domBoss = {
+        hud: document.getElementById('bossHud'),
+        name: document.getElementById('bossName'),
+        digits: document.getElementById('bossHpDigits'),
+        fill: document.getElementById('bossHpFill')
+      };
+    }
+    const d = this.domBoss;
     const activeBoss = this.enemies.find(en => en.isBoss);
 
-    if (activeBoss && bossHud) {
-      bossHud.style.display = 'flex';
-      const nameEl = document.getElementById('bossName');
-      const digitsEl = document.getElementById('bossHpDigits');
-      const fillEl = document.getElementById('bossHpFill');
-      if (nameEl) nameEl.textContent = activeBoss.name;
-      if (digitsEl) digitsEl.textContent = activeBoss.isImmortalDummy ? 'INFINITE / INFINITE' : `${Math.max(0, Math.ceil(activeBoss.hp))} / ${activeBoss.maxHp}`;
-      if (fillEl) {
-        const pct = activeBoss.isImmortalDummy ? 100 : Math.max(0, (activeBoss.hp / activeBoss.maxHp) * 100);
-        fillEl.style.width = `${pct}%`;
+    if (activeBoss && d && d.hud) {
+      if (d.hud.style.display !== 'flex') d.hud.style.display = 'flex';
+      const curHp = activeBoss.hp;
+      if (this._lastBossHp !== curHp || this._lastBossName !== activeBoss.name) {
+        this._lastBossHp = curHp;
+        this._lastBossName = activeBoss.name;
+        if (d.name) d.name.textContent = activeBoss.name;
+        if (d.digits) d.digits.textContent = activeBoss.isImmortalDummy ? 'INFINITE / INFINITE' : `${Math.max(0, Math.ceil(curHp))} / ${activeBoss.maxHp}`;
+        if (d.fill) {
+          const pct = activeBoss.isImmortalDummy ? 100 : Math.max(0, (curHp / activeBoss.maxHp) * 100);
+          d.fill.style.width = `${pct}%`;
+        }
       }
-    } else if (bossHud) {
-      bossHud.style.display = 'none';
+    } else if (d && d.hud && d.hud.style.display !== 'none') {
+      d.hud.style.display = 'none';
+      this._lastBossHp = null;
     }
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
@@ -16604,8 +16622,8 @@ class EnemyManager {
         if (!this.flashCanvas && typeof document !== 'undefined') {
           try {
             this.flashCanvas = document.createElement('canvas');
-            this.flashCanvas.width = 640;
-            this.flashCanvas.height = 640;
+            this.flashCanvas.width = 512;
+            this.flashCanvas.height = 512;
             this.flashCtx = this.flashCanvas.getContext('2d');
           } catch (err) {
             this.flashCanvas = null;
@@ -16613,28 +16631,32 @@ class EnemyManager {
           }
         }
         if (this.flashCanvas && this.flashCtx) {
-          const maxDim = Math.max(e.width || 60, e.height || 60, 180);
-          const reqSize = Math.max(640, Math.ceil(maxDim * 2.6));
-          if (this.flashCanvas.width < reqSize || this.flashCanvas.height < reqSize) {
-            this.flashCanvas.width = reqSize;
-            this.flashCanvas.height = reqSize;
-          }
           const fc = this.flashCanvas;
           const fctx = this.flashCtx;
-          const cx = Math.floor(fc.width / 2);
-          const cy = Math.floor(fc.height * 0.75);
+          const cx = 256;
+          const cy = 360;
 
-          fctx.clearRect(0, 0, fc.width, fc.height);
+          // Localized bounding box for zero-lag CPU/GPU processing
+          const halfW = Math.min(240, Math.ceil(Math.max((e.width || 60) * 1.35, 75)));
+          const topH = Math.min(340, Math.ceil(Math.max((e.height || 60) * 1.35, 85)));
+          const botH = 25;
+          const boxW = halfW * 2;
+          const boxH = topH + botH;
+          const sx = cx - halfW;
+          const sy = cy - topH;
+
+          // Clear and fill ONLY the localized sub-rect
+          fctx.clearRect(sx, sy, boxW, boxH);
           fctx.save();
           fctx.translate(cx, cy);
           this.drawEnemyModel(fctx, e);
           fctx.globalCompositeOperation = 'source-in';
           fctx.fillStyle = e.isPoofing ? '#ffffff' : 'rgba(255, 255, 255, 0.92)';
-          fctx.fillRect(-cx, -cy, fc.width, fc.height);
+          fctx.fillRect(-halfW, -topH, boxW, boxH);
           fctx.restore();
 
-          // Overlay the exact white silhouette cleanly onto main canvas
-          ctx.drawImage(fc, -cx, -cy);
+          // Blit only the localized sub-rect cleanly onto main canvas
+          ctx.drawImage(fc, sx, sy, boxW, boxH, -halfW, -topH, boxW, boxH);
         }
       }
 
@@ -19365,12 +19387,12 @@ class StevenUniverseGame {
     this.fusionEnergy = 0;
     this.isFused = false;
     this.fusionTimer = 0;
-    this.fusionMaxDuration = 4.0;
+    this.fusionMaxDuration = 12.0;
     this.isHyperAttack = false;
     this.hyperAttackTimer = 0;
     this.hyperAttackFired = false;
-    // Freebuff fusion tuning: overcharge, pair power and variable duration
-    this.hyperAttackDuration = 4.0;
+    // Freebuff fusion tuning: overcharge, pair power and variable duration (matched with 12s Overdrive)
+    this.hyperAttackDuration = 12.0;
     this.activeFusionNukeMult = 1.0;
     this.activeFusionHeal = 1;
     this.synergyBuffTimer = 0;
@@ -19856,9 +19878,11 @@ class StevenUniverseGame {
     }
   }
 
-  triggerHitstop(duration = 0.045, shake = 3.5) {
-    this.hitstopTimer = Math.max(this.hitstopTimer, duration);
-    this.hitShake = Math.max(this.hitShake, shake);
+  triggerHitstop(duration = 0.024, shake = 2.5) {
+    // Only trigger if not already active to prevent chain-freezing on continuous attacks
+    if (this.hitstopTimer > 0) return;
+    this.hitstopTimer = Math.min(0.028, duration);
+    this.hitShake = Math.max(this.hitShake, Math.min(3.5, shake));
   }
 
   // Freebuff: finishing a 3-hit chain feeds the fusion meter — teamwork pays off
@@ -20028,47 +20052,59 @@ class StevenUniverseGame {
 
   // --- PLANTS VS. ZOMBIES STYLE WAVE PROGRESSION & WARNINGS ---
   updateWaveLine() {
-    const container = document.getElementById('pvzWaveContainer');
-    if (!container) return;
+    if (!this._waveDom && typeof document !== 'undefined') {
+      this._waveDom = {
+        container: document.getElementById('pvzWaveContainer'),
+        fillEl: document.getElementById('pvzWaveFill'),
+        markerEl: document.getElementById('pvzWaveMarker'),
+        labelEl: document.getElementById('pvzWaveLabel'),
+        statusEl: document.getElementById('pvzWaveStatus')
+      };
+    }
+    const d = this._waveDom;
+    if (!d || !d.container) return;
 
     if (this.gameMode === 'practice' || this.stageIndex === 0) {
-      container.style.display = 'none';
+      if (d.container.style.display !== 'none') d.container.style.display = 'none';
       return;
     }
-    container.style.display = 'flex';
+    if (d.container.style.display !== 'flex') d.container.style.display = 'flex';
 
     const pct = this.enemyManager.getProgressPercent();
-    const fillEl = document.getElementById('pvzWaveFill');
-    const markerEl = document.getElementById('pvzWaveMarker');
-    const labelEl = document.getElementById('pvzWaveLabel');
-    const statusEl = document.getElementById('pvzWaveStatus');
-
-    if (fillEl) fillEl.style.width = `${pct}%`;
-    if (markerEl) markerEl.style.left = `${pct}%`;
+    if (this._lastWavePct !== pct) {
+      this._lastWavePct = pct;
+      if (d.fillEl) d.fillEl.style.width = `${pct}%`;
+      if (d.markerEl) d.markerEl.style.left = `${pct}%`;
+    }
 
     const curWave = this.enemyManager.wave || 1;
     const maxW = this.enemyManager.maxWaves || 4;
+    const isBoss = this.enemyManager.isBossAlive;
+    const waveKey = `${curWave}_${maxW}_${isBoss}`;
 
-    if (labelEl) {
-      if (this.enemyManager.isBossAlive) {
-        labelEl.textContent = '⚡ FINAL BOSS FIGHT!';
-      } else if (curWave >= maxW) {
-        labelEl.textContent = `⚠️ WAVE ${curWave} / ${maxW} (HUGE WAVE!)`;
-      } else {
-        labelEl.textContent = `WAVE ${curWave} / ${maxW}`;
+    if (this._lastWaveKey !== waveKey) {
+      this._lastWaveKey = waveKey;
+      if (d.labelEl) {
+        if (isBoss) {
+          d.labelEl.textContent = '⚡ FINAL BOSS FIGHT!';
+        } else if (curWave >= maxW) {
+          d.labelEl.textContent = `⚠️ WAVE ${curWave} / ${maxW} (HUGE WAVE!)`;
+        } else {
+          d.labelEl.textContent = `WAVE ${curWave} / ${maxW}`;
+        }
       }
-    }
 
-    if (statusEl) {
-      if (this.enemyManager.isBossAlive) {
-        statusEl.textContent = 'BOSS ENCOUNTER';
-        statusEl.style.color = '#f43f5e';
-      } else if (curWave >= maxW) {
-        statusEl.textContent = 'HUGE WAVE';
-        statusEl.style.color = '#fbbf24';
-      } else {
-        statusEl.textContent = 'APPROACHING';
-        statusEl.style.color = '#94a3b8';
+      if (d.statusEl) {
+        if (isBoss) {
+          d.statusEl.textContent = 'BOSS ENCOUNTER';
+          d.statusEl.style.color = '#f43f5e';
+        } else if (curWave >= maxW) {
+          d.statusEl.textContent = 'HUGE WAVE';
+          d.statusEl.style.color = '#fbbf24';
+        } else {
+          d.statusEl.textContent = 'APPROACHING';
+          d.statusEl.style.color = '#94a3b8';
+        }
       }
     }
   }
@@ -22430,8 +22466,34 @@ class StevenUniverseGame {
   }
 
   updateHUD() {
+    if (!this._domHud && typeof document !== 'undefined') {
+      this._domHud = {
+        heartsContainer: document.getElementById('hudHearts'),
+        nameEl: document.getElementById('hudCharacterName'),
+        avatarEl: document.getElementById('hudAvatarIcon'),
+        odLabel: document.getElementById('overdriveLabel'),
+        fill: document.getElementById('harmonyBarFill'),
+        pct: document.getElementById('harmonyPercent'),
+        btnOverdrive: document.getElementById('btnOverdrive'),
+        btnText: document.getElementById('btnOverdriveText'),
+        touchOd: document.getElementById('touchOverdrive'),
+        nameP2: document.getElementById('hudCharacterNameP2'),
+        avatarP2: document.getElementById('hudAvatarIconP2'),
+        heartsContainerP2: document.getElementById('hudHeartsP2'),
+        odLabelP2: document.getElementById('overdriveLabelP2'),
+        fillP2: document.getElementById('harmonyBarFillP2'),
+        pctP2: document.getElementById('harmonyPercentP2'),
+        btnOverdriveP2: document.getElementById('btnOverdriveP2'),
+        btnTextP2: document.getElementById('btnOverdriveTextP2'),
+        p2Panel: document.getElementById('hudP2Panel'),
+        scoreEl: document.getElementById('hudScore'),
+        bubbledEl: document.getElementById('hudBubbledGems')
+      };
+    }
+    const d = this._domHud || {};
+
     // 1. Player 1 Hearts (Re-use existing DOM nodes to prevent GC thrashing & mobile lag)
-    const heartsContainer = document.getElementById('hudHearts');
+    const heartsContainer = d.heartsContainer;
     if (heartsContainer) {
       if (heartsContainer.children.length !== this.maxHearts) {
         heartsContainer.innerHTML = '';
@@ -22454,9 +22516,9 @@ class StevenUniverseGame {
 
     // Player 1 Character Info & Character-Specific Overdrive
     const charData = GUARDIAN_DATA[this.player.activeChar] || GUARDIAN_DATA.steven;
-    const nameEl = document.getElementById('hudCharacterName');
+    const nameEl = d.nameEl;
     if (nameEl && nameEl.textContent !== charData.name) nameEl.textContent = charData.name;
-    const avatarEl = document.getElementById('hudAvatarIcon');
+    const avatarEl = d.avatarEl;
     if (avatarEl && avatarEl.dataset.char !== this.player.activeChar) {
       avatarEl.dataset.char = this.player.activeChar;
       avatarEl.innerHTML = (typeof getGuardianSvg === 'function')
@@ -22465,14 +22527,14 @@ class StevenUniverseGame {
     }
 
     const odTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
-    const odLabel = document.getElementById('overdriveLabel');
+    const odLabel = d.odLabel;
     if (odLabel && odLabel.textContent !== `⚡ ${odTheme.name}`) odLabel.textContent = `⚡ ${odTheme.name}`;
 
-    const fill = document.getElementById('harmonyBarFill');
-    const pct = document.getElementById('harmonyPercent');
-    const btnOverdrive = document.getElementById('btnOverdrive');
-    const btnText = document.getElementById('btnOverdriveText');
-    const touchOd = document.getElementById('touchOverdrive');
+    const fill = d.fill;
+    const pct = d.pct;
+    const btnOverdrive = d.btnOverdrive;
+    const btnText = d.btnText;
+    const touchOd = d.touchOd;
 
     if (this.isOverdriveActive) {
       const remainingPct = Math.max(0, (this.overdriveTimer / this.overdriveDuration) * 100);
@@ -22500,9 +22562,9 @@ class StevenUniverseGame {
     // 2. Player 2 HUD Panel (Active in 2P Co-Op Mode)
     if (this.playerMode === '2p' && this.player2) {
       const charDataP2 = GUARDIAN_DATA[this.player2.activeChar] || GUARDIAN_DATA.garnet;
-      const nameP2 = document.getElementById('hudCharacterNameP2');
+      const nameP2 = d.nameP2;
       if (nameP2 && nameP2.textContent !== `${charDataP2.name} (P2)`) nameP2.textContent = `${charDataP2.name} (P2)`;
-      const avatarP2 = document.getElementById('hudAvatarIconP2');
+      const avatarP2 = d.avatarP2;
       if (avatarP2 && avatarP2.dataset.char !== this.player2.activeChar) {
         avatarP2.dataset.char = this.player2.activeChar;
         avatarP2.innerHTML = (typeof getGuardianSvg === 'function')
@@ -22510,7 +22572,7 @@ class StevenUniverseGame {
           : charDataP2.icon;
       }
 
-      const heartsContainerP2 = document.getElementById('hudHeartsP2');
+      const heartsContainerP2 = d.heartsContainerP2;
       if (heartsContainerP2) {
         if (heartsContainerP2.children.length !== this.maxHearts) {
           heartsContainerP2.innerHTML = '';
@@ -22532,13 +22594,13 @@ class StevenUniverseGame {
       }
 
       const odThemeP2 = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
-      const odLabelP2 = document.getElementById('overdriveLabelP2');
+      const odLabelP2 = d.odLabelP2;
       if (odLabelP2 && odLabelP2.textContent !== `⚡ ${odThemeP2.name}`) odLabelP2.textContent = `⚡ ${odThemeP2.name}`;
 
-      const fillP2 = document.getElementById('harmonyBarFillP2');
-      const pctP2 = document.getElementById('harmonyPercentP2');
-      const btnOverdriveP2 = document.getElementById('btnOverdriveP2');
-      const btnTextP2 = document.getElementById('btnOverdriveTextP2');
+      const fillP2 = d.fillP2;
+      const pctP2 = d.pctP2;
+      const btnOverdriveP2 = d.btnOverdriveP2;
+      const btnTextP2 = d.btnTextP2;
 
       if (this.isOverdriveActiveP2) {
         const remainingPct = Math.max(0, (this.overdriveTimerP2 / this.overdriveDuration) * 100);
@@ -22560,15 +22622,15 @@ class StevenUniverseGame {
       }
     }
 
-    const p2Panel = document.getElementById('hudP2Panel');
+    const p2Panel = d.p2Panel;
     if (p2Panel) {
       p2Panel.style.display = (this.playerMode === '2p' && this.player2) ? 'flex' : 'none';
     }
 
-    const scoreEl = document.getElementById('hudScore');
+    const scoreEl = d.scoreEl;
     const curScore = `${this.score}`;
     if (scoreEl && scoreEl.textContent !== curScore) scoreEl.textContent = curScore;
-    const bubbledEl = document.getElementById('hudBubbledGems');
+    const bubbledEl = d.bubbledEl;
     const curBubbled = `💎 ${this.bubbledGemsCount}`;
     if (bubbledEl && bubbledEl.textContent !== curBubbled) bubbledEl.textContent = curBubbled;
 
@@ -22614,8 +22676,8 @@ class StevenUniverseGame {
       return;
     }
 
-    // Pair-specific fusion identity (Sugilite is short and brutal, Sardonyx is long)
-    const power = FUSION_POWER[fusion.id] || { nuke: 1.0, duration: 4.0, heal: 1, title: 'GEM FUSION' };
+    // Pair-specific fusion identity (Extended to match 12s Overdrive duration!)
+    const power = FUSION_POWER[fusion.id] || { nuke: 1.0, duration: 12.0, heal: 1, title: 'GEM FUSION' };
 
     this.startCutin({
       kicker: 'GEM FUSION',
@@ -22625,13 +22687,13 @@ class StevenUniverseGame {
       centerPortraitId: fusion.id,
       icon: fusion.icon || '💎',
       name: fusion.name.toUpperCase(),
-      quote: `${fusion.weapon} · ${power.title}`,
+      quote: `${fusion.weapon} · ${power.title} · ${Math.round(power.duration)} SECONDS`,
       side: 'left',
       duration: 1.0,
       freeze: 0
     });
     const overcharge = Math.max(0, (this.fusionEnergy || 0) - 100);
-    const duration = power.duration + Math.min(1.2, overcharge * 0.05);
+    const duration = power.duration + Math.min(2.5, overcharge * 0.08);
     this.activeFusionNukeMult = power.nuke * (1 + Math.min(0.3, overcharge * 0.008));
     this.activeFusionHeal = power.heal;
     this.hyperAttackDuration = duration;
@@ -22650,8 +22712,8 @@ class StevenUniverseGame {
     this.player.fusionData = fusion;
     this.player.invulnerableTimer = duration + 0.5;
     this.player.actionType = 'skill';
-    this.player.actionDuration = Math.max(2.4, duration - 0.4);
-    this.player.actionTimer = Math.max(2.4, duration - 0.4);
+    this.player.actionDuration = 1.3;
+    this.player.actionTimer = 1.3;
 
     const targetX = (this.playerMode === '2p' && this.player2) ? (this.player.x + this.player2.x) / 2 : this.player.x;
     this.player.x = targetX;
@@ -22732,8 +22794,8 @@ class StevenUniverseGame {
       this.player2.isMergedInFusion = true;
     }
 
-    // Phase 2: Unleash Colossal Screen Nuke at T <= 3.2s
-    if (this.hyperAttackTimer <= 3.2 && !this.hyperAttackFired) {
+    // Phase 2: Unleash Colossal Screen Nuke early in the fusion intro
+    if (this.hyperAttackTimer <= (this.hyperAttackDuration - 0.6) && !this.hyperAttackFired) {
       this.hyperAttackFired = true;
       this.executeHyperAttackBlast(this.player.fusionData);
 
@@ -22754,10 +22816,13 @@ class StevenUniverseGame {
     // Once the cinematic has had its moment, hand control back to the players while
     // the fusion is still standing: from here the pair drives ONE body with the fused
     // shared kit (J/K/L blend both partners' skills).
-    if (!this.fusionPlayable && this.hyperAttackTimer <= 2.6) {
+    // Now with extended 12s fusion, players get ~10.7+ seconds of active playable fusion!
+    if (!this.fusionPlayable && this.hyperAttackTimer <= (this.hyperAttackDuration - 1.3)) {
       this.fusionPlayable = true;
       this.isHyperAttack = false;
-      this.fusionTimer = Math.max(1.4, this.hyperAttackTimer);
+      this.fusionTimer = Math.max(10.0, this.hyperAttackTimer);
+      this.player.actionType = null;
+      this.player.actionTimer = 0;
       this.particles.addDamageText(this.player.x, this.player.y - 150, '💎 SHARED KIT UNLOCKED — PLAY AS THE FUSION!', true, '#f472b6');
       this.audio.playSfx('powerup');
       this.updateFusionHUD();
@@ -23014,16 +23079,33 @@ class StevenUniverseGame {
   }
 
   updateFusionHUD() {
-    const container = document.getElementById('hudFusionContainer');
-    const iconEl = document.getElementById('hudFusionIcon');
-    const labelEl = document.getElementById('hudFusionLabel');
-    const pctEl = document.getElementById('hudFusionPct');
-    const fillEl = document.getElementById('hudFusionFill');
-    const btnEl = document.getElementById('btnFuseHud');
-    const btnText = document.getElementById('btnFuseText');
-    const btnElP2 = document.getElementById('btnFuseHudP2');
-    const btnTextP2 = document.getElementById('btnFuseTextP2');
-    const touchFuse = document.getElementById('touchFuse');
+    if (!this._domFusion && typeof document !== 'undefined') {
+      this._domFusion = {
+        container: document.getElementById('hudFusionContainer'),
+        iconEl: document.getElementById('hudFusionIcon'),
+        labelEl: document.getElementById('hudFusionLabel'),
+        pctEl: document.getElementById('hudFusionPct'),
+        fillEl: document.getElementById('hudFusionFill'),
+        btnEl: document.getElementById('btnFuseHud'),
+        btnText: document.getElementById('btnFuseText'),
+        btnElP2: document.getElementById('btnFuseHudP2'),
+        btnTextP2: document.getElementById('btnFuseTextP2'),
+        touchFuse: document.getElementById('touchFuse'),
+        touchLbl: document.getElementById('touchLblFuse')
+      };
+    }
+    const d = this._domFusion || {};
+    const container = d.container;
+    const iconEl = d.iconEl;
+    const labelEl = d.labelEl;
+    const pctEl = d.pctEl;
+    const fillEl = d.fillEl;
+    const btnEl = d.btnEl;
+    const btnText = d.btnText;
+    const btnElP2 = d.btnElP2;
+    const btnTextP2 = d.btnTextP2;
+    const touchFuse = d.touchFuse;
+    const touchLbl = d.touchLbl;
 
     // Strict Rule: Fusion is exclusively a 2-Player feature and must be hidden in 1-Player mode!
     if (this.playerMode !== '2p') {
@@ -23060,7 +23142,7 @@ class StevenUniverseGame {
     if (this.isHyperAttack || this.isFused) {
       if (container) container.style.display = 'flex';
       const timerVal = Math.max(0, this.hyperAttackTimer || this.fusionTimer || 0);
-      const remainingPct = Math.max(0, (timerVal / (this.hyperAttackDuration || 4.0)) * 100);
+      const remainingPct = Math.max(0, (timerVal / (this.hyperAttackDuration || 12.0)) * 100);
       if (fillEl) {
         fillEl.style.width = `${remainingPct}%`;
         fillEl.style.background = 'linear-gradient(90deg, #ec4899, #a855f7, #38bdf8, #fbbf24)';
@@ -23079,7 +23161,6 @@ class StevenUniverseGame {
       }
       if (touchFuse) {
         touchFuse.classList.add('ready');
-        const touchLbl = document.getElementById('touchLblFuse');
         if (touchLbl) touchLbl.textContent = 'HYPER!';
       }
     } else if (isIndependent) {
@@ -23102,7 +23183,6 @@ class StevenUniverseGame {
       }
       if (touchFuse) {
         touchFuse.classList.remove('ready');
-        const touchLbl = document.getElementById('touchLblFuse');
         if (touchLbl) touchLbl.textContent = 'NO FUSION';
       }
     } else {
