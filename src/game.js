@@ -245,6 +245,16 @@ class GemAudioEngine {
           osc.stop(t + 0.12);
           break;
 
+        case 'pop':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(680, t);
+          osc.frequency.exponentialRampToValueAtTime(110, t + 0.08);
+          gain.gain.setValueAtTime(0.38, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+          osc.start(t);
+          osc.stop(t + 0.09);
+          break;
+
         case 'shield':
           osc.type = 'sine';
           osc.frequency.setValueAtTime(880, t);
@@ -1099,6 +1109,24 @@ class ParticleSystem {
         color,
         size: Math.random() * 4 + 3,
         isStar: Math.random() > 0.4
+      });
+    }
+  }
+
+  addImpactSparks(x, y, dirX = 1, color = '#ffd700', count = 12) {
+    const baseAngle = dirX >= 0 ? 0 : Math.PI;
+    for (let i = 0; i < count; i++) {
+      const angle = baseAngle + (Math.random() - 0.5) * 1.3 - 0.22;
+      const spd = Math.random() * 8.5 + 4.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd - (Math.random() * 2.5 + 1.2),
+        life: 1.0,
+        decay: Math.random() * 0.05 + 0.035,
+        color,
+        size: Math.random() * 5 + 3,
+        isStar: Math.random() > 0.35
       });
     }
   }
@@ -10241,6 +10269,24 @@ class EnemyManager {
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const e = this.enemies[i];
+      if (e.isPoofed) {
+        this.enemies.splice(i, 1);
+        continue;
+      }
+      if (e.isPoofing) {
+        e.poofTimer -= dt;
+        e.vx *= 0.8;
+        e.vy *= 0.8;
+        e.x += e.vx * dt;
+        e.y += e.vy * dt;
+        if (e.poofTimer <= 0) {
+          e.isPoofing = false;
+          e.isPoofed = true;
+          this.poofEnemy(e, i, particles, audioEngine, onPoofed);
+          this.enemies.splice(i, 1);
+        }
+        continue;
+      }
       e.animTime += dt;
       if (e.hurtTimer > 0) e.hurtTimer -= dt;
 
@@ -10831,6 +10877,10 @@ class EnemyManager {
       if (dist < 65 && e.hurtTimer <= 0) {
         let dmg = (player.isPinkOverdrive ? 60 : 35) * (player.hasSynergyBuff ? 1.25 : 1.0);
         this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType('k'), player.getStabMultiplier('k'));
+        particles.addImpactSparks(e.x, e.y - 20, player.facing, '#c084fc', 10);
+        if (this.gameRef && this.gameRef.triggerHitstop) {
+          this.gameRef.triggerHitstop(0.035, 2.5);
+        }
         e.vx = player.facing * 440;
         e.vy = -240;
         e.hurtTimer = 0.35;
@@ -10879,6 +10929,11 @@ class EnemyManager {
         }
 
         this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType));
+        const sparkColor = player.isPinkOverdrive ? '#f43f5e' : (CHARACTER_CONFIG[player.activeChar]?.color || '#fde047');
+        particles.addImpactSparks(e.x, e.y - e.height / 2, player.facing, sparkColor, 12);
+        if (this.gameRef && this.gameRef.triggerHitstop) {
+          this.gameRef.triggerHitstop(player.isFusion ? 0.055 : 0.038, player.isFusion ? 4.5 : 2.5);
+        }
 
         // ENEMY STAGGER & KNOCKBACK FOR CLOSE-RANGE / MELEE ATTACKS
         if (player.isFusion) {
@@ -11024,6 +11079,11 @@ class EnemyManager {
       // 3. Confirmed Hit! Apply damage, particle sparkle, and weapon knockback
       this.damageEnemy(e, p.damage || 25, particles, audioEngine, onPoofed, enemyIndex, p.elementType || null, p.stabMult || 1);
       particles.addSparkle(p.x, p.y, p.color || '#fff', 12, 4);
+      const projDir = (p.vx && p.vx > 0) ? 1 : ((p.vx && p.vx < 0) ? -1 : player.facing);
+      particles.addImpactSparks(e.x, e.y - e.height / 2, projDir, p.color || '#fde047', 10);
+      if (this.gameRef && this.gameRef.triggerHitstop) {
+        this.gameRef.triggerHitstop(0.032, 2.0);
+      }
 
       // Specific Knockbacks based on lore weapons
       if (p.type === 'tidalWave') {
@@ -11202,12 +11262,21 @@ class EnemyManager {
     audioEngine.playSfx('hit');
 
     if (e.hp <= 0) {
-      e.isPoofed = true;
-      this.poofEnemy(e, enemyIndex, particles, audioEngine, onPoofed);
+      if (!e.isPoofed && !e.isPoofing) {
+        e.hp = 0;
+        e.isPoofing = true;
+        e.poofTimer = 0.16;
+        e.maxPoofTime = 0.16;
+        if (this.gameRef && this.gameRef.triggerHitstop) {
+          this.gameRef.triggerHitstop(0.065, 5.0);
+        }
+      }
+      return;
     }
   }
 
   poofEnemy(e, enemyIndex, particles, audioEngine, onPoofed) {
+    audioEngine.playSfx('pop');
     audioEngine.playSfx('poof');
     particles.addPoof(e.x, e.y - e.height / 2, e.gemColor || '#22c55e');
     this.enemiesDefeatedInStage = (this.enemiesDefeatedInStage || 0) + 1;
@@ -11271,6 +11340,12 @@ class EnemyManager {
       ctx.save();
       ctx.translate(e.x, e.y);
       ctx.scale(e.facing, 1);
+
+      if (e.isPoofing) {
+        const poofProgress = Math.max(0, Math.min(1, 1 - (e.poofTimer / (e.maxPoofTime || 0.16))));
+        const swell = 1.0 + Math.sin(poofProgress * Math.PI * 0.85) * 0.42;
+        ctx.scale(swell, swell);
+      }
 
       // Boss on its last legs: light bleeds out of the cracks before it breaks.
       if (e.isBoss && !e.isImmortalDummy && e.maxHp > 0 && e.hp / e.maxHp < 0.3) {
@@ -11350,7 +11425,18 @@ class EnemyManager {
         this.drawCorruptedJasper(ctx, e);
       }
 
-      this.drawHealthBar(ctx, e);
+      // 1: IMPACT FLASH & BALLOON POP (Fighting Style Guide)
+      if (e.isPoofing || e.hurtTimer > 0.16) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = e.isPoofing ? '#ffffff' : 'rgba(255, 255, 255, 0.88)';
+        ctx.fillRect(-e.width * 2, -e.height * 2.5, e.width * 4, e.height * 4);
+        ctx.restore();
+      }
+
+      if (!e.isPoofing) {
+        this.drawHealthBar(ctx, e);
+      }
       ctx.restore();
 
       // Freebuff readability layer: elite aura + wind-up warning
@@ -13871,69 +13957,73 @@ function drawPortraitCard(ctx, id, size = 512) {
   ctx.clearRect(0, 0, size, size);
   const img = _portraitImages[id];
   if (img && img.complete && img.naturalWidth > 0) {
-    // Soft halo so the cut-out sits on the star burst instead of floating
-    const glow = ctx.createRadialGradient(size * 0.5, size * 0.55, size * 0.05, size * 0.5, size * 0.55, size * 0.55);
-    glow.addColorStop(0, 'rgba(255,255,255,0.30)');
-    glow.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = glow;
-    ctx.fillRect(0, 0, size, size);
+    const theme = (typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[id]) ? OVERDRIVE_THEMES[id].color :
+                  (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS[id]) ? CANON_FUSIONS[id].color : '#f472b6';
 
-    // Radiating energy rays behind the character
+    // 1. Dynamic rotating energy rays behind character
     ctx.save();
-    ctx.translate(size / 2, size * 0.52);
-    ctx.globalAlpha = 0.16;
-    ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 22; i++) {
-      ctx.rotate((Math.PI * 2) / 22);
+    ctx.translate(size / 2, size * 0.50);
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = theme;
+    for (let i = 0; i < 16; i++) {
+      ctx.rotate((Math.PI * 2) / 16);
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(size * 0.022, -size * 0.85);
-      ctx.lineTo(-size * 0.022, -size * 0.85);
+      ctx.lineTo(size * 0.035, -size * 0.85);
+      ctx.lineTo(-size * 0.035, -size * 0.85);
       ctx.closePath();
       ctx.fill();
     }
     ctx.restore();
 
-    const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * 0.98;
-    const w = img.naturalWidth * scale;
-    const h = img.naturalHeight * scale;
-    ctx.drawImage(img, (size - w) / 2, size - h, w, h);
-
-    // Warm rim sparkle haze over the silhouette edges
+    // 2. High-speed action slash stripes in signature gem color
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const haze = ctx.createRadialGradient(size / 2, size * 0.45, size * 0.18, size / 2, size * 0.5, size * 0.55);
-    haze.addColorStop(0, 'rgba(255, 240, 200, 0.10)');
-    haze.addColorStop(0.7, 'rgba(255, 180, 220, 0.06)');
-    haze.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = haze;
-    ctx.fillRect(0, 0, size, size);
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = theme;
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.36);
+    ctx.lineTo(size, size * 0.16);
+    ctx.lineTo(size, size * 0.29);
+    ctx.lineTo(0, size * 0.49);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(0, size * 0.74);
+    ctx.lineTo(size, size * 0.54);
+    ctx.lineTo(size, size * 0.67);
+    ctx.lineTo(0, size * 0.87);
+    ctx.closePath();
+    ctx.fill();
     ctx.restore();
 
-    // Bottom fade so the bust melts into the title band
-    const fade = ctx.createLinearGradient(0, size * 0.78, 0, size);
-    fade.addColorStop(0, 'rgba(0, 0, 0, 0)');
-    fade.addColorStop(1, 'rgba(8, 4, 16, 0.75)');
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, size * 0.78, size, size * 0.22);
+    // 3. Draw pristine HD character portrait
+    ctx.save();
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    const scale = Math.min(size / img.naturalWidth, size / img.naturalHeight) * 0.96;
+    const w = img.naturalWidth * scale;
+    const h = img.naturalHeight * scale;
+    ctx.drawImage(img, (size - w) / 2, size - h - size * 0.02, w, h);
+    ctx.restore();
 
-    // Sparkles
-    const spark = (sx, sy, r, a) => {
+    // 4. Sparkling four-point gem stars
+    const spark = (sx, sy, r, a = 1.0) => {
       ctx.save();
       ctx.globalAlpha = a;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(sx, sy - r); ctx.quadraticCurveTo(sx + r * 0.2, sy - r * 0.2, sx + r, sy);
-      ctx.quadraticCurveTo(sx + r * 0.2, sy + r * 0.2, sx, sy + r);
-      ctx.quadraticCurveTo(sx - r * 0.2, sy + r * 0.2, sx - r, sy);
-      ctx.quadraticCurveTo(sx - r * 0.2, sy - r * 0.2, sx, sy - r);
+      ctx.moveTo(sx, sy - r);
+      ctx.quadraticCurveTo(sx + r * 0.18, sy - r * 0.18, sx + r, sy);
+      ctx.quadraticCurveTo(sx + r * 0.18, sy + r * 0.18, sx, sy + r);
+      ctx.quadraticCurveTo(sx - r * 0.18, sy + r * 0.18, sx - r, sy);
+      ctx.quadraticCurveTo(sx - r * 0.18, sy - r * 0.18, sx, sy - r);
       ctx.fill();
       ctx.restore();
     };
-    spark(size * 0.16, size * 0.18, size * 0.045, 0.9);
-    spark(size * 0.85, size * 0.24, size * 0.032, 0.75);
-    spark(size * 0.11, size * 0.62, size * 0.026, 0.7);
-    spark(size * 0.90, size * 0.66, size * 0.03, 0.8);
+    spark(size * 0.14, size * 0.22, size * 0.05, 0.95);
+    spark(size * 0.86, size * 0.28, size * 0.038, 0.85);
+    spark(size * 0.12, size * 0.65, size * 0.032, 0.75);
+    spark(size * 0.88, size * 0.70, size * 0.042, 0.9);
     return true;
   }
   drawPortrait(ctx, id, size);
@@ -13981,6 +14071,12 @@ class StevenUniverseGame {
     this.enemyManager = new EnemyManager(this.groundY, this.stageWidth);
     this.enemyManager.diffMult = 1.0;
     this.enemyManager.onComboHit = (dmg) => this.registerComboHit(dmg);
+    this.enemyManager.gameRef = this;
+    this.hitstopTimer = 0;
+    this.hitShake = 0;
+    this.player2AttackCooldown = 0;
+    this.player2SpecialCooldown = 0;
+    this.player2SkillCooldown = 0;
 
     this.projectiles = [];
     this.pickups = [];
@@ -14232,7 +14328,7 @@ class StevenUniverseGame {
     const typesContainer = document.getElementById('lobbyGuardianTypes');
 
     if (modeBtnText) {
-      modeBtnText.textContent = this.playerMode === '2p' ? 'MODE: 👥 2 PLAYERS' : 'MODE: 👤 1 PLAYER';
+      modeBtnText.textContent = this.playerMode === '2p' ? 'Mode: Co-Op (2P)' : 'Mode: Solo (1P)';
     }
 
     if (this.playerMode === '2p') {
@@ -14279,14 +14375,15 @@ class StevenUniverseGame {
 
   updateLobbyDifficulty() {
     const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
+    const cleanDiffName = (diff.name || 'Medium').replace(/^[^\w\s]+\s*/, '');
     const pill = document.getElementById('lobbyDifficultyPill');
     if (pill) {
-      pill.textContent = diff.name;
+      pill.textContent = cleanDiffName;
       pill.style.background = diff.pillColor;
     }
     const btnText = document.getElementById('btnDiffLevelText');
     if (btnText) {
-      btnText.textContent = `DIFFICULTY: ${diff.name}`;
+      btnText.textContent = `Difficulty: ${cleanDiffName}`;
     }
   }
 
@@ -14514,6 +14611,11 @@ class StevenUniverseGame {
       void cDisp.offsetWidth;
       cDisp.classList.add('active');
     }
+  }
+
+  triggerHitstop(duration = 0.045, shake = 3.5) {
+    this.hitstopTimer = Math.max(this.hitstopTimer, duration);
+    this.hitShake = Math.max(this.hitShake, shake);
   }
 
   // Freebuff: finishing a 3-hit chain feeds the fusion meter — teamwork pays off
@@ -15037,7 +15139,7 @@ class StevenUniverseGame {
     const btn = document.getElementById('btnStoryMode');
     const label = document.getElementById('btnStoryModeText');
     if (btn) btn.classList.toggle('off', this.storyMode === false);
-    if (label) label.textContent = this.storyMode === false ? 'STORY: OFF' : 'STORY: ON';
+    if (label) label.textContent = this.storyMode === false ? 'Story: Off' : 'Story: On';
   }
 
   toggleStoryMode() {
@@ -15501,6 +15603,17 @@ class StevenUniverseGame {
         if (isNaN(this.player2.vy)) this.player2.vy = 0;
       }
 
+      if (this.hitstopTimer > 0) {
+        this.hitstopTimer -= dt;
+        if (this.hitShake > 0) this.hitShake = Math.max(0, this.hitShake - dt * 25);
+        this.render();
+        requestAnimationFrame((t) => this.gameLoop(t));
+        return;
+      }
+      if (this.hitShake > 0) {
+        this.hitShake = Math.max(0, this.hitShake - dt * 25);
+      }
+
       if (this.state === 'playing') {
         this.update(dt);
       }
@@ -15714,6 +15827,47 @@ class StevenUniverseGame {
     // 1. Update Players (or Tag-Team Hyper Fusion Attack)
     if (this.isHyperAttack) {
       this.updateHyperAttack(dt, platforms);
+    } else if (this.isFused && this.playerMode === '2p' && this.player2) {
+      // 2-Player Co-Op Fusion: Shared movement and divided skills!
+      const sharedKeys = {
+        left: this.keysP1.left || this.keysP2.left,
+        right: this.keysP1.right || this.keysP2.right,
+        jump: this.keysP1.jump || this.keysP2.jump,
+        down: this.keysP1.down || this.keysP2.down,
+        shield: this.keysP1.shield || this.keysP2.shield,
+        dodge: this.keysP1.dodge || this.keysP2.dodge,
+        attack: this.keysP1.attack,
+        special: this.keysP1.special,
+        skill: this.keysP1.skill,
+        overdrive: this.keysP1.overdrive
+      };
+
+      this.player.update(dt, sharedKeys, this.audio, this.particles, this.projectiles, this.pickups, platforms);
+      this.tagPlayerProjectiles(this.player);
+
+      // Keep Player 2 synced with Fusion
+      this.player2.x = this.player.x;
+      this.player2.y = this.player.y;
+      this.player2.vx = this.player.vx;
+      this.player2.vy = this.player.vy;
+      this.player2.facing = this.player.facing;
+      this.player2.isMergedInFusion = true;
+
+      // Tick P2 Fusion Cooldowns
+      if (this.player2AttackCooldown > 0) this.player2AttackCooldown -= dt;
+      if (this.player2SpecialCooldown > 0) this.player2SpecialCooldown -= dt;
+      if (this.player2SkillCooldown > 0) this.player2SkillCooldown -= dt;
+
+      // Process Player 2 Fusion Actions
+      if (this.keysP2.attack && (this.player2AttackCooldown || 0) <= 0) {
+        this.executePlayer2FusionAction('j');
+      }
+      if (this.keysP2.special && (this.player2SpecialCooldown || 0) <= 0) {
+        this.executePlayer2FusionAction('k');
+      }
+      if (this.keysP2.skill && (this.player2SkillCooldown || 0) <= 0) {
+        this.executePlayer2FusionAction('l');
+      }
     } else {
       this.player.update(dt, this.keysP1, this.audio, this.particles, this.projectiles, this.pickups, platforms);
       this.tagPlayerProjectiles(this.player);
@@ -16091,6 +16245,10 @@ class StevenUniverseGame {
     const boss = this.enemyManager.enemies.find(en => en.isBoss && !en.isPoofed && !en.isImmortalDummy);
     let shakeX = 0;
     let shakeY = 0;
+    if (this.hitShake && this.hitShake > 0) {
+      shakeX += (Math.random() - 0.5) * this.hitShake * 2.2;
+      shakeY += (Math.random() - 0.5) * this.hitShake * 2.2;
+    }
     if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
       const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
       const amp = 1.4 + 4.2 * frac;
@@ -17287,6 +17445,40 @@ class StevenUniverseGame {
     this.finishTagTeamHyperAttack();
   }
 
+  executePlayer2FusionAction(slot) {
+    if (!this.isFused || !this.player || !this.player.isFusion || !this.player.fusionData) return;
+    const fid = this.player.fusionData.id;
+    const coop = COOP_FUSION_MOVES[fid];
+    const dmgMult = this.isPinkOverdriveP2 ? 2.0 : 1.0;
+
+    if (slot === 'j') {
+      this.player2AttackCooldown = 0.22;
+      this.triggerSlotAnimation('slotP2_J');
+      this.player.facing = this.player.facing || 1;
+      this.player.isAttacking = true;
+      this.player.attackTimer = 0.22;
+      this.player.attackFrame = 0.25;
+      this.player.attackType = 'j';
+      this.audio.playSfx('punch');
+      this.particles.addSparkle(this.player.x + this.player.facing * 40, this.player.y - 40, this.player.fusionData.color || '#ec4899', 12, 4);
+      const moveName = coop?.p2?.j?.name || 'Synergy Strike';
+      this.particles.addDamageText(this.player.x, this.player.y - 65, `${moveName}!`, false, this.player.fusionData.color || '#ec4899');
+    } else if (slot === 'k') {
+      this.player2SpecialCooldown = 0.85;
+      this.triggerSlotAnimation('slotP2_K');
+      if (typeof this.player.executeFusionSkillL === 'function') {
+        this.player.executeFusionSkillL(this.audio, this.particles, this.pickups, this.projectiles, dmgMult);
+      }
+    } else if (slot === 'l') {
+      this.player2SkillCooldown = 3.5;
+      this.triggerSlotAnimation('slotP2_L');
+      this.audio.playSfx('overdrive');
+      this.executeHyperAttackBlast(this.player.fusionData);
+      const moveName = coop?.p2?.l?.name || 'Harmony Surge';
+      this.particles.addDamageText(this.player.x, this.player.y - 110, `🌟 ${moveName}! 🌟`, true, '#fde047');
+    }
+  }
+
   updateHyperAttack(dt, platforms) {
     this.hyperAttackTimer -= dt;
     this.fusionTimer = Math.max(0, this.hyperAttackTimer);
@@ -17806,8 +17998,8 @@ class StevenUniverseGame {
         if (nameK) nameK.textContent = coop.p1.k.name;
         if (iconL) iconL.textContent = coop.p1.l.icon;
         if (nameL) nameL.textContent = coop.p1.l.name;
-        if (iconI) iconI.textContent = '🛡️';
-        if (nameI) nameI.textContent = 'Invulnerable';
+        if (iconI) iconI.textContent = coop.p1.i?.icon || '💨';
+        if (nameI) nameI.textContent = coop.p1.i?.name || 'Flash Step';
 
         // P2 Slots
         const iconP2_J = document.getElementById('iconP2_J');
@@ -17818,14 +18010,14 @@ class StevenUniverseGame {
         const nameP2_L = document.getElementById('nameP2_L');
         const iconP2_I = document.getElementById('iconP2_I');
         const nameP2_I = document.getElementById('nameP2_I');
-        if (iconP2_J) iconP2_J.textContent = coop.p1.j.icon;
-        if (nameP2_J) nameP2_J.textContent = coop.p1.j.name;
-        if (iconP2_K) iconP2_K.textContent = coop.p1.k.icon;
-        if (nameP2_K) nameP2_K.textContent = coop.p1.k.name;
-        if (iconP2_L) iconP2_L.textContent = coop.p1.l.icon;
-        if (nameP2_L) nameP2_L.textContent = coop.p1.l.name;
-        if (iconP2_I) iconP2_I.textContent = '🛡️';
-        if (nameP2_I) nameP2_I.textContent = 'Invulnerable';
+        if (iconP2_J) iconP2_J.textContent = coop.p2.j.icon;
+        if (nameP2_J) nameP2_J.textContent = coop.p2.j.name;
+        if (iconP2_K) iconP2_K.textContent = coop.p2.k.icon;
+        if (nameP2_K) nameP2_K.textContent = coop.p2.k.name;
+        if (iconP2_L) iconP2_L.textContent = coop.p2.l.icon;
+        if (nameP2_L) nameP2_L.textContent = coop.p2.l.name;
+        if (iconP2_I) iconP2_I.textContent = coop.p2.i?.icon || '💨';
+        if (nameP2_I) nameP2_I.textContent = coop.p2.i?.name || 'Flash Step';
       } else {
         // Unfused 2-Player Mode: P1 on left bar, P2 on right bar
         const d1 = GUARDIAN_DATA[this.player.activeChar] || GUARDIAN_DATA.steven;

@@ -381,7 +381,7 @@
     <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
   </svg></span></div>
           <div class="lobby-guardian-details">
-            <span class="lobby-guardian-badge">CHOSEN GUARDIAN • CLICK TO SWITCH 🔄</span>
+            <span class="lobby-guardian-badge">Active Guardian · Click to switch</span>
             <h3 class="lobby-guardian-name" id="lobbyGuardianName">Steven Universe</h3>
             <p class="lobby-guardian-desc" id="lobbyGuardianDesc">Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Cookie Cat (+1 Heart)</p>
             <div class="char-types-row" id="lobbyGuardianTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
@@ -390,56 +390,56 @@
               <span id="lobbyGuardianFusionText">Fuses with: Connie, Amethyst, Pearl, Garnet</span>
             </div>
           </div>
-          <div class="lobby-difficulty-pill" id="lobbyDifficultyPill">🟡 MEDIUM</div>
+          <div class="lobby-difficulty-pill" id="lobbyDifficultyPill">Medium</div>
         </button>
 
         <div class="menu-button-group">
           <!-- Play Story (Primary Grand Action) -->
           <button id="btnPlayStory" class="btn-primary" title="Embark on the Crystal Gems Story Adventure!">
             <span class="btn-icon">🌟</span>
-            <span>PLAY STORY</span>
+            <span>Play Story</span>
           </button>
 
           <!-- 1P / 2P Mode Toggle -->
           <button id="btnPlayerMode" class="btn-secondary btn-mode" title="Toggle between 1-Player Solo and 2-Player Co-Op">
-            <span class="btn-icon">👤</span>
-            <span id="btnPlayerModeText">MODE: 1 PLAYER</span>
+            <span class="btn-icon">👥</span>
+            <span id="btnPlayerModeText">Mode: Solo (1P)</span>
           </button>
 
           <!-- Tekken-Style Practice Mode -->
           <button id="btnPractice" class="btn-secondary btn-practice" title="Tekken-style practice mode with infinite HP training dummy & combo counter">
             <span class="btn-icon">🥋</span>
-            <span>PRACTICE</span>
+            <span>Practice Dojo</span>
           </button>
 
           <!-- Difficulty Direct Click Cycling (Easy ➔ Medium ➔ Hard ➔ Extreme) -->
           <button id="btnOpenDifficulty" class="btn-secondary btn-diff" title="Click to cycle difficulty: Easy ➔ Medium ➔ Hard ➔ Extreme">
             <span class="btn-icon">⚔️</span>
-            <span id="btnDiffLevelText">DIFFICULTY: 🟡 MEDIUM</span>
+            <span id="btnDiffLevelText">Difficulty: Medium</span>
           </button>
 
           <!-- Story cutscene toggle (dialogue on/off) -->
           <button id="btnStoryMode" class="btn-secondary btn-story" title="Toggle story dialogue between waves and bosses">
             <span class="btn-icon">📖</span>
-            <span id="btnStoryModeText">STORY: ON</span>
+            <span id="btnStoryModeText">Story Dialogue: On</span>
           </button>
 
           <!-- Episode / stage select -->
           <button id="btnEpisodes" class="btn-secondary" title="Replay any of the 10 episodes directly">
             <span class="btn-icon">🗺️</span>
-            <span>EPISODES</span>
+            <span>Select Episode</span>
           </button>
 
           <!-- Settings & Audio -->
           <button id="btnOpenSettings" class="btn-secondary" title="Configure Sound Effects & Music">
             <span class="btn-icon">⚙️</span>
-            <span>SETTINGS & AUDIO</span>
+            <span>Settings & Audio</span>
           </button>
 
           <!-- Native Quit Button -->
           <button id="btnQuitGame" class="btn-secondary btn-quit" title="Exit Crystal Gems">
             <span class="btn-icon">🚪</span>
-            <span>QUIT</span>
+            <span>Quit Game</span>
           </button>
         </div>
       </div>
@@ -449,7 +449,7 @@
     <div id="episodeSelectScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card episode-card">
         <div class="modal-header">
-          <h2>🗺️ SELECT AN EPISODE</h2>
+          <h2>Select Episode</h2>
           <button class="btn-close" id="btnCloseEpisodes">✕</button>
         </div>
         <div class="modal-body">
@@ -477,7 +477,7 @@
     <div id="characterSelectScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card char-select-modal">
         <div class="modal-header">
-          <h2>💎 SELECT YOUR CRYSTAL GUARDIAN</h2>
+          <h2>Select Guardian</h2>
           <button class="btn-close" id="btnCloseCharSelect">✕</button>
         </div>
         <div class="modal-body char-select-body">
@@ -870,7 +870,7 @@
     <div id="difficultyScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card difficulty-card">
         <div class="modal-header">
-          <h2>⚔️ SELECT COMBAT DIFFICULTY</h2>
+          <h2>Select Difficulty</h2>
           <button class="btn-close" id="btnCloseDifficulty">✕</button>
         </div>
         <div class="modal-body">
@@ -908,7 +908,7 @@
     <div id="settingsScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card settings-card">
         <div class="modal-header">
-          <h2>⚙️ GAME & AUDIO SETTINGS</h2>
+          <h2>Settings & Audio</h2>
           <button class="btn-close" id="btnCloseSettings">✕</button>
         </div>
         <div class="modal-body">
@@ -1025,7 +1025,7 @@
     <div id="howToPlayScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card">
         <div class="modal-header">
-          <h2>🌟 GEM POWERS, LORE & COMBAT TECHNIQUES [J, K, L]</h2>
+          <h2>Combat Techniques & Lore</h2>
           <button class="btn-close" id="btnCloseHowToPlay">✕</button>
         </div>
         <div class="modal-body">
@@ -1081,7 +1081,7 @@
     <div id="bubbleRoomScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card bubble-room-modal">
         <div class="modal-header">
-          <h2>🔮 THE CRYSTAL TEMPLE BURNING ROOM</h2>
+          <h2>The Burning Room</h2>
           <button class="btn-close" id="btnCloseBubbleRoom">✕</button>
         </div>
         <div class="modal-body">
@@ -1149,7 +1149,7 @@
     <!-- 4. Pause Screen -->
     <div id="pauseScreen" class="overlay-screen" style="display: none;">
       <div class="pause-card">
-        <h2>⏸️ GAME PAUSED</h2>
+        <h2>Game Paused</h2>
         <p>Take a breath! Cookie Cats are best enjoyed slowly.</p>
 
         <!-- In-Game Audio & Music Adjustment -->
@@ -1226,7 +1226,7 @@
     <div id="gameOverScreen" class="overlay-screen" style="display: none;">
       <div class="game-over-card">
         <div class="cracked-gem-icon">💔</div>
-        <h2>THE GEMS HAVE POOFED!</h2>
+        <h2>The Gems Have Poofed</h2>
         <p>Don't lose hope! As long as we have each other, we can always find a way!</p>
         <div class="game-over-stats">
           <div>Final Score: <b id="goFinalScore">0</b></div>
