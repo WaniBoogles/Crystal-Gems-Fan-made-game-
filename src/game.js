@@ -9873,6 +9873,21 @@ class EnemyManager {
     this.enemiesDefeatedInStage = 0;
     this.waveQueue = [];
     this.waveTimer = 0;
+
+    // Offscreen scratch canvas for silhouette-masked hit flash & poofing
+    this.flashCanvas = null;
+    this.flashCtx = null;
+    if (typeof document !== 'undefined') {
+      try {
+        this.flashCanvas = document.createElement('canvas');
+        this.flashCanvas.width = 640;
+        this.flashCanvas.height = 640;
+        this.flashCtx = this.flashCanvas.getContext('2d');
+      } catch (err) {
+        this.flashCanvas = null;
+        this.flashCtx = null;
+      }
+    }
   }
 
   reset(stageIndex, difficultyConfig = null, pickupsRef = null) {
@@ -11330,6 +11345,57 @@ class EnemyManager {
     if (onPoofed) onPoofed(e);
   }
 
+  drawEnemyModel(ctx, e) {
+    if (e.type === 'winged_centipeetle') {
+      this.drawWingedCentipeetle(ctx, e);
+    } else if (e.type === 'spire_harpy') {
+      this.drawSpireHarpy(ctx, e);
+    } else if (e.type === 'volcanic_firebird') {
+      this.drawVolcanicFirebird(ctx, e);
+    } else if (e.type === 'ice_gargoyle') {
+      this.drawIceGargoyle(ctx, e);
+    } else if (e.type === 'centipeetle' || e.type === 'acid_centipeetle') {
+      this.drawCentipeetleHatchling(ctx, e);
+    } else if (e.type === 'blade_quartz') {
+      this.drawBladeQuartz(ctx, e);
+    } else if (e.type === 'cluster') {
+      this.drawClusterMutant(ctx, e);
+    } else if (e.type === 'ice_monster') {
+      this.drawIceMonster(ctx, e);
+    } else if (e.type === 'boss_spitter' || e.type === 'boss_centipeetle') {
+      this.drawMotherCentipeetle(ctx, e);
+    } else if (e.type === 'boss_quartz_beast') {
+      this.drawCorruptedQuartzBeast(ctx, e);
+    } else if (e.type === 'boss_cluster_titan') {
+      this.drawClusterTitan(ctx, e);
+    } else if (e.type === 'boss_ice_guardian') {
+      this.drawIceGuardian(ctx, e);
+    } else if (e.type === 'boss_jasper' || e.type === 'boss_jasper_dummy' || e.type.includes('dummy') || e.type.includes('jasper')) {
+      this.drawCorruptedJasper(ctx, e);
+    } else if (e.type === 'boss_cluster_core') {
+      this.drawClusterCore(ctx, e);
+    } else if (e.type === 'boss_forge_guardian') {
+      this.drawForgeGuardian(ctx, e);
+    } else if (e.type === 'boss_agate_warden') {
+      this.drawAgateWarden(ctx, e);
+    } else if (e.type === 'boss_topaz_fusion') {
+      this.drawTopazFusion(ctx, e);
+    } else if (e.type === 'boss_robonoid_titan') {
+      this.drawRobonoidTitan(ctx, e);
+    } else if (e.type === 'boss_white_diamond') {
+      this.drawWhiteDiamond(ctx, e);
+    } else if (e.type === 'robonoid_scout') {
+      this.drawRobonoidScout(ctx, e);
+    } else if (e.type === 'forge_automaton') {
+      this.drawForgeAutomaton(ctx, e);
+    } else if (e.type === 'destabilizer_soldier') {
+      this.drawDestabilizerSoldier(ctx, e);
+    } else {
+      // Safe ultimate fallback: guarantees NO enemy or boss is ever invisible!
+      this.drawCorruptedJasper(ctx, e);
+    }
+  }
+
   draw(ctx) {
     ctx.save();
     for (const g of this.droppedGems) {
@@ -11372,66 +11438,47 @@ class EnemyManager {
         ctx.restore();
       }
 
-      if (e.hurtTimer > 0) {
-        ctx.fillStyle = '#ffffff';
-      }
-
-      if (e.type === 'winged_centipeetle') {
-        this.drawWingedCentipeetle(ctx, e);
-      } else if (e.type === 'spire_harpy') {
-        this.drawSpireHarpy(ctx, e);
-      } else if (e.type === 'volcanic_firebird') {
-        this.drawVolcanicFirebird(ctx, e);
-      } else if (e.type === 'ice_gargoyle') {
-        this.drawIceGargoyle(ctx, e);
-      } else if (e.type === 'centipeetle' || e.type === 'acid_centipeetle') {
-        this.drawCentipeetleHatchling(ctx, e);
-      } else if (e.type === 'blade_quartz') {
-        this.drawBladeQuartz(ctx, e);
-      } else if (e.type === 'cluster') {
-        this.drawClusterMutant(ctx, e);
-      } else if (e.type === 'ice_monster') {
-        this.drawIceMonster(ctx, e);
-      } else if (e.type === 'boss_spitter' || e.type === 'boss_centipeetle') {
-        this.drawMotherCentipeetle(ctx, e);
-      } else if (e.type === 'boss_quartz_beast') {
-        this.drawCorruptedQuartzBeast(ctx, e);
-      } else if (e.type === 'boss_cluster_titan') {
-        this.drawClusterTitan(ctx, e);
-      } else if (e.type === 'boss_ice_guardian') {
-        this.drawIceGuardian(ctx, e);
-      } else if (e.type === 'boss_jasper' || e.type === 'boss_jasper_dummy' || e.type.includes('dummy') || e.type.includes('jasper')) {
-        this.drawCorruptedJasper(ctx, e);
-      } else if (e.type === 'boss_cluster_core') {
-        this.drawClusterCore(ctx, e);
-      } else if (e.type === 'boss_forge_guardian') {
-        this.drawForgeGuardian(ctx, e);
-      } else if (e.type === 'boss_agate_warden') {
-        this.drawAgateWarden(ctx, e);
-      } else if (e.type === 'boss_topaz_fusion') {
-        this.drawTopazFusion(ctx, e);
-      } else if (e.type === 'boss_robonoid_titan') {
-        this.drawRobonoidTitan(ctx, e);
-      } else if (e.type === 'boss_white_diamond') {
-        this.drawWhiteDiamond(ctx, e);
-      } else if (e.type === 'robonoid_scout') {
-        this.drawRobonoidScout(ctx, e);
-      } else if (e.type === 'forge_automaton') {
-        this.drawForgeAutomaton(ctx, e);
-      } else if (e.type === 'destabilizer_soldier') {
-        this.drawDestabilizerSoldier(ctx, e);
-      } else {
-        // Safe ultimate fallback: guarantees NO enemy or boss is ever invisible!
-        this.drawCorruptedJasper(ctx, e);
-      }
+      // Draw base enemy
+      this.drawEnemyModel(ctx, e);
 
       // 1: IMPACT FLASH & BALLOON POP (Fighting Style Guide)
+      // Flash ONLY the exact silhouette of the enemy using an isolated offscreen canvas mask (no square box!)
       if (e.isPoofing || e.hurtTimer > 0.16) {
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-atop';
-        ctx.fillStyle = e.isPoofing ? '#ffffff' : 'rgba(255, 255, 255, 0.88)';
-        ctx.fillRect(-e.width * 2, -e.height * 2.5, e.width * 4, e.height * 4);
-        ctx.restore();
+        if (!this.flashCanvas && typeof document !== 'undefined') {
+          try {
+            this.flashCanvas = document.createElement('canvas');
+            this.flashCanvas.width = 640;
+            this.flashCanvas.height = 640;
+            this.flashCtx = this.flashCanvas.getContext('2d');
+          } catch (err) {
+            this.flashCanvas = null;
+            this.flashCtx = null;
+          }
+        }
+        if (this.flashCanvas && this.flashCtx) {
+          const maxDim = Math.max(e.width || 60, e.height || 60, 180);
+          const reqSize = Math.max(640, Math.ceil(maxDim * 2.6));
+          if (this.flashCanvas.width < reqSize || this.flashCanvas.height < reqSize) {
+            this.flashCanvas.width = reqSize;
+            this.flashCanvas.height = reqSize;
+          }
+          const fc = this.flashCanvas;
+          const fctx = this.flashCtx;
+          const cx = Math.floor(fc.width / 2);
+          const cy = Math.floor(fc.height * 0.75);
+
+          fctx.clearRect(0, 0, fc.width, fc.height);
+          fctx.save();
+          fctx.translate(cx, cy);
+          this.drawEnemyModel(fctx, e);
+          fctx.globalCompositeOperation = 'source-in';
+          fctx.fillStyle = e.isPoofing ? '#ffffff' : 'rgba(255, 255, 255, 0.92)';
+          fctx.fillRect(-cx, -cy, fc.width, fc.height);
+          fctx.restore();
+
+          // Overlay the exact white silhouette cleanly onto main canvas
+          ctx.drawImage(fc, -cx, -cy);
+        }
       }
 
       if (!e.isPoofing) {
@@ -12500,16 +12547,55 @@ class EnemyManager {
   }
 
   drawHealthBar(ctx, e) {
-    const barWidth = e.isBoss ? 84 : 38;
-    const barHeight = e.isBoss ? 7 : 4;
-    const yOff = e.isBoss ? -e.height - 18 : -e.height - 8;
+    // Only display floating health bar if damaged or if boss/elite
+    if (!e.isBoss && !e.isElite && e.hp >= e.maxHp) return;
 
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
-    ctx.fillRect(-barWidth / 2, yOff, barWidth, barHeight);
+    ctx.save();
+    // Un-flip so health bar always depletes left-to-right regardless of enemy facing direction
+    if (e.facing < 0) {
+      ctx.scale(-1, 1);
+    }
 
-    const pct = Math.max(0, e.hp / e.maxHp);
-    ctx.fillStyle = e.isBoss ? '#f43f5e' : '#22c55e';
-    ctx.fillRect(-barWidth / 2, yOff, barWidth * pct, barHeight);
+    const barWidth = e.isBoss ? 76 : 36;
+    const barHeight = e.isBoss ? 5 : 4;
+    const yOff = e.isBoss ? -e.height - 16 : -e.height - 8;
+    const pct = Math.max(0, Math.min(1, e.hp / e.maxHp));
+    const radius = barHeight / 2;
+
+    // Dark slate capsule background
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-barWidth / 2, yOff, barWidth, barHeight, radius);
+    } else {
+      ctx.rect(-barWidth / 2, yOff, barWidth, barHeight);
+    }
+    ctx.fill();
+    ctx.stroke();
+
+    // Smooth health fill
+    if (pct > 0) {
+      if (e.isBoss) {
+        ctx.fillStyle = '#f43f5e';
+      } else if (pct > 0.5) {
+        ctx.fillStyle = '#22c55e';
+      } else if (pct > 0.25) {
+        ctx.fillStyle = '#eab308';
+      } else {
+        ctx.fillStyle = '#ef4444';
+      }
+      ctx.beginPath();
+      const fillW = Math.max(barHeight, barWidth * pct);
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(-barWidth / 2, yOff, fillW, barHeight, radius);
+      } else {
+        ctx.rect(-barWidth / 2, yOff, barWidth * pct, barHeight);
+      }
+      ctx.fill();
+    }
+    ctx.restore();
   }
 }
 
@@ -15091,7 +15177,7 @@ class StevenUniverseGame {
     });
 
     // Restart the entrance animation on every activation
-    [leftWrap, rightWrap].forEach(w => {
+    [centerWrap, leftWrap, rightWrap].forEach(w => {
       if (!w) return;
       w.style.animation = 'none';
       void w.offsetWidth;
