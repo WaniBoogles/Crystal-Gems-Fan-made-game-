@@ -1355,6 +1355,141 @@ class ParticleSystem {
     }
   }
 
+  // --- PIXEL-FX AUTHENTIC COMBAT EMITTERS (Effects / pixelfx-main reference) ---
+  addThrustPierce(x, y, facing = 1, color = '#38bdf8') {
+    this.addHitSpark(x + facing * 28, y, color, 28, 0);
+    for (let i = 0; i < 4; i++) {
+      this.particles.push({
+        x: x - facing * (i * 8),
+        y: y + (i - 1.5) * 6,
+        vx: facing * (3 + Math.random() * 2),
+        vy: 0,
+        length: 28 + Math.random() * 16,
+        height: 2.2,
+        facing,
+        color,
+        life: 0.28,
+        decay: 0.045,
+        isSpeedStreak: true
+      });
+    }
+    this.particles.push({
+      x: x + facing * 18,
+      y,
+      vx: 0, vy: 0,
+      radius: 12,
+      growSpeed: 75,
+      color,
+      life: 0.26,
+      decay: 0.042,
+      isPierceRing: true
+    });
+  }
+
+  addWhipSnap(x, y, facing = 1, color = '#c084fc') {
+    this.addHitSpark(x, y, color, 24, Math.PI / 4);
+    this.addShockwaveRing(x, y, 65, color, 3.2);
+    for (let i = 0; i < 8; i++) {
+      const a = (Math.random() - 0.5) * 1.2 + (facing === 1 ? 0 : Math.PI);
+      const spd = Math.random() * 4.5 + 2.0;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(a) * spd,
+        vy: Math.sin(a) * spd,
+        size: Math.random() * 3 + 2,
+        color: i % 2 === 0 ? '#ffffff' : color,
+        life: 0.45,
+        decay: 0.038,
+        isStar: true
+      });
+    }
+  }
+
+  addHammerQuake(x, y, color = '#f97316') {
+    this.addGroundFissure(x - 35, y, 70, color);
+    this.addGroundFissure(x + 35, y, 70, color);
+    this.addDebris(x, y, '#94a3b8', 10);
+    this.addShockwaveRing(x, y, 140, color, 4.0);
+    this.addPoof(x - 30, y - 5, '#e2e8f0');
+    this.addPoof(x + 30, y - 5, '#e2e8f0');
+  }
+
+  addWaterStream(x, y, facing = 1, color = '#38bdf8') {
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.random() - 0.5) * 0.6 + (facing === 1 ? 0 : Math.PI);
+      const spd = Math.random() * 5.0 + 3.0;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: Math.cos(a) * spd,
+        vy: Math.sin(a) * spd - 0.8,
+        size: Math.random() * 4 + 2.5,
+        color,
+        life: 0.55,
+        decay: 0.035,
+        isWaterDroplet: true
+      });
+    }
+    this.addSparkle(x, y, '#e0f2fe', 8, 3);
+  }
+
+  addLightningArc(x1, y1, x2, y2, color = '#facc15') {
+    const points = [{ x: x1, y: y1 }];
+    const steps = 5;
+    for (let s = 1; s < steps; s++) {
+      const t = s / steps;
+      const lx = x1 + (x2 - x1) * t + (Math.random() - 0.5) * 24;
+      const ly = y1 + (y2 - y1) * t + (Math.random() - 0.5) * 24;
+      points.push({ x: lx, y: ly });
+    }
+    points.push({ x: x2, y: y2 });
+    this.particles.push({
+      x: x1, y: y1,
+      x1, y1, points,
+      vx: 0, vy: 0,
+      color,
+      life: 0.22,
+      decay: 0.048,
+      isLightningBolt: true
+    });
+  }
+
+  addFireRing(x, y, color = '#ea580c') {
+    this.addShockwaveRing(x, y, 95, color, 3.5);
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      const r = 24 + Math.random() * 20;
+      this.particles.push({
+        x: x + Math.cos(a) * r,
+        y: y + Math.sin(a) * r * 0.35,
+        vx: Math.cos(a) * 0.8,
+        vy: -Math.random() * 2.2 - 0.8,
+        size: Math.random() * 12 + 6,
+        color,
+        life: 0.55,
+        decay: 0.038,
+        isFlameTongue: true
+      });
+    }
+  }
+
+  addHolyHeal(x, y, color = '#ff94ba') {
+    for (let h = 0; h < 3; h++) {
+      this.particles.push({
+        x,
+        y: y - h * 18,
+        vx: 0, vy: 0,
+        radius: 26 + h * 8,
+        color,
+        life: 0.65 - h * 0.1,
+        decay: 0.032,
+        isHolyHeal: true
+      });
+    }
+    this.addRosePetals(x, y - 25, 8);
+    this.addSparkle(x, y - 25, '#ffffff', 14, 4);
+  }
+
   addRosePetals(x, y, count = 6) {
     for (let i = 0; i < count; i++) {
       this.particles.push({
@@ -1649,6 +1784,77 @@ class ParticleSystem {
         ctx.fill();
         ctx.restore();
         p.angle += p.rotSpeed * 0.016;
+      } else if (p.isSpeedStreak) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.75;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = p.height || 2.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x + p.length * p.facing, p.y);
+        ctx.stroke();
+        ctx.restore();
+      } else if (p.isPierceRing) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.65;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.radius * 0.35, p.radius, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        p.radius += p.growSpeed * 0.016;
+      } else if (p.isWaterDroplet) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.85;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(p.x - p.size * 0.3, p.y - p.size * 0.3, p.size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if (p.isLightningBolt) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(p.points[0].x, p.points[0].y);
+        for (let seg = 1; seg < p.points.length; seg++) {
+          ctx.lineTo(p.points[seg].x, p.points[seg].y);
+        }
+        ctx.stroke();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+        ctx.restore();
+      } else if (p.isFlameTongue) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.85;
+        ctx.translate(p.x, p.y);
+        const fGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, p.size);
+        fGrad.addColorStop(0, '#ffffff');
+        fGrad.addColorStop(0.35, p.color);
+        fGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else if (p.isHolyHeal) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.75;
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.radius, p.radius * 0.35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        p.y -= 1.4;
+        p.radius += 0.5;
       } else {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -3945,18 +4151,32 @@ class PlayerHero {
 
     if (this.isFusion && this.fusionData) {
       const f = this.fusionData;
-      if (f.id === 'opal') audioEngine.playSfx('laser');
+      if (f.id === 'opal') {
+        audioEngine.playSfx('laser');
+        if (particles) particles.addThrustPierce(this.x + this.facing * 50, this.y - 35, this.facing, '#818cf8');
+      }
       else if (f.id === 'stevonnie' || f.id === 'rainbowClassic' || f.id === 'rainbow2') {
         audioEngine.playSfx('sword');
         particles.addSlashArc(this.x + this.facing * 55, this.y - 50, this.facing, f.color || '#ec4899');
+        if (particles) particles.addThrustPierce(this.x + this.facing * 50, this.y - 45, this.facing, f.color || '#ec4899');
       }
-      else if (f.id === 'smoky') audioEngine.playSfx('whip');
-      else if (f.id === 'malachite') audioEngine.playSfx('water');
+      else if (f.id === 'smoky') {
+        audioEngine.playSfx('whip');
+        if (particles) particles.addWhipSnap(this.x + this.facing * 55, this.y - 35, this.facing, '#a855f7');
+      }
+      else if (f.id === 'malachite') {
+        audioEngine.playSfx('water');
+        if (particles) particles.addWaterStream(this.x + this.facing * 50, this.y - 35, this.facing, '#2dd4bf');
+      }
       else if (f.id === 'sugilite' || f.id === 'sardonyx') {
         audioEngine.playSfx('explosion');
         particles.addExplosion(this.x + this.facing * 60, this.groundY - 15, f.color || '#fbbf24', 20);
+        if (particles) particles.addHammerQuake(this.x + this.facing * 55, this.groundY, f.color || '#fbbf24');
       }
-      else audioEngine.playSfx('punch');
+      else {
+        audioEngine.playSfx('punch');
+        if (f.id === 'sunstone' && particles) particles.addFireRing(this.x + this.facing * 45, this.groundY, '#ea580c');
+      }
 
       particles.addSparkle(this.x + this.facing * 55, this.y - 35, f.glowColor || '#ffffff', 20, 6);
       return;
@@ -3970,6 +4190,8 @@ class PlayerHero {
       if (isFinisher) {
         audioEngine.playSfx('explosion');
         particles.addExplosion(this.x + this.facing * 45, this.groundY - 15, '#ef4444', 16);
+        particles.addHammerQuake(this.x + this.facing * 45, this.groundY, '#ef4444');
+        particles.addLightningArc(this.x + this.facing * 20, this.groundY, this.x + this.facing * 65, this.groundY, '#fbbf24');
       } else {
         audioEngine.playSfx('punch');
       }
@@ -3977,15 +4199,20 @@ class PlayerHero {
     } else if (this.activeChar === 'amethyst') {
       // Spiked Dual Whip Flurry
       audioEngine.playSfx('whip');
+      particles.addWhipSnap(this.x + this.facing * 60, this.y - 35, this.facing, '#c084fc');
       particles.addSparkle(this.x + this.facing * 60, this.y - 35, '#c084fc', 14, 5);
     } else if (this.activeChar === 'pearl') {
       audioEngine.playSfx('spear');
       particles.addSlashArc(this.x + this.facing * 50, this.y - 42, this.facing, '#38bdf8');
+      if (this.comboStep === 0) {
+        particles.addThrustPierce(this.x + this.facing * 50, this.y - 42, this.facing, '#38bdf8');
+      }
       particles.addSparkle(this.x + this.facing * 55, this.y - 42, '#38bdf8', 9, 5);
     } else if (this.activeChar === 'bismuth') {
       if (isFinisher) {
         audioEngine.playSfx('explosion');
         particles.addExplosion(this.x + this.facing * 45, this.groundY - 15, '#f97316', 16);
+        particles.addHammerQuake(this.x + this.facing * 45, this.groundY, '#f97316');
       } else {
         audioEngine.playSfx('hammer');
       }
@@ -3993,25 +4220,39 @@ class PlayerHero {
     } else if (this.activeChar === 'peridot') {
       // Ferrokinetic Metal Claws
       audioEngine.playSfx('metal');
+      if (isFinisher) {
+        particles.addLightningArc(this.x + this.facing * 20, this.y - 38, this.x + this.facing * 60, this.y - 38, '#84cc16');
+      }
       particles.addSparkle(this.x + this.facing * 50, this.y - 38, '#84cc16', 14, 5);
     } else if (this.activeChar === 'lapis') {
       audioEngine.playSfx('water');
+      particles.addWaterStream(this.x + this.facing * 55, this.y - 36, this.facing, '#38bdf8');
       particles.addSparkle(this.x + this.facing * 55, this.y - 36, '#38bdf8', 12, 5);
     } else if (this.activeChar === 'rose') {
       audioEngine.playSfx('sword');
       particles.addSlashArc(this.x + this.facing * 45, this.y - 40, this.facing, '#fbcfe8');
       particles.addRosePetals(this.x + this.facing * 45, this.y - 40, 6);
+      if (isFinisher) {
+        particles.addHolyHeal(this.x + this.facing * 45, this.y - 40, '#fbcfe8');
+      }
       particles.addSparkle(this.x + this.facing * 45, this.y - 35, '#fbcfe8', 10, 4);
     } else if (this.activeChar === 'connie') {
       // Knight's Fencing Combo: Lunge Thrust -> Crescent Slash -> Overhead Cleave!
       audioEngine.playSfx('sword');
       particles.addSlashArc(this.x + this.facing * 45, this.y - 38, this.facing, '#f472b6');
+      if (this.comboStep === 0) {
+        particles.addThrustPierce(this.x + this.facing * 45, this.y - 38, this.facing, '#f472b6');
+      } else if (isFinisher) {
+        particles.addHammerQuake(this.x + this.facing * 55, this.groundY, '#f43f5e');
+      }
       particles.addSparkle(this.x + this.facing * 50, this.y - 36, '#f472b6', 14, 5);
     } else if (this.activeChar === 'jasper') {
       // Beta Quartz Brawler Combo: Gut Punch -> Hammer Fist -> Seismic Haymaker!
       if (isFinisher) {
         audioEngine.playSfx('explosion');
         particles.addExplosion(this.x + this.facing * 50, this.groundY - 15, '#ea580c', 18);
+        particles.addHammerQuake(this.x + this.facing * 50, this.groundY, '#ea580c');
+        particles.addFireRing(this.x + this.facing * 50, this.groundY, '#ea580c');
       } else {
         audioEngine.playSfx('punch');
       }
@@ -4092,6 +4333,7 @@ class PlayerHero {
         life: 1.8
       });
       particles.addRosePetals(this.x, this.y - 35, 6);
+      if (particles) particles.addThrustPierce(this.x + this.facing * 25, this.y - 36, this.facing, '#ff6097');
     } else if (this.activeChar === 'garnet') {
       // Rocket Gauntlet Blast!
       audioEngine.playSfx('rocket');
@@ -4106,6 +4348,7 @@ class PlayerHero {
         color: '#e11d48',
         life: 1.0
       });
+      if (particles) particles.addFireRing(this.x + this.facing * 25, this.y - 38, '#e11d48');
       particles.addSparkle(this.x, this.y - 38, '#f59e0b', 14, 5);
     } else if (this.activeChar === 'amethyst') {
       // Authentic Sonic Spin Dash (Quartz Buzzsaw Ball)
@@ -4126,6 +4369,7 @@ class PlayerHero {
         color: '#c084fc',
         life: 0.55
       });
+      if (particles) particles.addWhipSnap(this.x + this.facing * 20, this.groundY - 20, this.facing, '#c084fc');
       particles.addSparkle(this.x, this.groundY - 20, '#e9d5ff', 16, 5);
     } else if (this.activeChar === 'pearl') {
       // Spear Laser Beam (3 Piercing Cyan Lasers!)
@@ -4143,6 +4387,7 @@ class PlayerHero {
           life: 1.1
         });
       }
+      if (particles) particles.addThrustPierce(this.x + this.facing * 40, this.y - 44, this.facing, '#38bdf8');
       particles.addSparkle(this.x + this.facing * 40, this.y - 44, '#67e8f9', 12, 5);
     } else if (this.activeChar === 'bismuth') {
       // Anvil Hand Launch
@@ -4158,6 +4403,7 @@ class PlayerHero {
         color: '#f97316',
         life: 1.1
       });
+      if (particles) particles.addHammerQuake(this.x + this.facing * 35, this.groundY, '#f97316');
       particles.addSparkle(this.x + this.facing * 35, this.y - 38, '#ea580c', 12, 4);
     } else if (this.activeChar === 'peridot') {
       // Authentic Ferrokinetic Scrap Salvo (Levitates 3 Magnetic Scraps!)
@@ -4165,6 +4411,7 @@ class PlayerHero {
       this.actionTimer = 0.45;
       audioEngine.playSfx('metal');
       const scrapTypes = ['metalGirder', 'scrapGear', 'trashLid'];
+      if (particles) particles.addLightningArc(this.x, this.y - 40, this.x + this.facing * 50, this.y - 40, '#84cc16');
       for (let s = 0; s < 3; s++) {
         setTimeout(() => {
           projectiles.push({
@@ -4195,6 +4442,7 @@ class PlayerHero {
         color: '#38bdf8',
         life: 1.2
       });
+      if (particles) particles.addWaterStream(this.x + this.facing * 35, this.y - 40, this.facing, '#38bdf8');
       particles.addSparkle(this.x + this.facing * 35, this.y - 40, '#0284c7', 16, 5);
     } else if (this.activeChar === 'rose') {
       // Thorny Bramble Shield Throw
@@ -4212,6 +4460,7 @@ class PlayerHero {
         startX: this.x,
         life: 1.6
       });
+      if (particles) particles.addHolyHeal(this.x + this.facing * 25, this.y - 38, '#f43f5e');
       particles.addRosePetals(this.x, this.y - 35, 8);
     } else if (this.activeChar === 'connie') {
       // Pink Sword Flying Arc (Crescent Sword Beam Projectile)
@@ -4230,6 +4479,7 @@ class PlayerHero {
         color: '#f472b6',
         life: 1.2
       });
+      if (particles) particles.addThrustPierce(this.x + this.facing * 35, this.y - 38, this.facing, '#f472b6');
       particles.addSparkle(this.x + this.facing * 40, this.y - 38, '#fbcfe8', 16, 6);
     } else if (this.activeChar === 'jasper') {
       // Crash Helmet Comet Charge (Battering Ram Projectile / Rush)
@@ -4251,6 +4501,10 @@ class PlayerHero {
         color: '#ea580c',
         life: 0.95
       });
+      if (particles) {
+        particles.addHammerQuake(this.x + this.facing * 35, this.groundY, '#ea580c');
+        particles.addFireRing(this.x + this.facing * 35, this.groundY, '#ea580c');
+      }
       particles.addSparkle(this.x + this.facing * 35, this.y - 44, '#f97316', 18, 6);
     }
   }
@@ -4301,6 +4555,7 @@ class PlayerHero {
         type: 'bubbleShockwave',
         life: 0.35
       });
+      if (particles) particles.addHolyHeal(this.x, this.y, '#ff94ba');
       particles.addRosePetals(this.x, this.y - 35, 12);
       particles.addSparkle(this.x, this.y - 35, '#ff94ba', 20, 6);
     } else if (this.activeChar === 'garnet') {
@@ -4310,6 +4565,10 @@ class PlayerHero {
       this.actionTimer = 0.50;
       audioEngine.playSfx('explosion');
       particles.addExplosion(this.x, this.groundY - 15, '#fbbf24', 26);
+      if (particles) {
+        particles.addHammerQuake(this.x, this.groundY, '#fbbf24');
+        particles.addLightningArc(this.x - 70, this.groundY, this.x + 70, this.groundY, '#fbbf24');
+      }
       particles.addSparkle(this.x, this.groundY, '#fbbf24', 32, 9);
       particles.addSparkle(this.x, this.groundY, '#e11d48', 32, 9);
       projectiles.push({
@@ -4343,6 +4602,8 @@ class PlayerHero {
             maxLife: 0.60
           });
           if (particles) {
+            particles.addHammerQuake(this.x + this.facing * (50 + i * 55), this.groundY, '#a855f7');
+            particles.addLightningArc(this.x + this.facing * (50 + i * 55) - 20, this.groundY, this.x + this.facing * (50 + i * 55) + 20, this.groundY - 60, '#c084fc');
             particles.addSparkle(this.x + this.facing * (50 + i * 55), this.groundY - 15, '#d8b4fe', 16, 5);
             particles.addSparkle(this.x + this.facing * (50 + i * 55), this.groundY - 30, '#fde047', 12, 4);
           }
@@ -4372,6 +4633,7 @@ class PlayerHero {
       });
       const quote = isOd ? "⚔️ 'HOLO-PEARL: MAXIMUM OVERDRIVE!'" : "⚔️ 'DO YOU WISH TO ENGAGE IN COMBAT?!'";
       particles.addDamageText(this.x + this.facing * 40, this.y - 75, quote, true, isOd ? '#f472b6' : '#38bdf8');
+      if (particles) particles.addThrustPierce(this.x + this.facing * 45, this.y - 42, this.facing, isOd ? '#f472b6' : '#38bdf8');
       particles.addSparkle(this.x + this.facing * 45, this.y - 42, isOd ? '#f472b6' : '#a5f3fc', 20, 6);
     } else if (this.activeChar === 'bismuth') {
       // Molten Forge Breaking Point!
@@ -4380,6 +4642,7 @@ class PlayerHero {
       this.actionTimer = 0.50;
       audioEngine.playSfx('explosion');
       particles.addExplosion(this.x, this.groundY - 15, '#f97316', 26);
+      if (particles) particles.addHammerQuake(this.x, this.groundY, '#f97316');
       particles.addSparkle(this.x, this.groundY, '#f97316', 30, 9);
       projectiles.push({
         x: this.x - 110,
@@ -4419,6 +4682,10 @@ class PlayerHero {
         type: 'magneticVortex',
         life: 0.5
       });
+      if (particles) {
+        particles.addLightningArc(this.x - 60, this.y - 40, this.x + 60, this.y - 40, '#84cc16');
+        particles.addLightningArc(this.x - 40, this.y - 60, this.x + 40, this.y - 20, '#a3e635');
+      }
       particles.addSparkle(this.x, this.y - 35, '#a3e635', 25, 7);
     } else if (this.activeChar === 'lapis') {
       // Water Wings Tidal Surge! Towering 140px Tsunami Sweeps Battlefield!
@@ -4442,6 +4709,10 @@ class PlayerHero {
         life: 1.6,
         maxLife: 1.6
       });
+      if (particles) {
+        particles.addWaterStream(this.x + waveFacing * 40, ((typeof this.groundY === 'number' && !isNaN(this.groundY)) ? this.groundY : 600) - 65, waveFacing, '#0284c7');
+        particles.addWaterStream(this.x + waveFacing * 60, ((typeof this.groundY === 'number' && !isNaN(this.groundY)) ? this.groundY : 600) - 40, waveFacing, '#38bdf8');
+      }
       particles.addSparkle(this.x, this.y - 45, '#38bdf8', 28, 8);
       particles.addSparkle(this.x, this.y - 45, '#e0f2fe', 20, 6);
     } else if (this.activeChar === 'rose') {
@@ -4478,6 +4749,10 @@ class PlayerHero {
         type: 'roseShockwave',
         life: 0.35
       });
+      if (particles) {
+        particles.addHolyHeal(this.x, this.y, '#fbcfe8');
+        particles.addHolyHeal(this.x + 35, this.y, '#f43f5e');
+      }
       particles.addRosePetals(this.x, this.y - 35, 20);
       particles.addSparkle(this.x, this.y - 35, '#fbcfe8', 26, 8);
     } else if (this.activeChar === 'connie') {
@@ -4502,6 +4777,7 @@ class PlayerHero {
           type: 'connieShadowSlash',
           life: 0.35
         });
+        if (particles) particles.addThrustPierce(startX + (dashDist / 4) * s, this.y - 38, this.facing, '#f472b6');
       }
       particles.addSparkle(this.x, this.y - 35, '#ff94ba', 24, 7);
       particles.addSparkle(startX, this.y - 35, '#f472b6', 20, 6);
@@ -4525,6 +4801,10 @@ class PlayerHero {
         color: '#ea580c',
         life: 0.65
       });
+      if (particles) {
+        particles.addFireRing(this.x, this.groundY, '#ea580c');
+        particles.addHammerQuake(this.x + this.facing * 35, this.groundY, '#ea580c');
+      }
       particles.addExplosion(this.x + this.facing * 35, this.groundY - 15, '#ea580c', 22);
       particles.addSparkle(this.x, this.groundY - 15, '#fbbf24', 22, 7);
       particles.addSparkle(this.x, this.groundY - 15, '#ea580c', 22, 7);
@@ -4551,6 +4831,7 @@ class PlayerHero {
         color: '#ec4899',
         life: 1.1
       });
+      if (particles) particles.addThrustPierce(this.x + this.facing * 35, this.y - 35, this.facing, '#ec4899');
       particles.addRosePetals(this.x, this.y - 35, 12);
     } else if (fid === 'smoky') {
       // Smoky Quartz: Yo-Yo Grapple Slam!
@@ -4566,6 +4847,7 @@ class PlayerHero {
         color: '#a855f7',
         life: 1.0
       });
+      if (particles) particles.addWhipSnap(this.x + this.facing * 35, this.y - 35, this.facing, '#a855f7');
       particles.addSparkle(this.x + this.facing * 35, this.y - 35, '#c084fc', 18, 5);
     } else if (fid === 'rainbow2') {
       // Rainbow Quartz 2.0: Rocket Umbrella Float!
@@ -4582,6 +4864,7 @@ class PlayerHero {
         color: '#38bdf8',
         life: 1.0
       });
+      if (particles) particles.addThrustPierce(this.x + this.facing * 35, this.y - 40, this.facing, '#38bdf8');
       particles.addSparkle(this.x, this.y - 40, '#f472b6', 16, 5);
     } else if (fid === 'sunstone') {
       // Sunstone: Solar Rocket Punch!
@@ -4598,6 +4881,7 @@ class PlayerHero {
         color: '#ea580c',
         life: 1.1
       });
+      if (particles) particles.addFireRing(this.x + this.facing * 35, this.groundY, '#ea580c');
       particles.addSparkle(this.x, this.y - 42, '#fde047', 22, 6);
     } else if (fid === 'sugilite') {
       // Sugilite: Earthquake Stomp!
@@ -4616,6 +4900,7 @@ class PlayerHero {
           life: 0.95
         });
       }
+      if (particles) particles.addHammerQuake(this.x, this.groundY, '#7e22ce');
     } else if (fid === 'sardonyx') {
       // Sardonyx: Spinning Hammer Drill!
       audioEngine.playSfx('hammer');
@@ -4631,6 +4916,7 @@ class PlayerHero {
         color: '#fb7185',
         life: 1.0
       });
+      if (particles) particles.addHammerQuake(this.x + this.facing * 40, this.groundY, '#fb7185');
       particles.addSparkle(this.x, this.y - 40, '#fdba74', 20, 6);
     } else if (fid === 'opal') {
       // Opal: Multi-Arrow Volley (5 Spread Light Arrows)!
@@ -4649,6 +4935,7 @@ class PlayerHero {
           life: 1.2
         });
       }
+      if (particles) particles.addThrustPierce(this.x + this.facing * 35, this.y - 40, this.facing, '#818cf8');
       particles.addSparkle(this.x, this.y - 40, '#c084fc', 24, 6);
     } else if (fid === 'malachite') {
       // Malachite: Glacial Ice Hand Slam!
@@ -4666,6 +4953,7 @@ class PlayerHero {
         color: '#2dd4bf',
         life: 0.85
       });
+      if (particles) particles.addWaterStream(this.x + this.facing * 130, this.groundY - 55, this.facing, '#2dd4bf');
       particles.addSparkle(this.x + this.facing * 130, this.groundY - 45, '#a7f3d0', 26, 7);
     } else if (fid === 'rainbowClassic') {
       // Rainbow Quartz Classic: Rose Petal Barrier Thrust!
@@ -4683,6 +4971,7 @@ class PlayerHero {
         color: '#f43f5e',
         life: 0.75
       });
+      if (particles) particles.addHolyHeal(this.x + this.facing * 40, this.y - 40, '#f43f5e');
       particles.addRosePetals(this.x, this.y - 35, 16);
     }
   }
@@ -4712,6 +5001,7 @@ class PlayerHero {
         color: '#ec4899',
         life: 1.4
       });
+      if (particles) particles.addThrustPierce(this.x + this.facing * 50, this.y - 45, this.facing, '#ec4899');
       particles.addRosePetals(this.x, this.y - 45, 24);
     } else if (fid === 'smoky') {
       // Smoky Quartz: Cyclone Tornado!
@@ -4729,6 +5019,7 @@ class PlayerHero {
         color: '#a855f7',
         life: 1.6
       });
+      if (particles) particles.addWhipSnap(this.x + this.facing * 60, this.y - 60, this.facing, '#a855f7');
       particles.addSparkle(this.x, this.y - 50, '#c084fc', 30, 8);
     } else if (fid === 'rainbow2') {
       // Rainbow Quartz 2.0: Prismatic Prism Cannon!
@@ -4745,6 +5036,7 @@ class PlayerHero {
         color: '#38bdf8',
         life: 1.3
       });
+      if (particles) particles.addLightningArc(this.x, this.y - 45, this.x + this.facing * 180, this.y - 45, '#38bdf8');
       particles.addSparkle(this.x, this.y - 45, '#f472b6', 28, 8);
     } else if (fid === 'sunstone') {
       // Sunstone: Supernova Burst!
@@ -4762,6 +5054,10 @@ class PlayerHero {
         color: '#ea580c',
         life: 1.0
       });
+      if (particles) {
+        particles.addFireRing(this.x, this.groundY, '#ea580c');
+        particles.addHammerQuake(this.x, this.groundY, '#f97316');
+      }
       particles.addSparkle(this.x, this.y - 50, '#fde047', 40, 10);
     } else if (fid === 'sugilite') {
       // Sugilite: Flail Cataclysm!
@@ -4779,6 +5075,7 @@ class PlayerHero {
         color: '#7e22ce',
         life: 1.2
       });
+      if (particles) particles.addHammerQuake(this.x + this.facing * 80, this.groundY - 70, '#7e22ce');
       particles.addSparkle(this.x, this.groundY - 60, '#c084fc', 35, 9);
     } else if (fid === 'sardonyx') {
       // Sardonyx: Showstopper Finale!
@@ -4795,6 +5092,7 @@ class PlayerHero {
         color: '#fb7185',
         life: 1.1
       });
+      if (particles) particles.addHammerQuake(this.x, this.groundY, '#fb7185');
       particles.addSparkle(this.x, this.y - 50, '#fdba74', 36, 9);
     } else if (fid === 'opal') {
       // Opal: Celestial Light Rain (24 Golden Light Arrows from the Heavens)!
@@ -4813,6 +5111,7 @@ class PlayerHero {
           life: 1.1
         });
       }
+      if (particles) particles.addThrustPierce(this.x + this.facing * 40, this.y - 50, this.facing, '#818cf8');
       particles.addSparkle(this.x, this.y - 50, '#c084fc', 35, 9);
     } else if (fid === 'malachite') {
       // Malachite: Abyssal Tsunami Cage!
@@ -4829,6 +5128,10 @@ class PlayerHero {
         color: '#0d9488',
         life: 1.2
       });
+      if (particles) {
+        particles.addWaterStream(this.x, this.groundY - 80, 1, '#0d9488');
+        particles.addWaterStream(this.x, this.groundY - 80, -1, '#2dd4bf');
+      }
       particles.addSparkle(this.x, this.groundY - 60, '#2dd4bf', 36, 9);
     } else if (fid === 'rainbowClassic') {
       // Rainbow Quartz Classic: Prismatic Tears Dance!
@@ -12682,6 +12985,7 @@ class EnemyManager {
             this.damageEnemy(e, p.damage || 55, particles, audioEngine, onPoofed, enemyIndex, p.elementType || 'psychic', p.stabMult || 1);
             audioEngine.playSfx('laser');
             particles.addDamageText(e.x, e.y - e.height - 20, '🤺 PARRY! THRUST!', true, p.isOverdrive ? '#f472b6' : '#38bdf8');
+            particles.addThrustPierce(e.x, e.y - 25, p.facing || (p.vx >= 0 ? 1 : -1), p.isOverdrive ? '#f472b6' : '#38bdf8');
             particles.addSparkle(e.x, e.y - 25, p.isOverdrive ? '#f472b6' : '#a5f3fc', 16, 5);
             e.vx = (p.facing || (p.vx >= 0 ? 1 : -1)) * 380;
             e.vy = -190;
@@ -12752,6 +13056,7 @@ class EnemyManager {
         e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 520;
         e.vy = -360;
         e.hurtTimer = 0.55;
+        particles.addWaterStream(e.x, e.y - e.height / 2, projDir, '#38bdf8');
         particles.addDamageText(e.x, e.y - e.height - 25, '🌊 TIDAL WAVE!', true, '#0284c7');
         particles.addSparkle(e.x, e.y - 25, '#38bdf8', 22, 6);
         particles.addSparkle(e.x, e.y - 45, '#e0f2fe', 16, 5);
@@ -12759,60 +13064,73 @@ class EnemyManager {
           e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 650;
           e.vy = -320;
           e.hurtTimer = 0.55;
+          particles.addHammerQuake(e.x, e.y, '#ea580c');
+          particles.addFireRing(e.x, e.y, '#ea580c');
           particles.addDamageText(e.x, e.y - e.height - 20, 'HELMET CRASH!', true, '#ea580c');
           particles.addSparkle(e.x, e.y - 20, '#fbbf24', 16, 5);
         } else if (p.type === 'jasperSpinDashHit') {
           e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 580;
           e.vy = -260;
           e.hurtTimer = 0.45;
+          particles.addFireRing(e.x, e.y, '#ea580c');
           particles.addDamageText(e.x, e.y - e.height - 20, 'TORNADO SHRED!', true, '#f97316');
         } else if (p.type === 'shieldShockwave' || p.type === 'bubbleShockwave') {
           e.vx = player.facing * 440;
           e.vy = -220;
           e.hurtTimer = 0.42;
+          particles.addHolyHeal(e.x, e.y - e.height / 2, '#ec4899');
           particles.addDamageText(e.x, e.y - e.height - 20, 'BUBBLE BURST!', true, '#ec4899');
         } else if (p.type === 'rocketGauntlet') {
           e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 520;
           e.vy = -240;
           e.hurtTimer = 0.45;
+          particles.addFireRing(e.x, e.y - e.height / 2, '#ef4444');
           particles.addDamageText(e.x, e.y - e.height - 20, 'ROCKET IMPACT!', true, '#ef4444');
         } else if (p.type === 'roseSwordWave' || p.type === 'roseShockwave') {
           e.vx = player.facing * 460;
           e.vy = -220;
           e.hurtTimer = 0.42;
+          particles.addHolyHeal(e.x, e.y - e.height / 2, '#f43f5e');
           particles.addDamageText(e.x, e.y - e.height - 20, 'ROSE BURST!', true, '#f43f5e');
         } else if (p.type === 'spearBeam') {
           e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 440;
           e.vy = -190;
           e.hurtTimer = 0.38;
+          particles.addThrustPierce(e.x, e.y - e.height / 2, projDir, '#22d3ee');
           particles.addDamageText(e.x, e.y - e.height - 20, 'SPEAR PIERCE!', true, '#22d3ee');
         } else if (p.type === 'connieSwordBeam') {
           e.vx = (p.vx && p.vx > 0 ? 1 : -1) * 420;
           e.vy = -180;
           e.hurtTimer = 0.40;
+          particles.addThrustPierce(e.x, e.y - e.height / 2, projDir, '#ec4899');
           particles.addDamageText(e.x, e.y - e.height - 20, 'CRESCENT BEAM!', true, '#ec4899');
         } else if (p.type === 'connieShadowSlash') {
           e.vx = player.facing * 340;
           e.vy = -200;
           e.hurtTimer = 0.40;
+          particles.addThrustPierce(e.x, e.y - e.height / 2, player.facing, '#f472b6');
           particles.addDamageText(e.x, e.y - e.height - 20, 'SHADOW CUT!', true, '#f472b6');
         } else if (p.type === 'bismuthAnvil') {
           // Bismuth Anvil Launch: heavy catapult knockback
           e.vx = (p.vx && p.vx > 0 ? 1 : (p.vx && p.vx < 0 ? -1 : player.facing)) * 620;
           e.vy = -300;
           e.hurtTimer = 0.50;
+          particles.addHammerQuake(e.x, e.y, '#ea580c');
           particles.addDamageText(e.x, e.y - e.height - 20, 'HEAVY ANVIL!', true, '#ea580c');
         } else if (p.type === 'moltenShockwave') {
           // Bismuth Breaking Point Ultimate: catastrophic air pop & knockback!
           e.vx = player.facing * 850;
           e.vy = -480;
           e.hurtTimer = 0.65;
+          particles.addHammerQuake(e.x, e.y, '#ef4444');
           particles.addDamageText(e.x, e.y - e.height - 30, 'BREAKING POINT!', true, '#ef4444');
         } else if (p.type === 'giantGauntletSlam' || p.type === 'seismicShockwave') {
           // Garnet Giant Gauntlets Seismic Slam: ground tremor pop
           e.vx = player.facing * 450;
           e.vy = -360;
           e.hurtTimer = 0.50;
+          particles.addHammerQuake(e.x, e.y, '#fbbf24');
+          particles.addLightningArc(e.x - 30, e.y, e.x + 30, e.y - 40, '#fbbf24');
           particles.addDamageText(e.x, e.y - e.height - 20, 'MEGA SLAM!', true, '#fbbf24');
         } else {
           // Standard Projectile Knockback (combo finishers carry their own tuning)
@@ -12839,6 +13157,7 @@ class EnemyManager {
           e.vx = player.facing * 120;
           e.vy = -360;
           e.hurtTimer = 0.50;
+          particles.addLightningArc(e.x - 15, e.y, e.x + 15, e.y - e.height, '#c084fc');
           particles.addDamageText(e.x, e.y - e.height - 25, 'VIOLET GEYSER!', true, '#c084fc');
           particles.addSparkle(e.x, e.y - 30, '#fde047', 12, 4);
         } else if (!isPersistentAoE && p.type !== 'amethystSpinDashHit' && p.type !== 'jasperSpinDashHit') {
