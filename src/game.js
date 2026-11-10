@@ -318,6 +318,55 @@ class GemAudioEngine {
           osc.stop(t + 0.08);
           break;
 
+        case 'parry':
+          // Crystalline resonant clash & ringing harmonics
+          [1046.50, 1567.98, 2093.00, 3135.96].forEach((freq, idx) => {
+            const pOsc = this.ctx.createOscillator();
+            const pGain = this.ctx.createGain();
+            pOsc.type = idx === 0 ? 'triangle' : 'sine';
+            pOsc.frequency.setValueAtTime(freq, t);
+            pGain.gain.setValueAtTime(0.28 / (idx + 1), t);
+            pGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45 + idx * 0.05);
+            pOsc.connect(pGain);
+            pGain.connect(this.getSfxDestination());
+            pOsc.start(t);
+            pOsc.stop(t + 0.55);
+          });
+          return;
+
+        case 'windup':
+          // High-frequency danger warning glimmer
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1760, t);
+          osc.frequency.exponentialRampToValueAtTime(2637, t + 0.08);
+          gain.gain.setValueAtTime(0.18, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+          osc.start(t);
+          osc.stop(t + 0.09);
+          break;
+
+        case 'subBass':
+          // Deep visceral sub-bass sine drop
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(68, t);
+          osc.frequency.exponentialRampToValueAtTime(28, t + 0.35);
+          gain.gain.setValueAtTime(0.55, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+          osc.start(t);
+          osc.stop(t + 0.35);
+          break;
+
+        case 'bounce':
+          // Springy cartoon warp launch
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(220, t);
+          osc.frequency.exponentialRampToValueAtTime(780, t + 0.18);
+          gain.gain.setValueAtTime(0.28, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+          osc.start(t);
+          osc.stop(t + 0.20);
+          break;
+
         case 'jump':
           // Clean, buoyant, classic video game jump sound (smooth upward sine glide with zero vocal artifacts)
           osc.type = 'sine';
@@ -1279,6 +1328,33 @@ class ParticleSystem {
     });
   }
 
+  addPerfectParryVFX(x, y) {
+    this.addShockwaveRing(x, y, 160, '#fde047', 4.5);
+    this.addShockwaveRing(x, y, 95, '#ffffff', 3.0);
+    for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+      this.addHitSpark(x + Math.cos(a) * 32, y + Math.sin(a) * 32, '#fde047', 24, a);
+    }
+    this.addSparkle(x, y, '#ffffff', 24, 8);
+  }
+
+  // Radiant Victory Light Rays (Reference: victory light rays preferred)
+  addVictoryLightRays(x, y, color = '#ffd700', rayCount = 14) {
+    for (let i = 0; i < rayCount; i++) {
+      this.particles.push({
+        x, y,
+        vx: 0, vy: 0,
+        angle: (i / rayCount) * Math.PI * 2,
+        rotSpeed: 0.65,
+        length: 260,
+        width: 22,
+        color,
+        life: 1.6,
+        decay: 0.016,
+        isVictoryRay: true
+      });
+    }
+  }
+
   addRosePetals(x, y, count = 6) {
     for (let i = 0; i < count; i++) {
       this.particles.push({
@@ -1555,6 +1631,24 @@ class ParticleSystem {
         ctx.lineTo(p.x + hw, p.y + 2);
         ctx.stroke();
         ctx.restore();
+      } else if (p.isVictoryRay) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life) * 0.42;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        const grad = ctx.createLinearGradient(0, 0, p.length, 0);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.35, p.color);
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(p.length, -p.width);
+        ctx.lineTo(p.length, p.width);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        p.angle += p.rotSpeed * 0.016;
       } else {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -2351,6 +2445,145 @@ class EnvironmentRenderer {
       this.drawPlatform(ctx, p);
     }
 
+    // Render interactive stage hazards & environmental gimmicks
+    const hazards = this.getHazardsForStage(stageIndex, isPractice || stageIndex === 0);
+    for (const h of hazards) {
+      this.drawHazard(ctx, h);
+    }
+
+    ctx.restore();
+  }
+
+  getHazardsForStage(stageIndex, isPractice = false) {
+    if (!this._hazardsByStage) this._hazardsByStage = {};
+    const key = (stageIndex === 0 || isPractice) ? 'practice_0' : `stage_${stageIndex}`;
+    if (this._hazardsByStage[key]) return this._hazardsByStage[key];
+
+    let list = [];
+    if (stageIndex === 0 || isPractice) {
+      list = [
+        { id: 'bounce_spire', type: 'bounce_pad', x: 600, y: this.groundY - 14, width: 80, height: 16, color: '#f472b6' }
+      ];
+    } else if (stageIndex === 1) {
+      // Stage 1 (Beach): Pink Bounce Dunes & Breakable Ancient Pillar
+      list = [
+        { id: 'bounce_beach', type: 'bounce_pad', x: 740, y: this.groundY - 14, width: 85, height: 16, color: '#f472b6' },
+        { id: 'pillar_beach', type: 'pillar', x: 1440, y: this.groundY - 110, width: 44, height: 110, hp: 60, maxHp: 60, color: '#cbd5e1' }
+      ];
+    } else if (stageIndex === 2) {
+      // Stage 2 (Galaxy Warp / Ancient Spire): Zero-Gravity Warp Beam
+      list = [
+        { id: 'antigrav_spire', type: 'low_gravity', x: 1180, y: 160, width: 140, height: 440, color: 'rgba(56, 189, 248, 0.28)' }
+      ];
+    } else if (stageIndex === 3) {
+      // Stage 3 (Prime Kindergarten): Destabilizer Energy Barrier
+      list = [
+        { id: 'destabilizer_kinder', type: 'destabilizer', x: 1020, y: this.groundY - 140, width: 34, height: 140, cycleTimer: 0, active: true, color: '#facc15' }
+      ];
+    } else if (stageIndex === 4) {
+      // Stage 4 (Subterranean Mantle): Molten Core Geysers
+      list = [
+        { id: 'geyser_mantle1', type: 'geyser', x: 700, y: this.groundY - 14, width: 75, height: 140, cycleTimer: 0, active: false, color: '#f97316' },
+        { id: 'geyser_mantle2', type: 'geyser', x: 1950, y: this.groundY - 14, width: 75, height: 140, cycleTimer: 1.8, active: false, color: '#f97316' }
+      ];
+    }
+    this._hazardsByStage[key] = list;
+    return list;
+  }
+
+  drawHazard(ctx, h) {
+    ctx.save();
+    const anim = this.animTime || 0;
+    if (h.type === 'bounce_pad') {
+      const pulse = Math.sin(anim * 6) * 3;
+      ctx.fillStyle = '#be185d';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(h.x, h.y, h.width, h.height, 8);
+      else ctx.rect(h.x, h.y, h.width, h.height);
+      ctx.fill();
+
+      ctx.fillStyle = h.color || '#f472b6';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(h.x + 4, h.y + 2, h.width - 8, h.height - 4, 6);
+      else ctx.rect(h.x + 4, h.y + 2, h.width - 8, h.height - 4);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      this.drawDiamondInsignia(ctx, h.x + h.width / 2, h.y + h.height / 2, 8 + pulse);
+    } else if (h.type === 'pillar') {
+      if (h.hp > 0) {
+        const grad = ctx.createLinearGradient(h.x, h.y, h.x + h.width, h.y);
+        grad.addColorStop(0, '#94a3b8');
+        grad.addColorStop(0.5, '#f1f5f9');
+        grad.addColorStop(1, '#64748b');
+        ctx.fillStyle = grad;
+        ctx.fillRect(h.x, h.y, h.width, h.height);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(h.x, h.y, h.width, h.height);
+
+        if (h.hp < h.maxHp) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(h.x + 10, h.y + 20);
+          ctx.lineTo(h.x + 24, h.y + 45);
+          ctx.lineTo(h.x + 16, h.y + 70);
+          ctx.stroke();
+        }
+      }
+    } else if (h.type === 'low_gravity') {
+      ctx.fillStyle = h.color;
+      ctx.fillRect(h.x, h.y, h.width, h.height);
+      ctx.strokeStyle = 'rgba(125, 211, 252, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(h.x, h.y, h.width, h.height);
+      for (let i = 0; i < 4; i++) {
+        const arrowY = h.y + h.height - (((anim * 80 + i * 90) % h.height));
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(h.x + h.width * 0.25, arrowY + 12);
+        ctx.lineTo(h.x + h.width * 0.5, arrowY);
+        ctx.lineTo(h.x + h.width * 0.75, arrowY + 12);
+        ctx.stroke();
+      }
+    } else if (h.type === 'destabilizer') {
+      h.cycleTimer = (h.cycleTimer || 0) + 0.016;
+      const cycle = h.cycleTimer % 4.5;
+      h.active = cycle < 2.6;
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(h.x, h.y, 8, h.height);
+      ctx.fillRect(h.x + h.width - 8, h.y, 8, h.height);
+      if (h.active) {
+        ctx.strokeStyle = '#facc15';
+        ctx.lineWidth = 3 + Math.sin(anim * 35) * 1.5;
+        ctx.beginPath();
+        ctx.moveTo(h.x + 4, h.y + 10);
+        for (let py = h.y + 20; py < h.y + h.height - 10; py += 15) {
+          const jitter = (Math.random() - 0.5) * (h.width - 12);
+          ctx.lineTo(h.x + h.width / 2 + jitter, py);
+        }
+        ctx.lineTo(h.x + h.width - 4, h.y + h.height - 10);
+        ctx.stroke();
+      }
+    } else if (h.type === 'geyser') {
+      h.cycleTimer = (h.cycleTimer || 0) + 0.016;
+      const cycle = h.cycleTimer % 4.0;
+      h.active = cycle > 2.8;
+      ctx.fillStyle = '#450a0a';
+      ctx.beginPath();
+      ctx.ellipse(h.x + h.width / 2, h.y + 8, h.width / 2, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      if (h.active) {
+        const flameGrad = ctx.createLinearGradient(h.x, h.y, h.x, h.y - h.height);
+        flameGrad.addColorStop(0, '#f97316');
+        flameGrad.addColorStop(0.6, '#ef4444');
+        flameGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = flameGrad;
+        ctx.fillRect(h.x + 8, h.y - h.height, h.width - 16, h.height);
+      }
+    }
     ctx.restore();
   }
 
@@ -3016,6 +3249,14 @@ class PlayerHero {
     this.isFallen = false;
     this.fallenType = null; // 'lie_down' for Steven/Connie, 'poofed' for Gems
     this.fallenTimer = 0;
+
+    // Advanced Combat & Acrobatic Attributes
+    this.parryWindow = 0;
+    this.prevShieldPressed = false;
+    this.isWallSliding = false;
+    this.blinkTimer = 0;
+    this.isBlinking = false;
+    this.gameRef = null;
   }
 
   switchCharacter(charName, audioEngine, particles) {
@@ -3179,6 +3420,24 @@ class PlayerHero {
     if (this.skillCooldown > 0) this.skillCooldown -= dt;
     if (this.dodgeCooldown > 0) this.dodgeCooldown -= dt;
     if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
+    if (this.parryWindow > 0) this.parryWindow -= dt;
+
+    // Guard / Shield input edge detection for Perfect Parry
+    const shieldHeld = !!(input.shield || (input.down && !input.jump));
+    if (shieldHeld && !this.prevShieldPressed) {
+      this.parryWindow = 0.14;
+    }
+    this.prevShieldPressed = shieldHeld;
+
+    // Natural eye blinking timer (every 3.6s)
+    this.blinkTimer = (this.blinkTimer || 0) + dt;
+    if (this.blinkTimer > 3.6) {
+      this.isBlinking = true;
+      if (this.blinkTimer > 3.74) {
+        this.isBlinking = false;
+        this.blinkTimer = 0;
+      }
+    }
 
     // Combo chain window: let it lapse and the next press starts from step 1 again
     if (this.comboStepTimer > 0) {
@@ -3510,6 +3769,28 @@ class PlayerHero {
     if (this.x < 35) this.x = 35;
     if (this.x > maxX - 35) this.x = maxX - 35;
 
+    // Wall-Slide & Wall-Kick Acrobatic Movement
+    const isAtStageWall = (this.x <= 45 || this.x >= maxX - 45);
+    if (!this.isGrounded && isAtStageWall && this.vy > 80) {
+      this.isWallSliding = true;
+      this.vy = Math.min(180, this.vy); // Wall friction slows descent
+      if (particles && Math.random() < 0.3) {
+        particles.addPoof(this.x, this.y - 15, '#cbd5e1');
+      }
+      if (input.jump && !this.jumpDebounce) {
+        this.jumpDebounce = true;
+        this.vy = -720;
+        const kickDir = (this.x <= 45 ? 1 : -1);
+        this.vx = kickDir * 450;
+        this.facing = kickDir;
+        this.canDoubleJump = true;
+        if (audioEngine) audioEngine.playSfx('jump');
+        if (particles) particles.addSparkle(this.x, this.y - 20, '#38bdf8', 14, 4);
+      }
+    } else {
+      this.isWallSliding = false;
+    }
+
     // Motion blur ghost afterimages during evasive dodge
     if (this.isDodging) {
       this.dodgeAfterimageTimer = (this.dodgeAfterimageTimer || 0) + dt;
@@ -3582,6 +3863,7 @@ class PlayerHero {
     this.dodgeTimer = this.dodgeDuration;
     this.dodgeCooldown = 0.55;
     this.invulnerableTimer = 0.38; // Generous i-frames throughout dodge
+    this.parryWindow = 0.14; // Perfect Parry / Flash Step reward window!
 
     // Determine dodge direction
     let dir = this.facing;
@@ -4572,6 +4854,45 @@ class PlayerHero {
 
   takeDamage(amount, particles, audioEngine) {
     if (this.isFallen) return false;
+
+    // PERFECT PARRY / COUNTER-FLASH (140ms precision timing window)
+    if (this.parryWindow > 0) {
+      this.parryWindow = 0;
+      this.invulnerableTimer = 0.45;
+      this.attackCooldown = 0;
+      this.specialCooldown = 0;
+      this.skillCooldown = 0;
+      this.dodgeCooldown = 0;
+      if (audioEngine) {
+        audioEngine.playSfx('parry');
+        audioEngine.playSfx('subBass');
+      }
+      if (particles) {
+        particles.addPerfectParryVFX(this.x, this.y - 30);
+        particles.addDamageText(this.x, this.y - 65, '★ PERFECT PARRY!', true, '#fde047');
+      }
+      if (this.gameRef) {
+        this.gameRef.triggerHitstop(0.08, 4.0);
+        if (this.playerId === 'p2') {
+          this.gameRef.starPowerMeterP2 = Math.min(100, (this.gameRef.starPowerMeterP2 || 0) + 15);
+        } else {
+          this.gameRef.starPowerMeter = Math.min(100, this.gameRef.starPowerMeter + 15);
+        }
+        this.gameRef.addFusionSync(15);
+        if (this.gameRef.enemyManager && this.gameRef.enemyManager.enemies) {
+          for (const e of this.gameRef.enemyManager.enemies) {
+            if (Math.hypot(e.x - this.x, e.y - this.y) < 240) {
+              e.hurtTimer = 0.85;
+              e.stunTimer = 0.85;
+              e.vx = (e.x < this.x ? -1 : 1) * 260;
+              particles.addHitSpark(e.x, e.y - 20, '#fde047', 24, 0);
+            }
+          }
+        }
+      }
+      return false;
+    }
+
     if (this.invulnerableTimer > 0 || this.isShielding || this.isSpinDashing) return false;
     this.invulnerableTimer = 1.25; // Generous 1.25s iframes to prevent rapid tick deaths!
     const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5)) : amount;
@@ -4583,6 +4904,19 @@ class PlayerHero {
 
   draw(ctx) {
     if (this.isMergedInFusion) return;
+
+    // Dynamic Cast Shadow on Ground / Platform
+    const floorY = this.currentPlatform ? this.currentPlatform.y : this.groundY;
+    const elev = Math.max(0, floorY - this.y);
+    const shadowScale = Math.max(0.25, 1 - (elev / 380));
+    ctx.save();
+    ctx.translate(this.x, floorY);
+    ctx.scale(shadowScale, shadowScale * 0.32);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.32)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     if (this.isFallen) {
       this.drawFallenHero(ctx);
@@ -11777,7 +12111,11 @@ class EnemyManager {
           e.windup = this.getEnemyTelegraph(e);
           e.windupMax = e.windup;
           e.aiState = 'windup';
-          if (particles) particles.addDamageText(e.x, e.y - e.height - 26, '!', true, '#ef4444');
+          if (audioEngine) audioEngine.playSfx('windup');
+          if (particles) {
+            particles.addDamageText(e.x, e.y - e.height - 26, '!', true, '#ef4444');
+            particles.addHitSpark(e.x, e.y - e.height - 10, '#fde047', 16, 0);
+          }
         } else {
           // No attack slot: hold fire instead of forming a firing squad
           e.attackTimer = Math.max(0, e.attackCooldown / (this.aggression || 1) - 0.25);
@@ -12309,6 +12647,16 @@ class EnemyManager {
         if (player.comboStep === 2 && e.vy) e.vy *= 1.15;
         e.attackTimer = 0;
 
+        // Airborne Juggle State: Striking airborne enemies in mid-air suspends both aloft
+        if (!player.isGrounded && !e.isGrounded) {
+          player.vy = Math.min(player.vy, -50);
+          player.airComboCount = (player.airComboCount || 0) + 1;
+          particles.addHitSpark(e.x, e.y - e.height / 2, '#38bdf8', 22, -Math.PI / 4);
+          particles.addDamageText(e.x, e.y - e.height - 12, `AIR COMBO x${player.airComboCount}!`, true, '#38bdf8');
+        } else if (player.isGrounded) {
+          player.airComboCount = 0;
+        }
+
         // Loophole 1 Fix: Hitstun Decay (15% reduction per consecutive hit, min 0.08s)
         // Prevents perpetual infinite corner stun-locking without altering attack knockback values
         const decayMult = Math.max(0.35, Math.pow(0.85, (e.comboHitCount || 1) - 1));
@@ -12654,6 +13002,9 @@ class EnemyManager {
     if (e.isBoss) {
       this.isBossAlive = false;
       this.bossDefeated = true;
+      if (this.gameRef && this.gameRef.triggerBossCinematicFinisher) {
+        this.gameRef.triggerBossCinematicFinisher(e);
+      }
     }
 
     const idx = this.enemies.indexOf(e);
@@ -12721,6 +13072,19 @@ class EnemyManager {
     }
 
     for (const e of this.enemies) {
+      // Dynamic Cast Shadow on Ground / Platform
+      const eFloorY = e.currentPlatform ? e.currentPlatform.y : this.groundY;
+      const eElev = Math.max(0, eFloorY - e.y);
+      const eShadowScale = Math.max(0.25, 1 - (eElev / 360));
+      ctx.save();
+      ctx.translate(e.x, eFloorY);
+      ctx.scale(eShadowScale, eShadowScale * 0.32);
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+      ctx.beginPath();
+      ctx.arc(0, 0, (e.width || 45) * 0.65, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
       ctx.save();
       ctx.translate(e.x, e.y);
       ctx.scale(e.facing, 1);
@@ -12868,6 +13232,12 @@ class EnemyManager {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('!', e.x, e.y - e.height - 26);
+
+      // Distinct enemy eye-gleam spark indicator
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(e.x + e.facing * 14, e.y - e.height * 0.72, 4 + progress * 3, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
   }
@@ -15753,6 +16123,7 @@ class StevenUniverseGame {
     this.charSelectActiveTab = 'p1';
 
     this.player = new PlayerHero(this.groundY, 'p1', this.stageWidth);
+    this.player.gameRef = this;
     this.player2 = null;
     this.enemyManager = new EnemyManager(this.groundY, this.stageWidth);
     this.enemyManager.diffMult = 1.0;
@@ -16392,6 +16763,7 @@ class StevenUniverseGame {
       const hudEl = document.getElementById('hud');
       if (hudEl) hudEl.classList.add('two-player');
       this.player2 = new PlayerHero(this.groundY, 'p2', this.stageWidth);
+      this.player2.gameRef = this;
       this.player2.x = 340;
       this.player2.y = this.groundY;
       this.player2.switchCharacter(this.selectedCharP2, this.audio, this.particles);
@@ -17337,6 +17709,8 @@ class StevenUniverseGame {
 
     this.environment.update();
     this.particles.update();
+    this.pollGamepads();
+    this.updateHazards(dt);
 
     if (this.dialogueActive) {
       this.dialogueAutoTimer = (this.dialogueAutoTimer || 0) + dt;
@@ -17767,6 +18141,189 @@ class StevenUniverseGame {
         this.handleFinalVictory();
       }
     }
+  }
+
+  // Native HTML5 Gamepad API Support (Console-Grade 1P & 2P Controller Navigation)
+  pollGamepads() {
+    if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+    const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+    if (!gamepads) return;
+
+    const pads = [];
+    for (let i = 0; i < gamepads.length; i++) {
+      if (gamepads[i] && gamepads[i].connected) pads.push(gamepads[i]);
+    }
+    if (pads.length === 0) return;
+
+    const applyPadToKeys = (pad, keys, playerId) => {
+      if (!pad || !keys) return;
+      const stickX = pad.axes[0] || 0;
+      const stickY = pad.axes[1] || 0;
+      const dpadLeft = pad.buttons[14]?.pressed;
+      const dpadRight = pad.buttons[15]?.pressed;
+      const dpadUp = pad.buttons[12]?.pressed;
+      const dpadDown = pad.buttons[13]?.pressed;
+
+      if (stickX < -0.3 || dpadLeft) keys.left = true;
+      if (stickX > 0.3 || dpadRight) keys.right = true;
+      if (stickY < -0.4 || dpadUp) keys.jump = true;
+      if (stickY > 0.4 || dpadDown) { keys.down = true; keys.shield = true; }
+
+      // Face Buttons: A(Jump), X(Attack), B(Special), Y(Skill)
+      if (pad.buttons[0]?.pressed) keys.jump = true;
+      if (pad.buttons[2]?.pressed) {
+        keys.attack = true;
+        this.triggerSlotAnimation(playerId === 'p2' ? 'slotP2_J' : 'slotJ');
+      }
+      if (pad.buttons[1]?.pressed) {
+        keys.special = true;
+        this.triggerSlotAnimation(playerId === 'p2' ? 'slotP2_K' : 'slotK');
+      }
+      if (pad.buttons[3]?.pressed) {
+        keys.skill = true;
+        this.triggerSlotAnimation(playerId === 'p2' ? 'slotP2_L' : 'slotL');
+      }
+
+      // Shoulders & Triggers: LB/LT (Shield), RB/RT (Dodge)
+      if (pad.buttons[4]?.pressed || pad.buttons[6]?.pressed) { keys.shield = true; }
+      if (pad.buttons[5]?.pressed || pad.buttons[7]?.pressed) {
+        keys.dodge = true;
+        this.triggerSlotAnimation(playerId === 'p2' ? 'slotP2_I' : 'slotI');
+      }
+
+      // Start/Select (Overdrive / Fusion)
+      if (pad.buttons[9]?.pressed || pad.buttons[8]?.pressed) {
+        if (this.playerMode === '2p') {
+          this.triggerFusion();
+        } else {
+          this.activatePinkOverdrive('p1');
+        }
+      }
+    };
+
+    if (this.playerMode === '2p' && pads.length >= 2) {
+      applyPadToKeys(pads[0], this.keysP1, 'p1');
+      applyPadToKeys(pads[1], this.keysP2, 'p2');
+    } else if (this.playerMode === '2p' && pads.length === 1) {
+      applyPadToKeys(pads[0], this.keysP2, 'p2');
+    } else {
+      applyPadToKeys(pads[0], this.keysP1, 'p1');
+    }
+  }
+
+  // Interactive Stage Hazards & Level Gimmicks Update
+  updateHazards(dt) {
+    const hazards = this.environment.getHazardsForStage(this.stageIndex, this.gameMode === 'practice');
+    if (!hazards || hazards.length === 0) return;
+
+    const players = [this.player];
+    if (this.playerMode === '2p' && this.player2) players.push(this.player2);
+
+    for (const h of hazards) {
+      if (h.type === 'bounce_pad') {
+        for (const pl of players) {
+          if (pl.isFallen) continue;
+          if (pl.x >= h.x - 10 && pl.x <= h.x + h.width + 10 && Math.abs(pl.y - h.y) < 22 && pl.vy >= 0) {
+            pl.vy = -1050;
+            pl.isGrounded = false;
+            pl.canDoubleJump = true;
+            if (this.audio) this.audio.playSfx('bounce');
+            if (this.particles) {
+              this.particles.addSparkle(pl.x, pl.y, h.color || '#f472b6', 16, 5);
+              this.particles.addDamageText(pl.x, pl.y - 45, '★ SUPER BOUNCE!', true, '#f472b6');
+            }
+          }
+        }
+      } else if (h.type === 'pillar' && h.hp > 0) {
+        for (const pl of players) {
+          if (pl.isAttacking && Math.abs(pl.x - (h.x + h.width / 2)) < 65 && Math.abs(pl.y - (h.y + h.height / 2)) < 75) {
+            h.hp -= 20;
+            if (this.particles) this.particles.addDebris(h.x + h.width / 2, h.y + 35, '#94a3b8', 6);
+            if (h.hp <= 0 && !h.crumbled) {
+              h.crumbled = true;
+              if (this.audio) {
+                this.audio.playSfx('explosion');
+                this.audio.playSfx('subBass');
+              }
+              if (this.particles) {
+                this.particles.addExplosion(h.x + h.width / 2, h.y + h.height / 2, '#cbd5e1', 28);
+                this.particles.addShockwaveRing(h.x + h.width / 2, this.groundY, 160, '#cbd5e1', 4.0);
+              }
+              if (this.enemyManager && this.enemyManager.enemies) {
+                for (const e of this.enemyManager.enemies) {
+                  if (Math.hypot(e.x - (h.x + h.width / 2), e.y - this.groundY) < 180) {
+                    e.hurtTimer = 0.9;
+                    e.stunTimer = 1.0;
+                    e.hp = Math.max(0, e.hp - 45);
+                    if (this.particles) this.particles.addDamageText(e.x, e.y - 30, '★ PILLAR CRUSH! (45)', true, '#f97316');
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (h.type === 'low_gravity') {
+        for (const pl of players) {
+          if (pl.isFallen) continue;
+          if (pl.x >= h.x && pl.x <= h.x + h.width && pl.y >= h.y && pl.y <= h.y + h.height) {
+            if (pl.vy > 0) pl.vy *= 0.94;
+            if (Math.random() < 0.25 && this.particles) {
+              this.particles.addSparkle(pl.x, pl.y - 20, '#38bdf8', 2, 1);
+            }
+          }
+        }
+      } else if (h.type === 'destabilizer' && h.active) {
+        if (this.enemyManager && this.enemyManager.enemies) {
+          for (const e of this.enemyManager.enemies) {
+            if (e.isPoofed || e.isPoofing) continue;
+            if (e.x >= h.x - 15 && e.x <= h.x + h.width + 15 && e.y >= h.y && e.y <= h.y + h.height) {
+              e.hurtTimer = 0.85;
+              e.stunTimer = 1.0;
+              e.vx = e.facing * -280;
+              e.hp = Math.max(0, e.hp - 20);
+              if (this.audio) this.audio.playSfx('lightning');
+              if (this.particles) {
+                this.particles.addHitSpark(e.x, e.y - e.height / 2, '#facc15', 26, 0);
+                this.particles.addDamageText(e.x, e.y - e.height - 15, '20 ELEC!', true, '#facc15');
+              }
+            }
+          }
+        }
+      } else if (h.type === 'geyser' && h.active) {
+        if (this.enemyManager && this.enemyManager.enemies) {
+          for (const e of this.enemyManager.enemies) {
+            if (e.isPoofed || e.isPoofing) continue;
+            if (Math.abs(e.x - (h.x + h.width / 2)) < h.width / 2 + 10 && e.y >= h.y - h.height && e.y <= h.y + 20) {
+              e.vy = -680;
+              e.hurtTimer = 0.6;
+              e.hp = Math.max(0, e.hp - 15);
+              if (this.audio) this.audio.playSfx('explosion');
+              if (this.particles) {
+                this.particles.addExplosion(e.x, e.y - e.height / 2, '#f97316', 20);
+                this.particles.addDamageText(e.x, e.y - e.height - 15, '15 BURN!', true, '#f97316');
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Cinematic Boss Defeat Finisher
+  triggerBossCinematicFinisher(boss) {
+    if (this.cinematicFinisherActive) return;
+    this.cinematicFinisherActive = true;
+    this.triggerHitstop(0.08, 4.5);
+    if (this.audio) {
+      this.audio.playSfx('subBass');
+      this.audio.playSfx('victory');
+      this.audio.duckMusic(0.65, 2.5);
+    }
+    if (this.particles) {
+      this.particles.addVictoryLightRays(boss.x, boss.y - boss.height / 2, boss.gemColor || '#ffd700');
+      this.particles.addDamageText(boss.x, boss.y - boss.height - 35, '★ VICTORY! ★', true, '#ffd700');
+    }
+    setTimeout(() => { this.cinematicFinisherActive = false; }, 2500);
   }
 
   activatePinkOverdrive(playerId = 'p1') {
