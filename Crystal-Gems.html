@@ -5242,9 +5242,6 @@ class GemAudioEngine {
   }
 
   init() {
-    if (!this._sfxLoaded) {
-      this.loadAuthenticSfx();
-    }
     if (!this.ctx) {
       const AudioCtx = (typeof window !== 'undefined') ? (window.AudioContext || window.webkitAudioContext) : null;
       if (AudioCtx) {
@@ -5266,6 +5263,10 @@ class GemAudioEngine {
       }
     }
 
+    if (this.ctx && !this._sfxLoaded) {
+      this.loadAuthenticSfx();
+    }
+
     if (this.ctx) {
       if (this.ctx.state === 'running') {
         this.onAudioRunning();
@@ -5284,9 +5285,38 @@ class GemAudioEngine {
     }
   }
 
+  loadAuthenticSfx() {
+    if (this._sfxLoaded || !this.ctx || typeof AUTHENTIC_SFX === 'undefined') return;
+    this._sfxLoaded = true;
+    this.sfxBuffers = this.sfxBuffers || {};
+
+    for (const [key, b64] of Object.entries(AUTHENTIC_SFX)) {
+      if (!b64) continue;
+      try {
+        const bin = (typeof atob === 'function') ? atob(b64) : null;
+        if (!bin) continue;
+        const len = bin.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+        const bufSlice = bytes.buffer.slice(0);
+        const res = this.ctx.decodeAudioData(bufSlice, (buf) => {
+          this.sfxBuffers[key] = buf;
+        }, () => {});
+        if (res && typeof res.then === 'function') {
+          res.then((buf) => {
+            if (buf) this.sfxBuffers[key] = buf;
+          }).catch(() => {});
+        }
+      } catch (e) {}
+    }
+  }
+
   onAudioRunning() {
     const firstTime = !this.hasAwakened;
     this.hasAwakened = true;
+    if (!this._sfxLoaded) {
+      this.loadAuthenticSfx();
+    }
 
     if (this.sfxGainNode && this.ctx) {
       try {
