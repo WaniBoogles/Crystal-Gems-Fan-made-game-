@@ -1727,7 +1727,7 @@ class EnvironmentRenderer {
     ctx.save();
     const skyGradient = this.getSkyGradient(ctx, stageIndex, isPractice);
     ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, this.canvasWidth, this.height);
+    ctx.fillRect(-500, -200, (this.stageWidth || 2600) + 1000, this.height + 600);
 
     // Parallax Twinkling Stars
     ctx.fillStyle = '#ffffff';
@@ -1961,6 +1961,9 @@ class EnvironmentRenderer {
   drawForeground(ctx, stageIndex, isPractice = false) {
     ctx.save();
     const anim = this.animTime || 0;
+    const bleedL = -500;
+    const bleedW = (this.stageWidth || 2600) + 1000;
+    const bleedH = (this.height - this.groundY) + 400;
 
     if (stageIndex === 0 || isPractice) {
       // Practice Mode: Pearl's Sky Spire Colonnade Arena
@@ -1971,15 +1974,15 @@ class EnvironmentRenderer {
         ctx.fillRect(cx - 8, this.groundY - 12, 52, 12);
       }
       // Pristine Sky Spire Marble Ground
-      const spireGrad = ctx.createLinearGradient(0, this.groundY, 0, this.height);
+      const spireGrad = ctx.createLinearGradient(0, this.groundY, 0, this.height + 400);
       spireGrad.addColorStop(0, '#1e1b4b');
       spireGrad.addColorStop(0.3, '#312e81');
       spireGrad.addColorStop(1, '#0f172a');
       ctx.fillStyle = spireGrad;
-      ctx.fillRect(0, this.groundY, this.stageWidth, this.height - this.groundY);
+      ctx.fillRect(bleedL, this.groundY, bleedW, bleedH);
       // Glowing Cyan Trim & Gold Insignia
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(0, this.groundY - 4, this.stageWidth, 5);
+      ctx.fillRect(bleedL, this.groundY - 4, bleedW, 5);
       ctx.fillStyle = '#ffd700';
       for (let dx = 400; dx < this.stageWidth; dx += 550) {
         this.drawDiamondInsignia(ctx, dx, this.groundY + 35, 22);
@@ -1987,19 +1990,19 @@ class EnvironmentRenderer {
     } else if (stageIndex === 1) {
       // Stage 1: Beach City Boardwalk, Sand Shore & Lapping Ocean Waves
       // 1. Deep Beach Sand Base
-      const sandGrad = ctx.createLinearGradient(0, this.groundY, 0, this.height);
+      const sandGrad = ctx.createLinearGradient(0, this.groundY, 0, this.height + 400);
       sandGrad.addColorStop(0, '#d97706');
       sandGrad.addColorStop(0.35, '#b45309');
       sandGrad.addColorStop(1, '#78350f');
       ctx.fillStyle = sandGrad;
-      ctx.fillRect(0, this.groundY, this.stageWidth, this.height - this.groundY);
+      ctx.fillRect(bleedL, this.groundY, bleedW, bleedH);
 
       // 2. Heavy Timber Support Pilings sinking into sand
       ctx.fillStyle = '#451a03';
-      for (let px = 60; px < this.stageWidth; px += 160) {
-        ctx.fillRect(px, this.groundY + 12, 18, this.height - this.groundY - 12);
+      for (let px = bleedL + 60; px < bleedL + bleedW; px += 160) {
+        ctx.fillRect(px, this.groundY + 12, 18, bleedH - 12);
         ctx.fillStyle = '#270e02';
-        ctx.fillRect(px, this.groundY + 12, 4, this.height - this.groundY - 12);
+        ctx.fillRect(px, this.groundY + 12, 4, bleedH - 12);
         ctx.fillStyle = '#451a03';
       }
 
@@ -2010,16 +2013,16 @@ class EnvironmentRenderer {
       deckGrad.addColorStop(0.18, '#b45309');
       deckGrad.addColorStop(1, '#78350f');
       ctx.fillStyle = deckGrad;
-      ctx.fillRect(0, this.groundY - 2, this.stageWidth, deckH);
+      ctx.fillRect(bleedL, this.groundY - 2, bleedW, deckH);
 
       // Drop shadow beneath the boardwalk overhang
       ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
-      ctx.fillRect(0, this.groundY + deckH, this.stageWidth, 8);
+      ctx.fillRect(bleedL, this.groundY + deckH, bleedW, 8);
 
       // Plank dividers and iron nail bolts
       ctx.strokeStyle = '#451a03';
       ctx.lineWidth = 2;
-      for (let x = 0; x < this.stageWidth; x += 38) {
+      for (let x = bleedL; x < bleedL + bleedW; x += 38) {
         ctx.beginPath();
         ctx.moveTo(x, this.groundY - 2);
         ctx.lineTo(x, this.groundY + deckH);
@@ -2034,12 +2037,12 @@ class EnvironmentRenderer {
       const waveY = this.height - 30;
       ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
       ctx.beginPath();
-      ctx.moveTo(0, this.height);
-      for (let x = 0; x <= this.stageWidth; x += 30) {
+      ctx.moveTo(bleedL, this.height + 400);
+      for (let x = bleedL; x <= bleedL + bleedW; x += 30) {
         const wy = waveY + Math.sin(anim * 1.8 + x * 0.018) * 6;
         ctx.lineTo(x, wy);
       }
-      ctx.lineTo(this.stageWidth, this.height);
+      ctx.lineTo(bleedL + bleedW, this.height + 400);
       ctx.closePath();
       ctx.fill();
 
@@ -2047,9 +2050,9 @@ class EnvironmentRenderer {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      for (let x = 0; x <= this.stageWidth; x += 30) {
+      for (let x = bleedL; x <= bleedL + bleedW; x += 30) {
         const wy = waveY + Math.sin(anim * 1.8 + x * 0.018) * 6;
-        if (x === 0) ctx.moveTo(x, wy);
+        if (x === bleedL) ctx.moveTo(x, wy);
         else ctx.lineTo(x, wy);
       }
       ctx.stroke();
@@ -2336,24 +2339,38 @@ class EnvironmentRenderer {
                   (stageIndex === 3 || stageIndex === 5 || stageIndex === 8 || stageIndex === 9) ? 'metal' :
                   (stageIndex === 4) ? 'obsidian' : 'stone';
 
+    if (stageIndex === 0 || isPractice) {
+      // Balanced Sky Spire Colonnade Arena (1280px single-screen combat ring)
+      // Both endcaps clearly visible, perfectly framed with Holo-Jasper dummy
+      return [
+        { x: 120, y: 460, width: 220, height: 24, type: pType },
+        { x: 220, y: 260, width: 190, height: 22, type: pType },
+        { x: 480, y: 360, width: 320, height: 24, type: pType },
+        { x: 540, y: 190, width: 200, height: 22, type: pType },
+        { x: 870, y: 260, width: 190, height: 22, type: pType },
+        { x: 940, y: 460, width: 220, height: 24, type: pType }
+      ];
+    }
+
     // Expansive Multi-Tiered Arena Platforms spanning full 2600px width:
-    // Left Wing (X: 140 - 750) • Center Dais & Spire (X: 950 - 1650) • Right Wing (X: 1850 - 2460)
+    // Left Wing (X: 120 - 680) • Center Dais & Spire (X: 860 - 1720) • Right Wing (X: 1880 - 2480)
+    // Distributed so no platform is sliced across the initial 1280 screen view
     return [
       // Left Wing: Low stepped platform & high sniper perch
-      { x: 140, y: 475, width: 260, height: 24, type: pType },
-      { x: 420, y: 360, width: 240, height: 24, type: pType },
-      { x: 220, y: 240, width: 200, height: 22, type: pType },
+      { x: 120, y: 475, width: 240, height: 24, type: pType },
+      { x: 400, y: 360, width: 230, height: 24, type: pType },
+      { x: 200, y: 230, width: 190, height: 22, type: pType },
 
       // Center Arena: Wide central dais, high bridge & sky perch
-      { x: 880, y: 460, width: 320, height: 26, type: pType },
-      { x: 1220, y: 330, width: 300, height: 26, type: pType },
-      { x: 1540, y: 460, width: 300, height: 26, type: pType },
-      { x: 1150, y: 200, width: 220, height: 22, type: pType },
+      { x: 860, y: 460, width: 300, height: 26, type: pType },
+      { x: 1200, y: 320, width: 280, height: 26, type: pType },
+      { x: 1520, y: 460, width: 280, height: 26, type: pType },
+      { x: 1140, y: 180, width: 200, height: 22, type: pType },
 
       // Right Wing: Stepped terraces & flyer watchtower
-      { x: 1880, y: 360, width: 260, height: 24, type: pType },
-      { x: 2160, y: 475, width: 280, height: 24, type: pType },
-      { x: 2220, y: 240, width: 220, height: 22, type: pType }
+      { x: 1880, y: 360, width: 250, height: 24, type: pType },
+      { x: 2160, y: 475, width: 270, height: 24, type: pType },
+      { x: 2200, y: 230, width: 210, height: 22, type: pType }
     ];
   }
 
@@ -9060,26 +9077,51 @@ class PlayerHero {
     // 1. Luminous Grand Rainbow / Prism Fusion Aura
     this.drawFusionAura(ctx, fusion, bob);
 
-    // 2. Specialized Lore-Accurate Silhouette for each of the 9 Canon Fusions
+    // 2. Official Canon Fusion Character Art Sprite (with high-fidelity procedural fallback)
     const fid = fusion.id;
-    if (fid === 'stevonnie') {
-      this.drawStevonnie(ctx, bob, animP, this.actionType);
-    } else if (fid === 'smoky') {
-      this.drawSmokyQuartz(ctx, bob, animP, this.actionType);
-    } else if (fid === 'rainbow2') {
-      this.drawRainbowQuartz2(ctx, bob, animP, this.actionType);
-    } else if (fid === 'sunstone') {
-      this.drawSunstone(ctx, bob, animP, this.actionType);
-    } else if (fid === 'sugilite') {
-      this.drawSugilite(ctx, bob, animP, this.actionType);
-    } else if (fid === 'sardonyx') {
-      this.drawSardonyx(ctx, bob, animP, this.actionType);
-    } else if (fid === 'opal') {
-      this.drawOpal(ctx, bob, animP, this.actionType);
-    } else if (fid === 'malachite') {
-      this.drawMalachite(ctx, bob, animP, this.actionType);
-    } else if (fid === 'rainbowClassic') {
-      this.drawRainbowQuartzClassic(ctx, bob, animP, this.actionType);
+    const spr = (typeof _fusionSprites !== 'undefined') ? _fusionSprites[fid] : null;
+
+    if (spr && spr.complete && spr.naturalWidth > 0) {
+      // Draw official canon character art directly matching reference images
+      ctx.save();
+      const fusionHeights = {
+        stevonnie: 96,
+        smoky: 92,
+        rainbow2: 94,
+        rainbowClassic: 100,
+        sunstone: 112,
+        sardonyx: 124,
+        opal: 122,
+        sugilite: 126,
+        malachite: 124
+      };
+      const targetH = fusionHeights[fid] || 98;
+      const aspect = spr.naturalWidth / spr.naturalHeight;
+      const targetW = targetH * aspect;
+
+      // Draw canon sprite anchored at feet (y = 0) with kinetic bob
+      ctx.drawImage(spr, -targetW / 2, -targetH + bob, targetW, targetH);
+      ctx.restore();
+    } else {
+      if (fid === 'stevonnie') {
+        this.drawStevonnie(ctx, bob, animP, this.actionType);
+      } else if (fid === 'smoky') {
+        this.drawSmokyQuartz(ctx, bob, animP, this.actionType);
+      } else if (fid === 'rainbow2') {
+        this.drawRainbowQuartz2(ctx, bob, animP, this.actionType);
+      } else if (fid === 'sunstone') {
+        this.drawSunstone(ctx, bob, animP, this.actionType);
+      } else if (fid === 'sugilite') {
+        this.drawSugilite(ctx, bob, animP, this.actionType);
+      } else if (fid === 'sardonyx') {
+        this.drawSardonyx(ctx, bob, animP, this.actionType);
+      } else if (fid === 'opal') {
+        this.drawOpal(ctx, bob, animP, this.actionType);
+      } else if (fid === 'malachite') {
+        this.drawMalachite(ctx, bob, animP, this.actionType);
+      } else if (fid === 'rainbowClassic') {
+        this.drawRainbowQuartzClassic(ctx, bob, animP, this.actionType);
+      }
     }
 
     // 3. Dynamic Attack Slashes & Impact Visuals for Fusion
@@ -15200,6 +15242,17 @@ if (typeof PORTRAIT_IMAGES !== 'undefined') {
   });
 }
 
+// Official reference fusion sprites (full-body canon artwork)
+const _fusionSprites = {};
+if (typeof FUSION_SPRITES !== 'undefined') {
+  Object.keys(FUSION_SPRITES).forEach(id => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = FUSION_SPRITES[id];
+    _fusionSprites[id] = img;
+  });
+}
+
 function drawPortraitCard(ctx, id, size = 512) {
   ctx.clearRect(0, 0, size, size);
   const img = _portraitImages[id];
@@ -17001,7 +17054,7 @@ class StevenUniverseGame {
       }
     }
     this.cameraZoom = (this.cameraZoom || 1.0) + (targetZoom - (this.cameraZoom || 1.0)) * Math.min(1, dt * 3.8);
-    this.cameraZoom = Math.max(0.85, Math.min(1.18, this.cameraZoom));
+    this.cameraZoom = Math.max(0.92, Math.min(1.15, this.cameraZoom));
 
     // Update Plants vs Zombies style wave progression bar
     this.updateWaveLine();
@@ -17643,8 +17696,10 @@ class StevenUniverseGame {
   }
 
   drawPickup(p) {
+    const ctx = this.ctx;
     this.ctx.save();
-    const bob = Math.sin(Date.now() / 150) * 4;
+    try {
+      const bob = Math.sin(Date.now() / 150) * 4;
     if (p.type === 'cookie') {
       // Cookie Cat
       this.ctx.fillStyle = '#451a03';
@@ -17758,7 +17813,7 @@ class StevenUniverseGame {
       this.ctx.strokeStyle = '#7a1340';
       this.ctx.lineWidth = 1.2;
       this.ctx.beginPath();
-      this.ctx.moveTo(0, 5); this.ctx.lineTo(9, 7); this.ctx.lineTo(0, 19); ctx.lineTo(-9, 7); this.ctx.closePath();
+      this.ctx.moveTo(0, 5); this.ctx.lineTo(9, 7); this.ctx.lineTo(0, 19); this.ctx.lineTo(-9, 7); this.ctx.closePath();
       this.ctx.stroke();
 
       // Ambient Shimmer Stars
@@ -17774,7 +17829,9 @@ class StevenUniverseGame {
       }
       this.ctx.restore();
     }
-    this.ctx.restore();
+    } finally {
+      this.ctx.restore();
+    }
   }
 
   drawProjectile(p) {
