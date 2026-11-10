@@ -49,7 +49,7 @@
       <!-- Far Left: Active Character Info & Health (Player 1) -->
       <div class="hud-character-panel" id="hudP1Panel">
         <div class="hud-avatar-frame" id="hudAvatarFrame">
-          <div class="hud-avatar-icon" id="hudAvatarIcon">⭐</div>
+          <div class="hud-avatar-icon" id="hudAvatarIcon"></div>
           <span class="hud-character-name" id="hudCharacterName">Steven</span>
         </div>
         <div class="hud-stats">
@@ -58,7 +58,7 @@
           </div>
           <div class="hud-harmony-container" title="Overdrive Power-Up Meter">
             <div class="hud-harmony-label">
-              <span id="overdriveLabel">⚡ STEVEN OVERDRIVE</span>
+              <span id="overdriveLabel">STEVEN OVERDRIVE</span>
               <span id="harmonyPercent">0%</span>
             </div>
             <div class="hud-harmony-bar-bg">
@@ -67,11 +67,9 @@
           </div>
           <div class="hud-btn-row">
             <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to enter Overdrive!">
-              <span class="overdrive-icon">⚡</span>
               <span class="overdrive-text" id="btnOverdriveText">OVERDRIVE [U]</span>
             </button>
             <button id="btnFuseHud" class="btn-fuse-hud disabled" type="button" title="Fuse Gems when Sync reaches 100%!">
-              <span class="fuse-btn-icon">💎</span>
               <span class="fuse-btn-text" id="btnFuseText">FUSE [V]</span>
             </button>
           </div>
@@ -86,7 +84,7 @@
         </div>
         <div class="hud-mini-stat">
           <span class="mini-stat-label">BUBBLED</span>
-          <span class="mini-stat-val" id="hudBubbledGems">💎 0</span>
+          <span class="mini-stat-val" id="hudBubbledGems">0</span>
         </div>
       </div>
 
@@ -104,11 +102,11 @@
           <div class="pvz-wave-track-wrapper">
             <div class="pvz-wave-track" id="pvzWaveTrack">
               <div class="pvz-wave-fill" id="pvzWaveFill" style="width: 0%;"></div>
-              <div class="pvz-wave-flag flag-1" style="left: 25%;" title="Wave 1">🚩</div>
-              <div class="pvz-wave-flag flag-2" style="left: 50%;" title="Wave 2">🚩</div>
-              <div class="pvz-wave-flag flag-3" style="left: 75%;" title="Huge Wave 3!">⚠️</div>
-              <div class="pvz-wave-flag flag-boss" style="left: 96%;" title="Final Boss Wave!">👾</div>
-              <div class="pvz-wave-marker" id="pvzWaveMarker" style="left: 0%;">⭐</div>
+              <div class="pvz-wave-flag flag-1" style="left: 25%;" title="Wave 1"><span class="wave-pip"></span></div>
+              <div class="pvz-wave-flag flag-2" style="left: 50%;" title="Wave 2"><span class="wave-pip"></span></div>
+              <div class="pvz-wave-flag flag-3" style="left: 75%;" title="Huge Wave 3!"><span class="wave-pip wave-pip-warn"></span></div>
+              <div class="pvz-wave-flag flag-boss" style="left: 96%;" title="Final Boss Wave!"><span class="wave-pip wave-pip-boss"></span></div>
+              <div class="pvz-wave-marker" id="pvzWaveMarker" style="left: 0%;"></div>
             </div>
           </div>
         </div>
@@ -116,7 +114,7 @@
         <!-- Top-Center Animated Boss Health Bar (Active on Level 5 and Boss Fights) -->
         <div id="bossHud" class="boss-health-container" style="display: none;">
           <div class="boss-title-row">
-            <span class="boss-skull">👾</span>
+            <span class="boss-skull">BOSS</span>
             <span class="boss-name" id="bossName">CORRUPTED JASPER & MOTHER CENTIPEETLE</span>
             <span class="boss-hp-digits" id="bossHpDigits">1500 / 1500</span>
           </div>
@@ -128,7 +126,7 @@
 
       <!-- Quick Actions: pause only (top-right in 1P, centred in 2P) -->
       <div class="hud-actions-pill" id="hudActionsPill">
-        <button id="btnPause" class="hud-btn" title="Pause Game (ESC)">⏸️</button>
+        <button id="btnPause" class="hud-btn" title="Pause Game (ESC)">❚❚</button>
       </div>
 
       <!-- Far Right: Player 2 HUD Panel (Active in 2-Player Co-Op Mode) -->
@@ -322,15 +320,14 @@
       <!-- Top-Left Floating Soundtrack Bar on Main Menu -->
       <div class="lobby-jukebox-bar" id="lobbyJukeboxBar">
         <div class="jukebox-info">
-          <span class="jukebox-icon-spin">🎵</span>
           <span class="jukebox-now-playing">SOUNDTRACK:</span>
         </div>
         <select id="lobbySelectBgm" class="su-select lobby-select-bgm" title="Select and play any Steven Universe theme">
-          <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
-          <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-          <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
-          <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
-          <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+          <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
+          <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+          <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
+          <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+          <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
         </select>
         <button id="btnLobbyPlayMusic" class="btn-lobby-music playing" type="button" title="Play or Pause Soundtrack">
           <span id="lobbyMusicPlayIcon">⏸</span>
@@ -340,53 +337,26 @@
 
       <!-- Floating Audio Notification if browser restricts autoplay -->
       <div id="audioUnlockPrompt" class="audio-unlock-prompt" style="display: none;">
-        <span>🎵 CLICK ANYWHERE TO START SOUNDTRACK 🎵</span>
+        <span>CLICK ANYWHERE TO START SOUNDTRACK</span>
       </div>
 
       <div class="title-content">
         <div class="title-logo-container">
-          <div class="star-badge">🌟</div>
+          <div class="star-badge"><svg viewBox="0 0 24 24" width="30" height="30" style="display:block;"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#fde047" stroke="#eab308" stroke-width="1.2"/></svg></div>
           <h1 class="main-title">CRYSTAL GEMS!</h1>
           <h2 class="sub-title">ACTION BATTLER</h2>
         </div>
 
         <!-- Chosen Hero Lobby Showcase (Clickable Guardian Button) -->
         <button class="lobby-guardian-btn" id="lobbyGuardianCard" type="button" title="Click to Switch Guardian">
-          <div class="lobby-guardian-avatar" id="lobbyGuardianAvatar"><span class="guardian-svg-wrap" style="width:46px;height:46px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
-    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
-    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <!-- Face / Head -->
-    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
-    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
-    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
-    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
-    <!-- Arched Eyebrows -->
-    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
-    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
-    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
-    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
-    <!-- Red Shirt & Star -->
-    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
-    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
-  </svg></span></div>
+          <div class="lobby-guardian-avatar" id="lobbyGuardianAvatar"></div>
           <div class="lobby-guardian-details">
             <span class="lobby-guardian-badge">Active Guardian · Click to switch</span>
             <h3 class="lobby-guardian-name" id="lobbyGuardianName">Steven Universe</h3>
             <p class="lobby-guardian-desc" id="lobbyGuardianDesc">Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Cookie Cat (+1 Heart)</p>
             <div class="char-types-row" id="lobbyGuardianTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
             <div class="lobby-guardian-fusion" id="lobbyGuardianFusion">
-              <span class="fusion-dot">💎</span>
+              
               <span id="lobbyGuardianFusionText">Fuses with: Connie, Amethyst, Pearl, Garnet</span>
             </div>
           </div>
@@ -396,49 +366,41 @@
         <div class="menu-button-group">
           <!-- Play Story (Primary Grand Action) -->
           <button id="btnPlayStory" class="btn-primary" title="Embark on the Crystal Gems Story Adventure!">
-            <span class="btn-icon">🌟</span>
             <span>Play Story</span>
           </button>
 
           <!-- 1P / 2P Mode Toggle -->
           <button id="btnPlayerMode" class="btn-secondary btn-mode" title="Toggle between 1-Player Solo and 2-Player Co-Op">
-            <span class="btn-icon">👥</span>
             <span id="btnPlayerModeText">Mode: Solo (1P)</span>
           </button>
 
           <!-- Tekken-Style Practice Mode -->
-          <button id="btnPractice" class="btn-secondary btn-practice" title="Tekken-style practice mode with infinite HP training dummy & combo counter">
-            <span class="btn-icon">🥋</span>
+          <button id="btnPractice" class="btn-secondary btn-practice" title="Practice mode with infinite HP training dummy & combo counter">
             <span>Practice Dojo</span>
           </button>
 
           <!-- Difficulty Direct Click Cycling (Easy ➔ Medium ➔ Hard ➔ Extreme) -->
           <button id="btnOpenDifficulty" class="btn-secondary btn-diff" title="Click to cycle difficulty: Easy ➔ Medium ➔ Hard ➔ Extreme">
-            <span class="btn-icon">⚔️</span>
             <span id="btnDiffLevelText">Difficulty: Medium</span>
           </button>
 
           <!-- Story cutscene toggle (dialogue on/off) -->
           <button id="btnStoryMode" class="btn-secondary btn-story" title="Toggle story dialogue between waves and bosses">
-            <span class="btn-icon">📖</span>
             <span id="btnStoryModeText">Story Dialogue: On</span>
           </button>
 
           <!-- Episode / stage select -->
           <button id="btnEpisodes" class="btn-secondary" title="Replay any of the 10 episodes directly">
-            <span class="btn-icon">🗺️</span>
             <span>Select Episode</span>
           </button>
 
           <!-- Settings & Audio -->
           <button id="btnOpenSettings" class="btn-secondary" title="Configure Sound Effects & Music">
-            <span class="btn-icon">⚙️</span>
             <span>Settings & Audio</span>
           </button>
 
           <!-- Native Quit Button -->
           <button id="btnQuitGame" class="btn-secondary btn-quit" title="Exit Crystal Gems">
-            <span class="btn-icon">🚪</span>
             <span>Quit Game</span>
           </button>
         </div>
@@ -489,336 +451,62 @@
           <div class="char-grid-8" id="charGrid8">
             <!-- Row 1: Garnet, Amethyst, Pearl, Steven, Connie -->
             <div class="char-grid-item" data-char="garnet">
-              <div class="char-item-bubble garnet-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- 3D Beveled Cubic Box Afro -->
-    <rect x="11" y="9" width="42" height="30" rx="5" fill="#200a2e"/>
-    <path d="M 11 14 L 32 10 L 53 14" stroke="#701a75" stroke-width="2.6" stroke-linecap="round" fill="none"/>
-    <polygon points="11,9 53,9 49,15 15,15" fill="#4a044e" opacity="0.6"/>
-    <!-- Face / Jaw -->
-    <polygon points="19,30 45,30 42,48 22,48" fill="#78350f"/>
-    <!-- Iconic Angular Visor (Ruby & Sapphire Shimmer) -->
-    <defs>
-      <linearGradient id="garnetVisorGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#f43f5e"/>
-        <stop offset="50%" stop-color="#ec4899"/>
-        <stop offset="100%" stop-color="#38bdf8"/>
-      </linearGradient>
-    </defs>
-    <polygon points="15,26 49,26 44,38 20,38" fill="url(#garnetVisorGrad)"/>
-    <polygon points="17,27 47,27 44,30 20,30" fill="#ffffff" opacity="0.6"/>
-    <!-- Golden Star Specular Glint (Unleash the Light) -->
-    <polygon points="32,27 33.5,31 37,32 33.5,33 32,37 30.5,33 27,32 30.5,31" fill="#fde047" opacity="0.95"/>
-    <!-- Stoic Mouth / Lips -->
-    <rect x="28" y="43" width="8" height="2" rx="1" fill="#be185d"/>
-    <!-- Asymmetrical Bodysuit Collar -->
-    <path d="M 12 48 L 32 50 L 32 64 L 10 64 Z" fill="#881337"/>
-    <path d="M 32 50 L 52 48 L 54 64 L 32 64 Z" fill="#1e1b4b"/>
-    <!-- Cubic Shoulder Armor -->
-    <polygon points="8,48 16,46 14,56 6,56" fill="#be123c"/>
-    <polygon points="56,48 48,46 50,56 58,56" fill="#312e81"/>
-  </svg></span></div>
+              <div class="char-item-bubble garnet-bg"></div>
               <span class="char-item-name">Garnet</span>
-              <span class="char-item-role">Leader & Power</span>
-              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span></div>
+              <span class="char-item-role">Leader</span>
             </div>
             <div class="char-grid-item" data-char="amethyst">
-              <div class="char-item-bubble amethyst-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Long Voluminous Flowing WAVY Pale-Lilac Hair Cascading Past Shoulders -->
-    <path d="M 32 8 C 14 8 6 22 6 36 C 6 48 10 58 14 62 C 18 54 18 46 22 38 C 24 30 28 20 32 18 C 36 20 42 30 44 40 C 46 48 48 56 52 62 C 58 56 60 44 60 34 C 60 18 48 8 32 8 Z" fill="#e9d5ff"/>
-    <path d="M 10 32 C 8 44 14 54 18 60 C 16 52 14 44 18 36" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <path d="M 54 32 C 56 44 50 54 46 60 C 48 52 50 44 46 36" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <!-- Purple Face -->
-    <circle cx="34" cy="33" r="15.5" fill="#d8b4fe"/>
-    <!-- Mischievous Smirking Quartz Grin with White Teeth -->
-    <path d="M 28 39 Q 36 41 43 37 Q 40 45 33 45 Q 28 45 28 39 Z" fill="#3b0764"/>
-    <path d="M 28 39 Q 36 41 43 37 Q 38 41 33 41 Q 29 41 28 39 Z" fill="#ffffff"/>
-    <!-- Dark Purple Eye (Right Eye visible) -->
-    <ellipse cx="38" cy="31" rx="4" ry="5.5" fill="#3b0764"/>
-    <circle cx="39.5" cy="29.5" r="1.6" fill="#ffffff"/>
-    <path d="M 33 24 Q 38 21 43 23" stroke="#3b0764" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <!-- Flowing Wavy Mane Cascading OVER Left Eye (Signature S-Curve Lock) -->
-    <path d="M 22 10 Q 32 14 28 26 Q 22 36 24 50 Q 16 40 18 24 Z" fill="#d8b4fe"/>
-    <path d="M 26 12 Q 34 20 30 32 Q 26 40 28 54 Q 22 44 24 28 Z" fill="#e9d5ff"/>
-    <!-- Hexagonal Faceted Amethyst Gem on Chest -->
-    <polygon points="32,49 35,51 35,55 32,57 29,55 29,51" fill="#7e22ce" stroke="#f3e8ff" stroke-width="1"/>
-    <!-- Dark Tank Top with Star Strap -->
-    <path d="M 18 52 Q 32 56 46 52 L 48 64 L 16 64 Z" fill="#1e1b4b"/>
-  </svg></span></div>
+              <div class="char-item-bubble amethyst-bg"></div>
               <span class="char-item-name">Amethyst</span>
-              <span class="char-item-role">Dual Whip & Spin</span>
-              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-DARK">DARK</span></div>
+              <span class="char-item-role">Brawler</span>
             </div>
             <div class="char-grid-item" data-char="pearl">
-              <div class="char-item-bubble pearl-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Conical Peach Hair Sweeping Gracefully BACKWARD (-X) -->
-    <path d="M 30 7 Q 12 11 4 22 Q 13 32 25 28 Z" fill="#fed7aa"/>
-    <path d="M 28 9 Q 14 13 7 22 Q 15 29 24 26 Z" fill="#fbcfe8"/>
-    <!-- Porcelain Head in Profile -->
-    <ellipse cx="32" cy="30" rx="14" ry="15" fill="#fff7ed"/>
-    <!-- Sharp Pointed Nose pointing FORWARD (+X) -->
-    <polygon points="38,28 50,31 38,34" fill="#fed7aa"/>
-    <!-- Forehead Luminous Oval Pearl Gemstone -->
-    <ellipse cx="32" cy="18" rx="4.5" ry="6.5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.2"/>
-    <ellipse cx="31" cy="16.5" rx="1.6" ry="2.5" fill="#e0f2fe"/>
-    <!-- Expressive Cyan Anime Eye in Profile -->
-    <ellipse cx="34" cy="29" rx="4" ry="5.5" fill="#0284c7"/>
-    <ellipse cx="35" cy="28.5" rx="2.5" ry="3.8" fill="#082f49"/>
-    <circle cx="36" cy="27.5" r="1.3" fill="#ffffff"/>
-    <path d="M 30 22 Q 35 20 40 23" stroke="#0284c7" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-    <!-- Peach Blush & Cheerful Smile -->
-    <ellipse cx="34" cy="35" rx="3.5" ry="2" fill="rgba(251, 146, 60, 0.4)"/>
-    <path d="M 32 37 Q 37 40 41 37" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-    <!-- Cyan Ballerina Tunic & Gold Star -->
-    <path d="M 18 46 Q 32 50 46 46 L 49 64 L 15 64 Z" fill="#38bdf8"/>
-    <polygon points="32,48 34,53 39,53 35,56 36.5,61 32,58 27.5,61 29,56 25,53 30,53" fill="#fde047"/>
-    <!-- Translucent Pink Sash -->
-    <path d="M 14 56 Q 32 60 50 56 L 48 60 Q 32 64 16 60 Z" fill="rgba(255, 148, 186, 0.8)"/>
-  </svg></span></div>
+              <div class="char-item-bubble pearl-bg"></div>
               <span class="char-item-name">Pearl</span>
-              <span class="char-item-role">Spear & Holo-Pearl</span>
-              <div class="char-types-row"><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+              <span class="char-item-role">Duelist</span>
             </div>
             <div class="char-grid-item active" data-char="steven">
-              <div class="char-item-bubble steven-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
-    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
-    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <!-- Face / Head -->
-    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
-    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
-    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
-    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
-    <!-- Arched Eyebrows -->
-    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
-    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
-    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
-    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
-    <!-- Red Shirt & Star -->
-    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
-    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
-  </svg></span></div>
+              <div class="char-item-bubble steven-bg"></div>
               <span class="char-item-name">Steven</span>
-              <span class="char-item-role">Shield & Bubble Heal</span>
-              <div class="char-types-row"><span class="gem-type-badge type-FAIRY">FAIRY</span><span class="gem-type-badge type-PSYCHIC">PSYCHIC</span></div>
+              <span class="char-item-role">Defender</span>
             </div>
             <div class="char-grid-item" data-char="connie">
-              <div class="char-item-bubble connie-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Flowing Dark Wavy Hair Cascading Past Shoulders -->
-    <path d="M 32 10 C 16 10 8 22 8 36 C 8 48 12 56 16 62 C 20 54 20 44 22 34 C 24 22 40 22 42 34 C 44 44 44 54 48 62 C 52 56 56 48 56 36 C 56 22 48 10 32 10 Z" fill="#1c1917"/>
-    <path d="M 12 36 C 10 46 16 54 20 60" stroke="#292524" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 52 36 C 54 46 48 54 44 60" stroke="#292524" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <!-- Warm Brown Skin Face -->
-    <ellipse cx="32" cy="34" rx="16" ry="16" fill="#a16207"/>
-    <!-- Signature Turquoise / Teal Headband across Hair (Save the Light Key Item!) -->
-    <path d="M 18 24 Q 32 16 46 24" stroke="#0d9488" stroke-width="4.2" stroke-linecap="round" fill="none"/>
-    <!-- Expressive Dark Eyes & Determined Eyebrows -->
-    <ellipse cx="26" cy="32" rx="4" ry="5.5" fill="#1c1917"/>
-    <ellipse cx="38" cy="32" rx="4" ry="5.5" fill="#1c1917"/>
-    <circle cx="27" cy="30.5" r="1.5" fill="#ffffff"/>
-    <circle cx="39" cy="30.5" r="1.5" fill="#ffffff"/>
-    <path d="M 21 24 Q 26 21 30 23" stroke="#1c1917" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <path d="M 43 24 Q 38 21 34 23" stroke="#1c1917" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <!-- Confident Warrior Smile with Teeth -->
-    <path d="M 26 40 Q 32 45 38 40 Z" fill="#ffffff" stroke="#78350f" stroke-width="1.2"/>
-    <!-- Salmon Pink Polo Shirt with White Pointed Collar -->
-    <path d="M 18 50 Q 32 54 46 50 L 48 64 L 16 64 Z" fill="#fb7185"/>
-    <polygon points="26,50 32,56 30,50" fill="#ffffff"/>
-    <polygon points="38,50 32,56 34,50" fill="#ffffff"/>
-  </svg></span></div>
+              <div class="char-item-bubble connie-bg"></div>
               <span class="char-item-name">Connie</span>
-              <span class="char-item-role">Knight & Swordmaster</span>
-              <div class="char-types-row"><span class="gem-type-badge type-NORMAL">NORMAL</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+              <span class="char-item-role">Swordmaster</span>
             </div>
-
-            <!-- Row 2: Bismuth, Peridot, Lapis Lazuli, Rose Quartz, Jasper -->
+            <!-- Row 2: Bismuth, Peridot, Lapis, Rose Quartz, Jasper -->
             <div class="char-grid-item" data-char="bismuth">
-              <div class="char-item-bubble bismuth-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Thick Curved Tubular Rainbow Dreadlocks Bundled by Headband -->
-    <path d="M 14 26 C 10 18 16 10 24 10 C 22 16 20 22 18 28 Z" fill="#ef4444"/>
-    <path d="M 22 12 C 22 8 28 6 34 8 C 32 14 30 20 28 26 Z" fill="#f97316"/>
-    <path d="M 32 8 C 36 6 42 8 44 12 C 40 18 38 24 36 28 Z" fill="#eab308"/>
-    <path d="M 42 12 C 48 10 52 14 52 20 C 48 24 44 28 42 32 Z" fill="#22c55e"/>
-    <path d="M 48 20 C 54 22 56 28 54 34 C 50 36 46 36 44 38 Z" fill="#3b82f6"/>
-    <path d="M 52 32 C 56 36 56 42 52 46 C 48 46 46 42 46 40 Z" fill="#a855f7"/>
-    <!-- Dark Leather Hair Tie -->
-    <path d="M 18 22 Q 34 16 50 22" stroke="#1e293b" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <!-- Muscular Slate-Blue Face -->
-    <circle cx="32" cy="33" r="16" fill="#94a3b8"/>
-    <!-- Big Friendly Eyes & Bushy Brows -->
-    <ellipse cx="26" cy="28" rx="3.5" ry="4.5" fill="#1e293b"/>
-    <ellipse cx="38" cy="28" rx="3.5" ry="4.5" fill="#1e293b"/>
-    <circle cx="27" cy="27" r="1.2" fill="#ffffff"/>
-    <circle cx="39" cy="27" r="1.2" fill="#ffffff"/>
-    <path d="M 22 22 Q 26 20 30 22" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <path d="M 42 22 Q 38 20 34 22" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <!-- Broad Grin with Big White Teeth -->
-    <path d="M 23 37 Q 32 46 41 37 Z" fill="#ffffff" stroke="#475569" stroke-width="1.5"/>
-    <!-- 98-Facet Stepped-Pyramid Chest Gemstone -->
-    <rect x="27" y="50" width="10" height="10" fill="#ec4899"/>
-    <rect x="29" y="52" width="6" height="6" fill="#06b6d4"/>
-    <rect x="31" y="54" width="2" height="2" fill="#eab308"/>
-    <!-- Blacksmith Apron & Star Strap -->
-    <path d="M 14 50 L 50 50 L 52 64 L 12 64 Z" fill="#78350f"/>
-    <line x1="16" y1="50" x2="38" y2="64" stroke="#f59e0b" stroke-width="2"/>
-  </svg></span></div>
+              <div class="char-item-bubble bismuth-bg"></div>
               <span class="char-item-name">Bismuth</span>
-              <span class="char-item-role">Hammer & Anvil Smelter</span>
-              <div class="char-types-row"><span class="gem-type-badge type-STEEL">STEEL</span><span class="gem-type-badge type-FIGHT">FIGHT</span></div>
+              <span class="char-item-role">Blacksmith</span>
             </div>
             <div class="char-grid-item" data-char="peridot">
-              <div class="char-item-bubble peridot-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Sculpted 3D Tetrahedral Chartreuse Hair (Iconic Faceted Dorito Shape!) -->
-    <polygon points="32,6 54,34 10,34" fill="#d9f99d"/>
-    <polygon points="32,8 52,33 32,24" fill="#bef264"/>
-    <polygon points="32,8 32,24 12,33" fill="#a3e635" opacity="0.75"/>
-    <!-- Lime Green Face -->
-    <polygon points="20,28 44,28 40,46 24,46" fill="#a3e635"/>
-    <!-- Forehead Triangular Peridot Gem -->
-    <polygon points="32,21 35,26 29,26" fill="#4ade80" stroke="#15803d" stroke-width="0.8"/>
-    <!-- Winged Yellow Visor Glasses (Change Your Mind / Save the Light) -->
-    <polygon points="16,28 32,32 48,28 46,38 32,40 18,38" fill="rgba(250, 204, 21, 0.95)" stroke="#ffffff" stroke-width="1.2"/>
-    <circle cx="26" cy="33" r="1.3" fill="#ffffff"/>
-    <circle cx="38" cy="33" r="1.3" fill="#ffffff"/>
-    <!-- Smug Smirk -->
-    <path d="M 28 42 Q 33 45 37 42" stroke="#15803d" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-    <!-- Tech Uniform with Yellow Diamond Insignia -->
-    <path d="M 18 48 Q 32 52 46 48 L 48 64 L 16 64 Z" fill="#15803d"/>
-    <polygon points="32,50 35,54 32,58 29,54" fill="#facc15"/>
-  </svg></span></div>
+              <div class="char-item-bubble peridot-bg"></div>
               <span class="char-item-name">Peridot</span>
-              <span class="char-item-role">Ferrokinesis Metal Shards</span>
-              <div class="char-types-row"><span class="gem-type-badge type-STEEL">STEEL</span><span class="gem-type-badge type-ELECTR">ELECTR</span></div>
+              <span class="char-item-role">Technician</span>
             </div>
             <div class="char-grid-item" data-char="lapis">
-              <div class="char-item-bubble lapis-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Liquid Translucent Cyan Hydro Wings Flanking Head -->
-    <path d="M 16 32 Q 4 16 2 32 Q 10 38 16 36 Z" fill="rgba(56, 189, 248, 0.75)" stroke="#e0f2fe" stroke-width="1.2"/>
-    <path d="M 48 32 Q 60 16 62 32 Q 54 38 48 36 Z" fill="rgba(56, 189, 248, 0.75)" stroke="#e0f2fe" stroke-width="1.2"/>
-    <!-- Fluid Feathered Navy Bob Hair -->
-    <ellipse cx="32" cy="28" rx="18" ry="18" fill="#1e3a8a"/>
-    <path d="M 14 30 L 16 44 L 22 34 Z" fill="#1e3a8a"/>
-    <path d="M 50 30 L 48 44 L 42 34 Z" fill="#1e3a8a"/>
-    <!-- Azure Blue Skin Face -->
-    <ellipse cx="32" cy="33" rx="14" ry="15" fill="#38bdf8"/>
-    <!-- Angular Windswept Bangs -->
-    <polygon points="20,20 26,30 32,22 38,30 44,20" fill="#1e3a8a"/>
-    <!-- Serene / Mystical Blue Eyes -->
-    <ellipse cx="26" cy="32" rx="3.5" ry="4.5" fill="#0c4a6e"/>
-    <ellipse cx="38" cy="32" rx="3.5" ry="4.5" fill="#0c4a6e"/>
-    <circle cx="27" cy="31" r="1.3" fill="#ffffff"/>
-    <circle cx="39" cy="31" r="1.3" fill="#ffffff"/>
-    <!-- Gentle Smile -->
-    <path d="M 28 41 Q 32 44 36 41" stroke="#0284c7" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-    <!-- Royal Blue Halter Top & Golden Ribbon Tie -->
-    <path d="M 20 48 Q 32 52 44 48 L 46 64 L 18 64 Z" fill="#1d4ed8"/>
-    <polygon points="32,48 30,53 34,53" fill="#fbbf24"/>
-  </svg></span></div>
+              <div class="char-item-bubble lapis-bg"></div>
               <span class="char-item-name">Lapis Lazuli</span>
-              <span class="char-item-role">Water Wings & Hydro Wave</span>
-              <div class="char-types-row"><span class="gem-type-badge type-WATER">WATER</span><span class="gem-type-badge type-FLYING">FLYING</span></div>
+              <span class="char-item-role">Water Mage</span>
             </div>
             <div class="char-grid-item" data-char="rose">
-              <div class="char-item-bubble rose-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Cascading Voluminous Pink Spiral Rose-Tube Ringlets with Hollow Centers -->
-    <path d="M 32 8 C 16 8 8 20 8 36 C 8 48 12 56 16 62 C 20 54 20 44 22 36 C 24 24 40 24 42 36 C 44 44 44 54 48 62 C 52 56 56 48 56 36 C 56 20 48 8 32 8 Z" fill="#f472b6"/>
-    <!-- Hollow Center Spirals -->
-    <path d="M 12 28 C 10 36 14 44 18 42 C 20 40 18 34 16 36" stroke="#db2777" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 52 28 C 54 36 50 44 46 42 C 44 40 46 34 48 36" stroke="#db2777" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 16 46 C 14 52 18 58 22 56" stroke="#db2777" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <path d="M 48 46 C 50 52 46 58 42 56" stroke="#db2777" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <!-- Gentle Romantic Curtain Bangs -->
-    <path d="M 22 18 Q 32 22 42 18 Q 32 26 22 18 Z" fill="#fbcfe8"/>
-    <!-- Gentle Peach Face -->
-    <ellipse cx="32" cy="33" rx="15" ry="16" fill="#fed7aa"/>
-    <!-- Gentle Eyes with Eyelashes -->
-    <ellipse cx="26" cy="31" rx="3.5" ry="4.5" fill="#1e102d"/>
-    <ellipse cx="38" cy="31" rx="3.5" ry="4.5" fill="#1e102d"/>
-    <circle cx="27" cy="30" r="1.3" fill="#ffffff"/>
-    <circle cx="39" cy="30" r="1.3" fill="#ffffff"/>
-    <!-- Sweet Pink Smile -->
-    <path d="M 27 40 Q 32 44 37 40" stroke="#db2777" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-    <!-- Tiered White Gown with Star Cutout & Navel Gem -->
-    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ffffff"/>
-    <polygon points="32,52 34,56 38,56 35,59 36,63 32,60 28,63 29,59 26,56 30,56" fill="#f43f5e"/>
-    <circle cx="32" cy="58" r="2.2" fill="#fbcfe8"/>
-  </svg></span></div>
+              <div class="char-item-bubble rose-bg"></div>
               <span class="char-item-name">Rose Quartz</span>
-              <span class="char-item-role">Rose Sword & Tears of Life</span>
-              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-FAIRY">FAIRY</span></div>
+              <span class="char-item-role">Healer / Knight</span>
             </div>
             <div class="char-grid-item" data-char="jasper">
-              <div class="char-item-bubble jasper-bg"><span class="guardian-svg-wrap" style="width:42px;height:42px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Massive Swept-Back WAVY Pale Peach-Cream Lion's Mane Cascading Behind Shoulders -->
-    <path d="M 32 6 C 14 6 6 18 6 34 C 6 48 10 58 14 62 C 16 52 18 44 20 36 C 22 26 26 18 32 16 C 38 18 42 26 44 36 C 46 44 48 52 50 62 C 54 58 58 48 58 34 C 58 18 50 6 32 6 Z" fill="#fed7aa"/>
-    <path d="M 10 32 C 8 44 12 54 16 60 C 14 50 14 42 18 34" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <path d="M 54 32 C 56 44 52 54 48 60 C 50 50 50 42 46 34" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-    <!-- Widow's Peak Crown Crest -->
-    <polygon points="32,12 36,20 28,20" fill="#fed7aa"/>
-    <!-- Broad Orange Face with Dark Red Tiger Stripes -->
-    <polygon points="18,24 46,24 42,48 22,48" fill="#ea580c"/>
-    <path d="M 18 28 L 26 30 L 18 34 Z" fill="#991b1b"/>
-    <path d="M 46 28 L 38 30 L 46 34 Z" fill="#991b1b"/>
-    <path d="M 28 24 L 32 30 L 36 24 Z" fill="#991b1b"/>
-    <!-- Faceted Amber Gemstone ON NOSE -->
-    <polygon points="32,32 36,37 32,41 28,37" fill="#b45309" stroke="#f59e0b" stroke-width="1"/>
-    <!-- Fierce Golden Eyes -->
-    <ellipse cx="24" cy="29" rx="3.5" ry="4" fill="#fbbf24"/>
-    <ellipse cx="40" cy="29" rx="3.5" ry="4" fill="#fbbf24"/>
-    <ellipse cx="24" cy="29" rx="1.8" ry="3" fill="#450a0a"/>
-    <ellipse cx="40" cy="29" rx="1.8" ry="3" fill="#450a0a"/>
-    <!-- Fierce Warrior Scowl -->
-    <path d="M 26 44 L 38 43" stroke="#450a0a" stroke-width="2" stroke-linecap="round"/>
-    <!-- Maroon Tunic with Yellow Diamond -->
-    <path d="M 16 50 Q 32 54 48 50 L 50 64 L 14 64 Z" fill="#7f1d1d"/>
-    <polygon points="32,51 35,55 32,59 29,55" fill="#fde047"/>
-  </svg></span></div>
+              <div class="char-item-bubble jasper-bg"></div>
               <span class="char-item-name">Jasper</span>
-              <span class="char-item-role">Beta Quartz Juggernaut</span>
-              <div class="char-types-row"><span class="gem-type-badge type-FIGHT">FIGHT</span><span class="gem-type-badge type-DRAGON">DRAGON</span></div>
+              <span class="char-item-role">Juggernaut</span>
             </div>
           </div>
 
           <!-- Selected Character Full Dossier Preview -->
           <div class="char-preview-pane" id="charPreviewPane">
             <div class="char-pane-header">
-              <div class="char-pane-icon" id="paneIcon"><span class="guardian-svg-wrap" style="width:72px;height:72px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-    <!-- Steven Sculpted Cloud-Curl Crown (Espresso Brown with inner C-swirls) -->
-    <path d="M 12 36 C 8 28 10 18 18 14 C 22 10 30 8 35 12 C 40 8 49 10 52 16 C 58 22 57 32 52 38 C 50 44 44 48 38 48 C 30 50 20 48 14 42 Z" fill="#26151c"/>
-    <path d="M 18 19 Q 24 14 30 18" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 33 14 Q 40 12 46 17" stroke="#3b252c" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 14 28 Q 11 20 18 22" stroke="#3b252c" stroke-width="2" stroke-linecap="round" fill="none"/>
-    <!-- Face / Head -->
-    <ellipse cx="32" cy="33" rx="18.5" ry="17.5" fill="#fbd0be"/>
-    <ellipse cx="19" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <ellipse cx="45" cy="37" rx="5" ry="3.5" fill="#f43f5e" opacity="0.35"/>
-    <!-- Big Expressive Cartoon Eyes (Save the Light Style) -->
-    <ellipse cx="25" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="39" cy="30" rx="4.5" ry="6" fill="#1e102d"/>
-    <ellipse cx="26" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <ellipse cx="40" cy="28.5" rx="1.8" ry="2.5" fill="#ffffff"/>
-    <circle cx="24" cy="32" r="0.8" fill="#ffffff"/>
-    <circle cx="38" cy="32" r="0.8" fill="#ffffff"/>
-    <!-- Arched Eyebrows -->
-    <path d="M 20 22 Q 25 18 29 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <path d="M 44 22 Q 39 18 35 21" stroke="#1e102d" stroke-width="2.2" stroke-linecap="round" fill="none"/>
-    <!-- Huge Open Teeny Smile with Upper Teeth Band & Crimson Depth -->
-    <path d="M 23 37 Q 32 37 41 37 Q 41 49 32 49 Q 23 49 23 37 Z" fill="#881337"/>
-    <path d="M 23 37 Q 32 37 41 37 Q 40 42 32 42 Q 24 42 23 37 Z" fill="#ffffff"/>
-    <path d="M 27 45 Q 32 43 37 45 Q 35 48 32 48 Q 29 48 27 45 Z" fill="#f472b6"/>
-    <!-- Red Shirt & Star -->
-    <path d="M 16 50 Q 32 54 48 50 L 52 64 L 12 64 Z" fill="#ff5975"/>
-    <polygon points="32,49 34.5,55 40,55 35.5,58.5 37,64 32,60.5 27,64 28.5,58.5 24,55 29.5,55" fill="#fde047"/>
-  </svg></span></div>
+              <div class="char-pane-icon" id="paneIcon"></div>
               <div>
                 <h3 class="char-pane-name" id="paneName">Steven Universe</h3>
                 <span class="char-pane-title" id="paneTitle">The Heart of the Crystal Gems</span>
@@ -834,34 +522,14 @@
 
             <!-- Canonical Fusion Compatibility Dossier -->
             <div class="char-fusion-preview" id="charFusionPreview">
-              <span class="fusion-preview-badge">💎 CANON FUSIONS FOR THIS GEM:</span>
+              <span class="fusion-preview-badge">CANON FUSIONS FOR THIS GEM</span>
               <div class="fusion-preview-list" id="fusionPreviewList">
-                <span class="fusion-chip">⚔️🛡️ <b>Stevonnie</b> (+ Connie)</span>
-                <span class="fusion-chip">🪀🌪️ <b>Smoky Quartz</b> (+ Amethyst)</span>
-                <span class="fusion-chip">☂️🌈 <b>Rainbow Quartz 2.0</b> (+ Pearl)</span>
-                <span class="fusion-chip">☀️🔥 <b>Sunstone</b> (+ Garnet)</span>
+                <span class="fusion-chip"><b>Stevonnie</b> (+ Connie)</span>
               </div>
             </div>
-          </div>
-
-          <!-- All 9 Canon Fusions Showcase Directory -->
-          <div class="fusions-directory-panel">
-            <span class="fusions-dir-title">✨ STEVEN UNIVERSE CANONICAL FUSION MATRIX:</span>
-            <div class="fusions-dir-grid">
-              <div class="fusion-card-mini" title="Steven + Connie = Stevonnie"><span>⚔️🛡️ Stevonnie</span><small>Steven + Connie</small></div>
-              <div class="fusion-card-mini" title="Amethyst + Pearl = Opal"><span>🏹🌟 Opal</span><small>Amethyst + Pearl</small></div>
-              <div class="fusion-card-mini" title="Garnet + Pearl = Sardonyx"><span>🔨✨ Sardonyx</span><small>Garnet + Pearl</small></div>
-              <div class="fusion-card-mini" title="Garnet + Amethyst = Sugilite"><span>🟣⛓️ Sugilite</span><small>Garnet + Amethyst</small></div>
-              <div class="fusion-card-mini" title="Steven + Amethyst = Smoky Quartz"><span>🪀🌪️ Smoky Quartz</span><small>Steven + Amethyst</small></div>
-              <div class="fusion-card-mini" title="Steven + Garnet = Sunstone"><span>☀️🔥 Sunstone</span><small>Steven + Garnet</small></div>
-              <div class="fusion-card-mini" title="Steven + Pearl = Rainbow 2.0"><span>☂️🌈 Rainbow 2.0</span><small>Steven + Pearl</small></div>
-              <div class="fusion-card-mini" title="Lapis + Jasper = Malachite"><span>🌊🧊 Malachite</span><small>Lapis + Jasper</small></div>
-              <div class="fusion-card-mini" title="Rose + Pearl = Rainbow Quartz"><span>🌹🩰 Rainbow Quartz</span><small>Rose + Pearl</small></div>
-            </div>
-          </div>
-        </div>
+          </div></div>
         <div class="modal-footer">
-          <button class="btn-primary" id="btnConfirmChar" style="width: 100%;">⭐ SELECT THIS GUARDIAN & RETURN TO LOBBY</button>
+          <button class="btn-primary" id="btnConfirmChar" style="width: 100%;">SELECT GUARDIAN & RETURN TO LOBBY</button>
         </div>
       </div>
     </div>
@@ -937,11 +605,11 @@
                 🎼 ACTIVE SOUNDTRACK (JUKEBOX):
               </label>
               <select id="selectBgmTrack" class="su-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 12px; border: 1.5px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
-                <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
+                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
               <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
                 Pick a track and it starts right away — it keeps playing through fights.
@@ -1172,11 +840,11 @@
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
               <span style="font-size: 11px; font-weight: 700; color: #a5f3fc;">🎼 Soundtrack:</span>
               <select id="pauseSelectBgmTrack" class="su-select" style="width: 100%; padding: 6px 10px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 11px; border: 1.2px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>🌊 "That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">🌊 "I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">🌊 "Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">⚔️ "Defenders of the Deep" (Water Clone Battle)</option>
-                <option value="opal_theme">⚔️ "Amethyst's Drum / Opal's Theme"</option>
+                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
+                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
+                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
             </div>
           </div>

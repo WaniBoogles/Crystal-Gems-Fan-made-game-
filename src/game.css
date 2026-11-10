@@ -459,20 +459,20 @@ html, body {
 
 /* Character Selection Modal Fusion Directory & Preview */
 .char-fusion-preview {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: rgba(18, 7, 34, 0.8);
-  border: 2px solid #ffd700;
-  border-radius: 12px;
+  margin-top: 6px;
+  padding: 7px 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 10px;
 }
 
 .fusion-preview-badge {
   font-family: var(--su-font-display);
-  font-size: 10.5px;
-  color: #ffd700;
+  font-size: 10px;
+  color: #38bdf8;
+  letter-spacing: 0.6px;
   display: block;
-  margin-bottom: 6px;
-  text-shadow: 1px 1px 0 #140522;
+  margin-bottom: 5px;
 }
 
 .fusion-preview-list {
@@ -482,12 +482,12 @@ html, body {
 }
 
 .fusion-chip {
-  background: rgba(236, 72, 153, 0.25);
-  border: 1.5px solid #f472b6;
-  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
   padding: 3px 8px;
   font-size: 10px;
-  color: #fff;
+  color: #f1f5f9;
 }
 
 .fusions-directory-panel {
@@ -811,8 +811,7 @@ html, body {
 }
 
 .action-icon {
-  font-size: 16px;
-  flex-shrink: 0;
+  display: none !important;
 }
 
 .action-info {
@@ -2319,16 +2318,15 @@ body.mobile-device .touch-controls.active {
 }
 
 .lobby-guardian-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #f43f5e 25%, #be123c 90%);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: none;
   flex-shrink: 0;
 }
 
@@ -2567,16 +2565,36 @@ body.mobile-device .touch-controls.active {
 }
 
 .char-item-bubble {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.guardian-avatar-frame {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.guardian-avatar-frame img {
+  width: 116%;
+  height: 116%;
+  object-fit: cover;
+  object-position: 50% 16%;
+  display: block;
+  pointer-events: none;
 }
 
 .char-item-bubble svg,
@@ -2593,6 +2611,24 @@ body.mobile-device .touch-controls.active {
   justify-content: center;
   width: 100%;
   height: 100%;
+}
+
+.wave-pip {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+.wave-pip-warn {
+  background: #f59e0b;
+  box-shadow: 0 0 8px #f59e0b;
+}
+.wave-pip-boss {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+  transform: scale(1.3);
 }
 
 .bismuth-bg { background: radial-gradient(circle, #f97316, #475569); }
@@ -2631,15 +2667,15 @@ body.mobile-device .touch-controls.active {
 }
 
 .char-pane-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle, #ff9bbd 25%, #e11d48 90%);
-  border: 2px solid #ffd700;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   flex-shrink: 0;
   overflow: hidden;
 }

@@ -1424,61 +1424,61 @@ const OVERDRIVE_THEMES = {
   steven: {
     name: 'STEVEN OVERDRIVE',
     short: 'STEVEN',
-    msg: '⚡ STEVEN OVERDRIVE: DIAMOND HYPER STATE!',
+    msg: 'STEVEN OVERDRIVE: DIAMOND HYPER STATE!',
     color: '#ff1493'
   },
   garnet: {
     name: 'GARNET OVERDRIVE',
     short: 'GARNET',
-    msg: '🔥 GARNET OVERDRIVE: DUAL RESONANCE!',
+    msg: 'GARNET OVERDRIVE: DUAL RESONANCE!',
     color: '#ef4444'
   },
   amethyst: {
     name: 'AMETHYST OVERDRIVE',
     short: 'AMETHYST',
-    msg: '🟣 AMETHYST OVERDRIVE: VOLCANIC QUARTZ!',
+    msg: 'AMETHYST OVERDRIVE: VOLCANIC QUARTZ!',
     color: '#a855f7'
   },
   pearl: {
     name: 'PEARL OVERDRIVE',
     short: 'PEARL',
-    msg: '⚔️ PEARL OVERDRIVE: PRISMATIC RADIANCE!',
+    msg: 'PEARL OVERDRIVE: PRISMATIC RADIANCE!',
     color: '#22d3ee'
   },
   bismuth: {
     name: 'BISMUTH OVERDRIVE',
     short: 'BISMUTH',
-    msg: '🌋 BISMUTH OVERDRIVE: MOLTEN FORGEMASTER!',
+    msg: 'BISMUTH OVERDRIVE: MOLTEN FORGEMASTER!',
     color: '#f97316'
   },
   peridot: {
     name: 'PERIDOT OVERDRIVE',
     short: 'PERIDOT',
-    msg: '⚡ PERIDOT OVERDRIVE: FERROKINETIC OVERCLOCK!',
+    msg: 'PERIDOT OVERDRIVE: FERROKINETIC OVERCLOCK!',
     color: '#22c55e'
   },
   lapis: {
     name: 'LAPIS OVERDRIVE',
     short: 'LAPIS',
-    msg: '🌊 LAPIS OVERDRIVE: OCEAN EMPRESS HYDRO-SURGE!',
+    msg: 'LAPIS OVERDRIVE: OCEAN EMPRESS HYDRO-SURGE!',
     color: '#0ea5e9'
   },
   rose: {
     name: 'ROSE OVERDRIVE',
     short: 'ROSE',
-    msg: '🌹 ROSE OVERDRIVE: CELESTIAL DIAMOND MANDALA!',
+    msg: 'ROSE OVERDRIVE: CELESTIAL DIAMOND MANDALA!',
     color: '#f43f5e'
   },
   connie: {
     name: 'CONNIE OVERDRIVE',
     short: 'CONNIE',
-    msg: '⚔️ CONNIE OVERDRIVE: KNIGHT OF THE CRYSTAL GEMS!',
+    msg: 'CONNIE OVERDRIVE: KNIGHT OF THE CRYSTAL GEMS!',
     color: '#ec4899'
   },
   jasper: {
     name: 'JASPER OVERDRIVE',
     short: 'JASPER',
-    msg: '💥 JASPER OVERDRIVE: SUPREME BETA QUARTZ JUGGERNAUT!',
+    msg: 'JASPER OVERDRIVE: SUPREME BETA QUARTZ JUGGERNAUT!',
     color: '#ea580c'
   }
 };
@@ -1697,10 +1697,20 @@ class EnvironmentRenderer {
       ctx.fillStyle = '#06b6d4';
       ctx.fillRect(0, this.groundY - 4, this.stageWidth, 6);
       for (const padX of [350, 900, 1450, 2050]) {
-        ctx.fillStyle = '#22d3ee';
+        // Authentic Galaxy Warp Pad Dais (horizontal beveled platform)
+        ctx.save();
+        ctx.fillStyle = '#0f172a';
         ctx.beginPath();
-        ctx.arc(padX, this.groundY + 25, 38, 0, Math.PI * 2);
+        ctx.ellipse(padX, this.groundY - 2, 56, 14, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.strokeStyle = '#06b6d4';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.45)';
+        ctx.beginPath();
+        ctx.ellipse(padX, this.groundY - 2, 42, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
     } else if (stageIndex === 3) {
       // Stage 3: The Prime Kindergarten
@@ -1807,12 +1817,16 @@ class EnvironmentRenderer {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(scale, scale);
-    ctx.fillStyle = stage === 1 ? 'rgba(255, 230, 240, 0.45)' : 'rgba(255, 255, 255, 0.35)';
+    ctx.fillStyle = stage === 1 ? 'rgba(255, 230, 240, 0.32)' : 'rgba(240, 244, 255, 0.22)';
     ctx.beginPath();
-    ctx.arc(0, 0, 24, 0, Math.PI * 2);
-    ctx.arc(22, -10, 28, 0, Math.PI * 2);
-    ctx.arc(50, 0, 24, 0, Math.PI * 2);
-    ctx.arc(26, 12, 22, 0, Math.PI * 2);
+    if (typeof ctx.roundRect === 'function') {
+      ctx.roundRect(-45, -6, 90, 18, 9);
+    } else {
+      ctx.rect(-45, -6, 90, 18);
+    }
+    ctx.arc(-20, -10, 20, 0, Math.PI * 2);
+    ctx.arc(12, -14, 24, 0, Math.PI * 2);
+    ctx.arc(32, -8, 16, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -13192,9 +13206,24 @@ const GUARDIAN_PORTRAITS = {
   </svg>`
 };
 
-function getGuardianSvg(charId, size = 44) {
-  const svg = GUARDIAN_PORTRAITS[charId] || GUARDIAN_PORTRAITS.steven;
+function getGuardianAvatarHtml(charId, size = 44) {
+  const cId = (charId || 'steven').toLowerCase();
+  const imgUrl = (typeof PORTRAIT_IMAGES !== 'undefined' && PORTRAIT_IMAGES[cId]) ? PORTRAIT_IMAGES[cId] : '';
+  const theme = (typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[cId]) ? OVERDRIVE_THEMES[cId].color :
+                (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS[cId]) ? CANON_FUSIONS[cId].color : '#f472b6';
+  const radius = Math.round(size * 0.22);
+
+  if (imgUrl) {
+    return `<div class="guardian-avatar-frame" data-char="${cId}" style="width:${size}px;height:${size}px;border-radius:${radius}px;background:radial-gradient(circle at 50% 25%, ${theme}33, rgba(15,23,42,0.92));border:1.5px solid ${theme}88;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.45);">
+      <img src="${imgUrl}" alt="${cId}" style="width:116%;height:116%;object-fit:cover;object-position:50% 16%;display:block;pointer-events:none;" />
+    </div>`;
+  }
+  const svg = GUARDIAN_PORTRAITS[cId] || GUARDIAN_PORTRAITS.steven;
   return `<span class="guardian-svg-wrap" style="width:${size}px;height:${size}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${svg}</span>`;
+}
+
+function getGuardianSvg(charId, size = 44) {
+  return getGuardianAvatarHtml(charId, size);
 }
 
 const GUARDIAN_DATA = {
@@ -14346,13 +14375,16 @@ function drawPortraitCard(ctx, id, size = 512) {
 
 const _portraitCache = {};
 function getPortraitDataUrl(id, size = 512) {
+  if (typeof PORTRAIT_IMAGES !== 'undefined' && PORTRAIT_IMAGES[id]) {
+    return PORTRAIT_IMAGES[id];
+  }
   const key = `${id}@${size}`;
   if (_portraitCache[key]) return _portraitCache[key];
   try {
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
-    drawPortrait(canvas.getContext('2d'), id, size);
+    drawPortraitCard(canvas.getContext('2d'), id, size);
     _portraitCache[key] = canvas.toDataURL('image/png');
   } catch (e) {
     _portraitCache[key] = '';
@@ -14650,7 +14682,7 @@ class StevenUniverseGame {
       if (avatarEl) avatarEl.innerHTML = `${getGuardianSvg(this.selectedCharP1, 32)}${getGuardianSvg(this.selectedCharP2, 32)}`;
       if (nameEl) nameEl.textContent = `P1: ${dataP1.name} • P2: ${dataP2.name}`;
       if (descEl) descEl.textContent = `P1 (${dataP1.name}): WASD + F/G/H/R • P2 (${dataP2.name}): Arrows + J/K/L/O`;
-      if (badgeEl) badgeEl.textContent = 'CHOSEN GUARDIANS (P1 & P2) • CLICK TO SWITCH 🔄';
+      if (badgeEl) badgeEl.textContent = 'ACTIVE GUARDIANS (P1 & P2) · CLICK TO SWITCH';
 
       if (typesContainer) {
         const p1Badges = (dataP1.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
@@ -14661,7 +14693,7 @@ class StevenUniverseGame {
       if (avatarEl) avatarEl.innerHTML = getGuardianSvg(this.selectedCharP1, 46);
       if (nameEl) nameEl.textContent = dataP1.name;
       if (descEl) descEl.textContent = dataP1.desc;
-      if (badgeEl) badgeEl.textContent = 'CHOSEN GUARDIAN • CLICK TO SWITCH 🔄';
+      if (badgeEl) badgeEl.textContent = 'ACTIVE GUARDIAN · CLICK TO SWITCH';
 
       if (typesContainer) {
         typesContainer.innerHTML = (dataP1.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
@@ -14805,7 +14837,7 @@ class StevenUniverseGame {
           const chip = document.createElement('span');
           chip.className = 'fusion-chip';
           const partnerName = GUARDIAN_DATA[p.partnerId]?.name || p.partnerId;
-          chip.innerHTML = `${p.fusion.icon} <b>${p.fusion.name}</b> (+${partnerName}) • ${p.fusion.weapon}`;
+          chip.innerHTML = `<b>${p.fusion.name}</b> (+${partnerName}) • ${p.fusion.weapon}`;
           fList.appendChild(chip);
         }
       } else {
@@ -15324,13 +15356,9 @@ class StevenUniverseGame {
       hintEl.style.textAlign = 'right';
     }
     if (portraitEl) {
-      if (speaker.villain) {
-        portraitEl.innerHTML = `<div style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;background:radial-gradient(circle, ${speaker.color}55, #0b0714);border:2px solid ${speaker.color};box-shadow:0 0 22px ${speaker.color}88">${speaker.icon}</div>`;
-      } else {
-        portraitEl.innerHTML = (typeof getGuardianSvg === 'function')
-          ? getGuardianSvg(speaker.id, 88)
-          : ((GUARDIAN_PORTRAITS && GUARDIAN_PORTRAITS[speaker.id]) || '');
-      }
+      portraitEl.innerHTML = (typeof getGuardianAvatarHtml === 'function')
+        ? getGuardianAvatarHtml(speaker.id, 88)
+        : '';
     }
   }
 
@@ -17639,7 +17667,7 @@ class StevenUniverseGame {
 
     const odTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
     const odLabel = d.odLabel;
-    if (odLabel && odLabel.textContent !== `⚡ ${odTheme.name}`) odLabel.textContent = `⚡ ${odTheme.name}`;
+    if (odLabel && odLabel.textContent !== odTheme.name) odLabel.textContent = odTheme.name;
 
     const fill = d.fill;
     const pct = d.pct;
@@ -17706,7 +17734,7 @@ class StevenUniverseGame {
 
       const odThemeP2 = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
       const odLabelP2 = d.odLabelP2;
-      if (odLabelP2 && odLabelP2.textContent !== `⚡ ${odThemeP2.name}`) odLabelP2.textContent = `⚡ ${odThemeP2.name}`;
+      if (odLabelP2 && odLabelP2.textContent !== odThemeP2.name) odLabelP2.textContent = odThemeP2.name;
 
       const fillP2 = d.fillP2;
       const pctP2 = d.pctP2;
@@ -17742,7 +17770,7 @@ class StevenUniverseGame {
     const curScore = `${this.score}`;
     if (scoreEl && scoreEl.textContent !== curScore) scoreEl.textContent = curScore;
     const bubbledEl = d.bubbledEl;
-    const curBubbled = `💎 ${this.bubbledGemsCount}`;
+    const curBubbled = `${this.bubbledGemsCount}`;
     if (bubbledEl && bubbledEl.textContent !== curBubbled) bubbledEl.textContent = curBubbled;
 
     this.updateFusionHUD();
@@ -19055,8 +19083,8 @@ class StevenUniverseGame {
       document.querySelectorAll('.char-grid-item[data-char]').forEach(item => {
         const cId = item.dataset.char;
         const b = item.querySelector('.char-item-bubble');
-        if (b && !b.querySelector('svg')) {
-          b.innerHTML = getGuardianSvg(cId, 42);
+        if (b) {
+          b.innerHTML = getGuardianAvatarHtml(cId, 42);
         }
       });
     };
