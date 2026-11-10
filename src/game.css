@@ -56,8 +56,10 @@ html, body {
   flex: 0 0 auto;
   transform: translate(-50%, -50%) scale(var(--gc-scale, 1));
   transform-origin: center center;
+  will-change: transform;
+  contain: layout style paint;
   background: #000;
-  box-shadow: 0 0 50px rgba(255, 96, 151, 0.35), 0 0 100px rgba(56, 189, 248, 0.18);
+  box-shadow: 0 0 35px rgba(255, 96, 151, 0.35), 0 0 50px rgba(56, 189, 248, 0.18);
   border-radius: 14px;
   overflow: hidden;
   display: flex;
@@ -166,14 +168,31 @@ html, body {
 
 .hud-hearts {
   display: flex;
-  gap: 3px;
-  font-size: 19px;
+  align-items: center;
+  gap: 5px;
   line-height: 1;
 }
 
 .hud-heart {
   display: inline-block;
-  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: 24px;
+  height: 24px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.2s ease, opacity 0.2s ease;
+}
+
+.hud-heart.filled {
+  background-image: url('spinel-heart-full.png');
+  filter: drop-shadow(0 0 6px rgba(255, 96, 151, 0.65)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.hud-heart.empty {
+  background-image: url('spinel-heart-empty.png');
+  opacity: 0.42;
+  filter: grayscale(0.85) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .hud-heart.pulse {
@@ -2476,19 +2495,21 @@ body.mobile-device .touch-controls.active {
    CHARACTER SELECTION MODAL (8 GEMS)
    ========================================================== */
 .char-select-modal {
-  width: 720px;
-  max-width: 95vw;
-  max-height: 90vh;
+  width: 820px;
+  max-width: 92vw;
+  max-height: 580px;
   display: flex;
   flex-direction: column;
+  padding: 14px 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 96, 151, 0.28);
 }
 
 .char-select-body {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   overflow-y: auto;
-  padding: 10px 4px;
+  padding: 4px 2px;
 }
 
 .connie-bg {
@@ -2502,7 +2523,7 @@ body.mobile-device .touch-controls.active {
 .char-grid-8 {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {
@@ -2522,38 +2543,38 @@ body.mobile-device .touch-controls.active {
   flex-direction: column;
   align-items: center;
   background: rgba(30, 12, 52, 0.88);
-  border: 3px solid #4a196e;
-  border-radius: 14px;
-  padding: 8px 6px;
+  border: 2px solid #4a196e;
+  border-radius: 12px;
+  padding: 6px 4px;
   cursor: pointer;
   transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.14s ease, box-shadow 0.14s ease;
   text-align: center;
-  box-shadow: 0 4px 0 #1b0728;
+  box-shadow: 0 3px 0 #1b0728;
 }
 
 .char-grid-item:hover {
   background: rgba(48, 18, 80, 0.95);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: #ffd700;
-  box-shadow: 0 7px 0 #1b0728;
+  box-shadow: 0 5px 0 #1b0728;
 }
 
 .char-grid-item.active {
   background: linear-gradient(135deg, rgba(255, 96, 151, 0.35), rgba(225, 29, 72, 0.45));
   border-color: #ffd700;
-  transform: translateY(-4px) scale(1.03);
-  box-shadow: 0 6px 0 #1b0728, 0 0 16px rgba(255, 96, 151, 0.6);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 5px 0 #1b0728, 0 0 14px rgba(255, 96, 151, 0.6);
 }
 
 .char-item-bubble {
-  width: 46px;
-  height: 46px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  margin-bottom: 4px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.25);
 }
@@ -2581,79 +2602,79 @@ body.mobile-device .touch-controls.active {
 
 .char-item-name {
   font-family: var(--su-font-display);
-  font-size: 13px;
+  font-size: 11.5px;
   color: #fff;
 }
 
 .char-item-role {
-  font-size: 10px;
+  font-size: 9px;
   color: #94a3b8;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 /* Character Preview Dossier */
 .char-preview-pane {
   background: rgba(18, 10, 34, 0.85);
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  border-radius: 14px;
-  padding: 14px 18px;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 8px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 5px;
   text-align: left;
 }
 
 .char-pane-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .char-pane-icon {
-  width: 58px;
-  height: 58px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle, #ff9bbd 25%, #e11d48 90%);
-  border: 2.5px solid #ffd700;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  border: 2px solid #ffd700;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
   overflow: hidden;
 }
 
 .char-pane-name {
   font-family: var(--su-font-display);
-  font-size: 18px;
+  font-size: 16px;
   color: #ffd700;
   margin: 0;
 }
 
 .char-pane-title {
-  font-size: 12px;
+  font-size: 11px;
   color: #cbd5e1;
 }
 
 .char-pane-lore {
-  font-size: 12px;
+  font-size: 11px;
   color: #e2e8f0;
-  line-height: 1.4;
-  margin: 2px 0;
+  line-height: 1.35;
+  margin: 1px 0;
 }
 
 .char-pane-powers {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   background: rgba(0, 0, 0, 0.3);
-  padding: 8px 12px;
-  border-radius: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .power-tag {
-  font-size: 12px;
+  font-size: 11px;
   color: #cbd5e1;
 }
 
@@ -2758,16 +2779,42 @@ body.mobile-device .touch-controls.active {
 }
 
 /* ==========================================================
-   STAGE CLEAR CELEBRATORY BANNER
+   STAGE CLEAR CELEBRATORY BANNER & VICTORY LIGHT RAYS
    ========================================================== */
 .stage-clear-banner {
   position: absolute;
-  top: 22%;
+  top: 24%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 60;
   pointer-events: none;
   animation: dropBanner 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.victory-light-rays {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 760px;
+  height: 760px;
+  margin-top: -380px;
+  margin-left: -380px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 215, 0, 0.32) 0deg 12deg,
+    transparent 12deg 24deg
+  );
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  animation: rotateLightRays 14s linear infinite;
+  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 22%, rgba(0, 0, 0, 0) 72%);
+  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 22%, rgba(0, 0, 0, 0) 72%);
+}
+
+@keyframes rotateLightRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes dropBanner {
