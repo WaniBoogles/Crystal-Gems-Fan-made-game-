@@ -234,6 +234,18 @@ class GemAudioEngine {
     return this.musicEnabled;
   }
 
+  duckMusic(factor = 0.75, duration = 1.0) {
+    if (!this.musicGainNode || !this.ctx || !this.musicEnabled) return;
+    try {
+      const t = this.ctx.currentTime;
+      const cur = this.musicVolume;
+      this.musicGainNode.gain.cancelScheduledValues(t);
+      this.musicGainNode.gain.setValueAtTime(cur, t);
+      this.musicGainNode.gain.linearRampToValueAtTime(cur * factor, t + 0.08);
+      this.musicGainNode.gain.linearRampToValueAtTime(cur, t + duration);
+    } catch (e) {}
+  }
+
   playSfx(type) {
     if (!this.soundEnabled) return;
     this.init();
@@ -241,6 +253,9 @@ class GemAudioEngine {
     if (this.ctx.state === 'suspended') {
       this.ctx.resume().catch(() => {});
     }
+
+    // Dynamic pitch variation (+/- 6%) on combat sounds for rich audio punch
+    const pitchVar = 0.94 + Math.random() * 0.12;
 
     const sfxAliases = {
       sword: 'sword',
@@ -266,6 +281,9 @@ class GemAudioEngine {
       try {
         const src = this.ctx.createBufferSource();
         src.buffer = this.sfxBuffers[targetKey];
+        if (targetKey === 'punch' || targetKey === 'sword' || targetKey === 'hitfeedback' || targetKey === 'dash' || targetKey === 'hurt' || targetKey === 'explosion') {
+          src.playbackRate.setValueAtTime(pitchVar, this.ctx.currentTime);
+        }
         const gain = this.ctx.createGain();
         let vol = 0.52;
         if (targetKey === 'explosion') vol = 0.65;
@@ -1247,6 +1265,20 @@ class ParticleSystem {
     }
   }
 
+  // Directional 4-point sharp diamond hit spark (Reference: pixelfx & Fighting Style)
+  addHitSpark(x, y, color = '#fde047', size = 18, angle = Math.PI / 4) {
+    this.particles.push({
+      x, y,
+      vx: 0, vy: 0,
+      size,
+      angle,
+      color,
+      life: 1.0,
+      decay: 0.11,
+      isHitSpark: true
+    });
+  }
+
   addRosePetals(x, y, count = 6) {
     for (let i = 0; i < count; i++) {
       this.particles.push({
@@ -1484,6 +1516,30 @@ class ParticleSystem {
         ctx.fillStyle = p.color;
         ctx.beginPath();
         ctx.rect(-p.size / 2, -p.size / 2, p.size, p.size);
+        ctx.fill();
+        ctx.restore();
+      } else if (p.isHitSpark) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        const s = p.size * (0.8 + (1 - p.life) * 0.45);
+        // 4-point diamond cross star (pixelfx style)
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(0, -s);
+        ctx.quadraticCurveTo(s * 0.12, -s * 0.12, s, 0);
+        ctx.quadraticCurveTo(s * 0.12, s * 0.12, 0, s);
+        ctx.quadraticCurveTo(-s * 0.12, s * 0.12, -s, 0);
+        ctx.quadraticCurveTo(-s * 0.12, -s * 0.12, 0, -s);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(0, 0, s * 0.25, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       } else if (p.isFissure) {
@@ -2947,6 +3003,7 @@ class PlayerHero {
     // Acrobatics & Jump Enhancements (Reach platforms effortlessly!)
     this.canDoubleJump = true;
     this.jumpDebounce = false;
+    this.inputBuffer = null; // 5-frame input buffer ({ action, timer })
 
     // Canonical Gem Fusion Attributes
     this.isFusion = false;
@@ -3136,8 +3193,22 @@ class PlayerHero {
       }
     }
 
+    // 5-Frame Input Buffering (~85ms window) to prevent dropped inputs during recovery
+    if (input.attack) this.inputBuffer = { action: 'attack', timer: 0.085 };
+    else if (input.special) this.inputBuffer = { action: 'special', timer: 0.085 };
+    else if (input.skill) this.inputBuffer = { action: 'skill', timer: 0.085 };
+    else if (input.dodge) this.inputBuffer = { action: 'dodge', timer: 0.085 };
+    else if (input.jump && !this.jumpDebounce) this.inputBuffer = { action: 'jump', timer: 0.085 };
+
+    if (this.inputBuffer) {
+      this.inputBuffer.timer -= dt;
+      if (this.inputBuffer.timer <= 0) this.inputBuffer = null;
+    }
+
     // Dodge Action Execution Check
-    if (input.dodge && this.dodgeCooldown <= 0 && !this.isDodging && !this.isSpinDashing) {
+    const tryDodgeDirect = input.dodge || (this.inputBuffer?.action === 'dodge' && this.actionTimer <= 0);
+    if (tryDodgeDirect && this.dodgeCooldown <= 0 && !this.isDodging && !this.isSpinDashing) {
+      if (this.inputBuffer?.action === 'dodge') this.inputBuffer = null;
       this.executeDodge(audioEngine, particles, input);
     }
 
@@ -3163,6 +3234,7 @@ class PlayerHero {
       if (this.dodgeTimer <= 0) {
         this.isDodging = false;
         this.vx = 0;
+        this.dodgeCooldown = Math.max(this.dodgeCooldown, 0.25);
       }
     }
 
@@ -3293,8 +3365,10 @@ class PlayerHero {
       this.currentPlatform = null;
     }
 
-    // Enhanced Jump & Double Jump System (Every platform reached smoothly!)
-    if (input.jump && !this.jumpDebounce && !input.down) {
+    // Enhanced Jump & Double Jump System with 5-Frame Input Buffer
+    const tryJump = (input.jump && !this.jumpDebounce && !input.down) || (this.isGrounded && this.inputBuffer?.action === 'jump');
+    if (tryJump) {
+      if (this.inputBuffer?.action === 'jump') this.inputBuffer = null;
       if (this.isGrounded) {
         this.vy = -680; // Powerful crisp leap: reaches 192px apex
         this.isGrounded = false;
@@ -3451,14 +3525,22 @@ class PlayerHero {
       }
     }
 
-    // Attack Triggers (J, K, L)
-    if (input.attack && this.attackCooldown <= 0) {
+    // Attack Triggers (J, K, L) with 5-Frame Input Buffering
+    const isActionable = this.actionTimer <= 0 && !this.isDodging && !this.isSpinDashing;
+    const tryAttack = input.attack || (isActionable && this.inputBuffer?.action === 'attack');
+    const trySpecial = input.special || (isActionable && this.inputBuffer?.action === 'special');
+    const trySkill = input.skill || (isActionable && this.inputBuffer?.action === 'skill');
+
+    if (tryAttack && this.attackCooldown <= 0) {
+      if (this.inputBuffer?.action === 'attack') this.inputBuffer = null;
       this.executeAttackJ(audioEngine, particles, projectiles);
     }
-    if (input.special && this.specialCooldown <= 0) {
+    if (trySpecial && this.specialCooldown <= 0) {
+      if (this.inputBuffer?.action === 'special') this.inputBuffer = null;
       this.executeSpecialK(audioEngine, particles, projectiles);
     }
-    if (input.skill && this.skillCooldown <= 0) {
+    if (trySkill && this.skillCooldown <= 0) {
+      if (this.inputBuffer?.action === 'skill') this.inputBuffer = null;
       this.executeSkillL(audioEngine, particles, pickups, projectiles);
     }
 
@@ -4330,6 +4412,7 @@ class PlayerHero {
     this.actionDuration = 0.65;
     this.actionTimer = 0.65;
     this.invulnerableTimer = 0.75;
+    if (audioEngine && audioEngine.duckMusic) audioEngine.duckMusic(0.75, 1.2);
 
     if (fid === 'stevonnie') {
       // Stevonnie: Rose Sword Wave!
@@ -9077,51 +9160,26 @@ class PlayerHero {
     // 1. Luminous Grand Rainbow / Prism Fusion Aura
     this.drawFusionAura(ctx, fusion, bob);
 
-    // 2. Official Canon Fusion Character Art Sprite (with high-fidelity procedural fallback)
+    // 2. High-Fidelity Animated Procedural Vector Fusion Characters (Full Kinematics, Articulated Limbs & Visual Skills)
     const fid = fusion.id;
-    const spr = (typeof _fusionSprites !== 'undefined') ? _fusionSprites[fid] : null;
-
-    if (spr && spr.complete && spr.naturalWidth > 0) {
-      // Draw official canon character art directly matching reference images
-      ctx.save();
-      const fusionHeights = {
-        stevonnie: 96,
-        smoky: 92,
-        rainbow2: 94,
-        rainbowClassic: 100,
-        sunstone: 112,
-        sardonyx: 124,
-        opal: 122,
-        sugilite: 126,
-        malachite: 124
-      };
-      const targetH = fusionHeights[fid] || 98;
-      const aspect = spr.naturalWidth / spr.naturalHeight;
-      const targetW = targetH * aspect;
-
-      // Draw canon sprite anchored at feet (y = 0) with kinetic bob
-      ctx.drawImage(spr, -targetW / 2, -targetH + bob, targetW, targetH);
-      ctx.restore();
-    } else {
-      if (fid === 'stevonnie') {
-        this.drawStevonnie(ctx, bob, animP, this.actionType);
-      } else if (fid === 'smoky') {
-        this.drawSmokyQuartz(ctx, bob, animP, this.actionType);
-      } else if (fid === 'rainbow2') {
-        this.drawRainbowQuartz2(ctx, bob, animP, this.actionType);
-      } else if (fid === 'sunstone') {
-        this.drawSunstone(ctx, bob, animP, this.actionType);
-      } else if (fid === 'sugilite') {
-        this.drawSugilite(ctx, bob, animP, this.actionType);
-      } else if (fid === 'sardonyx') {
-        this.drawSardonyx(ctx, bob, animP, this.actionType);
-      } else if (fid === 'opal') {
-        this.drawOpal(ctx, bob, animP, this.actionType);
-      } else if (fid === 'malachite') {
-        this.drawMalachite(ctx, bob, animP, this.actionType);
-      } else if (fid === 'rainbowClassic') {
-        this.drawRainbowQuartzClassic(ctx, bob, animP, this.actionType);
-      }
+    if (fid === 'stevonnie') {
+      this.drawStevonnie(ctx, bob, animP, this.actionType);
+    } else if (fid === 'smoky') {
+      this.drawSmokyQuartz(ctx, bob, animP, this.actionType);
+    } else if (fid === 'rainbow2') {
+      this.drawRainbowQuartz2(ctx, bob, animP, this.actionType);
+    } else if (fid === 'sunstone') {
+      this.drawSunstone(ctx, bob, animP, this.actionType);
+    } else if (fid === 'sugilite') {
+      this.drawSugilite(ctx, bob, animP, this.actionType);
+    } else if (fid === 'sardonyx') {
+      this.drawSardonyx(ctx, bob, animP, this.actionType);
+    } else if (fid === 'opal') {
+      this.drawOpal(ctx, bob, animP, this.actionType);
+    } else if (fid === 'malachite') {
+      this.drawMalachite(ctx, bob, animP, this.actionType);
+    } else if (fid === 'rainbowClassic') {
+      this.drawRainbowQuartzClassic(ctx, bob, animP, this.actionType);
     }
 
     // 3. Dynamic Attack Slashes & Impact Visuals for Fusion
@@ -9161,41 +9219,94 @@ class PlayerHero {
 
   // --- 1. STEVONNIE (Steven + Connie) ---
   drawStevonnie(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
+    const isPunch = (actionType === 'punch');
+    const isShieldStance = (actionType === 'shield');
 
     // 1. BACK LAYER: Lush, voluminous wavy dark espresso hair cascading behind shoulders (-X)
+    const swX = hair.swayX * 0.85;
+    const swY = hair.swayY * 0.5;
     ctx.fillStyle = '#1f1418';
     ctx.beginPath();
     ctx.moveTo(4, -89 + bob);
-    ctx.bezierCurveTo(-14, -92 + bob, -24 + hairSway * 0.4, -76 + bob, -21 + hairSway * 0.7, -60 + bob);
-    ctx.bezierCurveTo(-28 + hairSway, -46 + bob, -18 + hairSway * 1.1, -30 + bob, -24 + hairSway * 1.2, -18 + bob);
-    ctx.bezierCurveTo(-14 + hairSway, -16 + bob, -4 + hairSway * 0.6, -26 + bob, 4, -42 + bob);
+    ctx.bezierCurveTo(-14, -92 + bob, -24 + swX * 0.4, -76 + bob, -21 + swX * 0.7, -60 + bob + swY * 0.5);
+    ctx.bezierCurveTo(-28 + swX, -46 + bob + swY, -18 + swX * 1.1, -30 + bob + swY, -24 + swX * 1.2, -18 + bob + swY);
+    ctx.bezierCurveTo(-14 + swX, -16 + bob, -4 + swX * 0.6, -26 + bob, 4, -42 + bob);
     ctx.lineTo(8, -76 + bob);
     ctx.closePath();
     ctx.fill();
-    // Wavy espresso highlight ribbon
+
+    // Wavy espresso highlight sheen ribbon
     ctx.strokeStyle = '#3b252c';
     ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(-10, -82 + bob);
-    ctx.bezierCurveTo(-19 + hairSway * 0.5, -68 + bob, -14 + hairSway * 0.8, -50 + bob, -20 + hairSway, -30 + bob);
+    ctx.bezierCurveTo(-19 + swX * 0.5, -68 + bob, -14 + swX * 0.8, -50 + bob, -20 + swX, -30 + bob + swY);
     ctx.stroke();
 
-    // 2. Connie's Blue Jumpsuit Pants & Boots
-    ctx.fillStyle = '#2563eb';
-    ctx.fillRect(-14, -26 + bob, 11, 26);
-    ctx.fillRect(3, -26 + bob, 11, 26);
-    ctx.fillStyle = '#0d9488';
-    ctx.fillRect(-15, -6 + bob, 13, 6);
-    ctx.fillRect(2, -6 + bob, 13, 6);
-    ctx.fillStyle = '#f43f5e';
-    ctx.fillRect(-15, -2 + bob, 13, 2.5);
-    ctx.fillRect(2, -2 + bob, 13, 2.5);
+    // 2. Articulated Denim Jumpsuit Pants, Teal Cuffs & Pink Sneakers!
+    const drawStevonnieLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -28 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#1d4ed8' : '#2563eb';
+      ctx.fillRect(-5.5, 0, 11, 16);
+      ctx.fillStyle = '#0d9488';
+      ctx.fillRect(-6, 12, 12, 5);
+      ctx.fillStyle = '#d4976a';
+      ctx.fillRect(-4.5, 17, 9, 4);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(-6, 21, 13, 5);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, 24.5, 13, 1.8);
+      ctx.restore();
+    };
+    drawStevonnieLeg(-7 + legs.backX, legs.backY, legs.backRot, true);
+    drawStevonnieLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Steven's Cropped Salmon-Red Star Shirt & Midriff
+    // 3. Rear Left Arm: Rose's Crystalline Pink Shield
+    if (isShieldStance) {
+      this.drawArticulatedArm(ctx, -12, -56 + bob, -4, -52 + bob, 12, -48 + bob, '#f43f5e', '#d4976a', 6.5, 5.5, '#d4976a', 4);
+      ctx.save();
+      ctx.translate(14, -48 + bob);
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.92)';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#be185d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, 0, Math.PI * 1.5);
+      ctx.stroke();
+      ctx.restore();
+    } else {
+      const poise = Math.max(0, strike) * 8;
+      this.drawArticulatedArm(ctx, -12, -56 + bob, -20 - poise * 0.5, -58 + bob, -28 - poise, -52 + bob, '#f43f5e', '#d4976a', 6.5, 5.5, '#d4976a', 4);
+      ctx.save();
+      ctx.translate(-28 - poise, -52 + bob);
+      ctx.fillStyle = 'rgba(255, 96, 151, 0.88)';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = '#e11d48';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(0, 0, 8, 0, Math.PI * 1.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 4. Steven's Cropped Salmon-Red Star Shirt & Connie's Midriff
     ctx.fillStyle = '#d4976a';
-    ctx.fillRect(-13, -34 + bob, 26, 10);
+    ctx.fillRect(-13, -34 + bob, 26, 8);
     ctx.fillStyle = '#f43f5e';
     ctx.beginPath();
     ctx.roundRect(-16, -60 + bob, 32, 28, 6);
@@ -9203,14 +9314,14 @@ class PlayerHero {
 
     // Gold Star on chest + Rose Quartz Navel Gem
     ctx.fillStyle = '#ffd166';
-    this.drawMiniStar(ctx, 2, -46 + bob, 8.5);
+    this.drawMiniStar(ctx, 2, -47 + bob, 8.5);
     ctx.fillStyle = '#fda4af';
     ctx.strokeStyle = '#f43f5e';
     ctx.lineWidth = 1.2;
-    this.drawMiniStar(ctx, 1, -29 + bob, 4.2);
+    this.drawMiniStar(ctx, 1, -30 + bob, 4.2);
     ctx.stroke();
 
-    // 4. Warm golden-tan neck & head (clear face!)
+    // 5. Warm golden-tan neck & head (clear face!)
     ctx.fillStyle = '#d4976a';
     ctx.fillRect(-4, -68 + bob, 8, 10);
     ctx.beginPath();
@@ -9255,35 +9366,15 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 5. Back Arm: Rose's Crystalline Pink Shield
-    ctx.fillStyle = '#f43f5e';
-    ctx.fillRect(-19, -59 + bob, 7, 10);
-    ctx.fillStyle = '#d4976a';
-    ctx.fillRect(-18, -50 + bob, 6, 14);
-    ctx.save();
-    ctx.translate(-18 - strike * 4, -46 + bob);
-    ctx.fillStyle = 'rgba(255, 96, 151, 0.88)';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.arc(0, 0, 16, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#e11d48';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, Math.PI * 1.5);
-    ctx.stroke();
-    ctx.restore();
-
     // 6. Front Arm: Rose's Broadsword with kinetic slash!
-    const handX = 14 + strike * 12;
-    const handY = -45 + bob - strike * 4;
-    this.drawArticulatedArm(ctx, 11, -56 + bob, 13 + strike * 5, -49 + bob, handX, handY, '#f43f5e', '#d4976a', 6.5, 5.5, '#d4976a', 4);
+    const handX = 14 + strike * 18;
+    const handY = -46 + bob - strike * 6;
+    this.drawArticulatedArm(ctx, 11, -56 + bob, 14 + strike * 8, -50 + bob, handX, handY, '#f43f5e', '#d4976a', 6.5, 5.5, '#d4976a', 4);
     ctx.save();
     ctx.translate(handX, handY);
     const swordSwing = (actionType === 'punch' || actionType === 'throw') ? -0.35 + strike * 1.55 : 0.28;
     ctx.rotate(swordSwing);
+    // Rose Broadsword
     ctx.fillStyle = '#9f1239';
     ctx.fillRect(-2, -4, 4, 11);
     ctx.fillStyle = '#fbbf24';
@@ -9293,40 +9384,58 @@ class PlayerHero {
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-4, -6);
-    ctx.lineTo(-3.5, -40);
-    ctx.lineTo(0, -49);
-    ctx.lineTo(3.5, -40);
+    ctx.lineTo(-3.5, -42);
+    ctx.lineTo(0, -52);
+    ctx.lineTo(3.5, -42);
     ctx.lineTo(4, -6);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    // Fuller line
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    ctx.moveTo(0, -6);
+    ctx.lineTo(0, -44);
     ctx.stroke();
     ctx.restore();
   }
 
   // --- 2. SMOKY QUARTZ (Steven + Amethyst) ---
   drawSmokyQuartz(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
     // 1. BACK LAYER: Fluffy, tousled wavy dark taupe-violet hair trailing backward (-X)
+    const swX = hair.swayX * 0.8;
+    const swY = hair.swayY * 0.45;
     ctx.fillStyle = '#261e2b';
     ctx.beginPath();
     ctx.moveTo(6, -89 + bob);
-    ctx.bezierCurveTo(-12, -95 + bob, -26 + hairSway * 0.5, -82 + bob, -24 + hairSway * 0.8, -66 + bob);
-    ctx.bezierCurveTo(-30 + hairSway, -54 + bob, -20 + hairSway, -44 + bob, -14 + hairSway * 0.7, -46 + bob);
+    ctx.bezierCurveTo(-12, -95 + bob, -26 + swX * 0.5, -82 + bob, -24 + swX * 0.8, -66 + bob + swY);
+    ctx.bezierCurveTo(-30 + swX, -54 + bob + swY, -20 + swX, -44 + bob + swY, -14 + swX * 0.7, -46 + bob);
     ctx.lineTo(8, -66 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // 2. Legs: Dark purple ripped leggings with star cutouts
-    ctx.fillStyle = '#2e1065';
-    ctx.fillRect(-15, -26 + bob, 12, 26);
-    ctx.fillRect(3, -26 + bob, 12, 26);
-    ctx.fillStyle = '#8b797d';
-    this.drawMiniStar(ctx, -9, -15 + bob, 3.2);
-    this.drawMiniStar(ctx, 9, -15 + bob, 3.2);
-    ctx.fillRect(-16, -5 + bob, 13, 5);
-    ctx.fillRect(3, -5 + bob, 13, 5);
+    // 2. Articulated Legs: Dark purple ripped leggings with star cutouts
+    const drawSmokyLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -26 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#1e102d' : '#2e1065';
+      ctx.fillRect(-6, 0, 12, 18);
+      ctx.fillStyle = '#8b797d';
+      this.drawMiniStar(ctx, 0, 8, 3.2);
+      ctx.fillStyle = '#4c1d95';
+      ctx.fillRect(-5.5, 14, 11, 4);
+      ctx.fillStyle = '#8b797d';
+      ctx.fillRect(-5, 18, 11, 6);
+      ctx.restore();
+    };
+    drawSmokyLeg(-8 + legs.backX, legs.backY, legs.backRot, true);
+    drawSmokyLeg(8 + legs.frontX, legs.frontY, legs.frontRot, false);
 
     // 3. Torso: Steven's stretched salmon star shirt
     ctx.fillStyle = '#f43f5e';
@@ -9375,7 +9484,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Sculpted wavy/fluffy crown bangs above eyes (zero face-covering circles!)
+    // Sculpted wavy/fluffy crown bangs above eyes
     ctx.fillStyle = '#261e2b';
     ctx.beginPath();
     ctx.moveTo(-15, -74 + bob);
@@ -9385,53 +9494,28 @@ class PlayerHero {
     ctx.bezierCurveTo(-8, -83 + bob, -12, -79 + bob, -15, -74 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#4a3b52';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-10, -86 + bob);
-    ctx.quadraticCurveTo(0, -91 + bob, 9, -85 + bob);
-    ctx.stroke();
 
-    // 5. THREE ARMS + TRIPLE YO-YO WHIP EXTENSION!
-    ctx.fillStyle = '#8b797d';
-    ctx.fillRect(-24, -58 + bob, 8, 20);
-    ctx.fillRect(-22, -41 + bob, 8, 18);
-    ctx.fillRect(15, -55 + bob, 8 + strike * 6, 20);
-
+    // 5. THREE ARTICULATED ARMS + TRIPLE YO-YO ACTION!
     const spinRot = (typeof performance !== 'undefined' ? performance.now() / 55 : Date.now() / 55);
-    const yoyoReach = 28 + strike * 34;
-    const yoyoY = -36 + bob - strike * 6;
 
-    // Glowing Amethyst Yo-Yo String!
-    ctx.strokeStyle = '#e9d5ff';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(21, -40 + bob);
-    ctx.quadraticCurveTo(22 + strike * 16, -46 + bob, yoyoReach, yoyoY);
-    ctx.moveTo(-20, -48 + bob);
-    ctx.lineTo(-30, -48 + bob);
-    ctx.moveTo(-19, -28 + bob);
-    ctx.lineTo(-27, -25 + bob);
-    ctx.stroke();
-
-    // Yo-Yo 1 (Primary strike yo-yo)
+    // Rear Left Upper Arm: Yo-Yo 1
+    this.drawArticulatedArm(ctx, -14, -58 + bob, -22, -64 + bob, -28, -56 + bob, '#f43f5e', '#8b797d', 7, 6, '#8b797d', 4);
     ctx.save();
-    ctx.translate(yoyoReach, yoyoY);
-    ctx.rotate(spinRot);
-    ctx.fillStyle = '#a855f7';
-    ctx.strokeStyle = '#f3e8ff';
-    ctx.lineWidth = 2.2;
+    ctx.translate(-28, -56 + bob);
+    ctx.rotate(spinRot * 1.2);
+    ctx.fillStyle = '#c084fc';
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(0, 0, 10.5, 0, Math.PI * 2);
+    ctx.arc(0, 0, 8, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 0, 0, 5);
     ctx.restore();
 
-    // Yo-Yo 2 & 3 (Left dual arms)
+    // Rear Left Lower Arm: Yo-Yo 2
+    this.drawArticulatedArm(ctx, -12, -45 + bob, -20, -42 + bob, -24, -30 + bob, '#f43f5e', '#8b797d', 6.5, 5.5, '#8b797d', 4);
     ctx.save();
-    ctx.translate(-27, -25 + bob);
+    ctx.translate(-24, -30 + bob);
     ctx.rotate(-spinRot);
     ctx.fillStyle = '#9333ea';
     ctx.strokeStyle = '#e9d5ff';
@@ -9442,43 +9526,68 @@ class PlayerHero {
     ctx.stroke();
     ctx.restore();
 
-    ctx.save();
-    ctx.translate(-31, -48 + bob);
-    ctx.rotate(spinRot * 1.3);
-    ctx.fillStyle = '#c084fc';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.6;
+    // Front Right Primary Arm: Giant Star Yo-Yo Whip!
+    const yoyoReach = 28 + strike * 36;
+    const yoyoY = -38 + bob - strike * 6;
+    const handX = 14 + strike * 14;
+    const handY = -46 + bob - strike * 4;
+    this.drawArticulatedArm(ctx, 12, -56 + bob, 16 + strike * 8, -50 + bob, handX, handY, '#f43f5e', '#8b797d', 7.5, 6.5, '#8b797d', 4.5);
+
+    // Glowing Amethyst Yo-Yo String!
+    ctx.strokeStyle = '#e9d5ff';
+    ctx.lineWidth = 2.2;
     ctx.beginPath();
-    ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
+    ctx.moveTo(handX, handY);
+    ctx.quadraticCurveTo(handX + strike * 16, -46 + bob, yoyoReach, yoyoY);
+    ctx.stroke();
+
+    // Primary strike yo-yo
+    ctx.save();
+    ctx.translate(yoyoReach, yoyoY);
+    ctx.rotate(spinRot * 1.5);
+    ctx.fillStyle = '#a855f7';
+    ctx.strokeStyle = '#f3e8ff';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 11, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.fillStyle = '#fde047';
+    this.drawMiniStar(ctx, 0, 0, 5.5);
     ctx.restore();
   }
 
   // --- 3. RAINBOW QUARTZ 2.0 (Steven + Pearl) ---
   drawRainbowQuartz2(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
     // 1. BACK LAYER: Two-toned turquoise & rose feathered wavy bouffant behind head (-X)
+    const swX = hair.swayX * 0.7;
     ctx.fillStyle = '#06b6d4';
     ctx.beginPath();
     ctx.moveTo(6, -88 + bob);
-    ctx.bezierCurveTo(-12, -94 + bob, -24 + hairSway * 0.5, -84 + bob, -22 + hairSway * 0.8, -68 + bob);
-    ctx.bezierCurveTo(-14 + hairSway * 0.6, -64 + bob, -4, -66 + bob, 8, -72 + bob);
+    ctx.bezierCurveTo(-12, -94 + bob, -24 + swX * 0.5, -84 + bob, -22 + swX * 0.8, -68 + bob);
+    ctx.bezierCurveTo(-14 + swX * 0.6, -64 + bob, -4, -66 + bob, 8, -72 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // 2. Rolled-up blue denim shorts & ballerina shoes
-    ctx.fillStyle = '#2563eb';
-    ctx.fillRect(-13, -28 + bob, 11, 20);
-    ctx.fillRect(2, -28 + bob, 11, 20);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(-12, -12 + bob, 9, 8);
-    ctx.fillRect(3, -12 + bob, 9, 8);
-    ctx.fillStyle = '#06b6d4';
-    ctx.fillRect(-13, -5 + bob, 11, 5);
-    ctx.fillRect(2, -5 + bob, 11, 5);
+    // 2. Articulated Legs: Rolled-up blue denim shorts & ballerina shoes
+    const drawRainbowLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -28 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#1d4ed8' : '#2563eb';
+      ctx.fillRect(-5.5, 0, 11, 14);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(-4.5, 12, 9, 8);
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(-5, 19, 10, 5);
+      ctx.restore();
+    };
+    drawRainbowLeg(-6 + legs.backX, legs.backY, legs.backRot, true);
+    drawRainbowLeg(6 + legs.frontX, legs.frontY, legs.frontRot, false);
 
     // 3. Magenta blazer over coral shirt + Navel Gem
     ctx.fillStyle = '#db2777';
@@ -9534,10 +9643,18 @@ class PlayerHero {
     ctx.arc(-4, -72.5 + bob, 2.3, 0, Math.PI * 2);
     ctx.fill();
 
-    // 5. WEAPON: Magical Rainbow Parasol with kinetic thrust!
+    // 5. Articulated Arms & Magical Rainbow Parasol!
+    // Rear Arm: Elegant tutor pose
+    this.drawArticulatedArm(ctx, -11, -58 + bob, -18, -64 + bob, -22, -54 + bob, '#db2777', '#fce7f3', 6, 5, '#fce7f3', 3.8);
+
+    // Front Arm: Thrusting/Twirling Parasol
+    const handX = 14 + strike * 16;
+    const handY = -48 + bob - strike * 4;
+    this.drawArticulatedArm(ctx, 11, -58 + bob, 14 + strike * 8, -52 + bob, handX, handY, '#db2777', '#fce7f3', 6.5, 5.5, '#fce7f3', 4);
+
     ctx.save();
-    ctx.translate(14 + strike * 14, -50 + bob - strike * 3);
-    const angle = (actionType === 'punch' || actionType === 'throw') ? -0.15 + strike * 1.25 : -0.2;
+    ctx.translate(handX, handY);
+    const angle = (actionType === 'punch' || actionType === 'throw') ? -0.20 + strike * 1.35 : -0.22;
     ctx.rotate(angle);
     ctx.fillStyle = '#e2e8f0';
     ctx.fillRect(-2, -48, 4, 60);
@@ -9560,20 +9677,28 @@ class PlayerHero {
 
   // --- 4. SUNSTONE (Steven + Garnet) ---
   drawSunstone(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
 
-    // Powerful athletic legs in red-brown pants
-    ctx.fillStyle = '#7f1d1d';
-    ctx.fillRect(-16, -28 + bob, 13, 28);
-    ctx.fillRect(3, -28 + bob, 13, 28);
-    ctx.fillStyle = '#fde047';
-    ctx.fillRect(-17, -18 + bob, 15, 6);
-    ctx.fillRect(2, -18 + bob, 15, 6);
-    ctx.fillStyle = '#dc2626';
-    ctx.fillRect(-17, -6 + bob, 15, 6);
-    ctx.fillRect(2, -6 + bob, 15, 6);
+    // 1. Articulated Powerful Athletic Legs in red-brown pants
+    const drawSunstoneLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -28 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#7f1d1d' : '#991b1b';
+      ctx.fillRect(-6.5, 0, 13, 18);
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(-7, 10, 14, 4);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(-7, 16, 15, 6);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-7, 20, 15, 2);
+      ctx.restore();
+    };
+    drawSunstoneLeg(-9 + legs.backX, legs.backY, legs.backRot, true);
+    drawSunstoneLeg(9 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // Broad muscular brick-red torso
+    // 2. Broad muscular brick-red torso
     ctx.fillStyle = '#991b1b';
     ctx.beginPath();
     ctx.roundRect(-20, -68 + bob, 40, 42, 8);
@@ -9581,26 +9706,41 @@ class PlayerHero {
     ctx.fillStyle = '#ffd166';
     this.drawMiniStar(ctx, 0, -48 + bob, 11);
 
-    // FOUR ARMS + Kinetic Suction-Cup Gauntlet Punch!
-    ctx.fillStyle = '#991b1b';
-    ctx.fillRect(-28, -64 + bob, 10, 22);
-    ctx.fillRect(18, -64 + bob, 10 + strike * 8, 22);
-    ctx.fillRect(-26, -46 + bob, 9, 20);
-    ctx.fillRect(17, -46 + bob, 9 + strike * 14, 18);
+    // 3. FOUR ARTICULATED ARMS + Kinetic Suction-Cup Gauntlet Punch!
+    // Upper Rear Arm: High Five / Wave
+    this.drawArticulatedArm(ctx, -16, -66 + bob, -26, -76 + bob, -28, -90 + bob, '#991b1b', '#ea580c', 9, 8, '#ea580c', 6);
+    // Lower Rear Arm: Boxer Guard
+    this.drawArticulatedArm(ctx, -14, -50 + bob, -24, -46 + bob, -22, -32 + bob, '#991b1b', '#ea580c', 8.5, 7.5, '#ea580c', 6);
 
+    // Upper Front Arm: Flexing
+    this.drawArticulatedArm(ctx, 14, -66 + bob, 24, -72 + bob, 28, -84 + bob, '#991b1b', '#ea580c', 9, 8, '#ea580c', 6);
+
+    // Lower Front Arm (Primary Punch):
+    const reach = strike * 36;
+    const fx = 20 + reach;
+    const fy = -42 + bob - strike * 6;
+    this.drawArticulatedArm(ctx, 14, -50 + bob, 18 + reach * 0.45, -46 + bob, fx, fy, '#991b1b', '#ea580c', 9.5, 8.5, '#ea580c', 8);
+
+    // Suction Cup Gauntlet Head
+    ctx.save();
+    ctx.translate(fx, fy);
     ctx.fillStyle = '#ea580c';
     ctx.strokeStyle = '#fde047';
     ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.arc(25 + strike * 20, -34 + bob - strike * 6, 13, 0, Math.PI * 2);
+    ctx.arc(0, 0, 13, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(-24, -30 + bob, 12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    // Suction rim
+    ctx.fillStyle = '#f97316';
+    ctx.fillRect(8, -8, 5, 16);
+    if (strike > 0.2) {
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 14, 0, 7);
+    }
+    ctx.restore();
 
-    // BLAZING SUNBURST HEAD OF COMIC FLAMES!
+    // 4. BLAZING SUNBURST HEAD OF COMIC FLAMES!
     const t = (typeof performance !== 'undefined' ? performance.now() / 300 : Date.now() / 300);
     ctx.save();
     ctx.translate(0, -82 + bob);
@@ -9625,7 +9765,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Bold Crimson Shades + Smile
+    // Bold Crimson Shades + Heroic Smile
     ctx.fillStyle = '#be123c';
     ctx.fillRect(-14, -4, 28, 9);
     ctx.fillStyle = '#ffffff';
@@ -9645,38 +9785,49 @@ class PlayerHero {
 
   // --- 5. SUGILITE (Garnet + Amethyst) ---
   drawSugilite(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
     // 1. BACK LAYER: Colossal sweeping spiky-wavy midnight-violet anime mane (-X, behind face!)
+    const swX = hair.swayX * 0.9;
+    const swY = hair.swayY * 0.55;
     ctx.fillStyle = '#1e102d';
     ctx.beginPath();
     ctx.moveTo(6, -104 + bob);
-    ctx.lineTo(-10 + hairSway * 0.3, -124 + bob);
-    ctx.lineTo(-16 + hairSway * 0.4, -108 + bob);
-    ctx.lineTo(-36 + hairSway * 0.7, -114 + bob);
-    ctx.lineTo(-26 + hairSway * 0.6, -94 + bob);
-    ctx.bezierCurveTo(-44 + hairSway, -82 + bob, -38 + hairSway * 1.1, -56 + bob, -46 + hairSway * 1.3, -34 + bob);
-    ctx.bezierCurveTo(-30 + hairSway, -32 + bob, -18 + hairSway * 0.7, -42 + bob, -8, -56 + bob);
+    ctx.lineTo(-10 + swX * 0.3, -124 + bob);
+    ctx.lineTo(-16 + swX * 0.4, -108 + bob);
+    ctx.lineTo(-36 + swX * 0.7, -114 + bob);
+    ctx.lineTo(-26 + swX * 0.6, -94 + bob);
+    ctx.bezierCurveTo(-44 + swX, -82 + bob, -38 + swX * 1.1, -56 + bob + swY, -46 + swX * 1.3, -34 + bob + swY);
+    ctx.bezierCurveTo(-30 + swX, -32 + bob, -18 + swX * 0.7, -42 + bob, -8, -56 + bob);
     ctx.lineTo(10, -88 + bob);
     ctx.closePath();
     ctx.fill();
+
     // Violet mane highlight wave
     ctx.strokeStyle = '#4c1d95';
     ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(-12, -102 + bob);
-    ctx.bezierCurveTo(-28 + hairSway * 0.6, -84 + bob, -24 + hairSway * 0.9, -62 + bob, -34 + hairSway, -42 + bob);
+    ctx.bezierCurveTo(-28 + swX * 0.6, -84 + bob, -24 + swX * 0.9, -62 + bob, -34 + swX, -42 + bob + swY);
     ctx.stroke();
 
-    // 2. Massive muscular legs & broad titan torso
-    ctx.fillStyle = '#3b0764';
-    ctx.fillRect(-18, -32 + bob, 15, 32);
-    ctx.fillRect(3, -32 + bob, 15, 32);
-    ctx.fillStyle = '#581c87';
-    ctx.fillRect(-19, -6 + bob, 16, 6);
-    ctx.fillRect(3, -6 + bob, 16, 6);
+    // 2. Massive Articulated Muscular Legs & Titan Stride
+    const drawSugiliteLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -32 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#2e1065' : '#3b0764';
+      ctx.fillRect(-8.5, 0, 17, 22);
+      ctx.fillStyle = '#581c87';
+      ctx.fillRect(-9, 18, 18, 8);
+      ctx.restore();
+    };
+    drawSugiliteLeg(-11 + legs.backX, legs.backY, legs.backRot, true);
+    drawSugiliteLeg(11 + legs.frontX, legs.frontY, legs.frontRot, false);
 
+    // 3. Broad titan torso & Amethyst chest gem
     ctx.fillStyle = '#581c87';
     ctx.beginPath();
     ctx.roundRect(-24, -76 + bob, 48, 48, 10);
@@ -9684,27 +9835,33 @@ class PlayerHero {
     ctx.fillStyle = '#4a044e';
     ctx.fillRect(-22, -65 + bob, 44, 30);
 
-    // Amethyst chest gem
     ctx.fillStyle = '#a855f7';
     ctx.strokeStyle = '#f3e8ff';
     ctx.lineWidth = 1.4;
     this.drawMiniStar(ctx, 0, -60 + bob, 7);
     ctx.stroke();
 
-    // FOUR MUSCULAR ARMS!
-    ctx.fillStyle = '#581c87';
-    ctx.fillRect(-34, -72 + bob, 12, 28);
-    ctx.fillRect(22, -72 + bob, 12 + strike * 8, 28);
-    ctx.fillRect(-30, -50 + bob, 11, 24);
-    ctx.fillRect(20, -50 + bob, 11 + strike * 8, 24);
+    // 4. FOUR MUSCULAR ARMS!
+    // Upper Rear Arm: Roaring flex
+    this.drawArticulatedArm(ctx, -20, -74 + bob, -32, -88 + bob, -34, -104 + bob, '#581c87', '#6b21a8', 11, 9.5, '#6b21a8', 7);
+    // Lower Rear Arm: Clenched fist
+    this.drawArticulatedArm(ctx, -18, -55 + bob, -28, -52 + bob, -24, -36 + bob, '#581c87', '#6b21a8', 10, 8.5, '#6b21a8', 7);
 
-    // 3. Head with ALL FIVE PURPLE EYES & Menacing Fangs (100% unobstructed!)
+    // Upper Front Arm: Raised fist
+    this.drawArticulatedArm(ctx, 18, -74 + bob, 30, -86 + bob, 32, -102 + bob, '#581c87', '#6b21a8', 11, 9.5, '#6b21a8', 7);
+
+    // Lower Front Arm: Flail Wielder
+    const handX = 22 + strike * 14;
+    const handY = -48 + bob - strike * 6;
+    this.drawArticulatedArm(ctx, 18, -55 + bob, 22 + strike * 8, -52 + bob, handX, handY, '#581c87', '#6b21a8', 11, 9.5, '#6b21a8', 7.5);
+
+    // 5. Head with ALL FIVE PURPLE EYES & Menacing Fangs
     ctx.fillStyle = '#6b21a8';
     ctx.beginPath();
     ctx.arc(0, -88 + bob, 17, 0, Math.PI * 2);
     ctx.fill();
 
-    // Widow's peak crown spikes above forehead eye
+    // Widow's peak crown spikes
     ctx.fillStyle = '#1e102d';
     ctx.beginPath();
     ctx.moveTo(-16, -92 + bob);
@@ -9716,7 +9873,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 5 Glowing Purple Eyes + Translucent Dark Visor Gleam
+    // 5 Glowing Purple Eyes
     ctx.fillStyle = '#e9d5ff';
     ctx.beginPath();
     ctx.arc(0, -96 + bob, 2.8, 0, Math.PI * 2);
@@ -9737,16 +9894,16 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 4. WEAPON: Colossal Spiked Flail / Wrecking Ball whipping forward!
+    // 6. WEAPON: Colossal Spiked Flail / Wrecking Ball whipping forward!
     ctx.save();
-    ctx.translate(32 + strike * 8, -45 + bob);
-    const flailX = 24 + strike * 26;
-    const flailY = 14 - strike * 18;
+    ctx.translate(handX, handY);
+    const flailX = 26 + strike * 32;
+    const flailY = 16 - strike * 22;
     ctx.strokeStyle = '#c084fc';
-    ctx.lineWidth = 3.2;
+    ctx.lineWidth = 3.4;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(flailX * 0.5, -8 * strike, flailX, flailY);
+    ctx.quadraticCurveTo(flailX * 0.5, -12 * strike, flailX, flailY);
     ctx.stroke();
 
     ctx.fillStyle = '#7e22ce';
@@ -9761,7 +9918,7 @@ class PlayerHero {
       const a = s * Math.PI / 3 + strike * 1.5;
       ctx.beginPath();
       ctx.moveTo(flailX + Math.cos(a) * 15, flailY + Math.sin(a) * 15);
-      ctx.lineTo(flailX + Math.cos(a) * 24, flailY + Math.sin(a) * 24);
+      ctx.lineTo(flailX + Math.cos(a) * 25, flailY + Math.sin(a) * 25);
       ctx.lineTo(flailX + Math.cos(a + 0.3) * 15, flailY + Math.sin(a + 0.3) * 15);
       ctx.closePath();
       ctx.fill();
@@ -9771,6 +9928,7 @@ class PlayerHero {
 
   // --- 6. SARDONYX (Garnet + Pearl) ---
   drawSardonyx(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
 
     // 1. BACK LAYER: Sculpted 3D Beveled Tetrahedral Afro behind head!
@@ -9789,13 +9947,21 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Ultra-tall legs with white spat boots & Tuxedo Torso
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(-13, -34 + bob, 10, 34);
-    ctx.fillRect(3, -34 + bob, 10, 34);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-14, -10 + bob, 12, 10);
-    ctx.fillRect(2, -10 + bob, 12, 10);
+    // 2. Ultra-tall Articulated Legs with white spat boots & Tuxedo Torso
+    const drawSardonyxLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -34 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#020617' : '#0f172a';
+      ctx.fillRect(-5, 0, 10, 24);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-6, 20, 12, 10);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-6, 28, 12, 2.5);
+      ctx.restore();
+    };
+    drawSardonyxLeg(-7 + legs.backX, legs.backY, legs.backRot, true);
+    drawSardonyxLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
 
     ctx.fillStyle = '#fb923c';
     ctx.fillRect(-10, -42 + bob, 20, 8);
@@ -9832,17 +9998,20 @@ class PlayerHero {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(-5, -78.5 + bob, 10, 3.5);
 
-    // 4. FOUR ARMS + Colossal Theatrical War Hammer Smash!
-    ctx.fillStyle = '#fb923c';
-    ctx.fillRect(-22, -72 + bob, 8, 24);
-    ctx.fillRect(14, -72 + bob, 8 + strike * 8, 24);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-20, -50 + bob, 8, 14);
-    ctx.fillRect(12, -50 + bob, 8, 14);
+    // 4. FOUR ARTICULATED ARMS + Colossal Theatrical War Hammer Smash!
+    // Upper Arms: Theatrical Jazz Hands
+    this.drawArticulatedArm(ctx, -14, -74 + bob, -24, -82 + bob, -28, -96 + bob, '#0f172a', '#ffffff', 6, 5, '#ffffff', 4);
+    this.drawArticulatedArm(ctx, 14, -74 + bob, 22, -84 + bob, 26, -98 + bob, '#0f172a', '#ffffff', 6, 5, '#ffffff', 4);
+
+    // Lower Arms: Wielding War Hammer
+    const handX = 16 + strike * 14;
+    const handY = -56 + bob - strike * 4;
+    this.drawArticulatedArm(ctx, -10, -56 + bob, 2, -54 + bob, handX - 4, handY, '#0f172a', '#ffffff', 6, 5, '#ffffff', 4);
+    this.drawArticulatedArm(ctx, 12, -56 + bob, 16 + strike * 6, -52 + bob, handX + 4, handY, '#0f172a', '#ffffff', 6, 5, '#ffffff', 4);
 
     ctx.save();
-    ctx.translate(22 + strike * 10, -60 + bob);
-    ctx.rotate(strike * 1.15);
+    ctx.translate(handX, handY);
+    ctx.rotate(strike * 1.25);
     ctx.fillStyle = '#f43f5e';
     ctx.fillRect(-3, -48, 6, 76);
     ctx.fillStyle = '#fb7185';
@@ -9859,38 +10028,48 @@ class PlayerHero {
 
   // --- 7. OPAL (Pearl + Amethyst) ---
   drawOpal(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
-    // 1. BACK LAYER: High top-knot + long, thick, flowing wavy pearl-white ponytail (-X, behind face!)
+    // 1. BACK LAYER: High top-knot + long flowing wavy pearl-white ponytail (-X)
+    const swX = hair.swayX * 0.85;
+    const swY = hair.swayY * 0.5;
     ctx.fillStyle = '#f8fafc';
     ctx.beginPath();
     ctx.arc(-3, -99 + bob, 8.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.moveTo(-4, -98 + bob);
-    ctx.bezierCurveTo(-24 + hairSway * 0.4, -92 + bob, -32 + hairSway * 0.8, -68 + bob, -26 + hairSway, -46 + bob);
-    ctx.bezierCurveTo(-34 + hairSway * 1.2, -28 + bob, -22 + hairSway * 1.3, -12 + bob, -14 + hairSway, -14 + bob);
-    ctx.bezierCurveTo(-8 + hairSway * 0.7, -28 + bob, -12 + hairSway * 0.4, -56 + bob, 2, -84 + bob);
+    ctx.bezierCurveTo(-24 + swX * 0.4, -92 + bob, -32 + swX * 0.8, -68 + bob, -26 + swX, -46 + bob + swY);
+    ctx.bezierCurveTo(-34 + swX * 1.2, -28 + bob + swY, -22 + swX * 1.3, -12 + bob + swY, -14 + swX, -14 + bob);
+    ctx.bezierCurveTo(-8 + swX * 0.7, -28 + bob, -12 + swX * 0.4, -56 + bob, 2, -84 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = '#cbd5e1';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-12, -90 + bob);
-    ctx.bezierCurveTo(-24 + hairSway * 0.6, -68 + bob, -18 + hairSway * 0.9, -42 + bob, -20 + hairSway, -20 + bob);
+    ctx.bezierCurveTo(-24 + swX * 0.6, -68 + bob, -18 + swX * 0.9, -42 + bob, -20 + swX, -20 + bob + swY);
     ctx.stroke();
 
-    // 2. Tall slender legs & Mint turquoise tunic with flowing lavender sash
-    ctx.fillStyle = '#c7d2fe';
-    ctx.fillRect(-12, -32 + bob, 10, 32);
-    ctx.fillRect(2, -32 + bob, 10, 32);
-    ctx.strokeStyle = '#2dd4bf';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-13, -12 + bob); ctx.lineTo(-2, -6 + bob);
-    ctx.moveTo(2, -12 + bob); ctx.lineTo(13, -6 + bob);
-    ctx.stroke();
+    // 2. Articulated Slender Legs & Mint turquoise tunic with flowing lavender sash
+    const drawOpalLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -32 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#a5b4fc' : '#c7d2fe';
+      ctx.fillRect(-5, 0, 10, 26);
+      ctx.strokeStyle = '#2dd4bf';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(-5, 14); ctx.lineTo(5, 20);
+      ctx.moveTo(-5, 20); ctx.lineTo(5, 26);
+      ctx.stroke();
+      ctx.restore();
+    };
+    drawOpalLeg(-6 + legs.backX, legs.backY, legs.backRot, true);
+    drawOpalLeg(6 + legs.frontX, legs.frontY, legs.frontRot, false);
 
     ctx.fillStyle = '#2dd4bf';
     ctx.beginPath();
@@ -9904,13 +10083,13 @@ class PlayerHero {
     ctx.fillStyle = '#a855f7';
     this.drawMiniStar(ctx, 1, -62 + bob, 5);
 
-    // 3. Pale opalescent lavender head, Forehead Pearl & Serene Aquamarine Eyes (100% clear!)
+    // 3. Pale opalescent lavender head, Forehead Pearl & Serene Aquamarine Eyes
     ctx.fillStyle = '#c7d2fe';
     ctx.beginPath();
     ctx.arc(0, -82 + bob, 13, 0, Math.PI * 2);
     ctx.fill();
 
-    // Delicate parted pearl-white crown bangs framing forehead gem
+    // Parted pearl-white crown bangs framing forehead gem
     ctx.fillStyle = '#f8fafc';
     ctx.beginPath();
     ctx.moveTo(-13, -81 + bob);
@@ -9932,16 +10111,21 @@ class PlayerHero {
     ctx.arc(-3.5, -82 + bob, 2.6, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. FOUR ARMS + Giant Opal Recurve Bow with dynamic bowstring draw!
-    ctx.fillStyle = '#c7d2fe';
-    ctx.fillRect(-20, -56 + bob, 7, 24);
-    ctx.fillRect(13, -56 + bob, 7 + strike * 6, 24);
-    ctx.fillRect(-18, -70 + bob, 7, 20);
-    ctx.fillRect(11, -70 + bob, 7, 20);
+    // 4. FOUR ARTICULATED ARMS + Giant Opal Recurve Bow with dynamic string pull!
+    const bowX = 22 + strike * 10;
+    const bowY = -58 + bob;
+    const drawPull = -8 - strike * 16;
+
+    // Upper and Lower Left Arms holding the bow stave:
+    this.drawArticulatedArm(ctx, 10, -70 + bob, 18, -66 + bob, bowX, bowY - 14, '#2dd4bf', '#c7d2fe', 6, 5, '#c7d2fe', 3.8);
+    this.drawArticulatedArm(ctx, 10, -56 + bob, 16, -56 + bob, bowX, bowY + 14, '#2dd4bf', '#c7d2fe', 6, 5, '#c7d2fe', 3.8);
+
+    // Upper and Lower Right Arms drawing the string:
+    this.drawArticulatedArm(ctx, -10, -70 + bob, -4, -62 + bob, bowX + drawPull, bowY, '#2dd4bf', '#c7d2fe', 6, 5, '#c7d2fe', 3.8);
+    this.drawArticulatedArm(ctx, -10, -56 + bob, -2, -56 + bob, bowX + drawPull, bowY, '#2dd4bf', '#c7d2fe', 6, 5, '#c7d2fe', 3.8);
 
     ctx.save();
-    ctx.translate(20 + strike * 6, -58 + bob);
-    const drawPull = -8 - strike * 12;
+    ctx.translate(bowX, bowY);
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 3.8;
     ctx.beginPath();
@@ -9970,17 +10154,20 @@ class PlayerHero {
 
   // --- 8. MALACHITE (Lapis + Jasper) ---
   drawMalachite(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
-    // 1. BACK LAYER: Massive untamed WAVY mint-cream lion's mane (-X, behind face!) + Lapis Water Wings
+    // 1. BACK LAYER: Untamed WAVY mint-cream lion's mane + Lapis Water Wings
+    const swX = hair.swayX * 0.9;
+    const swY = hair.swayY * 0.55;
     ctx.save();
     ctx.fillStyle = 'rgba(56, 189, 248, 0.65)';
     ctx.strokeStyle = '#e0f2fe';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-16, -65 + bob);
-    ctx.bezierCurveTo(-56, -104 + bob, -64, -40 + bob, -24, -45 + bob);
+    ctx.bezierCurveTo(-56 + swX * 0.6, -104 + bob, -64 + swX, -40 + bob + swY, -24, -45 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -9989,9 +10176,9 @@ class PlayerHero {
     ctx.fillStyle = '#a7f3d0';
     ctx.beginPath();
     ctx.moveTo(8, -106 + bob);
-    ctx.bezierCurveTo(-8, -124 + bob, -32 + hairSway * 0.5, -110 + bob, -30 + hairSway * 0.8, -88 + bob);
-    ctx.bezierCurveTo(-44 + hairSway, -70 + bob, -34 + hairSway * 1.1, -46 + bob, -42 + hairSway * 1.3, -24 + bob);
-    ctx.bezierCurveTo(-24 + hairSway, -22 + bob, -12 + hairSway * 0.6, -38 + bob, -4, -56 + bob);
+    ctx.bezierCurveTo(-8, -124 + bob, -32 + swX * 0.5, -110 + bob, -30 + swX * 0.8, -88 + bob);
+    ctx.bezierCurveTo(-44 + swX, -70 + bob, -34 + swX * 1.1, -46 + bob + swY, -42 + swX * 1.3, -24 + bob + swY);
+    ctx.bezierCurveTo(-24 + swX, -22 + bob, -12 + swX * 0.6, -38 + bob, -4, -56 + bob);
     ctx.lineTo(10, -90 + bob);
     ctx.closePath();
     ctx.fill();
@@ -9999,19 +10186,26 @@ class PlayerHero {
     ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(-12, -104 + bob);
-    ctx.bezierCurveTo(-26 + hairSway * 0.6, -82 + bob, -20 + hairSway * 0.9, -56 + bob, -30 + hairSway, -32 + bob);
+    ctx.bezierCurveTo(-26 + swX * 0.6, -82 + bob, -20 + swX * 0.9, -56 + bob, -30 + swX, -32 + bob + swY);
     ctx.stroke();
 
-    // 2. Walking limbs & Monstrous Juggernaut Torso with Emerald Tiger Stripes
-    ctx.fillStyle = '#0d9488';
-    ctx.fillRect(-22, -26 + bob, 14, 26);
-    ctx.fillRect(-6, -26 + bob, 13, 26);
-    ctx.fillRect(9, -26 + bob, 14, 26);
-    ctx.fillStyle = '#047857';
-    ctx.fillRect(-23, -4 + bob, 16, 4);
-    ctx.fillRect(-7, -4 + bob, 15, 4);
-    ctx.fillRect(8, -4 + bob, 16, 4);
+    // 2. Centaur Quadruple Lower Walking Limbs
+    const drawMalachiteLeg = (lx, ly, rot) => {
+      ctx.save();
+      ctx.translate(lx, -26 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = '#0d9488';
+      ctx.fillRect(-6, 0, 12, 20);
+      ctx.fillStyle = '#047857';
+      ctx.fillRect(-6.5, 18, 13, 6);
+      ctx.restore();
+    };
+    drawMalachiteLeg(-22 + legs.backX * 0.8, legs.backY, legs.backRot);
+    drawMalachiteLeg(-8 + legs.backX, legs.backY, legs.backRot);
+    drawMalachiteLeg(6 + legs.frontX * 0.8, legs.frontY, legs.frontRot);
+    drawMalachiteLeg(20 + legs.frontX, legs.frontY, legs.frontRot);
 
+    // 3. Monstrous Juggernaut Torso with Emerald Tiger Stripes
     ctx.fillStyle = '#0d9488';
     ctx.beginPath();
     ctx.roundRect(-26, -78 + bob, 52, 54, 12);
@@ -10021,21 +10215,18 @@ class PlayerHero {
     ctx.fillRect(8, -60 + bob, 16, 5);
     ctx.fillRect(-20, -50 + bob, 18, 5);
 
-    // Upper Thrashing Arms with Hydro-Ice Claws!
-    ctx.fillStyle = '#0d9488';
-    ctx.fillRect(-36, -74 + bob, 12, 28);
-    ctx.fillRect(24, -74 + bob, 12 + strike * 14, 26);
-    ctx.fillStyle = '#2dd4bf';
-    ctx.fillRect(-38, -48 + bob, 15, 8);
-    ctx.fillRect(26 + strike * 16, -50 + bob - strike * 6, 17, 9);
+    // 4. Upper Thrashing Arms with Hydro-Ice Claws!
+    const reach = strike * 28;
+    this.drawArticulatedArm(ctx, -18, -72 + bob, -30, -68 + bob, -38, -50 + bob, '#0d9488', '#047857', 10, 8.5, '#2dd4bf', 8);
+    this.drawArticulatedArm(ctx, 18, -72 + bob, 26 + reach * 0.5, -66 + bob, 34 + reach, -48 + bob - strike * 6, '#0d9488', '#047857', 10, 8.5, '#2dd4bf', 8.5);
 
-    // 3. Head with Jasper's Orange Nose Gem & ALL SIX GLOWING EYES (100% clear!)
+    // 5. Head with Jasper's Orange Nose Gem & ALL SIX GLOWING EYES
     ctx.fillStyle = '#0d9488';
     ctx.beginPath();
     ctx.arc(0, -90 + bob, 18, 0, Math.PI * 2);
     ctx.fill();
 
-    // Swept mint-cream widow's peak crown above eyes
+    // Swept mint-cream widow's peak crown
     ctx.fillStyle = '#a7f3d0';
     ctx.beginPath();
     ctx.moveTo(-18, -94 + bob);
@@ -10069,38 +10260,47 @@ class PlayerHero {
 
   // --- 9. RAINBOW QUARTZ CLASSIC (Rose + Pearl) ---
   drawRainbowQuartzClassic(ctx, bob, animP, actionType) {
+    const legs = this.getLegKinematics(animP, actionType);
+    const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw') ? this.getStrikeCurve(animP) : 0;
-    const hairSway = this.getHairSway(animP, actionType);
 
-    // 1. BACK LAYER: Voluminous 80s cascading wavy/spiral blonde & pastel-pink mane (-X, behind face!)
+    // 1. BACK LAYER: Voluminous 80s cascading wavy blonde & pastel-pink mane (-X)
+    const swX = hair.swayX * 0.85;
+    const swY = hair.swayY * 0.5;
     ctx.fillStyle = '#fde68a';
     ctx.beginPath();
     ctx.moveTo(6, -96 + bob);
-    ctx.bezierCurveTo(-14, -104 + bob, -28 + hairSway * 0.5, -86 + bob, -24 + hairSway * 0.8, -64 + bob);
-    ctx.bezierCurveTo(-34 + hairSway, -46 + bob, -22 + hairSway * 1.1, -24 + bob, -28 + hairSway * 1.3, -12 + bob);
-    ctx.bezierCurveTo(-14 + hairSway, -10 + bob, -4 + hairSway * 0.6, -24 + bob, 4, -46 + bob);
+    ctx.bezierCurveTo(-14, -104 + bob, -28 + swX * 0.5, -86 + bob, -24 + swX * 0.8, -64 + bob + swY);
+    ctx.bezierCurveTo(-34 + swX, -46 + bob + swY, -22 + swX * 1.1, -24 + bob + swY, -28 + swX * 1.3, -12 + bob + swY);
+    ctx.bezierCurveTo(-14 + swX, -10 + bob, -4 + swX * 0.6, -24 + bob, 4, -46 + bob);
     ctx.lineTo(8, -80 + bob);
     ctx.closePath();
     ctx.fill();
+
     // Pastel rose-pink spiral wave ribbon
     ctx.fillStyle = '#fbcfe8';
     ctx.beginPath();
     ctx.moveTo(-6, -90 + bob);
-    ctx.bezierCurveTo(-22 + hairSway * 0.6, -72 + bob, -16 + hairSway * 0.9, -46 + bob, -22 + hairSway, -20 + bob);
-    ctx.bezierCurveTo(-14 + hairSway * 0.8, -20 + bob, -10 + hairSway * 0.6, -44 + bob, -2, -76 + bob);
+    ctx.bezierCurveTo(-22 + swX * 0.6, -72 + bob, -16 + swX * 0.9, -46 + bob, -22 + swX, -20 + bob + swY);
+    ctx.bezierCurveTo(-14 + swX * 0.8, -20 + bob, -10 + swX * 0.6, -44 + bob, -2, -76 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // 2. 80s dance leotard legs, leg warmers & torso
-    ctx.fillStyle = '#e9d5ff';
-    ctx.fillRect(-12, -32 + bob, 10, 32);
-    ctx.fillRect(2, -32 + bob, 10, 32);
-    ctx.fillStyle = '#ec4899';
-    ctx.fillRect(-13, -16 + bob, 12, 12);
-    ctx.fillRect(1, -16 + bob, 12, 12);
-    ctx.fillStyle = '#fda4af';
-    ctx.fillRect(-13, -4 + bob, 12, 4);
-    ctx.fillRect(1, -4 + bob, 12, 4);
+    // 2. Articulated Legs: 80s dance leotard legs, leg warmers & ballet slippers
+    const drawClassicLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -32 + bob + ly);
+      ctx.rotate(rot);
+      ctx.fillStyle = darken ? '#d8b4fe' : '#e9d5ff';
+      ctx.fillRect(-5, 0, 10, 20);
+      ctx.fillStyle = '#ec4899';
+      ctx.fillRect(-6, 12, 12, 10);
+      ctx.fillStyle = '#fda4af';
+      ctx.fillRect(-5, 22, 10, 4);
+      ctx.restore();
+    };
+    drawClassicLeg(-6 + legs.backX, legs.backY, legs.backRot, true);
+    drawClassicLeg(6 + legs.frontX, legs.frontY, legs.frontRot, false);
 
     ctx.fillStyle = '#f43f5e';
     ctx.beginPath();
@@ -10111,13 +10311,13 @@ class PlayerHero {
     ctx.fillStyle = '#fda4af';
     this.drawMiniStar(ctx, 0, -38 + bob, 5);
 
-    // 3. Fair peach-rose head, Forehead Pearl & ALL FOUR EYES (100% clear!)
+    // 3. Fair peach-rose head, Forehead Pearl & ALL FOUR EYES
     ctx.fillStyle = '#fed7aa';
     ctx.beginPath();
     ctx.arc(0, -80 + bob, 13, 0, Math.PI * 2);
     ctx.fill();
 
-    // Feathered 80s blonde-pink crown bangs above forehead Pearl
+    // Feathered 80s blonde-pink crown bangs
     ctx.fillStyle = '#fbcfe8';
     ctx.beginPath();
     ctx.moveTo(-13, -84 + bob);
@@ -10141,44 +10341,123 @@ class PlayerHero {
     ctx.arc(4, -77 + bob, 2.5, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. Arms, Rose Parasol & Kinetic Fencing Rapier Lunge!
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(-18, -65 + bob, 6, 20);
-    ctx.fillStyle = '#f43f5e';
-    ctx.fillRect(-22, -60 + bob, 3, 30);
-    ctx.beginPath();
-    ctx.arc(-20, -60 + bob, 14, -Math.PI * 0.9, -Math.PI * 0.1);
-    ctx.closePath();
-    ctx.fill();
+    // 4. Articulated Arms, Rose Parasol & Kinetic Fencing Lunge!
+    this.drawArticulatedArm(ctx, -10, -64 + bob, -18, -72 + bob, -22, -84 + bob, '#fed7aa', '#fed7aa', 6, 5, '#fed7aa', 3.8);
 
-    ctx.fillStyle = '#fed7aa';
-    ctx.fillRect(12, -65 + bob, 6 + strike * 8, 18);
+    const handX = 14 + strike * 18;
+    const handY = -52 + bob - strike * 4;
+    this.drawArticulatedArm(ctx, 10, -64 + bob, 14 + strike * 8, -56 + bob, handX, handY, '#fed7aa', '#fed7aa', 6.5, 5.5, '#fed7aa', 4);
+
     ctx.save();
-    ctx.translate(16 + strike * 12, -54 + bob - strike * 3);
+    ctx.translate(handX, handY);
     ctx.strokeStyle = '#f8fafc';
     ctx.lineWidth = 2.8;
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(32 + strike * 10, -8 + strike * 6);
+    ctx.lineTo(34 + strike * 12, -8 + strike * 6);
     ctx.stroke();
     ctx.fillStyle = '#f43f5e';
     ctx.beginPath();
-    ctx.arc(0, 0, 4.2, 0, Math.PI * 2);
+    ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
+  // --- CANONICAL FUSION COMBAT VFX (pixelfx Acting & Kinetic Slashes) ---
   drawFusionAttackVisuals(ctx, bob, fusion, animP = 0.5) {
-    const strike = Math.max(0.25, this.getStrikeCurve(animP));
+    const fid = fusion.id;
+    const strike = Math.max(0.2, this.getStrikeCurve(animP));
     const glow = fusion.glowColor || '#ffffff';
     const base = fusion.color || '#f472b6';
     ctx.save();
-    this.drawCrescentSlash(ctx, 26 + strike * 10, -46 + bob, 42 + strike * 10, -Math.PI * 0.48, Math.PI * 0.45, 'rgba(255, 255, 255, 0.35)', base, glow, 14);
-    this.drawSpeedLines(ctx, 16, -46 + bob, 44 * strike, 26, 4, glow);
-    ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 56 + strike * 12, -46 + bob, 9);
-    ctx.fillStyle = '#ffffff';
-    this.drawMiniStar(ctx, 44 + strike * 10, -66 + bob, 6);
+
+    if (fid === 'stevonnie') {
+      // Sweeping Rose-sword two-tier crescent blade waves + rose petals
+      this.drawCrescentSlash(ctx, 28 + strike * 14, -46 + bob, 48 + strike * 12, -Math.PI * 0.55, Math.PI * 0.42, 'rgba(244, 114, 182, 0.45)', '#f43f5e', '#ffffff', 16);
+      this.drawSpeedLines(ctx, 16, -46 + bob, 48 * strike, 24, 4, '#fb7185');
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 58 + strike * 14, -46 + bob, 8.5);
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.ellipse(45 + strike * 10, -62 + bob, 4.5, 2.2, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (fid === 'smoky') {
+      // Triple spinning yo-yo whirlwind trails & starburst
+      const rot = (typeof performance !== 'undefined' ? performance.now() / 30 : Date.now() / 30);
+      ctx.save();
+      ctx.translate(34 + strike * 18, -42 + bob);
+      ctx.rotate(rot);
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.65)';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 36 + strike * 12, 0, Math.PI * 1.6);
+      ctx.stroke();
+      ctx.restore();
+      this.drawSpeedLines(ctx, 16, -42 + bob, 44 * strike, 28, 4, '#c084fc');
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 56 + strike * 16, -42 + bob, 9);
+    } else if (fid === 'rainbow2') {
+      // Prismatic Rainbow arc trails
+      const colors = ['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#a855f7'];
+      for (let i = 0; i < colors.length; i++) {
+        ctx.strokeStyle = colors[i];
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(24 + strike * 14, -48 + bob, 32 + i * 3, -Math.PI * 0.4, Math.PI * 0.35);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 60 + strike * 14, -48 + bob, 8);
+    } else if (fid === 'sunstone') {
+      // Blazing solar flame fist shockwaves
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(36 + strike * 18, -42 + bob, 34 + strike * 16, -Math.PI * 0.45, Math.PI * 0.45);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.45)';
+      ctx.fill();
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 62 + strike * 16, -42 + bob, 11);
+    } else if (fid === 'sugilite') {
+      // Colossal violet wrecking ball cataclysm impact wave
+      this.drawCrescentSlash(ctx, 36 + strike * 16, -40 + bob, 64 + strike * 16, -Math.PI * 0.65, Math.PI * 0.45, 'rgba(126, 34, 206, 0.55)', '#7e22ce', '#e9d5ff', 22);
+      this.drawSpeedLines(ctx, 20, -40 + bob, 60 * strike, 36, 5, '#c084fc');
+      ctx.fillStyle = '#f3e8ff';
+      this.drawMiniStar(ctx, 68 + strike * 16, -40 + bob, 12);
+    } else if (fid === 'sardonyx') {
+      // Grand theatrical hammer shockwave & diamond glints
+      this.drawCrescentSlash(ctx, 32 + strike * 14, -46 + bob, 52 + strike * 14, -Math.PI * 0.7, Math.PI * 0.35, 'rgba(251, 146, 60, 0.50)', '#fb7185', '#fde047', 18);
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 64 + strike * 14, -54 + bob, 10);
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 48 + strike * 10, -74 + bob, 7);
+    } else if (fid === 'opal') {
+      // Radiant opalescent light arrows and starlight trails
+      ctx.strokeStyle = 'rgba(129, 140, 248, 0.85)';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(24, -58 + bob);
+      ctx.lineTo(72 + strike * 28, -58 + bob);
+      ctx.stroke();
+      ctx.fillStyle = '#67e8f9';
+      this.drawMiniStar(ctx, 72 + strike * 28, -58 + bob, 9.5);
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 52 + strike * 20, -58 + bob, 6.5);
+    } else if (fid === 'malachite') {
+      // Abyssal surging hydro-frost tidal claws
+      this.drawCrescentSlash(ctx, 34 + strike * 16, -46 + bob, 54 + strike * 16, -Math.PI * 0.55, Math.PI * 0.45, 'rgba(45, 212, 191, 0.55)', '#0d9488', '#ccfbf1', 18);
+      this.drawSpeedLines(ctx, 22, -46 + bob, 56 * strike, 30, 4, '#2dd4bf');
+      ctx.fillStyle = '#a7f3d0';
+      this.drawMiniStar(ctx, 66 + strike * 16, -46 + bob, 10);
+    } else {
+      // Rainbow Quartz Classic / Fallback: Graceful pastel fencing ribbons
+      this.drawCrescentSlash(ctx, 28 + strike * 12, -48 + bob, 44 + strike * 10, -Math.PI * 0.48, Math.PI * 0.45, 'rgba(251, 207, 232, 0.45)', base, glow, 14);
+      this.drawSpeedLines(ctx, 16, -48 + bob, 46 * strike, 24, 4, glow);
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 58 + strike * 12, -48 + bob, 8.5);
+    }
+
     ctx.restore();
   }
 
@@ -11517,6 +11796,48 @@ class EnemyManager {
         }
       }
 
+      // Loophole 2 Fix: Upper-Platform Anti-Camping Leap Pathfinding
+      // If target player perches on an elevated platform for >1.0s, melee bosses and ground enemies wind up and leap upward!
+      const playerIsHigh = targetPlayer && (targetPlayer.y < e.y - 70) && targetPlayer.isGrounded;
+      if (playerIsHigh && (e.isBoss || e.type === 'holoJasper' || e.type === 'blade_quartz' || e.type === 'carnelian_enforcer' || e.type === 'boss_jasper' || e.type === 'boss_quartz_beast') && e.hurtTimer <= 0) {
+        e.platformPerchTimer = (e.platformPerchTimer || 0) + dt;
+        if (e.platformPerchTimer > 1.0 && !e.isLeapWindup && (e.y >= this.groundY - 5 || e.currentPlatform)) {
+          e.isLeapWindup = true;
+          e.leapWindupTimer = 0.45;
+          e.vx = 0;
+          if (particles) particles.addDamageText(e.x, e.y - e.height - 24, '⚠️ LEAP!', true, '#ef4444');
+        }
+      } else {
+        e.platformPerchTimer = Math.max(0, (e.platformPerchTimer || 0) - dt * 2);
+      }
+
+      if (e.isLeapWindup) {
+        e.leapWindupTimer -= dt;
+        e.vx = 0;
+        if (e.leapWindupTimer <= 0) {
+          e.isLeapWindup = false;
+          e.vy = -840;
+          const dxToPlayer = (targetPlayer.x - e.x);
+          e.vx = Math.min(480, Math.max(-480, dxToPlayer * 1.6));
+          e.isGrounded = false;
+          if (audioEngine) audioEngine.playSfx('whoosh');
+          if (particles) {
+            particles.addSparkle(e.x, e.y, '#f59e0b', 16, 5);
+            particles.addPoof(e.x, e.y, '#94a3b8');
+          }
+        }
+      }
+
+      // Combo decay timer: reset continuous combo tracking after 0.65s of no hits
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      if (now - (e.lastComboHitTime || 0) > 650) {
+        e.comboHitCount = 0;
+        e.comboDamageTaken = 0;
+      }
+      if (e.breakoutBurstTimer > 0) {
+        e.breakoutBurstTimer -= dt;
+      }
+
       this.checkPlayerAttackCollisions(e, player, projectiles, particles, audioEngine, onPoofed, i);
       if (!e.isPoofed && player2) {
         this.checkPlayerAttackCollisions(e, player2, [], particles, audioEngine, onPoofed, i);
@@ -11988,6 +12309,11 @@ class EnemyManager {
         if (player.comboStep === 2 && e.vy) e.vy *= 1.15;
         e.attackTimer = 0;
 
+        // Loophole 1 Fix: Hitstun Decay (15% reduction per consecutive hit, min 0.08s)
+        // Prevents perpetual infinite corner stun-locking without altering attack knockback values
+        const decayMult = Math.max(0.35, Math.pow(0.85, (e.comboHitCount || 1) - 1));
+        e.hurtTimer = Math.max(0.08, e.hurtTimer * decayMult);
+
         if (e.isPoofed) return;
       }
     }
@@ -12240,6 +12566,34 @@ class EnemyManager {
     audioEngine.playSfx('hitfeedback');
     if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, typeMeta.color || '#ffd700');
 
+    e.comboHitCount = (e.comboHitCount || 0) + 1;
+    e.comboDamageTaken = (e.comboDamageTaken || 0) + finalDmg;
+    e.lastComboHitTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+    // Loophole 1 Fix: Boss Super-Armor Breakout Burst
+    // If boss takes >= 20% of maxHp in a continuous combo, burst out with invulnerability & shockwave to break the lock
+    if (e.isBoss && e.comboDamageTaken >= (e.maxHp * 0.20) && !e.isPoofed && !e.isPoofing) {
+      e.invulnerableTimer = 0.75;
+      e.breakoutBurstTimer = 0.45;
+      e.comboDamageTaken = 0;
+      e.comboHitCount = 0;
+      e.hurtTimer = 0;
+      e.aiState = 'chase';
+      audioEngine.playSfx('explosion');
+      audioEngine.playSfx('overdrive');
+      if (particles) {
+        particles.addExplosion(e.x, e.y - e.height / 2, '#fbbf24', 28);
+        particles.addHitSpark(e.x, e.y - e.height / 2, '#ef4444', 30, 0);
+      }
+      if (this.gameRef && this.gameRef.player) {
+        const p = this.gameRef.player;
+        const pDir = p.x < e.x ? -1 : 1;
+        p.vx = pDir * 380;
+        p.vy = -180;
+      }
+      return;
+    }
+
     if (e.hp <= 0) {
       if (!e.isPoofed && !e.isPoofing) {
         e.hp = 0;
@@ -12447,6 +12801,34 @@ class EnemyManager {
           // Blit only the localized sub-rect cleanly onto main canvas
           ctx.drawImage(fc, sx, sy, boxW, boxH, -halfW, -topH, boxW, boxH);
         }
+      }
+
+      // Boss Breakout Burst visual shockwave
+      if (e.breakoutBurstTimer > 0) {
+        ctx.save();
+        const p = 1 - (e.breakoutBurstTimer / 0.45);
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 4 * (1 - p);
+        ctx.beginPath();
+        ctx.arc(0, -e.height / 2, (e.width || 60) * (0.8 + p * 2), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2 * (1 - p);
+        ctx.beginPath();
+        ctx.arc(0, -e.height / 2, (e.width || 60) * (0.6 + p * 1.5), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Elevated Leap windup telegraph indicator
+      if (e.isLeapWindup) {
+        ctx.save();
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, (e.width || 50) * 0.7, 10, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
       }
 
       if (!e.isPoofing) {
@@ -15917,11 +16299,11 @@ class StevenUniverseGame {
     }
   }
 
-  triggerHitstop(duration = 0.024, shake = 2.5) {
+  triggerHitstop(duration = 0.045, shake = 3.5) {
     // Only trigger if not already active to prevent chain-freezing on continuous attacks
     if (this.hitstopTimer > 0) return;
-    this.hitstopTimer = Math.min(0.028, duration);
-    this.hitShake = Math.max(this.hitShake, Math.min(3.5, shake));
+    this.hitstopTimer = Math.min(0.05, duration);
+    this.hitShake = Math.max(this.hitShake, Math.min(4.5, shake));
   }
 
   // Freebuff: finishing a 3-hit chain feeds the fusion meter — teamwork pays off
@@ -17019,11 +17401,15 @@ class StevenUniverseGame {
 
     // In Practice Mode: Rapid Overdrive charging so moves can be tested continuously
     if (this.gameMode === 'practice') {
-      this.starPowerMeter = Math.min(100, this.starPowerMeter + dt * 45);
-      if (this.playerMode === '2p') {
+      if (!this.isOverdriveActive && !this.isFused) {
+        this.starPowerMeter = Math.min(100, this.starPowerMeter + dt * 45);
+      }
+      if (this.playerMode === '2p' && !this.isOverdriveActiveP2 && !this.isFused) {
         this.starPowerMeterP2 = Math.min(100, (this.starPowerMeterP2 || 0) + dt * 45);
       }
-      this.fusionEnergy = Math.min(100, (this.fusionEnergy || 0) + dt * 50);
+      if (!this.isFused && !this.isHyperAttack) {
+        this.fusionEnergy = Math.min(100, (this.fusionEnergy || 0) + dt * 50);
+      }
     }
 
     // Update Smooth Dynamic Camera tracking player & dynamic zoom (Reference: samplemap.mp4)
@@ -17410,6 +17796,7 @@ class StevenUniverseGame {
 
   // The actual power-up, played after the portrait cut-in finishes.
   applyOverdrive(playerId = 'p1') {
+    if (this.audio) this.audio.duckMusic(0.75, 1.2);
     if (playerId === 'p1') {
       if (this.isOverdriveActive) return;
       if (this.gameMode !== 'practice' && this.starPowerMeter < 100) return;
@@ -17493,10 +17880,15 @@ class StevenUniverseGame {
         this.bubbledGemsCount++;
         this.score += 500;
 
+        // Loophole 4 Fix: Overdrive meter gain freezes while overdrive or fusion is active
         if (collector.playerId === 'p2') {
-          this.starPowerMeterP2 = Math.min(100, (this.starPowerMeterP2 || 0) + awardPct);
+          if (!this.isOverdriveActiveP2 && !this.isFused) {
+            this.starPowerMeterP2 = Math.min(100, (this.starPowerMeterP2 || 0) + awardPct);
+          }
         } else {
-          this.starPowerMeter = Math.min(100, this.starPowerMeter + awardPct);
+          if (!this.isOverdriveActive && !this.isFused) {
+            this.starPowerMeter = Math.min(100, this.starPowerMeter + awardPct);
+          }
         }
 
         this.savedBubbles.push({
@@ -18926,8 +19318,8 @@ class StevenUniverseGame {
   // ==========================================================
   addFusionSync(amount) {
     if (this.isFused || this.isHyperAttack) return;
-    // Cap is intentionally above 100: extra teamwork becomes an overcharge bonus
-    this.fusionEnergy = Math.min(120, (this.fusionEnergy || 0) + amount);
+    // Cap cleanly at 100% to prevent overdrive runaway
+    this.fusionEnergy = Math.min(100, (this.fusionEnergy || 0) + amount);
     this.updateFusionHUD();
   }
 
@@ -18983,6 +19375,7 @@ class StevenUniverseGame {
     this.hyperAttackDuration = duration;
 
     // ACTIVATE TAG-TEAM HYPER FUSION ATTACK (pair-tuned cinematic screen nuke!)
+    if (this.audio) this.audio.duckMusic(0.70, 2.0);
     this.isFused = true;
     this.isHyperAttack = true;
     this.fusionPlayable = false;
