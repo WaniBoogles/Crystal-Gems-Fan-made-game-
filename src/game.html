@@ -39,9 +39,9 @@
 
     <!-- Plants vs Zombies-Style "Huge Wave is Approaching" Warning Banner -->
     <div id="waveWarningBanner" class="wave-warning-banner" style="display: none;">
-      <span class="banner-icon">⚠️</span>
-      <span class="banner-text" id="waveWarningText">A HUGE WAVE OF CORRUPTED GEMS IS APPROACHING!</span>
-      <span class="banner-icon">⚠️</span>
+      <span class="banner-icon" aria-hidden="true"><svg viewBox="0 0 18 18" width="14" height="14"><polygon points="9,1 17,9 9,17 1,9" fill="#ffd700" stroke="#fff" stroke-width="1.2"/></svg></span>
+      <span class="banner-text" id="waveWarningText">WAVE ASSAULT INCOMING</span>
+      <span class="banner-icon" aria-hidden="true"><svg viewBox="0 0 18 18" width="14" height="14"><polygon points="9,1 17,9 9,17 1,9" fill="#ffd700" stroke="#fff" stroke-width="1.2"/></svg></span>
     </div>
 
     <!-- Top In-Game HUD -->
@@ -631,11 +631,17 @@
 
     <!-- 1.8. Stage Clear Celebratory Banner Overlay -->
     <div id="stageClearBanner" class="stage-clear-banner" style="display: none;">
-      <div class="victory-light-rays"></div>
       <div class="stage-clear-content">
-        <div class="stage-clear-star">⭐</div>
-        <h2 id="stageClearTitle">STAGE 1 COMPLETED!</h2>
-        <div class="stage-clear-desc" id="stageClearDesc">Beach City Boardwalk is safe! Next: Strawberry Battlefield</div>
+        <div class="stage-clear-emblem" aria-hidden="true">
+          <svg viewBox="0 0 36 36" width="32" height="32">
+            <polygon points="18,2 33,13 27,32 9,32 3,13" fill="#ff6097" stroke="#ffd700" stroke-width="2"/>
+            <polygon points="18,8 20.6,14.8 27.8,15.1 22.1,19.4 24.1,26.3 18,22.3 11.9,26.3 13.9,19.4 8.2,15.1 15.4,14.8" fill="#fffbeb"/>
+          </svg>
+        </div>
+        <div class="stage-clear-copy">
+          <h2 id="stageClearTitle">EPISODE 1 CLEAR</h2>
+          <div class="stage-clear-desc" id="stageClearDesc">NEXT: GALAXY WARP &amp; SPIRE</div>
+        </div>
       </div>
     </div>
 
@@ -653,11 +659,15 @@
 
     <!-- Boss gate prompt: walk right when ready -->
     <div id="bossGateHint" class="boss-gate-hint" style="display: none;">
-      <span class="boss-gate-arrow">➜</span>
       <div class="boss-gate-copy">
-        <strong>WALK RIGHT TO FACE THE BOSS</strong>
-        <small>Collect bubbles &amp; hearts first — spend them on Overdrive!</small>
+        <strong>BOSS ARENA AHEAD</strong>
+        <small>MOVE RIGHT WHEN READY</small>
       </div>
+      <span class="boss-gate-arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M5 4l8 8-8 8M12 4l8 8-8 8" fill="none" stroke="#ffd700" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
     </div>
 
     <!-- Overdrive / Fusion portrait cut-in -->

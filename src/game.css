@@ -2019,19 +2019,8 @@ body.mobile-device .touch-controls.active {
 }
 
 .btn-close:hover {
-  background: rgba(244, 63, 94, 0.2);
-  border-color: rgba(244, 63, 94, 0.5);
-  color: #f43f5e;
-}
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 0 #881337;
-  transition: all 0.12s ease;
-}
-
-.btn-close:hover {
   background: #fb7185;
+  color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 5px 0 #881337;
 }
@@ -2412,7 +2401,7 @@ body.mobile-device .touch-controls.active {
    ========================================================== */
 .combo-display {
   position: absolute;
-  top: 145px;
+  top: 178px;
   left: 32px;
   z-index: 25;
   pointer-events: none;
@@ -2495,7 +2484,7 @@ body.mobile-device .touch-controls.active {
 .char-select-modal {
   width: 820px;
   max-width: 92vw;
-  max-height: 580px;
+  max-height: min(580px, 88vh);
   display: flex;
   flex-direction: column;
   padding: 14px 20px;
@@ -2837,79 +2826,69 @@ body.mobile-device .touch-controls.active {
    ========================================================== */
 .stage-clear-banner {
   position: absolute;
-  top: 24%;
+  top: 23%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 60;
   pointer-events: none;
-  animation: dropBanner 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
-.victory-light-rays {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 760px;
-  height: 760px;
-  margin-top: -380px;
-  margin-left: -380px;
-  background: repeating-conic-gradient(
-    from 0deg,
-    rgba(255, 215, 0, 0.32) 0deg 12deg,
-    transparent 12deg 24deg
-  );
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: -1;
-  animation: rotateLightRays 14s linear infinite;
-  mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 22%, rgba(0, 0, 0, 0) 72%);
-  -webkit-mask-image: radial-gradient(circle, rgba(0, 0, 0, 1) 22%, rgba(0, 0, 0, 0) 72%);
-}
-
-@keyframes rotateLightRays {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  animation: dropBanner 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes dropBanner {
-  0% { opacity: 0; transform: translate(-50%, -100%) scale(0.7); }
-  20% { opacity: 1; transform: translate(-50%, 0%) scale(1.05); }
-  30% { transform: translate(-50%, 0%) scale(1); }
-  80% { opacity: 1; transform: translate(-50%, 0%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
+  0% { opacity: 0; transform: translate(-50%, -65%) scale(0.92); }
+  14% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  82% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -58%) scale(0.96); }
 }
 
 .stage-clear-content {
-  background: linear-gradient(135deg, rgba(30, 16, 52, 0.95), rgba(76, 5, 25, 0.95));
-  border: 3px solid #ffd700;
-  border-radius: 24px;
-  padding: 16px 36px;
-  text-align: center;
-  box-shadow: 0 0 35px rgba(255, 215, 0, 0.65), 0 10px 40px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1.5px solid rgba(255, 215, 0, 0.55);
+  border-radius: 14px;
+  padding: 12px 24px;
+  text-align: left;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
-.stage-clear-star {
-  font-size: 40px;
-  animation: rotateStar 8s linear infinite;
-  display: inline-block;
-  margin-bottom: 4px;
+.stage-clear-emblem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: rgba(255, 96, 151, 0.16);
+  border: 1px solid rgba(255, 148, 186, 0.35);
+  flex-shrink: 0;
+}
+
+.stage-clear-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 #stageClearTitle {
   font-family: var(--su-font-display);
-  font-size: 26px;
-  letter-spacing: 1.5px;
-  background: linear-gradient(180deg, #fff 20%, #ffd700 80%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  color: #f8fafc;
   margin: 0;
 }
 
 .stage-clear-desc {
-  font-size: 13px;
-  color: #fbcfe8;
-  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: #fde68a;
+  opacity: 0.9;
 }
 
 /* ==========================================================
@@ -3027,56 +3006,54 @@ body.mobile-device .touch-controls.active {
 /* PvZ Dramatic "A Huge Wave is Approaching" Warning Banner */
 .wave-warning-banner {
   position: absolute;
-  top: 38%;
+  top: 34%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
-  padding: 16px 24px;
-  background: linear-gradient(90deg, rgba(225, 29, 72, 0) 0%, rgba(225, 29, 72, 0.92) 20%, rgba(244, 63, 94, 0.96) 50%, rgba(225, 29, 72, 0.92) 80%, rgba(225, 29, 72, 0) 100%);
-  border-top: 3px solid #fde047;
-  border-bottom: 3px solid #fde047;
-  color: #ffffff;
+  padding: 10px 24px;
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.88) 22%, rgba(30, 27, 75, 0.92) 50%, rgba(15, 23, 42, 0.88) 78%, rgba(15, 23, 42, 0) 100%);
+  border-top: 1.5px solid rgba(255, 96, 151, 0.55);
+  border-bottom: 1.5px solid rgba(255, 96, 151, 0.55);
+  color: #f8fafc;
   font-family: var(--su-font-display);
-  font-size: 24px;
-  letter-spacing: 2px;
-  text-shadow: 0 0 14px rgba(0, 0, 0, 0.9), 0 3px 6px rgba(0, 0, 0, 0.8);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
   z-index: 120;
   pointer-events: none;
-  animation: waveBannerAnim 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  box-shadow: 0 0 35px rgba(225, 29, 72, 0.7);
+  animation: waveBannerAnim 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .wave-warning-banner.boss-wave {
-  background: linear-gradient(90deg, rgba(147, 51, 234, 0) 0%, rgba(147, 51, 234, 0.94) 20%, rgba(168, 85, 247, 0.98) 50%, rgba(147, 51, 234, 0.94) 80%, rgba(147, 51, 234, 0) 100%);
-  border-color: #38bdf8;
-  color: #fdf4ff;
-  font-size: 26px;
-  box-shadow: 0 0 40px rgba(168, 85, 247, 0.8);
+  background: linear-gradient(90deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.9) 20%, rgba(30, 20, 58, 0.94) 50%, rgba(15, 23, 42, 0.9) 80%, rgba(15, 23, 42, 0) 100%);
+  border-color: rgba(255, 215, 0, 0.65);
+  color: #fffbeb;
+  font-size: 20px;
+  letter-spacing: 3.5px;
 }
 
 @keyframes waveBannerAnim {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.7);
+    transform: translate(-50%, -50%) scale(0.95);
   }
-  15% {
+  14% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08);
+    transform: translate(-50%, -50%) scale(1);
   }
-  25% {
-    transform: translate(-50%, -50%) scale(1.0);
-  }
-  75% {
+  82% {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1.03);
+    transform: translate(-50%, -50%) scale(1);
   }
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.15);
+    transform: translate(-50%, -50%) scale(1.03);
   }
 }
 
@@ -3839,16 +3816,16 @@ option {
 }
 
 /* ==========================================================
-   STAGE TRANSITION VEIL (BLUR + FADE TO BLACK)
+   STAGE TRANSITION VEIL (BLUR + COSMIC FADE)
    ========================================================== */
 .stage-veil {
   position: absolute;
   inset: 0;
-  z-index: 80;
-  background: #000;
+  z-index: 40;
+  background: radial-gradient(circle at center, rgba(16, 10, 34, 0.96), rgba(5, 3, 12, 0.99));
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.38s ease;
+  transition: opacity 0.26s ease;
 }
 
 .stage-veil.veil-in { opacity: 1; }
@@ -3856,10 +3833,10 @@ option {
 .stage-veil-blur {
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
-  transition: opacity 0.38s ease;
+  transition: opacity 0.26s ease;
 }
 
 .stage-veil.veil-in .stage-veil-blur { opacity: 1; }
@@ -3869,36 +3846,31 @@ option {
 .boss-gate-hint {
   position: absolute;
   right: 22px;
-  bottom: 110px;
+  bottom: 96px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 18px;
-  background: linear-gradient(135deg, rgba(124, 21, 51, 0.95), rgba(15, 23, 42, 0.95));
-  border: 2.5px solid #ffcf33;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 26px rgba(255, 207, 51, 0.45);
+  gap: 10px;
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 1px solid rgba(255, 215, 0, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 45;
   pointer-events: none;
-  animation: bossGateBob 1.6s ease-in-out infinite;
-}
-
-@keyframes bossGateBob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
 }
 
 .boss-gate-arrow {
-  font-size: 30px;
-  color: #ffcf33;
-  line-height: 1;
-  text-shadow: 0 0 14px rgba(255, 207, 51, 0.9);
-  animation: bossGateNudge 0.9s ease-in-out infinite;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: bossGateNudge 1.0s ease-in-out infinite;
 }
 
 @keyframes bossGateNudge {
   0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(8px); }
+  50% { transform: translateX(5px); }
 }
 
 .boss-gate-copy {
@@ -3909,17 +3881,17 @@ option {
 
 .boss-gate-copy strong {
   font-family: var(--su-font-display);
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 1px;
-  color: #ffd700;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+  color: #f8fafc;
 }
 
 .boss-gate-copy small {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.7px;
   color: #fde68a;
-  opacity: 0.9;
+  opacity: 0.88;
 }
 /* ==========================================================
    EPISODE SELECT
