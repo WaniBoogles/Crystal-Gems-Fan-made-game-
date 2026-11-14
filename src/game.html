@@ -93,19 +93,19 @@
         <div class="hud-stage-badge" id="hudStageBadge">STAGE 1: BEACH CITY</div>
         <div class="hud-objective-text" id="hudObjectiveText">Defend Beach City from Corrupted Centipeetles!</div>
 
-        <!-- Plants vs Zombies-Style Wave Progression Meter -->
+        <!-- Stage-Themed Wave Progression Meter with Random Gem Milestones -->
         <div class="pvz-wave-container" id="pvzWaveContainer">
           <div class="pvz-wave-header">
             <span class="pvz-wave-label" id="pvzWaveLabel">WAVE 1 / 4</span>
-            <span class="pvz-wave-status" id="pvzWaveStatus">NORMAL WAVE</span>
+            <span class="pvz-wave-status" id="pvzWaveStatus">APPROACHING</span>
           </div>
           <div class="pvz-wave-track-wrapper">
-            <div class="pvz-wave-track" id="pvzWaveTrack">
+            <div class="pvz-wave-track" id="pvzWaveTrack" data-platform="stone">
               <div class="pvz-wave-fill" id="pvzWaveFill" style="width: 0%;"></div>
-              <div class="pvz-wave-flag flag-1" style="left: 25%;" title="Wave 1"><span class="wave-pip"></span></div>
-              <div class="pvz-wave-flag flag-2" style="left: 50%;" title="Wave 2"><span class="wave-pip"></span></div>
-              <div class="pvz-wave-flag flag-3" style="left: 75%;" title="Huge Wave 3!"><span class="wave-pip wave-pip-warn"></span></div>
-              <div class="pvz-wave-flag flag-boss" style="left: 96%;" title="Final Boss Wave!"><span class="wave-pip wave-pip-boss"></span></div>
+              <div class="pvz-wave-flag flag-1" id="waveFlag1" style="left: 25%;" title="Wave 1"></div>
+              <div class="pvz-wave-flag flag-2" id="waveFlag2" style="left: 50%;" title="Wave 2"></div>
+              <div class="pvz-wave-flag flag-3" id="waveFlag3" style="left: 75%;" title="Huge Wave 3!"></div>
+              <div class="pvz-wave-flag flag-boss" id="waveFlagBoss" style="left: 96%;" title="Final Boss Wave!"></div>
               <div class="pvz-wave-marker" id="pvzWaveMarker" style="left: 0%;"></div>
             </div>
           </div>

@@ -2937,70 +2937,135 @@ body.mobile-device .touch-controls.active {
 .pvz-wave-track-wrapper {
   position: relative;
   width: 100%;
-  height: 12px;
+  height: 20px;
+  padding: 0 6px;
 }
 
 .pvz-wave-track {
   position: relative;
   width: 100%;
-  height: 8px;
-  top: 2px;
-  background: rgba(30, 27, 75, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 6px;
+  height: 11px;
+  top: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 32%, #94a3b8 74%, #475569 100%);
+  border: 2px solid #0f172a;
+  border-radius: 5px;
   overflow: visible;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 2px 0 #38bdf8, 0 3px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* Platform-matched Wave Line Themes */
+.pvz-wave-track::before,
+.pvz-wave-track::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  width: 6px;
+  height: 6px;
+  background: #fef08a;
+  transform: rotate(45deg);
+  box-shadow: 0 0 6px rgba(254, 240, 138, 0.85);
+}
+.pvz-wave-track::before { left: 2px; }
+.pvz-wave-track::after { right: 2px; }
+
+.pvz-wave-track[data-platform="wood"] {
+  background: repeating-linear-gradient(90deg, rgba(69, 26, 3, 0.45) 0 1px, transparent 1px 28px),
+              linear-gradient(180deg, #f59e0b 0%, #b45309 35%, #5c2306 100%);
+  border-color: #2d1406;
+  box-shadow: inset 0 2px 0 #fde68a, 0 3px 6px rgba(0, 0, 0, 0.6);
+}
+
+.pvz-wave-track[data-platform="stone"] {
+  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 30%, #94a3b8 72%, #475569 100%);
+  border-color: #0f172a;
+  box-shadow: inset 0 2px 0 #38bdf8, 0 3px 6px rgba(0, 0, 0, 0.55);
+}
+
+.pvz-wave-track[data-platform="metal"] {
+  background: linear-gradient(180deg, #64748b 0%, #334155 45%, #0f172a 100%);
+  border-color: #020617;
+  box-shadow: inset 0 2px 0 #94a3b8, inset 0 -2px 0 #eab308, 0 3px 6px rgba(0, 0, 0, 0.65);
+}
+
+.pvz-wave-track[data-platform="obsidian"] {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 0%, transparent 25%, rgba(249, 115, 22, 0.35) 55%, transparent 75%),
+              linear-gradient(180deg, #2e1065 0%, #0f051d 100%);
+  border-color: #3b0764;
+  box-shadow: inset 0 2px 0 #f97316, 0 3px 8px rgba(249, 115, 22, 0.4);
 }
 
 .pvz-wave-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, #ff6097 0%, #a855f7 50%, #fde047 100%);
-  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(255, 96, 151, 0.72) 0%, rgba(168, 85, 247, 0.72) 55%, rgba(56, 189, 248, 0.85) 100%);
+  border-radius: 3px;
   transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 8px rgba(255, 96, 151, 0.8);
+  box-shadow: 0 0 8px rgba(255, 96, 151, 0.55);
 }
 
 .pvz-wave-flag {
   position: absolute;
-  top: -8px;
+  top: -5px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform: translateX(-50%);
-  font-size: 11px;
-  line-height: 1;
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
-  transition: transform 0.2s ease;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85));
+  transition: transform 0.25s ease, opacity 0.25s ease;
   user-select: none;
 }
 
+.pvz-wave-flag svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.pvz-wave-flag.passed {
+  opacity: 0.55;
+  transform: translateX(-50%) scale(0.86);
+}
+
 .pvz-wave-flag.flag-boss {
-  font-size: 13px;
-  top: -9px;
+  width: 19px;
+  height: 19px;
+  top: -7px;
   animation: bossFlagPulse 1.5s ease-in-out infinite alternate;
 }
 
 @keyframes bossFlagPulse {
   0% { transform: translateX(-50%) scale(1.0); }
-  100% { transform: translateX(-50%) scale(1.25); filter: drop-shadow(0 0 6px #f43f5e); }
+  100% { transform: translateX(-50%) scale(1.2); filter: drop-shadow(0 0 6px #f43f5e); }
 }
 
 .pvz-wave-marker {
   position: absolute;
-  top: -6px;
+  top: -7px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transform: translateX(-50%);
-  font-size: 13px;
-  line-height: 1;
-  color: #ffd700;
-  filter: drop-shadow(0 0 6px #fde047);
+  filter: drop-shadow(0 0 5px rgba(253, 224, 71, 0.85));
   transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   user-select: none;
-  animation: markerSpin 4s linear infinite;
+  animation: markerPulse 1.8s ease-in-out infinite alternate;
 }
 
-@keyframes markerSpin {
-  0% { transform: translateX(-50%) rotate(0deg); }
-  100% { transform: translateX(-50%) rotate(360deg); }
+.pvz-wave-marker svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes markerPulse {
+  0% { transform: translateX(-50%) scale(0.95); }
+  100% { transform: translateX(-50%) scale(1.12); }
 }
 
 /* PvZ Dramatic "A Huge Wave is Approaching" Warning Banner */
