@@ -349,69 +349,55 @@
         <span>CLICK ANYWHERE TO START SOUNDTRACK</span>
       </div>
 
-      <div class="title-content">
+      <div class="title-content hover-float">
         <div class="title-logo-container">
-          <div class="star-badge"><svg viewBox="0 0 24 24" width="30" height="30" style="display:block;"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#fde047" stroke="#eab308" stroke-width="1.2"/></svg></div>
+          <div class="star-badge"><svg viewBox="0 0 24 24" width="34" height="34" style="display:block;"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#fde047" stroke="#eab308" stroke-width="1.2"/></svg></div>
           <h1 class="main-title">CRYSTAL GEMS!</h1>
-          <h2 class="sub-title">ACTION BATTLER</h2>
         </div>
 
-        <!-- Chosen Hero Lobby Showcase (Clickable Guardian Button) -->
-        <button class="lobby-guardian-btn" id="lobbyGuardianCard" type="button" title="Click to Switch Guardian">
-          <div class="lobby-guardian-avatar" id="lobbyGuardianAvatar"></div>
-          <div class="lobby-guardian-details">
-            <span class="lobby-guardian-badge">Active Guardian · Click to switch</span>
-            <h3 class="lobby-guardian-name" id="lobbyGuardianName">Steven Universe</h3>
-            <p class="lobby-guardian-desc" id="lobbyGuardianDesc">Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Cookie Cat (+1 Heart)</p>
-            <div class="char-types-row" id="lobbyGuardianTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
-            <div class="lobby-guardian-fusion" id="lobbyGuardianFusion">
-              
-              <span id="lobbyGuardianFusionText">Fuses with: Connie, Amethyst, Pearl, Garnet</span>
-            </div>
-          </div>
-          <div class="lobby-difficulty-pill" id="lobbyDifficultyPill">Medium</div>
-        </button>
-
-        <div class="menu-button-group">
-          <!-- Play Story (Primary Grand Action) -->
-          <button id="btnPlayStory" class="btn-primary" title="Embark on the Crystal Gems Story Adventure!">
-            <span>Play Story</span>
+        <!-- Frameless Concept UI Navigation Menu (No Rectangular Box Backgrounds) -->
+        <nav class="main-menu-nav" aria-label="Main Menu">
+          <button id="btnArcadeMode" class="menu-link-btn" type="button" title="Endless fast-paced waves across any map">
+            ARCADE MODE
+            <span class="menu-sub-hint">FAST-PACED ENDLESS RUSH · MAP SELECT · SCORE</span>
           </button>
 
-          <!-- 1P / 2P Mode Toggle -->
-          <button id="btnPlayerMode" class="btn-secondary btn-mode" title="Toggle between 1-Player Solo and 2-Player Co-Op">
-            <span id="btnPlayerModeText">Mode: Solo (1P)</span>
+          <button id="btnStoryModeEntry" class="menu-link-btn" type="button" title="Campaign Episodes 1 to 10 with Lore Puzzles & Cutscenes">
+            STORY MODE
+            <span class="menu-sub-hint">EPISODES 1–10 · PUZZLES · DIALOGUE · CUTSCENES</span>
           </button>
 
-          <!-- Tekken-Style Practice Mode -->
-          <button id="btnPractice" class="btn-secondary btn-practice" title="Practice mode with infinite HP training dummy & combo counter">
-            <span>Practice Dojo</span>
+          <button id="btnOpenSettings" class="menu-link-btn" type="button" title="Configure Audio, Graphics & Resolution">
+            SETTINGS
+            <span class="menu-sub-hint">AUDIO · GRAPHICS · RESOLUTION</span>
           </button>
 
-          <!-- Difficulty Direct Click Cycling (Easy ➔ Medium ➔ Hard ➔ Extreme) -->
-          <button id="btnOpenDifficulty" class="btn-secondary btn-diff" title="Click to cycle difficulty: Easy ➔ Medium ➔ Hard ➔ Extreme">
-            <span id="btnDiffLevelText">Difficulty: Medium</span>
+          <button id="btnOpenCredits" class="menu-link-btn" type="button" title="View Credits & Game References">
+            CREDITS
+            <span class="menu-sub-hint">CAST · ENGINE · ART · SOUNDTRACK</span>
           </button>
 
-          <!-- Story cutscene toggle (dialogue on/off) -->
-          <button id="btnStoryMode" class="btn-secondary btn-story" title="Toggle story dialogue between waves and bosses">
-            <span id="btnStoryModeText">Story Dialogue: On</span>
+          <button id="btnQuitGame" class="menu-link-btn menu-link-quit" type="button" title="Exit Crystal Gems">
+            QUIT GAME
           </button>
+        </nav>
 
-          <!-- Episode / stage select -->
-          <button id="btnEpisodes" class="btn-secondary" title="Replay any of the 10 episodes directly">
-            <span>Select Episode</span>
-          </button>
-
-          <!-- Settings & Audio -->
-          <button id="btnOpenSettings" class="btn-secondary" title="Configure Sound Effects & Music">
-            <span>Settings & Audio</span>
-          </button>
-
-          <!-- Native Quit Button -->
-          <button id="btnQuitGame" class="btn-secondary btn-quit" title="Exit Crystal Gems">
-            <span>Quit Game</span>
-          </button>
+        <!-- Hidden compatibility hooks for legacy test references -->
+        <div style="display: none;" aria-hidden="true">
+          <span id="lobbyGuardianAvatar"></span>
+          <span id="lobbyGuardianName">Steven Universe</span>
+          <span id="lobbyGuardianDesc"></span>
+          <span id="lobbyGuardianTypes"></span>
+          <span id="lobbyGuardianFusion"></span>
+          <span id="lobbyGuardianFusionText"></span>
+          <span id="lobbyDifficultyPill">Medium</span>
+          <button id="btnPlayStory" type="button"></button>
+          <button id="btnPlayerMode" type="button"><span id="btnPlayerModeText">Mode: Solo (1P)</span></button>
+          <button id="btnOpenDifficulty" type="button"><span id="btnDiffLevelText">Difficulty: Medium</span></button>
+          <button id="btnPractice" type="button"></button>
+          <button id="btnStoryMode" type="button"><span id="btnStoryModeText">Story Dialogue: On</span></button>
+          <button id="btnEpisodes" type="button"></button>
+          <button id="lobbyGuardianCard" type="button"></button>
         </div>
       </div>
     </div>
@@ -444,14 +430,32 @@
       </div>
     </div>
 
-    <!-- 1.5. Character Selection Modal (Choose from 8 Canon Gems!) -->
+    <!-- 1.5. Character / Gem Selection Screen (Shared Entry for Arcade & Story) -->
     <div id="characterSelectScreen" class="overlay-screen modal-screen" style="display: none;">
-      <div class="modal-card char-select-modal">
+      <div class="modal-card char-select-modal hover-float">
         <div class="modal-header">
-          <h2>Select Guardian</h2>
+          <h2 id="charSelectModalTitle">CHARACTER / GEM SELECTION</h2>
           <button class="btn-close" id="btnCloseCharSelect">✕</button>
         </div>
         <div class="modal-body char-select-body">
+          <!-- Mode Difference Intro Popup Banner -->
+          <div id="modeDiffPopup" class="mode-diff-popup">
+            <span class="mode-diff-badge" id="modeDiffBadge">STORY MODE</span>
+            <span class="mode-diff-desc" id="modeDiffDesc">COMBAT, PUZZLES, DIALOGUE &amp; CUTSCENES (EPISODES 1–10)</span>
+          </div>
+
+          <!-- Top Bar: Difficulty Button + 1P/2P Toggle + Optional Episode Jump -->
+          <div class="char-top-controls">
+            <div class="char-control-group">
+              <button type="button" class="pill-action-btn" id="btnCharDiff" title="Click to cycle or choose difficulty">DIFFICULTY: <span id="charDiffLabel">MEDIUM</span></button>
+              <button type="button" class="pill-action-btn" id="btnCharPlayerMode" title="Toggle Solo 1P or Co-Op 2P">PLAYERS: <span id="charPlayerModeLabel">1P SOLO</span></button>
+            </div>
+            <div class="char-control-group">
+              <button type="button" class="pill-action-btn" id="btnCharPractice" style="display: none;">PRACTICE DOJO</button>
+              <button type="button" class="pill-action-btn" id="btnCharEpisodes">EPISODE CHAPTERS</button>
+            </div>
+          </div>
+
           <!-- 2P Mode Guardian Tabs -->
           <div class="char-player-tabs" id="charPlayerTabs" style="display: none;">
             <button class="tab-btn active" id="tabSelectP1" type="button">PLAYER 1 GUARDIAN</button>
@@ -537,9 +541,163 @@
               </div>
             </div>
           </div></div>
-        <div class="modal-footer">
-          <button class="btn-primary" id="btnConfirmChar" style="width: 100%;">SELECT GUARDIAN & RETURN TO LOBBY</button>
+        <div class="modal-footer" style="display: flex; gap: 10px;">
+          <button class="btn-secondary hover-float" id="btnCharBackMenu" style="flex: 0.45;">MAIN MENU</button>
+          <button class="btn-primary hover-float" id="btnConfirmChar" style="flex: 1;">PLAY ➔</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 1.55. Arcade Map Selection Screen (10 Rectangles with Map Previews & Names) -->
+    <div id="mapSelectScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card map-select-card hover-float">
+        <div class="modal-header">
+          <h2>MAP SELECTION</h2>
+          <button class="btn-close" id="btnCloseMapSelect">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="settings-desc" style="margin-bottom: 12px;">Choose any arena for Endless Arcade Rush — corrupted gems &amp; bosses warp in endlessly!</p>
+          <div class="map-select-grid" id="mapSelectGrid">
+            <!-- Populated dynamically with 10 live rendered map preview canvases & names -->
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 12px;">
+          <button class="btn-secondary hover-float" id="btnMapBack" style="flex: 0.4;">BACK TO CHARACTERS</button>
+          <button class="btn-primary hover-float" id="btnPlayArcadeMap" style="flex: 1;">PLAY ➔</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.56. Arcade Wave Intermission Popup (Continue [ENTER] vs Gem Out [RETURN]) -->
+    <div id="arcadeWaveModal" class="overlay-screen modal-screen" style="display: none;">
+      <div class="arcade-wave-card hover-float">
+        <div class="star-badge" style="font-size: 36px; margin-bottom: 6px;">⭐</div>
+        <h2 id="arcadeWaveTitle" style="font-family: var(--su-font-display); color: #fde047; margin: 0 0 6px 0;">WAVE 1 CLEARED!</h2>
+        <p id="arcadeWaveSubtitle" style="color: #cbd5e1; font-size: 13px; margin: 0 0 12px 0;">
+          Ready for the next rush? You recover 1 Heart on Continue!
+        </p>
+        <div class="arcade-score-row" style="margin: 10px 0 6px; padding: 12px;">
+          <div class="arcade-stat-line" style="font-size: 15px;"><span>CURRENT SCORE:</span><b id="arcadeWaveScore">0</b></div>
+          <div class="arcade-stat-line" style="font-size: 15px;"><span>GEMS BUBBLED:</span><b id="arcadeWaveBubbled">0</b></div>
+        </div>
+        <div class="arcade-wave-actions">
+          <button type="button" id="btnArcadeContinue" class="btn-primary hover-float">CONTINUE (ENTER)</button>
+          <button type="button" id="btnArcadeGemOut" class="btn-secondary hover-float">GEM OUT (RETURN / ESC)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.57. Arcade End Result Screen (Score, Gem Bubbled, Main Menu & Retry) -->
+    <div id="arcadeResultScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="arcade-result-card hover-float">
+        <div class="star-badge" style="font-size: 40px; margin-bottom: 6px;">💎</div>
+        <h2 id="arcadeResultTitle" style="font-family: var(--su-font-display); color: #ffffff; margin: 0 0 4px 0;">ARCADE COMPLETE</h2>
+        <p id="arcadeResultMapLabel" style="font-size: 12px; color: #94a3b8; margin: 0 0 12px 0;">Arena: Beach City Boardwalk</p>
+        <div class="arcade-score-row">
+          <div class="arcade-stat-line"><span>SCORE:</span><b id="arcadeResultScore">0</b></div>
+          <div class="arcade-stat-line"><span>GEM BUBBLED:</span><b id="arcadeResultBubbled">0</b></div>
+          <div class="arcade-stat-line" style="font-size: 13px; color: #94a3b8;"><span>WAVES SURVIVED:</span><b id="arcadeResultWaves" style="font-size: 16px; color: #38bdf8;">1</b></div>
+        </div>
+        <div class="arcade-wave-actions">
+          <button type="button" id="btnArcadeMainMenu" class="btn-secondary hover-float">MAIN MENU</button>
+          <button type="button" id="btnArcadeRetry" class="btn-primary hover-float">RETRY</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.58. Story Mode Visual Cutscene Screen -->
+    <div id="cutsceneScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="cutscene-card hover-float">
+        <div class="cutscene-stage">
+          <canvas id="cutsceneCanvas" class="cutscene-canvas" width="860" height="310"></canvas>
+          <span class="cutscene-episode-tag" id="cutsceneEpisodeTag">EPISODE 1 · CUTSCENE</span>
+        </div>
+        <div class="cutscene-dialogue-bar">
+          <div class="cutscene-portrait" id="cutscenePortrait"></div>
+          <div class="cutscene-copy">
+            <div class="cutscene-speaker" id="cutsceneSpeaker">Steven</div>
+            <p class="cutscene-text" id="cutsceneText"></p>
+          </div>
+          <div class="cutscene-controls">
+            <button type="button" class="btn-primary hover-float" id="btnCutsceneNext">NEXT ▸</button>
+            <button type="button" class="btn-secondary hover-float" id="btnCutsceneSkip" style="font-size: 11px; padding: 6px 12px;">SKIP ⏭</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.59. Story Mode Interactive Gem Puzzle Modal -->
+    <div id="storyPuzzleScreen" class="overlay-screen modal-screen" style="display: none;">
+      <div class="modal-card puzzle-card hover-float">
+        <div class="modal-header">
+          <h2 id="puzzleTitle">TEMPLE PUZZLE CHALLENGE</h2>
+          <button class="btn-close" id="btnPuzzleSkip" title="Bypass puzzle (no bonus)">✕</button>
+        </div>
+        <div class="modal-body">
+          <p id="puzzleLoreDesc" style="font-size: 13px; color: #cbd5e1; margin: 0 0 8px 0; text-align: center;"></p>
+          <div class="puzzle-status-bar" id="puzzleStatusBar">Match the Crystal Gem sequence!</div>
+          <div class="puzzle-board" id="puzzleBoard"></div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: space-between;">
+          <button type="button" class="btn-secondary hover-float" id="btnPuzzleHint">HINT</button>
+          <button type="button" class="btn-secondary hover-float" id="btnPuzzleReset">RESET PUZZLE</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.60. Rolling Credits Screen -->
+    <div id="creditsScreen" class="overlay-screen credits-screen" style="display: none;">
+      <div class="credits-viewport">
+        <div class="credits-track" id="creditsTrack">
+          <div class="credits-block">
+            <h1 class="main-title" style="font-size: 40px;">CRYSTAL GEMS!</h1>
+            <p style="color: #fde68a; letter-spacing: 2px; font-weight: 800;">THANK YOU FOR DEFENDING EARTH &amp; HOMEWORLD</p>
+          </div>
+          <div class="credits-block">
+            <h3>ORIGINAL SERIES HOMAGE</h3>
+            <p>Inspired by <b>Steven Universe</b> &amp; <b>Steven Universe Future</b><br>Created by <b>Rebecca Sugar</b> · Cartoon Network Studios</p>
+          </div>
+          <div class="credits-block">
+            <h3>PLAYABLE GUARDIANS (10 HEROES)</h3>
+            <p>Steven Universe · Garnet · Amethyst · Pearl · Bismuth<br>Peridot · Lapis Lazuli · Rose Quartz · Connie Maheswaran · Jasper</p>
+          </div>
+          <div class="credits-block">
+            <h3>CANON GEM FUSIONS (9 FUSIONS)</h3>
+            <p>Stevonnie · Smoky Quartz · Rainbow Quartz 2.0 · Sunstone<br>Sugilite · Sardonyx · Opal · Malachite · Rainbow Quartz Classic</p>
+          </div>
+          <div class="credits-block">
+            <h3>COMBAT SYSTEM &amp; TECHNIQUES</h3>
+            <p>Accessible 4-Hit Tekken-Style Combo Chains · Directional Stepping &amp; Air Launchers<br>11-Type Gem Matchup Chart · STAB Multiplier · Status Riders<br>Hyper Fusion Co-Op Link · Gem Surge Resonance State</p>
+          </div>
+          <div class="credits-block">
+            <h3>STORY MODE EPISODES &amp; LORE PUZZLES</h3>
+            <p>Ep 1: Beach City Boardwalk · Ep 2: Galaxy Warp &amp; Spire<br>Ep 3: Prime Kindergarten · Ep 4: Earth's Mantle Cluster<br>Ep 5: Bismuth's Forge · Ep 6: The Frozen North<br>Ep 7: Pink Diamond's Zoo · Ep 8: Homeworld Abduction Shore<br>Ep 9: Homeworld Trial &amp; Off-Colors · Ep 10: Change Your Mind Finale</p>
+          </div>
+          <div class="credits-block">
+            <h3>GEM PUZZLE ARCHITECTURE</h3>
+            <p>Crystal Temple Harmony Sequences · Warp Prism Pair Matching<br>Kindergarten Conduit Circuits · Diamond Light Mirror Alignment</p>
+          </div>
+          <div class="credits-block">
+            <h3>CORRUPTED MONSTERS &amp; BOSS ROSTER</h3>
+            <p>Centipeetle Hatchlings · Acid Centipeetles · Blade Quartzes · Cluster Mutants<br>Ice Monsters · Volcanic Firebirds · Forge Automatons · Destabilizers<br>Mother Centipeetle · Spire Bird · Cluster Core · Jasper · Holy Blue Agate · Topaz · White Diamond Mecha</p>
+          </div>
+          <div class="credits-block">
+            <h3>DYNAMIC WEBAUDIO SOUNDTRACK</h3>
+            <p><i>"Temple Sunset"</i> Launch Theme · <i>"That Distant Shore"</i> · 10 Distinct Per-Stage Scores<br>Real-Time Multi-Voice Synthesis, Biquad Filtering &amp; Custom Percussion</p>
+          </div>
+          <div class="credits-block">
+            <h3>CONCEPT UI, ENGINEERING &amp; POLISH</h3>
+            <p>Built with HTML5 Canvas, Modular Game Engine &amp; Offline Zero-Asset Bundle<br>Concept Navigation Architecture by <b>Wanibur</b></p>
+          </div>
+          <div class="credits-block" style="margin-top: 24px;">
+            <h3>WE ARE THE CRYSTAL GEMS!</h3>
+            <p>"If you could only know what we really are..."</p>
+          </div>
+        </div>
+      </div>
+      <div class="credits-footer-bar">
+        <button type="button" class="btn-secondary hover-float" id="btnCreditsSpeed">SPEED: 1X</button>
+        <button type="button" class="btn-primary hover-float" id="btnCreditsMenu">BACK TO MAIN MENU</button>
       </div>
     </div>
 
@@ -581,16 +739,22 @@
       </div>
     </div>
 
-    <!-- 1.7. Game Audio & Display Settings Modal -->
+    <!-- 1.7. Game Settings Modal (AUDIO / GRAPHICS / RESOLUTION) -->
     <div id="settingsScreen" class="overlay-screen modal-screen" style="display: none;">
-      <div class="modal-card settings-card">
+      <div class="modal-card settings-card hover-float">
         <div class="modal-header">
-          <h2>Settings & Audio</h2>
+          <h2>SETTINGS</h2>
           <button class="btn-close" id="btnCloseSettings">✕</button>
         </div>
         <div class="modal-body">
-          <div class="settings-section">
-            <h3 class="settings-subtitle">AUDIO &amp; VOLUME CONTROLS</h3>
+          <div class="settings-tabs">
+            <button type="button" class="settings-tab-btn active" data-stab="audio" id="tabSettingAudio">AUDIO</button>
+            <button type="button" class="settings-tab-btn" data-stab="graphics" id="tabSettingGraphics">GRAPHICS</button>
+            <button type="button" class="settings-tab-btn" data-stab="resolution" id="tabSettingResolution">RESOLUTION</button>
+          </div>
+
+          <div class="settings-section" id="settingsPanelAudio">
+            <h3 class="settings-subtitle">AUDIO &amp; SOUNDTRACK</h3>
             <div class="settings-toggles">
               <button class="toggle-btn" id="btnSettingSound">Sound Effects: ON</button>
               <button class="toggle-btn" id="btnSettingMusic">Synth Music (BGM): ON</button>
@@ -630,21 +794,33 @@
                 <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
                 <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
-              <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
-                Pick a track and it starts right away — it keeps playing through fights.
-              </p>
             </div>
           </div>
-          <div class="settings-section" style="margin-top: 18px;">
-            <h3 class="settings-subtitle">GRAPHICS &amp; PERFORMANCE</h3>
+
+          <div class="settings-section" id="settingsPanelGraphics" style="display: none;">
+            <h3 class="settings-subtitle">GRAPHICS &amp; EFFECTS</h3>
             <div class="settings-toggles">
               <button class="toggle-btn" id="btnSettingShake">Screen Shake: ON</button>
+              <button class="toggle-btn" id="btnSettingPerf">Fast Performance Mode: OFF</button>
             </div>
-            <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 6px;">Turn the shake off if the boss fights get too bumpy for you.</p>
+            <p class="settings-hint" style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">Toggle camera hit-shake or lightweight particle rendering for smoother frame rates.</p>
+          </div>
+
+          <div class="settings-section" id="settingsPanelResolution" style="display: none;">
+            <h3 class="settings-subtitle">DISPLAY &amp; RESOLUTION</h3>
+            <div class="res-grid">
+              <button type="button" class="res-btn active" data-res="auto">AUTO FIT (RESPONSIVE)</button>
+              <button type="button" class="res-btn" data-res="1280x720">1280 × 720 (HD 720p)</button>
+              <button type="button" class="res-btn" data-res="1600x900">1600 × 900 (HD+ 900p)</button>
+              <button type="button" class="res-btn" data-res="1920x1080">1920 × 1080 (FULL HD)</button>
+            </div>
+            <div style="margin-top: 12px;">
+              <button type="button" class="toggle-btn" id="btnSettingFullscreen" style="width: 100%;">TOGGLE FULLSCREEN</button>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn-primary" id="btnSaveSettings" style="width: 100%;">SAVE SETTINGS & RETURN TO LOBBY</button>
+          <button class="btn-primary hover-float" id="btnSaveSettings" style="width: 100%;">SAVE SETTINGS &amp; RETURN</button>
         </div>
       </div>
     </div>

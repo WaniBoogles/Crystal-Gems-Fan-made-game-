@@ -14449,6 +14449,8 @@ class EnemyManager {
       hurtTimer: 0,
       movementType,
       isBoss,
+      spawnAnimTimer: isBoss ? 0.92 : 0.52,
+      maxSpawnAnim: isBoss ? 0.92 : 0.52,
       flyAltitude: isFlyer ? initialY : null,
       jumpCooldown: isJumper ? (1.5 + Math.random() * 1.5) : null,
       feintCooldown: 1.0 + Math.random() * 1.5,
@@ -14827,6 +14829,13 @@ class EnemyManager {
         continue;
       }
       e.animTime += dt;
+      if (e.spawnAnimTimer && e.spawnAnimTimer > 0) {
+        e.spawnAnimTimer = Math.max(0, e.spawnAnimTimer - dt);
+        if (e.spawnAnimTimer <= 0 && particles) {
+          particles.addSparkle(e.x, e.y - e.height * 0.45, e.gemColor || '#c084fc', e.isBoss ? 24 : 10, 5);
+        }
+        continue;
+      }
       if (e.hurtTimer > 0) e.hurtTimer -= dt;
 
       // --- GEM COMBAT TYPE STATUSES ----------------------------------------
@@ -16187,7 +16196,36 @@ class EnemyManager {
 
       ctx.save();
       ctx.translate(e.x, e.y);
-      ctx.scale(e.facing, 1);
+
+      // Dramatic Warp-In / Corruption Materialize Spawn Animation
+      let spawnScaleY = 1;
+      let spawnScaleX = 1;
+      let spawnAlpha = 1;
+      if (e.spawnAnimTimer && e.spawnAnimTimer > 0) {
+        const sp = Math.max(0.05, Math.min(1, 1 - (e.spawnAnimTimer / (e.maxSpawnAnim || 0.55))));
+        spawnScaleY = 0.25 + 0.75 * sp;
+        spawnScaleX = 1.45 - 0.45 * sp;
+        spawnAlpha = 0.35 + 0.65 * sp;
+        const beamW = (e.isBoss ? 86 : 44) * (1.25 - sp * 0.8);
+        ctx.save();
+        ctx.globalAlpha = (1 - sp * 0.75) * 0.78;
+        const col = e.gemColor || (e.isBoss ? '#f43f5e' : '#c084fc');
+        const beamGrad = ctx.createLinearGradient(0, -e.height * 2.4, 0, 0);
+        beamGrad.addColorStop(0, 'transparent');
+        beamGrad.addColorStop(0.4, col);
+        beamGrad.addColorStop(1, '#ffffff');
+        ctx.fillStyle = beamGrad;
+        ctx.fillRect(-beamW * 0.5, -e.height * 2.4, beamW, e.height * 2.4);
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.ellipse(0, -4, beamW * 0.85, 11, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.scale(e.facing * spawnScaleX, spawnScaleY);
+      ctx.globalAlpha *= spawnAlpha;
 
       if (e.isPoofing) {
         const poofProgress = Math.max(0, Math.min(1, 1 - (e.poofTimer / (e.maxPoofTime || 0.16))));
@@ -18970,6 +19008,91 @@ function getCompatibleFusionPartners(charId) {
 // actually going through in that part of the story. `party` / `partner` resolve
 // to whoever the player brought, so the lines stay in character for any roster.
 // ============================================================================
+// ============================================================================
+// CONCEPT UI: ARCADE MAPS, STORY CUTSCENES, FINALE & LORE PUZZLES
+// ============================================================================
+const ARCADE_MAPS = [
+  { stage: 1, name: 'Beach City Boardwalk', tag: 'EPISODE 1', boss: 'boss_spitter', bossName: 'ALPHA CENTIPEETLE MOTHER', mobs: ['centipeetle', 'acid_centipeetle', 'winged_centipeetle'] },
+  { stage: 2, name: 'Galaxy Warp & Spire', tag: 'EPISODE 2', boss: 'boss_giant_bird', bossName: 'ANCIENT SPIRE COLOSSUS', mobs: ['blade_quartz', 'spire_harpy', 'centipeetle'] },
+  { stage: 3, name: 'Prime Kindergarten', tag: 'EPISODE 3', boss: 'boss_cluster_titan', bossName: 'KINDERGARTEN AMALGAM TITAN', mobs: ['cluster', 'blade_quartz', 'acid_centipeetle'] },
+  { stage: 4, name: "Earth's Mantle Core", tag: 'EPISODE 4', boss: 'boss_cluster_core', bossName: 'GEO-WEAPON CLUSTER CORE', mobs: ['cluster', 'obsidian', 'volcanic_firebird'] },
+  { stage: 5, name: "Bismuth's Burning Forge", tag: 'EPISODE 5', boss: 'boss_forge_guardian', bossName: 'ANCIENT FORGE SENTINEL', mobs: ['forge_automaton', 'volcanic_firebird', 'carnelian_enforcer'] },
+  { stage: 6, name: 'The Frozen North', tag: 'EPISODE 6', boss: 'boss_jasper', bossName: 'CORRUPTED JASPER', mobs: ['ice_monster', 'snow_monster', 'ice_gargoyle'] },
+  { stage: 7, name: "Pink Diamond's Zoo", tag: 'EPISODE 7', boss: 'boss_agate_warden', bossName: 'HOLLY BLUE AGATE', mobs: ['carnelian_enforcer', 'destabilizer_soldier', 'blade_quartz'] },
+  { stage: 8, name: 'Homeworld Abduction Shore', tag: 'EPISODE 8', boss: 'boss_topaz_fusion', bossName: 'TOPAZ FUSION GUARD', mobs: ['destabilizer_soldier', 'robonoid_scout', 'obsidian'] },
+  { stage: 9, name: 'Homeworld Trial & Off-Colors', tag: 'EPISODE 9', boss: 'boss_robonoid_titan', bossName: 'ROBONOID HUNTER COLOSSUS', mobs: ['robonoid_scout', 'destabilizer_soldier', 'forge_automaton'] },
+  { stage: 10, name: 'Diamond Mecha Throne', tag: 'EPISODE 10', boss: 'boss_white_diamond', bossName: 'WHITE DIAMOND SUPREME MECHA', mobs: ['obsidian', 'destabilizer_soldier', 'robonoid_scout', 'cluster'] }
+];
+
+const STORY_CUTSCENES = {
+  1: {
+    tag: 'EPISODE 1 · GEM GLOW & BEACH CITY',
+    lines: [
+      { scene: 'beach', w: 'pearl', t: "Steven! Another cluster of Centipeetle corruptions warped onto Beach City beach!" },
+      { scene: 'beach', w: 'amethyst', t: "Chill, P! Steven's got Cookie Cats ready and we've got backup!" },
+      { scene: 'beach', w: 'garnet', t: "Stay sharp. Before we breach the shore ruins, align the Crystal Temple glyph seal." }
+    ]
+  },
+  2: {
+    tag: 'EPISODE 2 · GALAXY WARP & SEA SPIRE',
+    lines: [
+      { scene: 'warp', w: 'garnet', t: "These ancient warp streams link Earth to Homeworld's fallen outposts." },
+      { scene: 'warp', w: 'steven', t: "Look at those cracked shard murals! If we match them, the Sea Spire bridge opens!" }
+    ]
+  },
+  4: {
+    tag: 'EPISODE 4 · INTO THE CLUSTER',
+    lines: [
+      { scene: 'mantle', w: 'peridot', t: "We're miles under Earth's crust! Align Steven's prism mirrors or the Cluster tears the mantle apart!" },
+      { scene: 'mantle', w: 'steven', t: "Hold tight, Peridot — we can calm them just like real Gems!" }
+    ]
+  },
+  6: {
+    tag: 'EPISODE 6 · CRACK OF THE FROZEN NORTH',
+    lines: [
+      { scene: 'ice', w: 'amethyst', t: "Jasper's tracking corrupted beasts out in the blizzard... she won't listen to reason!" },
+      { scene: 'ice', w: 'steven', t: "Then we stand together—no Gem has to shatter today!" }
+    ]
+  },
+  8: {
+    tag: 'EPISODE 8 · ARE YOU MY DAD?',
+    lines: [
+      { scene: 'homeworld', w: 'connie', t: "Aquamarine and Topaz captured half our friends on Beach City shore!" },
+      { scene: 'homeworld', w: 'steven', t: "Not on our watch. Let's crack this Homeworld lock and rescue them all!" }
+    ]
+  },
+  10: {
+    tag: 'EPISODE 10 · CHANGE YOUR MIND',
+    lines: [
+      { scene: 'mecha', w: 'steven', t: "White Diamond's colossal ship looms ahead! Everything Rose left behind leads here." },
+      { scene: 'mecha', w: 'garnet', t: "Steven, whatever happens in her throne room... you already know who you truly are." }
+    ]
+  }
+};
+
+const STORY_FINALE_CUTSCENE = {
+  tag: 'FINALE · CHANGE YOUR MIND — ERA 3 PEACE',
+  lines: [
+    { scene: 'pink_merge', w: 'steven', t: "\"SHE'S GONE!!\" When White Diamond pulled my gem out, my Pink half held me tight... I don't need to be anyone else. I'm Steven." },
+    { scene: 'white_blush', w: 'pearl', t: "Look! White Diamond finally saw color—even she isn't flawless, and now she wants to understand!" },
+    { scene: 'fountain', w: 'garnet', t: "Back at Rose's Healing Fountain on Earth, all four Diamonds poured their essence together. Centipeetle, Jasper, and every corrupted Gem are finally free!" },
+    { scene: 'era3', w: 'steven', t: "No more fighting. Welcome to Era 3, everyone—and thank you for believing in Steven!" }
+  ]
+};
+
+const STORY_PUZZLE_CONFIGS = {
+  1: { kind: 'pattern', title: 'TEMPLE DOOR HARMONY SEAL', desc: 'Watch the Temple Door gemstones chime, then tap the exact 4-Gem sequence to unseal Beach City!' },
+  2: { kind: 'memory', title: 'GALAXY WARP PRISM RESONANCE', desc: 'Match the 4 fractured Crystal Gem pairs on the ancient warp pad to open the Sea Spire.' },
+  3: { kind: 'conduit', title: 'KINDERGARTEN INJECTOR BYPASS', desc: 'Click pipes to rotate and route Rose Energy from the top-left Core (IN) to the bottom-right Exit (OUT).' },
+  4: { kind: 'mirrors', title: 'MANTLE CLUSTER LIGHT PRISM', desc: 'Click mirror crystals (/ or \\) so Steven’s Pink Shield Beam reaches the Geo-Weapon Diamond Lock!' },
+  5: { kind: 'conduit', title: "BISMUTH'S LAVA FORGE GATE", desc: 'Rotate the molten conduit tiles to channel Bismuth Forge heat from IN to OUT.' },
+  6: { kind: 'memory', title: 'NORTH SEA ICE SHARD SEAL', desc: 'Uncover and match all 4 frozen Gem insignia pairs before Jasper charges!' },
+  7: { kind: 'pattern', title: 'SPACE ZOO AMETHYST DOOR CODE', desc: 'Memorize the Diamond Authority chime order and repeat it back to unlock the Zoo containment bay!' },
+  8: { kind: 'mirrors', title: 'AQUAMARINE SHUTTLE PRISM LOCK', desc: 'Angle the Homeworld prism mirrors to deflect Steven’s beam straight into the escape lock!' },
+  9: { kind: 'conduit', title: 'OFF-COLORS ESCAPE CONDUIT', desc: 'Re-route the decaying Homeworld Kindergarten power grid from IN to OUT for Lars & the Off-Colors!' },
+  10: { kind: 'mirrors', title: 'DIAMOND STARLIGHT NEXUS', desc: 'Align White Diamond’s prism reflectors to illuminate all pathways and reach the final confrontation!' }
+};
+
 const STORY_SCRIPT = {
   1: {
     map: 'Beach City Boardwalk',
@@ -19824,6 +19947,22 @@ class StevenUniverseGame {
     this.bossSpawnTimer = 0;
     this.gameOverTimerActive = false;
 
+    // Concept UI, Arcade Endless Rush, Story Cutscenes, Lore Puzzles & Resolution
+    this.selectedEntryMode = 'story';
+    this.arcadeMapStage = parseInt(SafeStorage.getItem('su_arcadeMapStage'), 10) || 1;
+    this.arcadeWave = 1;
+    this.arcadeWavePending = false;
+    this.arcadeBossEvery = 3;
+    this.cutsceneActive = false;
+    this.cutsceneData = null;
+    this.cutsceneIndex = 0;
+    this.cutsceneOnDone = null;
+    this.puzzleActive = false;
+    this.puzzleState = null;
+    this.creditsActive = false;
+    this.creditsSpeed = 1;
+    this.resolutionPreset = SafeStorage.getItem('su_resolutionPreset') || 'auto';
+
     this.keysP1 = {
       left: false, right: false, jump: false,
       down: false, shield: false,
@@ -19838,6 +19977,8 @@ class StevenUniverseGame {
 
     this.lastTime = performance.now();
     this.initEventListeners();
+    this.initInteractiveHoverPhysics();
+    this.applyResolution(this.resolutionPreset);
     this.updateLobbyGuardian();
     this.updateLobbyDifficulty();
     this.updateHUD();
@@ -20304,7 +20445,7 @@ class StevenUniverseGame {
     this.updateHUD();
   }
 
-  startNewGame(mode = 'story') {
+  startNewGame(mode = 'story', opts = {}) {
     this.stopLobbySlideshow();
     this.gameMode = mode;
     this.score = 0;
@@ -20350,6 +20491,14 @@ class StevenUniverseGame {
     this.isTransitioning = false;
     this.transitionTimer = 0;
     this.lastStoryBeat = null;
+    this.arcadeWave = 1;
+    this.arcadeWavePending = false;
+    this.cutsceneActive = false;
+    this.cutsceneData = null;
+    this.cutsceneOnDone = null;
+    this.puzzleActive = false;
+    this.puzzleState = null;
+    this.creditsActive = false;
     this.releaseAllInputs();
     this.dialogueActive = false;
     this.dialogueOnDone = null;
@@ -20414,22 +20563,30 @@ class StevenUniverseGame {
     }
 
     this.state = 'playing';
-    this.audio.lastStageIndex = this.stageIndex;
-    if (mode === 'practice') {
-      this.audio.playMusic('practice');
-    } else {
-      this.audio.playStageMusic(this.stageIndex, false);
-    }
     this.updateHUD();
     this.updateActionBar();
     this.updateFusionHUD();
 
     if (mode === 'practice') {
       this.stageIndex = 0;
+      this.audio.lastStageIndex = 0;
+      this.audio.playMusic('practice');
       this.startPracticeDojo();
+    } else if (mode === 'arcade') {
+      this.stageIndex = Math.max(1, Math.min(10, parseInt(opts.stage || this.arcadeMapStage || 1, 10) || 1));
+      this.arcadeMapStage = this.stageIndex;
+      this.audio.lastStageIndex = this.stageIndex;
+      this.audio.playStageMusic(this.stageIndex, false);
+      this.startArcadeWave(1);
     } else {
-      this.stageIndex = 1;
-      this.startStageWave();
+      this.stageIndex = Math.max(1, Math.min(10, parseInt(opts.stage || 1, 10) || 1));
+      this.audio.lastStageIndex = this.stageIndex;
+      this.audio.playStageMusic(this.stageIndex, false);
+      if (opts.skipIntroFlow) {
+        this.startStageWave();
+      } else {
+        this.startStoryEpisodeFlow(this.stageIndex);
+      }
     }
   }
 
@@ -20909,7 +21066,7 @@ class StevenUniverseGame {
   }
 
   // Jump straight into any episode from the menu (no restarting from episode 1).
-  startEpisode(stageNumber) {
+  startEpisode(stageNumber, opts = {}) {
     const n = Math.max(1, Math.min(10, parseInt(stageNumber, 10) || 1));
     if (this.dialogueActive) {
       this.dialogueActive = false;
@@ -20917,15 +21074,7 @@ class StevenUniverseGame {
       const box = document.getElementById('dialogueBox');
       if (box) box.style.display = 'none';
     }
-    this.startNewGame('story');
-    // startNewGame forces episode 1 — override it for the chosen stage.
-    this.stageIndex = n;
-    this.lastStoryBeat = null;
-    this.isWaitingForBoss = false;
-    const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
-    this.enemyManager.reset(n, diff, this.pickups);
-    this.updateHUD();
-    this.startStageWave();
+    this.startNewGame('story', { stage: n, skipIntroFlow: !!opts.skipIntroFlow });
   }
 
   openEpisodeScreen() {
@@ -21028,7 +21177,11 @@ class StevenUniverseGame {
     if (this.player2) this.player2.revive(this.audio, this.particles);
     this.isTransitioning = false;
     this.updateHUD();
-    this.startStageWave();
+    if (this.gameMode === 'story') {
+      this.startStoryEpisodeFlow(this.stageIndex);
+    } else {
+      this.startStageWave();
+    }
   }
 
   updateScreenTransition(dt) {
@@ -21449,7 +21602,11 @@ class StevenUniverseGame {
           if (this.player2) this.player2.revive(this.audio, this.particles);
           this.isTransitioning = false;
           this.updateHUD();
-          this.startStageWave();
+          if (this.gameMode === 'story') {
+            this.startStoryEpisodeFlow(this.stageIndex);
+          } else {
+            this.startStageWave();
+          }
         }
       }
       return;
@@ -21582,7 +21739,32 @@ class StevenUniverseGame {
     }
 
     // --- WAVE CONTROLLER (Delta-Time Driven, Immune to Pauses & Idling) ---
-    if (!this.isTransitioning && this.gameMode !== 'practice' && this.stageIndex > 0) {
+    if (!this.isTransitioning && this.gameMode === 'arcade' && this.stageIndex > 0) {
+      if (this.waveSpawnQueue && this.waveSpawnQueue.length > 0) {
+        for (let q = this.waveSpawnQueue.length - 1; q >= 0; q--) {
+          const item = this.waveSpawnQueue[q];
+          item.timer -= dt;
+          if (item.timer <= 0) {
+            this.enemyManager.spawnEnemy(item.type, item.spawnX);
+            this.waveSpawnQueue.splice(q, 1);
+          }
+        }
+      }
+      if ((!this.waveSpawnQueue || this.waveSpawnQueue.length === 0) && this.enemyManager.enemies.length === 0 && !this.arcadeWavePending) {
+        if (!this.isWaitingForWaveClear) {
+          this.isWaitingForWaveClear = true;
+          this.waveClearTimer = 0.65;
+        } else {
+          this.waveClearTimer -= dt;
+          if (this.waveClearTimer <= 0) {
+            this.isWaitingForWaveClear = false;
+            this.onArcadeWaveCleared();
+          }
+        }
+      } else {
+        this.isWaitingForWaveClear = false;
+      }
+    } else if (!this.isTransitioning && this.gameMode === 'story' && this.stageIndex > 0) {
       // 1. Process wave spawn queue
       if (this.waveSpawnQueue && this.waveSpawnQueue.length > 0) {
         for (let q = this.waveSpawnQueue.length - 1; q >= 0; q--) {
@@ -22357,6 +22539,12 @@ class StevenUniverseGame {
     document.getElementById('vStatScore').textContent = `${this.score}`;
     document.getElementById('vStatRank').textContent = this.currentHearts >= 4 ? 'STAR ⭐ (S+)' : 'GEM 💎 (A)';
 
+    if (this.gameMode === 'story' && typeof STORY_FINALE_CUTSCENE !== 'undefined') {
+      this.audio.playTrackById('distant_shore', false);
+      this.playStoryCutscene(STORY_FINALE_CUTSCENE, () => this.openCreditsScreen());
+      return;
+    }
+
     document.getElementById('victoryScreen').style.display = 'flex';
   }
 
@@ -22380,6 +22568,11 @@ class StevenUniverseGame {
     if (this.score > this.highScore) {
       this.highScore = this.score;
       SafeStorage.setItem('su_highScore', this.highScore.toString());
+    }
+
+    if (this.gameMode === 'arcade') {
+      this.showArcadeResultScreen('DEFEATED IN THE ARENA');
+      return;
     }
 
     document.getElementById('goFinalScore').textContent = `${this.score}`;
@@ -24678,6 +24871,10 @@ class StevenUniverseGame {
   showTitleScreen() {
     this.screenTransition = null;
     this.setVeil(false);
+    this.arcadeWavePending = false;
+    this.cutsceneActive = false;
+    this.puzzleActive = false;
+    this.creditsActive = false;
     this.hideAllScreens();
     this.state = 'title';
     this.releaseAllInputs();
@@ -24686,7 +24883,7 @@ class StevenUniverseGame {
     if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
       this.audio.ctx.resume().catch(() => {});
     }
-    const lobbyTrack = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
+    const lobbyTrack = (this.audio.bgmOverrideManual && this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'intro_launch';
     this.audio.playTrackById(lobbyTrack, false);
     // A returning player should always land on music, not silence.
     if (this.audio.ctx && this.audio.ctx.state === 'running' && this.audio.musicGainNode) {
@@ -24836,6 +25033,42 @@ class StevenUniverseGame {
       // Only touch the audio graph when it actually needs unlocking.
       if (!this.audio.ctx || this.audio.ctx.state !== 'running') this.audio.init();
       this.releaseKeysOnModifierChange(e);
+
+      // Modal Navigation Hotkeys (Arcade Intermission, Story Cutscene, Credits)
+      if (this.arcadeWavePending || this.state === 'arcade_wait') {
+        if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+          e.preventDefault();
+          this.continueArcadeWave();
+          return;
+        }
+        if (e.code === 'Escape' || e.code === 'Backspace' || e.code === 'KeyR') {
+          e.preventDefault();
+          this.gemOutArcade();
+          return;
+        }
+        return;
+      }
+      if (this.cutsceneActive || this.state === 'cutscene') {
+        if (e.code === 'Space' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'ArrowRight') {
+          e.preventDefault();
+          this.advanceCutscene();
+          return;
+        }
+        if (e.code === 'Escape') {
+          e.preventDefault();
+          this.finishCutscene();
+          return;
+        }
+        return;
+      }
+      if (this.creditsActive || this.state === 'credits') {
+        if (e.code === 'Escape' || e.code === 'Enter') {
+          e.preventDefault();
+          this.closeCreditsScreen();
+          return;
+        }
+        return;
+      }
 
       // Screenshot hotkey: PrintScreen (or [P] in Solo Mode)
       if (e.code === 'PrintScreen' || (e.code === 'KeyP' && this.playerMode !== '2p')) {
@@ -25046,10 +25279,22 @@ class StevenUniverseGame {
       }
     };
 
-    // Main Menu Buttons
+    // Main Menu Buttons (Frameless Concept UI Entry Points)
+    safeClick('btnArcadeMode', () => {
+      this.audio.playSfx('warpPad');
+      this.openCharacterSelect('arcade');
+    });
+    safeClick('btnStoryModeEntry', () => {
+      this.audio.playSfx('warpPad');
+      this.openCharacterSelect('story');
+    });
+    safeClick('btnOpenCredits', () => {
+      this.audio.playSfx('warpPad');
+      this.openCreditsScreen();
+    });
     safeClick('btnPlayStory', () => {
       this.audio.playSfx('warpPad');
-      this.startNewGame('story');
+      this.openCharacterSelect('story');
     });
     safeClick('btnPractice', () => {
       this.audio.playSfx('warpPad');
@@ -25058,6 +25303,73 @@ class StevenUniverseGame {
     safeClick('btnPlayerMode', () => {
       this.audio.playSfx('menuTap');
       this.togglePlayerMode();
+    });
+    safeClick('btnCharPractice', () => {
+      this.audio.playSfx('warpPad');
+      if (charModal) charModal.style.display = 'none';
+      this.startNewGame('practice');
+    });
+    safeClick('btnCharDiff', () => {
+      this.audio.playSfx('menuTap');
+      this.cycleDifficulty();
+      this.syncCharModalMeta();
+    });
+    safeClick('btnCharPlayerMode', () => {
+      this.audio.playSfx('menuTap');
+      this.togglePlayerMode();
+      this.syncCharModalMeta();
+      const pTabs = document.getElementById('charPlayerTabs');
+      if (pTabs) pTabs.style.display = this.playerMode === '2p' ? 'flex' : 'none';
+    });
+    safeClick('btnCharEpisodes', () => {
+      this.audio.playSfx('menuTap');
+      if (charModal) charModal.style.display = 'none';
+      this.openEpisodeScreen();
+    });
+    safeClick('btnCharBackMenu', () => {
+      this.audio.playSfx('menuTap');
+      if (charModal) charModal.style.display = 'none';
+    });
+    // Map Selection Buttons
+    safeClick('btnCloseMapSelect', () => {
+      this.audio.playSfx('menuTap');
+      const mScreen = document.getElementById('mapSelectScreen');
+      if (mScreen) mScreen.style.display = 'none';
+    });
+    safeClick('btnMapBack', () => {
+      this.audio.playSfx('menuTap');
+      const mScreen = document.getElementById('mapSelectScreen');
+      if (mScreen) mScreen.style.display = 'none';
+      this.openCharacterSelect('arcade');
+    });
+    safeClick('btnPlayArcadeMap', () => {
+      this.audio.playSfx('warpPad');
+      const mScreen = document.getElementById('mapSelectScreen');
+      if (mScreen) mScreen.style.display = 'none';
+      this.startArcadeRun(this.arcadeMapStage || 1);
+    });
+    // Arcade Wave Intermission & Result Buttons
+    safeClick('btnArcadeContinue', () => this.continueArcadeWave());
+    safeClick('btnArcadeGemOut', () => this.gemOutArcade());
+    safeClick('btnArcadeMainMenu', () => {
+      this.audio.playSfx('menuTap');
+      this.showTitleScreen();
+    });
+    safeClick('btnArcadeRetry', () => {
+      this.audio.playSfx('warpPad');
+      this.startArcadeRun(this.arcadeMapStage || 1);
+    });
+    // Story Cutscene & Puzzle Buttons
+    safeClick('btnCutsceneNext', () => this.advanceCutscene());
+    safeClick('btnCutsceneSkip', () => this.finishCutscene());
+    safeClick('btnPuzzleHint', () => this.showPuzzleHint());
+    safeClick('btnPuzzleReset', () => this.resetCurrentPuzzle());
+    safeClick('btnPuzzleSkip', () => this.skipCurrentPuzzle());
+    // Credits Buttons
+    safeClick('btnCreditsSpeed', () => this.toggleCreditsSpeed());
+    safeClick('btnCreditsMenu', () => {
+      this.audio.playSfx('menuTap');
+      this.closeCreditsScreen();
     });
     safeClick('btnOpenDifficulty', () => this.openDifficultyScreen());
     safeClick('btnCloseDifficulty', () => this.closeDifficultyScreen());
@@ -25159,10 +25471,11 @@ class StevenUniverseGame {
       this.updateCharPreview(this.tempSelectedChar);
       if (charModal) charModal.style.display = 'flex';
     };
+    this._openCharModalInternal = openCharModal;
 
     safeClick('lobbyGuardianCard', () => {
       this.audio.playSfx('weaponSummon');
-      openCharModal();
+      this.openCharacterSelect(this.selectedEntryMode || 'story');
     });
     safeClick('btnCloseCharSelect', () => {
       this.audio.playSfx('menuTap');
@@ -25244,7 +25557,12 @@ class StevenUniverseGame {
       }
       this.updateLobbyGuardian();
       if (charModal) charModal.style.display = 'none';
-      this.audio.playSfx('weaponSummon');
+      this.audio.playSfx('warpPad');
+      if (this.selectedEntryMode === 'arcade') {
+        this.openMapSelectScreen();
+      } else {
+        this.startNewGame('story', { stage: 1 });
+      }
     });
 
     // Settings & Audio Controls
@@ -25381,7 +25699,34 @@ class StevenUniverseGame {
       if (btnSettingPerf) btnSettingPerf.textContent = this.fastPerfMode ? 'Fast Performance Mode: ON' : 'Fast Performance Mode: OFF';
       if (btnSettingShake) btnSettingShake.textContent = this.screenShakeEnabled ? 'Screen Shake: ON' : 'Screen Shake: OFF';
       if (btnSettingTouch) btnSettingTouch.textContent = this.isRealMobile ? 'Mobile Controls: FORCED ON' : 'Mobile Controls: AUTO';
+      this.switchSettingsTab('audio');
+      this.syncResolutionUI();
       if (settingsModal) settingsModal.style.display = 'flex';
+    });
+
+    document.querySelectorAll('.settings-tab-btn[data-stab]').forEach(tabBtn => {
+      tabBtn.addEventListener('click', () => {
+        this.audio.playSfx('menuTap');
+        this.switchSettingsTab(tabBtn.dataset.stab || 'audio');
+      });
+    });
+
+    document.querySelectorAll('.res-btn[data-res]').forEach(resBtn => {
+      resBtn.addEventListener('click', () => {
+        this.audio.playSfx('menuTap');
+        this.applyResolution(resBtn.dataset.res || 'auto');
+      });
+    });
+
+    safeClick('btnSettingFullscreen', () => {
+      this.audio.playSfx('menuTap');
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      } catch (e) {}
     });
 
     safeClick('btnCloseSettings', () => {
@@ -25633,6 +25978,973 @@ class StevenUniverseGame {
     const touchCdDodge = document.getElementById('touchCdDodge');
     if (touchCdDodge) touchCdDodge.style.height = `${Math.min(100, Math.max(0, (this.player.dodgeCooldown / 0.55) * 100))}%`;
   }
+
+  // ============================================================================
+  // CONCEPT UI: HOVER PHYSICS, RESOLUTION, ARCADE MODE, CUTSCENES, PUZZLES, CREDITS
+  // ============================================================================
+  initInteractiveHoverPhysics() {
+    if (this._hoverPhysicsBound || typeof document === 'undefined') return;
+    this._hoverPhysicsBound = true;
+    const selector = '.menu-link-btn, .hover-float, .modal-card, .map-card-item, .char-grid-item, .diff-btn, .episode-btn, .puzzle-tile';
+    document.addEventListener('pointermove', (e) => {
+      const target = e.target && e.target.closest ? e.target.closest(selector) : null;
+      if (this._activeHoverEl && this._activeHoverEl !== target) {
+        this._activeHoverEl.style.setProperty('--mx', '0px');
+        this._activeHoverEl.style.setProperty('--my', '0px');
+      }
+      this._activeHoverEl = target;
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const nx = Math.max(-1, Math.min(1, ((e.clientX - rect.left) / rect.width - 0.5) * 2));
+      const ny = Math.max(-1, Math.min(1, ((e.clientY - rect.top) / rect.height - 0.5) * 2));
+      target.style.setProperty('--mx', `${(nx * 6).toFixed(2)}px`);
+      target.style.setProperty('--my', `${(ny * 4).toFixed(2)}px`);
+    }, { passive: true });
+    document.addEventListener('pointerleave', () => {
+      if (this._activeHoverEl) {
+        this._activeHoverEl.style.setProperty('--mx', '0px');
+        this._activeHoverEl.style.setProperty('--my', '0px');
+        this._activeHoverEl = null;
+      }
+    }, true);
+  }
+
+  switchSettingsTab(tab = 'audio') {
+    const panels = {
+      audio: document.getElementById('settingsPanelAudio'),
+      graphics: document.getElementById('settingsPanelGraphics'),
+      resolution: document.getElementById('settingsPanelResolution')
+    };
+    Object.entries(panels).forEach(([k, el]) => {
+      if (el) el.style.display = (k === tab) ? 'block' : 'none';
+    });
+    document.querySelectorAll('.settings-tab-btn[data-stab]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.stab === tab);
+    });
+  }
+
+  syncResolutionUI() {
+    document.querySelectorAll('.res-btn[data-res]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.res === (this.resolutionPreset || 'auto'));
+    });
+  }
+
+  applyResolution(preset = 'auto') {
+    const valid = ['auto', '1280x720', '1600x900', '1920x1080'].includes(preset) ? preset : 'auto';
+    this.resolutionPreset = valid;
+    SafeStorage.setItem('su_resolutionPreset', valid);
+    if (typeof window !== 'undefined') window.__suResolutionPreset = valid;
+    if (typeof fitGameToViewport === 'function') fitGameToViewport();
+    this.syncResolutionUI();
+  }
+
+  syncCharModalMeta() {
+    const mode = this.selectedEntryMode || 'story';
+    const badge = document.getElementById('modeDiffBadge');
+    const desc = document.getElementById('modeDiffDesc');
+    const popup = document.getElementById('modeDiffPopup');
+    const pracBtn = document.getElementById('btnCharPractice');
+    const epBtn = document.getElementById('btnCharEpisodes');
+    const playBtn = document.getElementById('btnConfirmChar');
+    const diffLabel = document.getElementById('charDiffLabel');
+    const pModeLabel = document.getElementById('charPlayerModeLabel');
+    const dCfg = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
+    if (diffLabel) diffLabel.textContent = (dCfg.label || this.difficulty || 'medium').toUpperCase();
+    if (pModeLabel) pModeLabel.textContent = this.playerMode === '2p' ? '2P CO-OP' : '1P SOLO';
+
+    if (mode === 'arcade') {
+      if (popup) popup.classList.add('arcade-mode');
+      if (badge) badge.textContent = 'ARCADE MODE';
+      if (desc) desc.textContent = 'FAST-PACED, QUICK PROGRESSION, SCORE-BASED · ENDLESS WAVES & BOSSES';
+      if (pracBtn) pracBtn.style.display = 'inline-flex';
+      if (epBtn) epBtn.style.display = 'none';
+      if (playBtn) playBtn.textContent = 'NEXT: MAP SELECTION ➔';
+    } else {
+      if (popup) popup.classList.remove('arcade-mode');
+      if (badge) badge.textContent = 'STORY MODE';
+      if (desc) desc.textContent = 'COMBAT, PUZZLES, DIALOGUE & CUTSCENES · EPISODES 1 TO 10';
+      if (pracBtn) pracBtn.style.display = 'inline-flex';
+      if (epBtn) epBtn.style.display = 'inline-flex';
+      if (playBtn) playBtn.textContent = 'PLAY STORY (EP 1–10) ➔';
+    }
+  }
+
+  openCharacterSelect(flowMode = 'story') {
+    this.selectedEntryMode = (flowMode === 'arcade') ? 'arcade' : 'story';
+    this.syncCharModalMeta();
+    if (this._openCharModalInternal) {
+      this._openCharModalInternal();
+    } else {
+      const m = document.getElementById('characterSelectScreen');
+      if (m) m.style.display = 'flex';
+    }
+  }
+
+  openMapSelectScreen() {
+    this.renderMapSelectCards();
+    const screen = document.getElementById('mapSelectScreen');
+    if (screen) screen.style.display = 'flex';
+  }
+
+  renderMapSelectCards() {
+    const grid = document.getElementById('mapSelectGrid');
+    if (!grid || typeof ARCADE_MAPS === 'undefined') return;
+    grid.innerHTML = '';
+    const selected = this.arcadeMapStage || 1;
+    ARCADE_MAPS.forEach((m) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'map-card-item' + (m.stage === selected ? ' selected' : '');
+      card.dataset.stage = String(m.stage);
+
+      const cvs = document.createElement('canvas');
+      cvs.width = 320;
+      cvs.height = 180;
+      const pctx = cvs.getContext('2d');
+      if (pctx && typeof EnvironmentRenderer === 'function') {
+        try {
+          if (!this._previewRenderer) this._previewRenderer = new EnvironmentRenderer(1280, 720, 1280);
+          pctx.save();
+          pctx.scale(0.25, 0.25);
+          this._previewRenderer.drawBackground(pctx, m.stage, 160, false);
+          this._previewRenderer.drawForeground(pctx, m.stage, false);
+          pctx.restore();
+        } catch (err) {
+          pctx.fillStyle = '#0f172a';
+          pctx.fillRect(0, 0, 320, 180);
+        }
+      }
+
+      const cap = document.createElement('div');
+      cap.className = 'map-card-caption';
+      cap.innerHTML = `<span class="map-card-title">${m.name}</span><span class="map-card-tag">${m.tag}</span>`;
+
+      card.appendChild(cvs);
+      card.appendChild(cap);
+      card.addEventListener('click', () => {
+        this.arcadeMapStage = m.stage;
+        SafeStorage.setItem('su_arcadeMapStage', String(m.stage));
+        grid.querySelectorAll('.map-card-item').forEach(el => el.classList.remove('selected'));
+        card.classList.add('selected');
+        if (this.audio) this.audio.playSfx('menuTap');
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  startArcadeRun(mapStage = 1) {
+    const st = Math.max(1, Math.min(10, parseInt(mapStage, 10) || 1));
+    this.arcadeMapStage = st;
+    SafeStorage.setItem('su_arcadeMapStage', String(st));
+    this.startNewGame('arcade', { stage: st });
+  }
+
+  startArcadeWave(waveNum = 1) {
+    this.arcadeWave = Math.max(1, waveNum);
+    this.arcadeWavePending = false;
+    this.isWaitingForWaveClear = false;
+    this.isWaitingForBoss = false;
+    this.waveSpawnQueue = [];
+    const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
+    this.enemyManager.reset(this.stageIndex, diff, this.pickups);
+    this.enemyManager.wave = this.arcadeWave;
+    this.enemyManager.maxWaves = this.arcadeWave + 1;
+
+    const mapInfo = (typeof ARCADE_MAPS !== 'undefined' && ARCADE_MAPS[this.stageIndex - 1])
+      ? ARCADE_MAPS[this.stageIndex - 1]
+      : { name: `ARENA ${this.stageIndex}`, mobs: ['centipeetle', 'acid_centipeetle', 'blade_quartz'], boss: 'boss_spitter', bossName: 'CORRUPTED BOSS' };
+
+    const badge = document.getElementById('hudStageBadge');
+    if (badge) {
+      badge.textContent = `ARCADE · ${mapInfo.name.toUpperCase()} · WAVE ${this.arcadeWave}`;
+      badge.style.display = 'block';
+    }
+    const objText = document.getElementById('hudObjectiveText');
+    if (objText) {
+      objText.textContent = `Endless Rush Wave ${this.arcadeWave} — Score: ${this.score}`;
+      objText.style.display = 'block';
+    }
+
+    const count = Math.min(12, 3 + Math.floor(this.arcadeWave * 1.4));
+    const allMixPool = ['centipeetle', 'acid_centipeetle', 'winged_centipeetle', 'blade_quartz', 'spire_harpy', 'cluster', 'obsidian', 'volcanic_firebird', 'ice_monster', 'snow_monster', 'carnelian_enforcer', 'destabilizer_soldier', 'robonoid_scout'];
+    const pool = this.arcadeWave >= 4 ? mapInfo.mobs.concat(allMixPool) : mapInfo.mobs;
+
+    for (let i = 0; i < count; i++) {
+      const mType = pool[Math.floor(Math.random() * pool.length)];
+      const spawnX = (i % 2 === 0 ? 1120 + (i * 85) : 140 + (i * 55)) % 2200 + 180;
+      this.waveSpawnQueue.push({
+        type: mType,
+        spawnX: Math.max(160, Math.min(this.stageWidth - 180, spawnX)),
+        timer: i * 0.22
+      });
+    }
+
+    // Spawn a roaring Boss or Cross-Map Boss every 3rd wave (or Wave 2+)!
+    const isBossWave = (this.arcadeWave % (this.arcadeBossEvery || 3) === 0);
+    if (isBossWave) {
+      const altBosses = (typeof ARCADE_MAPS !== 'undefined') ? ARCADE_MAPS : [mapInfo];
+      const chosenBossInfo = this.arcadeWave === 3 ? mapInfo : altBosses[(this.stageIndex + this.arcadeWave - 1) % altBosses.length];
+      this.waveSpawnQueue.push({
+        type: chosenBossInfo.boss,
+        spawnX: Math.min(this.stageWidth - 260, (this.player ? this.player.x : 400) + 520),
+        timer: 0.75
+      });
+      const bossHud = document.getElementById('bossHud');
+      if (bossHud) {
+        bossHud.classList.add('story-mode-boss');
+        bossHud.style.display = 'flex';
+        const bName = document.getElementById('bossName');
+        if (bName) bName.textContent = chosenBossInfo.bossName || 'ARCADE BOSS';
+      }
+      this.triggerWaveWarning(`WAVE ${this.arcadeWave} · BOSS INCOMING!`, true);
+    } else {
+      const bossHud = document.getElementById('bossHud');
+      if (bossHud) bossHud.style.display = 'none';
+      this.triggerWaveWarning(`ARCADE WAVE ${this.arcadeWave}`, false);
+    }
+    this.updateWaveLine();
+  }
+
+  onArcadeWaveCleared() {
+    if (this.gameMode !== 'arcade' || this.arcadeWavePending) return;
+    this.arcadeWavePending = true;
+    this.state = 'arcade_wait';
+    this.releaseAllInputs();
+    if (this.audio) this.audio.playSfx('stageClear');
+
+    const modal = document.getElementById('arcadeWaveModal');
+    const title = document.getElementById('arcadeWaveTitle');
+    const sub = document.getElementById('arcadeWaveSubtitle');
+    const sc = document.getElementById('arcadeWaveScore');
+    const bub = document.getElementById('arcadeWaveBubbled');
+    if (title) title.textContent = `WAVE ${this.arcadeWave} CLEARED!`;
+    if (sub) sub.textContent = `Next wave (#${this.arcadeWave + 1}) ramps up intensity. Continue for +1 Heart or Gem Out with your score!`;
+    if (sc) sc.textContent = String(this.score);
+    if (bub) bub.textContent = String(this.bubbledGemsCount);
+    if (modal) modal.style.display = 'flex';
+  }
+
+  continueArcadeWave() {
+    if (this.gameMode !== 'arcade') return;
+    this.arcadeWavePending = false;
+    const modal = document.getElementById('arcadeWaveModal');
+    if (modal) modal.style.display = 'none';
+    this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
+    if (this.playerMode === '2p' && this.player2) {
+      this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
+    }
+    this.state = 'playing';
+    this.lastTime = performance.now();
+    this.updateHUD();
+    if (this.audio) this.audio.playSfx('warpPad');
+    this.startArcadeWave(this.arcadeWave + 1);
+  }
+
+  gemOutArcade() {
+    this.arcadeWavePending = false;
+    const modal = document.getElementById('arcadeWaveModal');
+    if (modal) modal.style.display = 'none';
+    if (this.score > this.highScore) {
+      this.highScore = this.score;
+      SafeStorage.setItem('su_highScore', this.highScore.toString());
+    }
+    this.showArcadeResultScreen('GEMMED OUT WITH TREASURE!');
+  }
+
+  showArcadeResultScreen(headline = 'ARCADE COMPLETE') {
+    this.state = 'gameover';
+    this.arcadeWavePending = false;
+    this.releaseAllInputs();
+    if (this.audio) this.audio.stopMusic();
+    if (document.body) document.body.classList.remove('in-game');
+    const mapInfo = (typeof ARCADE_MAPS !== 'undefined' && ARCADE_MAPS[this.stageIndex - 1])
+      ? ARCADE_MAPS[this.stageIndex - 1]
+      : { name: `Arena ${this.stageIndex}` };
+    const scr = document.getElementById('arcadeResultScreen');
+    const tEl = document.getElementById('arcadeResultTitle');
+    const mEl = document.getElementById('arcadeResultMapLabel');
+    const sEl = document.getElementById('arcadeResultScore');
+    const bEl = document.getElementById('arcadeResultBubbled');
+    const wEl = document.getElementById('arcadeResultWaves');
+    if (tEl) tEl.textContent = headline;
+    if (mEl) mEl.textContent = `Arena: ${mapInfo.name}`;
+    if (sEl) sEl.textContent = String(this.score || 0);
+    if (bEl) bEl.textContent = String(this.bubbledGemsCount || 0);
+    if (wEl) wEl.textContent = String(this.arcadeWave || 1);
+    if (scr) scr.style.display = 'flex';
+  }
+
+  startStoryEpisodeFlow(epNum) {
+    const ep = Math.max(1, Math.min(10, parseInt(epNum, 10) || 1));
+    this.stageIndex = ep;
+    const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
+    this.enemyManager.reset(ep, diff, this.pickups);
+    this.audio.lastStageIndex = ep;
+    this.audio.playStageMusic(ep, false);
+
+    const launchCombat = () => {
+      this.state = 'playing';
+      this.lastTime = performance.now();
+      this.startStageWave();
+    };
+    const runPuzzleThenCombat = () => {
+      const hasDomPuzzle = !!(typeof document !== 'undefined' && document.getElementById('storyPuzzleScreen'));
+      if (this.storyMode !== false && typeof STORY_PUZZLE_CONFIGS !== 'undefined' && STORY_PUZZLE_CONFIGS[ep] && hasDomPuzzle) {
+        this.startStoryPuzzle(ep, launchCombat);
+      } else {
+        launchCombat();
+      }
+    };
+    const hasDomCutscene = !!(typeof document !== 'undefined' && document.getElementById('cutsceneScreen'));
+    if (this.storyMode !== false && typeof STORY_CUTSCENES !== 'undefined' && STORY_CUTSCENES[ep] && hasDomCutscene) {
+      this.playStoryCutscene(STORY_CUTSCENES[ep], runPuzzleThenCombat);
+    } else {
+      runPuzzleThenCombat();
+    }
+  }
+
+  playStoryCutscene(sceneObj, onDone) {
+    if (!sceneObj || !sceneObj.lines || sceneObj.lines.length === 0) {
+      if (onDone) onDone();
+      return;
+    }
+    const screen = document.getElementById('cutsceneScreen');
+    if (!screen) {
+      if (onDone) onDone();
+      return;
+    }
+    this.cutsceneActive = true;
+    this.cutsceneData = sceneObj;
+    this.cutsceneIndex = 0;
+    this.cutsceneOnDone = onDone || null;
+    this.state = 'cutscene';
+    this.releaseAllInputs();
+    screen.style.display = 'flex';
+    this.renderCutsceneLine();
+  }
+
+  renderCutsceneLine() {
+    if (!this.cutsceneData || !this.cutsceneData.lines) { this.finishCutscene(); return; }
+    const line = this.cutsceneData.lines[this.cutsceneIndex];
+    if (!line) { this.finishCutscene(); return; }
+
+    const tagEl = document.getElementById('cutsceneEpisodeTag');
+    const spEl = document.getElementById('cutsceneSpeaker');
+    const txtEl = document.getElementById('cutsceneText');
+    const portEl = document.getElementById('cutscenePortrait');
+    const nextBtn = document.getElementById('btnCutsceneNext');
+
+    const speaker = (typeof this.resolveStorySpeaker === 'function')
+      ? this.resolveStorySpeaker(line)
+      : { id: line.w || 'steven', name: (line.w || 'Steven').toUpperCase(), color: '#ff4f8b' };
+
+    if (tagEl) tagEl.textContent = this.cutsceneData.tag || 'STORY CUTSCENE';
+    if (spEl) {
+      spEl.textContent = speaker.name;
+      spEl.style.color = speaker.color || '#ffd700';
+    }
+    if (txtEl) txtEl.textContent = line.t || '';
+    if (portEl) {
+      portEl.innerHTML = (typeof getGuardianAvatarHtml === 'function')
+        ? getGuardianAvatarHtml(speaker.id, 78)
+        : '';
+    }
+    if (nextBtn) {
+      nextBtn.textContent = (this.cutsceneIndex >= this.cutsceneData.lines.length - 1) ? 'CONTINUE ➔' : 'NEXT ▸';
+    }
+    this.renderCutsceneCanvas(line.scene || 'beach');
+  }
+
+  renderCutsceneCanvas(sceneKind = 'beach') {
+    const cvs = document.getElementById('cutsceneCanvas');
+    if (!cvs) return;
+    const ctx = cvs.getContext('2d');
+    if (!ctx) return;
+    const w = cvs.width, h = cvs.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Paint rich atmospheric lore backdrop per cutscene beat
+    const palettes = {
+      beach: ['#0f172a', '#be185d', '#fb923c'],
+      warp: ['#090d26', '#1e3a8a', '#38bdf8'],
+      mantle: ['#1f0a0a', '#7f1d1d', '#ef4444'],
+      ice: ['#0c1c36', '#1e40af', '#bae6fd'],
+      homeworld: ['#1a0b2e', '#581c87', '#e879f9'],
+      mecha: ['#0f172a', '#475569', '#f8fafc'],
+      pink_merge: ['#3b0764', '#db2777', '#fbcfe8'],
+      white_blush: ['#1e293b', '#f472b6', '#ffffff'],
+      fountain: ['#064e3b', '#0284c7', '#f9a8d4'],
+      era3: ['#1e1b4b', '#ec4899', '#fde047']
+    };
+    const pal = palettes[sceneKind] || palettes.beach;
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, pal[0]);
+    grad.addColorStop(0.58, pal[1]);
+    grad.addColorStop(1, pal[2]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Stars & Warp Shimmer
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    for (let i = 0; i < 36; i++) {
+      const sx = (i * 97 + 41) % w;
+      const sy = (i * 53 + 17) % (h * 0.65);
+      const r = (i % 3 === 0) ? 2.2 : 1.1;
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Scene focal centerpiece
+    if (sceneKind === 'pink_merge' || sceneKind === 'white_blush' || sceneKind === 'mecha') {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.lineWidth = 3;
+      const cx = w / 2, cy = h * 0.48;
+      ctx.fillStyle = sceneKind === 'pink_merge' ? 'rgba(255, 118, 178, 0.35)' : 'rgba(255, 255, 255, 0.18)';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - 82);
+      ctx.lineTo(cx + 62, cy);
+      ctx.lineTo(cx, cy + 82);
+      ctx.lineTo(cx - 62, cy);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    } else if (sceneKind === 'fountain' || sceneKind === 'era3') {
+      const glow = ctx.createRadialGradient(w / 2, h * 0.65, 10, w / 2, h * 0.65, 240);
+      glow.addColorStop(0, 'rgba(255, 214, 102, 0.75)');
+      glow.addColorStop(0.5, 'rgba(236, 72, 153, 0.35)');
+      glow.addColorStop(1, 'rgba(236, 72, 153, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+    } else {
+      // Crystal Warp Pad silhouette
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.fillRect(w * 0.42, 0, w * 0.16, h * 0.84);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(w * 0.5, h * 0.84, 170, 24, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Horizon ground silhouette
+    ctx.fillStyle = 'rgba(10, 15, 32, 0.85)';
+    ctx.fillRect(0, h * 0.82, w, h * 0.18);
+  }
+
+  advanceCutscene() {
+    if (!this.cutsceneActive) return;
+    this.cutsceneIndex++;
+    if (this.audio) this.audio.playSfx('menuTap');
+    if (!this.cutsceneData || this.cutsceneIndex >= this.cutsceneData.lines.length) {
+      this.finishCutscene();
+    } else {
+      this.renderCutsceneLine();
+    }
+  }
+
+  finishCutscene() {
+    this.cutsceneActive = false;
+    const screen = document.getElementById('cutsceneScreen');
+    if (screen) screen.style.display = 'none';
+    const cb = this.cutsceneOnDone;
+    this.cutsceneOnDone = null;
+    this.cutsceneData = null;
+    if (cb) cb();
+  }
+
+  // ---- INTERACTIVE STORY GEM PUZZLES (4 DISTINCT SOLVABLE MECHANICS) ----
+  startStoryPuzzle(epNum, onSolved) {
+    const ep = Math.max(1, Math.min(10, parseInt(epNum, 10) || 1));
+    const cfg = (typeof STORY_PUZZLE_CONFIGS !== 'undefined' && STORY_PUZZLE_CONFIGS[ep])
+      ? STORY_PUZZLE_CONFIGS[ep]
+      : { kind: 'pattern', title: `EPISODE ${ep} TEMPLE SEAL`, desc: 'Align the Gem Harmony sequence!' };
+
+    const screen = document.getElementById('storyPuzzleScreen');
+    if (!screen) { if (onSolved) onSolved(); return; }
+
+    this.puzzleActive = true;
+    this.state = 'puzzle';
+    this.releaseAllInputs();
+    this.puzzleState = { ep, cfg, onSolved: onSolved || null };
+
+    const titleEl = document.getElementById('puzzleTitle');
+    const descEl = document.getElementById('puzzleLoreDesc');
+    if (titleEl) titleEl.textContent = cfg.title;
+    if (descEl) descEl.textContent = cfg.desc;
+    screen.style.display = 'flex';
+    this.buildPuzzleState();
+  }
+
+  resetCurrentPuzzle() {
+    if (!this.puzzleActive || !this.puzzleState) return;
+    if (this.audio) this.audio.playSfx('menuTap');
+    this.buildPuzzleState();
+  }
+
+  skipCurrentPuzzle() {
+    if (!this.puzzleActive) return;
+    const cb = this.puzzleState ? this.puzzleState.onSolved : null;
+    this.puzzleActive = false;
+    this.puzzleState = null;
+    const screen = document.getElementById('storyPuzzleScreen');
+    if (screen) screen.style.display = 'none';
+    if (cb) cb();
+  }
+
+  completeCurrentPuzzle() {
+    if (!this.puzzleActive) return;
+    const statusEl = document.getElementById('puzzleStatusBar');
+    if (statusEl) {
+      statusEl.textContent = '★ GEM SEAL UNLOCKED! +300 BONUS ★';
+      statusEl.style.color = '#34d399';
+    }
+    this.score = (this.score || 0) + 300;
+    this.updateHUD();
+    if (this.audio) this.audio.playSfx('victory');
+    const cb = this.puzzleState ? this.puzzleState.onSolved : null;
+    setTimeout(() => {
+      this.puzzleActive = false;
+      this.puzzleState = null;
+      const screen = document.getElementById('storyPuzzleScreen');
+      if (screen) screen.style.display = 'none';
+      if (cb) cb();
+    }, 620);
+  }
+
+  buildPuzzleState() {
+    if (!this.puzzleState) return;
+    const { cfg, ep } = this.puzzleState;
+    const board = document.getElementById('puzzleBoard');
+    const status = document.getElementById('puzzleStatusBar');
+    if (!board) return;
+    board.innerHTML = '';
+    if (status) status.style.color = '#fde68a';
+
+    if (cfg.kind === 'pattern') {
+      const gems = [
+        { label: 'ROSE SHIELD', color: '#ff4f8b', icon: '🌸' },
+        { label: 'GARNET GAUNTLET', color: '#b91c1c', icon: '🥊' },
+        { label: 'PEARL SPEAR', color: '#38bdf8', icon: '💠' },
+        { label: 'AMETHYST WHIP', color: '#a855f7', icon: '🔮' }
+      ];
+      const sequence = ep === 7 ? [2, 0, 3, 1] : [0, 2, 1, 3];
+      this.puzzleState.data = { sequence, input: [], locked: false };
+      board.style.gridTemplateColumns = 'repeat(2, 110px)';
+      if (status) status.textContent = `Step 0 / ${sequence.length} · Watch the Gem Chime!`;
+
+      const btns = gems.map((g, idx) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'puzzle-tile';
+        b.style.width = '110px';
+        b.style.height = '90px';
+        b.style.flexDirection = 'column';
+        b.style.gap = '4px';
+        b.style.borderColor = g.color;
+        b.innerHTML = `<span style="font-size:26px;">${g.icon}</span><span style="font-size:10px;">${g.label}</span>`;
+        b.addEventListener('click', () => this.handlePatternTileClick(idx, btns));
+        board.appendChild(b);
+        return b;
+      });
+      this.puzzleState.data.btns = btns;
+      this.playPatternPreview();
+    } else if (cfg.kind === 'memory') {
+      const pairs = ep === 6
+        ? ['❄️', '🔥', '🛡️', '💎', '❄️', '🔥', '🛡️', '💎']
+        : ['⭐', '🌊', '🔮', '🫧', '⭐', '🌊', '🔮', '🫧'];
+      const order = pairs.map((v, i) => ({ v, k: (i * 3 + ep) % 8 })).sort((a, b) => a.k - b.k).map(x => x.v);
+      this.puzzleState.data = { deck: order, revealed: [], matched: new Set(), busy: false };
+      board.style.gridTemplateColumns = 'repeat(4, 72px)';
+      if (status) status.textContent = 'Pairs Matched: 0 / 4';
+
+      order.forEach((_, idx) => {
+        const t = document.createElement('button');
+        t.type = 'button';
+        t.className = 'puzzle-tile';
+        t.textContent = '?';
+        t.addEventListener('click', () => this.handleMemoryTileClick(idx));
+        board.appendChild(t);
+      });
+    } else if (cfg.kind === 'conduit') {
+      // Bitmask: N=1, E=2, S=4, W=8. Solution path (0,0) W|E -> (0,1) W|S -> (1,1) N|E -> (1,2) W|S -> (2,2) N|E
+      const template = [
+        { type: 'straight', base: 10, sol: 0, rot: 1 }, // (0,0) IN
+        { type: 'elbow', base: 6, sol: 1, rot: 0 },     // (0,1)
+        { type: 'elbow', base: 6, sol: 2, rot: 0 },     // (0,2)
+        { type: 'elbow', base: 6, sol: 0, rot: 2 },     // (1,0)
+        { type: 'elbow', base: 6, sol: 3, rot: 1 },     // (1,1)
+        { type: 'elbow', base: 6, sol: 1, rot: 3 },     // (1,2)
+        { type: 'straight', base: 10, sol: 0, rot: 1 }, // (2,0)
+        { type: 'elbow', base: 6, sol: 3, rot: 0 },     // (2,1)
+        { type: 'elbow', base: 6, sol: 3, rot: 1 }      // (2,2) OUT
+      ];
+      if (ep === 5) template[4].rot = 0;
+      if (ep === 9) template[1].rot = 3;
+      this.puzzleState.data = { cells: template.map(c => ({ ...c })), lit: new Set() };
+      board.style.gridTemplateColumns = 'repeat(3, 76px)';
+      this.renderConduitBoard();
+    } else if (cfg.kind === 'mirrors') {
+      // 4x4 Laser beam enters (0,0) heading East -> hits Target Lock at (3,3)
+      const layout = (ep === 8)
+        ? {
+            mirrors: { '0,1': '/', '3,1': '\\', '1,3': '/' }, // wrong starts: (0,1) sol '\', (3,1) sol '\', wait: E(1)->S(2) at (0,1)='\', S(2)->E(1) at (3,1)='\' -> hits (3,3)!!
+            solutions: { '0,1': '\\', '3,1': '\\' },
+            blockers: ['1,2', '2,2']
+          }
+        : {
+            mirrors: { '0,2': '/', '2,2': '/', '2,3': '/', '1,1': '/' }, // sol: (0,2)='\', (2,2)='\', (2,3)='\'
+            solutions: { '0,2': '\\', '2,2': '\\', '2,3': '\\' },
+            blockers: ['1,0', '3,1']
+          };
+      this.puzzleState.data = {
+        size: 4,
+        mirrors: { ...layout.mirrors },
+        solutions: { ...layout.solutions },
+        blockers: new Set(layout.blockers),
+        beam: new Set(),
+        reached: false
+      };
+      board.style.gridTemplateColumns = 'repeat(4, 66px)';
+      this.renderMirrorBoard();
+    }
+  }
+
+  playPatternPreview() {
+    if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'pattern') return;
+    const d = this.puzzleState.data;
+    d.locked = true;
+    d.input = [];
+    const status = document.getElementById('puzzleStatusBar');
+    if (status) status.textContent = 'Watch closely... Crystal Temple is chiming!';
+    d.sequence.forEach((padIdx, step) => {
+      setTimeout(() => {
+        if (!this.puzzleActive || !d.btns || !d.btns[padIdx]) return;
+        const btn = d.btns[padIdx];
+        btn.classList.add('lit');
+        if (this.audio) this.audio.playSfx('menuTap');
+        setTimeout(() => btn.classList.remove('lit'), 340);
+        if (step === d.sequence.length - 1) {
+          setTimeout(() => {
+            if (!this.puzzleActive) return;
+            d.locked = false;
+            if (status) status.textContent = `Your turn! Tap Step 1 / ${d.sequence.length}`;
+          }, 420);
+        }
+      }, step * 520 + 200);
+    });
+  }
+
+  handlePatternTileClick(idx, btns) {
+    if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'pattern') return;
+    const d = this.puzzleState.data;
+    if (d.locked) return;
+    const btn = btns[idx];
+    if (btn) {
+      btn.classList.add('lit');
+      setTimeout(() => btn.classList.remove('lit'), 220);
+    }
+    const expected = d.sequence[d.input.length];
+    if (idx === expected) {
+      d.input.push(idx);
+      if (this.audio) this.audio.playSfx('menuTap');
+      const status = document.getElementById('puzzleStatusBar');
+      if (status) status.textContent = `Harmony ${d.input.length} / ${d.sequence.length} Matched!`;
+      if (d.input.length >= d.sequence.length) {
+        this.completeCurrentPuzzle();
+      }
+    } else {
+      if (this.audio) this.audio.playSfx('hit');
+      const status = document.getElementById('puzzleStatusBar');
+      if (status) status.textContent = 'Discordant chime! Re-watching pattern...';
+      d.input = [];
+      setTimeout(() => this.playPatternPreview(), 500);
+    }
+  }
+
+  handleMemoryTileClick(idx) {
+    if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'memory') return;
+    const d = this.puzzleState.data;
+    if (d.busy || d.matched.has(idx) || d.revealed.includes(idx)) return;
+    const tiles = document.querySelectorAll('#puzzleBoard .puzzle-tile');
+    d.revealed.push(idx);
+    if (tiles[idx]) {
+      tiles[idx].textContent = d.deck[idx];
+      tiles[idx].classList.add('lit');
+    }
+    if (this.audio) this.audio.playSfx('menuTap');
+
+    if (d.revealed.length === 2) {
+      const [a, b] = d.revealed;
+      if (d.deck[a] === d.deck[b]) {
+        d.matched.add(a);
+        d.matched.add(b);
+        d.revealed = [];
+        [a, b].forEach(i => tiles[i] && tiles[i].classList.add('solved'));
+        const status = document.getElementById('puzzleStatusBar');
+        if (status) status.textContent = `Pairs Matched: ${d.matched.size / 2} / ${d.deck.length / 2}`;
+        if (d.matched.size === d.deck.length) {
+          this.completeCurrentPuzzle();
+        }
+      } else {
+        d.busy = true;
+        setTimeout(() => {
+          d.revealed = [];
+          d.busy = false;
+          [a, b].forEach(i => {
+            if (tiles[i] && !d.matched.has(i)) {
+              tiles[i].textContent = '?';
+              tiles[i].classList.remove('lit');
+            }
+          });
+        }, 560);
+      }
+    }
+  }
+
+  getConduitMask(cell) {
+    let m = cell.base;
+    for (let r = 0; r < (cell.rot % 4); r++) {
+      m = ((m << 1) | (m >> 3)) & 15;
+    }
+    return m;
+  }
+
+  evaluateConduitPower() {
+    if (!this.puzzleState || this.puzzleState.cfg.kind !== 'conduit') return false;
+    const d = this.puzzleState.data;
+    const lit = new Set();
+    const firstMask = this.getConduitMask(d.cells[0]);
+    if ((firstMask & 8) !== 0) {
+      const queue = [0];
+      lit.add(0);
+      while (queue.length) {
+        const cur = queue.shift();
+        const r = Math.floor(cur / 3), c = cur % 3;
+        const mask = this.getConduitMask(d.cells[cur]);
+        const dirs = [
+          { dr: -1, dc: 0, outBit: 1, inBit: 4 },
+          { dr: 0, dc: 1, outBit: 2, inBit: 8 },
+          { dr: 1, dc: 0, outBit: 4, inBit: 1 },
+          { dr: 0, dc: -1, outBit: 8, inBit: 2 }
+        ];
+        for (const dir of dirs) {
+          if ((mask & dir.outBit) === 0) continue;
+          const nr = r + dir.dr, nc = c + dir.dc;
+          if (nr < 0 || nr > 2 || nc < 0 || nc > 2) continue;
+          const ni = nr * 3 + nc;
+          if (lit.has(ni)) continue;
+          if ((this.getConduitMask(d.cells[ni]) & dir.inBit) !== 0) {
+            lit.add(ni);
+            queue.push(ni);
+          }
+        }
+      }
+    }
+    d.lit = lit;
+    return lit.has(8) && (this.getConduitMask(d.cells[8]) & 2) !== 0;
+  }
+
+  renderConduitBoard() {
+    const board = document.getElementById('puzzleBoard');
+    const status = document.getElementById('puzzleStatusBar');
+    if (!board || !this.puzzleState || this.puzzleState.cfg.kind !== 'conduit') return;
+    const d = this.puzzleState.data;
+    const isSolved = this.evaluateConduitPower();
+    board.innerHTML = '';
+
+    const glyphForMask = (m) => {
+      if (m === 10) return '━';
+      if (m === 5) return '┃';
+      if (m === 6) return '┏';
+      if (m === 12) return '┓';
+      if (m === 9) return '┛';
+      if (m === 3) return '┗';
+      return '╋';
+    };
+
+    d.cells.forEach((cell, idx) => {
+      const m = this.getConduitMask(cell);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'puzzle-tile' + (d.lit.has(idx) ? ' lit' : '') + (isSolved && d.lit.has(idx) ? ' solved' : '');
+      const tag = idx === 0 ? '<small style="position:absolute;top:2px;left:5px;font-size:8px;color:#38bdf8;">IN</small>'
+        : idx === 8 ? '<small style="position:absolute;bottom:2px;right:5px;font-size:8px;color:#34d399;">OUT</small>' : '';
+      btn.innerHTML = `${tag}<span style="font-size:32px;line-height:1;">${glyphForMask(m)}</span>`;
+      btn.addEventListener('click', () => {
+        if (!this.puzzleActive) return;
+        cell.rot = (cell.rot + 1) % 4;
+        if (this.audio) this.audio.playSfx('menuTap');
+        this.renderConduitBoard();
+      });
+      board.appendChild(btn);
+    });
+    if (status) {
+      status.textContent = isSolved ? 'CONDUIT ALIGNED!' : `Click tiles to rotate energy conduits (${d.lit.size} powered)`;
+    }
+    if (isSolved && this.puzzleActive) this.completeCurrentPuzzle();
+  }
+
+  evaluateMirrorBeam() {
+    if (!this.puzzleState || this.puzzleState.cfg.kind !== 'mirrors') return false;
+    const d = this.puzzleState.data;
+    d.beam = new Set();
+    let r = 0, c = 0, dir = 1; // 0:N, 1:E, 2:S, 3:W
+    const dr = [-1, 0, 1, 0], dc = [0, 1, 0, -1];
+    for (let steps = 0; steps < 25; steps++) {
+      if (r < 0 || r >= d.size || c < 0 || c >= d.size) break;
+      const key = `${r},${c}`;
+      if (d.blockers.has(key)) break;
+      d.beam.add(key);
+      if (r === d.size - 1 && c === d.size - 1) {
+        d.reached = true;
+        return true;
+      }
+      const mir = d.mirrors[key];
+      if (mir === '/') {
+        dir = dir === 1 ? 0 : dir === 0 ? 1 : dir === 2 ? 3 : 2;
+      } else if (mir === '\\') {
+        dir = dir === 1 ? 2 : dir === 2 ? 1 : dir === 0 ? 3 : 0;
+      }
+      r += dr[dir];
+      c += dc[dir];
+    }
+    d.reached = false;
+    return false;
+  }
+
+  renderMirrorBoard() {
+    const board = document.getElementById('puzzleBoard');
+    const status = document.getElementById('puzzleStatusBar');
+    if (!board || !this.puzzleState || this.puzzleState.cfg.kind !== 'mirrors') return;
+    const d = this.puzzleState.data;
+    const reached = this.evaluateMirrorBeam();
+    board.innerHTML = '';
+
+    for (let r = 0; r < d.size; r++) {
+      for (let c = 0; c < d.size; c++) {
+        const key = `${r},${c}`;
+        const mir = d.mirrors[key];
+        const isBlk = d.blockers.has(key);
+        const isLit = d.beam.has(key);
+        const isStart = (r === 0 && c === 0);
+        const isEnd = (r === d.size - 1 && c === d.size - 1);
+
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'puzzle-tile' + (isLit ? ' lit' : '') + (reached && isLit ? ' solved' : '');
+        tile.style.width = '66px';
+        tile.style.height = '66px';
+
+        if (isStart) {
+          tile.innerHTML = '<span style="font-size:18px;">✨➜</span>';
+          tile.disabled = true;
+        } else if (isEnd) {
+          tile.innerHTML = `<span style="font-size:22px;">💎</span>`;
+          tile.style.borderColor = reached ? '#34d399' : '#38bdf8';
+          tile.disabled = true;
+        } else if (isBlk) {
+          tile.innerHTML = '<span style="font-size:20px;opacity:0.6;">🪨</span>';
+          tile.disabled = true;
+        } else if (mir) {
+          tile.innerHTML = `<span style="font-size:30px;color:#fde68a;">${mir}</span>`;
+          tile.addEventListener('click', () => {
+            if (!this.puzzleActive) return;
+            d.mirrors[key] = d.mirrors[key] === '/' ? '\\' : '/';
+            if (this.audio) this.audio.playSfx('menuTap');
+            this.renderMirrorBoard();
+          });
+        } else {
+          tile.innerHTML = `<span style="font-size:14px;opacity:${isLit ? '0.95' : '0.25'};">${isLit ? '✦' : '·'}</span>`;
+          tile.disabled = true;
+        }
+        board.appendChild(tile);
+      }
+    }
+    if (status) {
+      status.textContent = reached ? 'DIAMOND LOCK ILLUMINATED!' : 'Click prism mirrors (/ or \\) to aim the light beam into 💎';
+    }
+    if (reached && this.puzzleActive) this.completeCurrentPuzzle();
+  }
+
+  showPuzzleHint() {
+    if (!this.puzzleActive || !this.puzzleState) return;
+    const { cfg, data } = this.puzzleState;
+    const status = document.getElementById('puzzleStatusBar');
+    if (this.audio) this.audio.playSfx('weaponSummon');
+    if (cfg.kind === 'pattern') {
+      this.playPatternPreview();
+    } else if (cfg.kind === 'memory') {
+      const tiles = document.querySelectorAll('#puzzleBoard .puzzle-tile');
+      data.deck.forEach((sym, i) => { if (tiles[i] && !data.matched.has(i)) tiles[i].textContent = sym; });
+      if (status) status.textContent = 'Gem Vision peek active briefly...';
+      setTimeout(() => {
+        if (!this.puzzleActive) return;
+        data.deck.forEach((_, i) => {
+          if (tiles[i] && !data.matched.has(i) && !data.revealed.includes(i)) tiles[i].textContent = '?';
+        });
+      }, 950);
+    } else if (cfg.kind === 'conduit') {
+      const solIndices = [0, 1, 4, 5, 8];
+      for (const idx of solIndices) {
+        if (data.cells[idx].rot !== data.cells[idx].sol) {
+          data.cells[idx].rot = data.cells[idx].sol;
+          break;
+        }
+      }
+      this.renderConduitBoard();
+    } else if (cfg.kind === 'mirrors') {
+      for (const [k, solMir] of Object.entries(data.solutions)) {
+        if (data.mirrors[k] !== solMir) {
+          data.mirrors[k] = solMir;
+          break;
+        }
+      }
+      this.renderMirrorBoard();
+    }
+  }
+
+  openCreditsScreen() {
+    this.hideAllScreens();
+    this.creditsActive = true;
+    this.state = 'credits';
+    this.creditsSpeed = 1;
+    this.releaseAllInputs();
+    const screen = document.getElementById('creditsScreen');
+    const track = document.getElementById('creditsTrack');
+    const speedBtn = document.getElementById('btnCreditsSpeed');
+    if (speedBtn) speedBtn.textContent = 'SPEED: 1X';
+    if (track) {
+      track.style.animation = 'none';
+      void track.offsetWidth;
+      track.style.animation = 'creditsScroll 42s linear infinite';
+    }
+    if (screen) screen.style.display = 'flex';
+    if (this.audio) {
+      this.audio.isManuallyPaused = false;
+      this.audio.playTrackById('intro_launch', false);
+    }
+  }
+
+  toggleCreditsSpeed() {
+    this.creditsSpeed = this.creditsSpeed === 1 ? 2 : 1;
+    const track = document.getElementById('creditsTrack');
+    const speedBtn = document.getElementById('btnCreditsSpeed');
+    if (speedBtn) speedBtn.textContent = `SPEED: ${this.creditsSpeed}X`;
+    if (track) {
+      track.style.animationDuration = this.creditsSpeed === 2 ? '21s' : '42s';
+    }
+    if (this.audio) this.audio.playSfx('menuTap');
+  }
+
+  closeCreditsScreen() {
+    this.creditsActive = false;
+    const screen = document.getElementById('creditsScreen');
+    if (screen) screen.style.display = 'none';
+    this.showTitleScreen();
+  }
 }
 // Bulletproof Game Bootstrapper (works whether DOM is loading, interactive, or complete)
 // ---------------------------------------------------------------------------
@@ -25644,7 +26956,14 @@ class StevenUniverseGame {
 function fitGameToViewport() {
   const w = window.innerWidth || 1280;
   const h = window.innerHeight || 720;
-  const scale = Math.max(0.35, Math.min(w / 1280, h / 720));
+  const preset = (typeof window !== 'undefined' && window.__suResolutionPreset) || 'auto';
+  let scale = Math.max(0.35, Math.min(w / 1280, h / 720));
+  if (preset !== 'auto' && preset.includes('x')) {
+    const [rw, rh] = preset.split('x').map(n => parseInt(n, 10) || 0);
+    if (rw > 0 && rh > 0) {
+      scale = Math.max(0.35, Math.min(w / 1280, h / 720, rw / 1280, rh / 720));
+    }
+  }
   document.documentElement.style.setProperty('--gc-scale', String(scale));
 }
 
