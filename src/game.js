@@ -22,8 +22,9 @@ class GemAudioEngine {
     this.musicVolume = parseFloat(getVal('su_musicVol', '0.7'));
     this.bgmOverrideManual = getVal('su_bgmManual', 'false') === 'true';
     let storedBgm = getVal('su_selectedBgm', 'auto');
-    if (!this.bgmOverrideManual || !storedBgm || storedBgm === 'menu' || storedBgm === 'distant_shore' && !this.bgmOverrideManual) {
+    if (!this.bgmOverrideManual || !storedBgm || storedBgm === 'menu' || storedBgm === 'intro_launch' || (storedBgm === 'distant_shore' && !this.bgmOverrideManual)) {
       storedBgm = 'auto';
+      this.bgmOverrideManual = false;
     }
     this.selectedBgm = storedBgm;
     this.musicInterval = null;
@@ -1588,7 +1589,8 @@ class GemAudioEngine {
     const trackId = STAGE_TRACKS[stageNum] || 'defenders_deep';
     this.currentTrack = trackId;
 
-    if (this.bgmOverrideManual && this.selectedBgm && this.selectedBgm !== 'auto') {
+    // Never allow the Main Menu launch intro track to override in-game per-episode music
+    if (this.bgmOverrideManual && this.selectedBgm && this.selectedBgm !== 'auto' && this.selectedBgm !== 'intro_launch') {
       return this.playTrackById(this.selectedBgm, isBoss);
     }
     return this.playTrackById(trackId, isBoss);
@@ -1651,11 +1653,34 @@ class ParticleSystem {
   constructor() {
     this.particles = [];
     this.texts = [];
+    this.quality = 'high';
+    this.maxParticles = 280;
+    this.particleScale = 1.0;
+    this.glowEnabled = true;
+  }
+
+  setQualityPreset(tier = 'high') {
+    const t = (tier === 'low' || tier === 'medium' || tier === 'high') ? tier : 'high';
+    this.quality = t;
+    if (t === 'low') {
+      this.maxParticles = 85;
+      this.particleScale = 0.35;
+      this.glowEnabled = false;
+    } else if (t === 'medium') {
+      this.maxParticles = 165;
+      this.particleScale = 0.65;
+      this.glowEnabled = true;
+    } else {
+      this.maxParticles = 280;
+      this.particleScale = 1.0;
+      this.glowEnabled = true;
+    }
   }
 
   addSparkle(x, y, color = '#ffd700', count = 8, speed = 4) {
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5);
+    const n = Math.max(1, Math.round(count * (this.particleScale || 1)));
+    for (let i = 0; i < n; i++) {
+      const angle = (Math.PI * 2 * i) / n + (Math.random() - 0.5);
       const spd = (Math.random() * 0.7 + 0.3) * speed;
       this.particles.push({
         x, y,
@@ -1672,7 +1697,8 @@ class ParticleSystem {
 
   addImpactSparks(x, y, dirX = 1, color = '#ffd700', count = 12) {
     const baseAngle = dirX >= 0 ? 0 : Math.PI;
-    for (let i = 0; i < count; i++) {
+    const n = Math.max(1, Math.round(count * (this.particleScale || 1)));
+    for (let i = 0; i < n; i++) {
       const angle = baseAngle + (Math.random() - 0.5) * 1.3 - 0.22;
       const spd = Math.random() * 8.5 + 4.5;
       this.particles.push({
@@ -2191,9 +2217,10 @@ class ParticleSystem {
   }
 
   update() {
-    // Keep max active particles reasonable to ensure buttery smooth 60 FPS
-    if (this.particles.length > 220) {
-      this.particles.splice(0, this.particles.length - 220);
+    // Respect graphics tier particle budget (Low: 85, Medium: 165, High: 280)
+    const cap = this.maxParticles || 220;
+    if (this.particles.length > cap) {
+      this.particles.splice(0, this.particles.length - cap);
     }
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
@@ -2605,6 +2632,7 @@ class EnvironmentRenderer {
     this.stageWidth = stageWidth;
     this.height = canvasHeight;
     this.groundY = canvasHeight - 120; // 600px
+    this.quality = 'high';
     this.clouds = [
       { x: 80, y: 65, speed: 0.2, scale: 1.2 },
       { x: 480, y: 105, speed: 0.35, scale: 0.9 },
@@ -2716,9 +2744,10 @@ class EnvironmentRenderer {
     ctx.fillStyle = skyGradient;
     ctx.fillRect(0, 0, this.canvasWidth, this.height);
 
-    // Parallax Twinkling Stars (fast batched rects)
+    // Parallax Twinkling Stars (scaled by Graphics Quality tier)
+    const starStep = this.quality === 'low' ? 3 : (this.quality === 'medium' ? 2 : 1);
     ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < this.stars.length; i++) {
+    for (let i = 0; i < this.stars.length; i += starStep) {
       const s = this.stars[i];
       const sx = ((s.x - cameraX * 0.08) % this.canvasWidth + this.canvasWidth) % this.canvasWidth;
       const alpha = 0.4 + 0.6 * Math.sin(s.twinkle);
@@ -2728,8 +2757,10 @@ class EnvironmentRenderer {
     }
     ctx.globalAlpha = 1.0;
 
-    // Parallax Drifting Clouds
-    for (const c of this.clouds) {
+    // Parallax Drifting Clouds (halved on Low graphics preset)
+    for (let ci = 0; ci < this.clouds.length; ci++) {
+      if (this.quality === 'low' && ci % 2 === 1) continue;
+      const c = this.clouds[ci];
       const cx = ((c.x - cameraX * 0.18) % (this.canvasWidth + 240) + (this.canvasWidth + 240)) % (this.canvasWidth + 240) - 120;
       this.drawCloud(ctx, cx, c.y, c.scale, stageIndex);
     }
@@ -18617,6 +18648,121 @@ const GUARDIAN_PORTRAITS = {
   </svg>`
 };
 
+const VILLAIN_PORTRAITS = {
+  boss_centipeetle: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#0b1f14"/>
+    <path d="M 12 18 L 6 10 L 18 14 Z" fill="#84cc16"/>
+    <path d="M 52 18 L 58 10 L 46 14 Z" fill="#84cc16"/>
+    <path d="M 10 34 L 4 28 L 14 28 Z" fill="#65a30d"/>
+    <path d="M 54 34 L 60 28 L 50 28 Z" fill="#65a30d"/>
+    <ellipse cx="32" cy="36" rx="22" ry="19" fill="#14532d" stroke="#84cc16" stroke-width="2.2"/>
+    <ellipse cx="32" cy="34" rx="15" ry="13" fill="#052e16"/>
+    <circle cx="32" cy="33" r="10.5" fill="#bef264"/>
+    <ellipse cx="32" cy="33" rx="2.8" ry="8.5" fill="#0f172a"/>
+    <circle cx="34.5" cy="30" r="2" fill="#ffffff" opacity="0.85"/>
+    <path d="M 18 46 L 23 51 L 27 46 L 32 52 L 37 46 L 41 51 L 46 46" stroke="#d9f99d" stroke-width="2.2" fill="none" stroke-linejoin="round"/>
+  </svg>`,
+  boss_giant_bird: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#0b162c"/>
+    <path d="M 8 24 L 22 10 L 32 18 L 42 10 L 56 24 L 48 44 L 16 44 Z" fill="#1e3a8a" stroke="#38bdf8" stroke-width="2"/>
+    <polygon points="32,6 26,18 38,18" fill="#67e8f9"/>
+    <circle cx="24" cy="27" r="4" fill="#fde047"/>
+    <circle cx="40" cy="27" r="4" fill="#fde047"/>
+    <circle cx="24" cy="27" r="1.6" fill="#0f172a"/>
+    <circle cx="40" cy="27" r="1.6" fill="#0f172a"/>
+    <polygon points="32,29 24,42 32,48 40,42" fill="#f59e0b" stroke="#78350f" stroke-width="1.6"/>
+    <polygon points="32,50 26,56 32,62 38,56" fill="#22d3ee" stroke="#083344" stroke-width="1.4"/>
+  </svg>`,
+  boss_cluster_titan: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#1f0a2c"/>
+    <polygon points="12,18 26,8 38,12 52,20 50,52 14,52" fill="#581c87" stroke="#c084fc" stroke-width="2"/>
+    <path d="M 26 8 L 31 30 L 18 46" stroke="#f0abfc" stroke-width="2" fill="none"/>
+    <path d="M 38 12 L 35 32 L 48 44" stroke="#f472b6" stroke-width="2" fill="none"/>
+    <circle cx="23" cy="28" r="4.2" fill="#fde047"/>
+    <circle cx="41" cy="26" r="3.6" fill="#38bdf8"/>
+    <circle cx="33" cy="40" r="3.2" fill="#f43f5e"/>
+    <rect x="22" y="47" width="20" height="4" rx="2" fill="#1e1b4b"/>
+  </svg>`,
+  boss_cluster_core: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#240b06"/>
+    <circle cx="32" cy="32" r="22" fill="#7c2d12" stroke="#fb923c" stroke-width="2.2"/>
+    <polygon points="32,8 40,22 56,24 44,36 48,54 32,45 16,54 20,36 8,24 24,22" fill="#f97316" opacity="0.88"/>
+    <polygon points="32,16 42,26 38,44 26,44 22,26" fill="#fde047" stroke="#ffffff" stroke-width="1.4"/>
+    <circle cx="27" cy="30" r="2.6" fill="#0f172a"/>
+    <circle cx="37" cy="30" r="2.6" fill="#0f172a"/>
+  </svg>`,
+  boss_forge_guardian: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#1c0d09"/>
+    <polygon points="14,14 50,14 54,44 42,56 22,56 10,44" fill="#334155" stroke="#f97316" stroke-width="2.2"/>
+    <rect x="16" y="25" width="32" height="10" rx="4" fill="#0f172a" stroke="#fb923c" stroke-width="1.4"/>
+    <rect x="20" y="28" width="9" height="4" rx="1" fill="#fde047"/>
+    <rect x="35" y="28" width="9" height="4" rx="1" fill="#fde047"/>
+    <polygon points="32,40 24,49 40,49" fill="#ef4444" stroke="#fed7aa" stroke-width="1.2"/>
+  </svg>`,
+  boss_jasper: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#2b1206"/>
+    <path d="M 10 20 L 20 8 L 28 16 L 36 16 L 44 8 L 54 20 L 49 54 L 15 54 Z" fill="#fff7ed" stroke="#f97316" stroke-width="1.8"/>
+    <ellipse cx="32" cy="34" rx="16" ry="17" fill="#ea580c"/>
+    <path d="M 18 26 L 26 30 L 18 35 Z" fill="#9a3412"/>
+    <path d="M 46 26 L 38 30 L 46 35 Z" fill="#9a3412"/>
+    <circle cx="22" cy="43" r="3" fill="#2dd4bf" opacity="0.9"/>
+    <circle cx="43" cy="21" r="2.6" fill="#2dd4bf" opacity="0.9"/>
+    <ellipse cx="25" cy="31" rx="3.4" ry="2.8" fill="#fef08a"/>
+    <ellipse cx="39" cy="31" rx="3.4" ry="2.8" fill="#fef08a"/>
+    <circle cx="25" cy="31" r="1.4" fill="#451a03"/>
+    <circle cx="39" cy="31" r="1.4" fill="#451a03"/>
+    <polygon points="32,33 35.5,37 32,41 28.5,37" fill="#fb923c" stroke="#7c2d12" stroke-width="1.4"/>
+    <path d="M 24 46 L 32 43 L 40 46" stroke="#451a03" stroke-width="2.2" fill="none"/>
+  </svg>`,
+  boss_agate_warden: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#0c1c38"/>
+    <polygon points="18,8 28,24 10,24" fill="#bae6fd" stroke="#0284c7" stroke-width="1.5"/>
+    <polygon points="46,8 54,24 36,24" fill="#bae6fd" stroke="#0284c7" stroke-width="1.5"/>
+    <ellipse cx="32" cy="34" rx="15" ry="16" fill="#38bdf8" stroke="#0369a1" stroke-width="1.6"/>
+    <path d="M 21 27 L 29 30" stroke="#0c4a6e" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M 43 27 L 35 30" stroke="#0c4a6e" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="26" cy="32" r="2.5" fill="#0f172a"/>
+    <circle cx="38" cy="32" r="2.5" fill="#0f172a"/>
+    <path d="M 26 42 Q 32 39 38 42" stroke="#0c4a6e" stroke-width="2" fill="none"/>
+    <ellipse cx="32" cy="54" rx="5" ry="3.5" fill="#7dd3fc" stroke="#0c4a6e" stroke-width="1.4"/>
+  </svg>`,
+  boss_topaz_fusion: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#271d06"/>
+    <rect x="13" y="10" width="38" height="14" rx="4" fill="#fef08a" stroke="#ca8a04" stroke-width="1.6"/>
+    <rect x="12" y="21" width="40" height="33" rx="8" fill="#eab308" stroke="#854d0e" stroke-width="2"/>
+    <circle cx="15" cy="37" r="4.5" fill="#fde047" stroke="#854d0e" stroke-width="1.5"/>
+    <circle cx="49" cy="37" r="4.5" fill="#fde047" stroke="#854d0e" stroke-width="1.5"/>
+    <rect x="21" y="30" width="7" height="3.2" rx="1" fill="#422006"/>
+    <rect x="36" y="30" width="7" height="3.2" rx="1" fill="#422006"/>
+    <line x1="25" y1="43" x2="39" y2="43" stroke="#422006" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`,
+  boss_robonoid_titan: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#0d1720"/>
+    <circle cx="32" cy="32" r="21" fill="#334155" stroke="#94a3b8" stroke-width="2.2"/>
+    <circle cx="32" cy="32" r="14" fill="#0f172a"/>
+    <polygon points="32,20 43,39 21,39" fill="#22c55e" stroke="#86efac" stroke-width="1.8"/>
+    <circle cx="32" cy="32" r="4.2" fill="#ffffff"/>
+    <line x1="11" y1="32" x2="18" y2="32" stroke="#38bdf8" stroke-width="2.5"/>
+    <line x1="46" y1="32" x2="53" y2="32" stroke="#38bdf8" stroke-width="2.5"/>
+  </svg>`,
+  boss_white_diamond: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#0f172a"/>
+    <polygon points="32,4 38,18 54,10 43,24 58,32 42,38 48,52 32,44 16,52 22,38 6,32 21,24 10,10 26,18" fill="#e2e8f0" opacity="0.28"/>
+    <ellipse cx="32" cy="35" rx="16" ry="18" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.8"/>
+    <polygon points="32,18 37,24 32,30 27,24" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+    <path d="M 21 34 L 28 36 L 22 37 Z" fill="#0f172a"/>
+    <path d="M 43 34 L 36 36 L 42 37 Z" fill="#0f172a"/>
+    <path d="M 27 45 Q 32 43 37 45" stroke="#334155" stroke-width="1.8" fill="none"/>
+  </svg>`,
+  corrupted_gem: `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <rect width="64" height="64" rx="14" fill="#1e0b16"/>
+    <polygon points="32,8 52,22 46,52 18,52 12,22" fill="#be123c" stroke="#fda4af" stroke-width="2.2"/>
+    <polygon points="32,16 42,26 38,44 26,44 22,26" fill="#f43f5e"/>
+    <path d="M 22 28 L 29 33 L 22 37 Z" fill="#fef08a"/>
+    <path d="M 42 28 L 35 33 L 42 37 Z" fill="#fef08a"/>
+  </svg>`
+};
+
 function getGuardianAvatarHtml(charId, size = 44) {
   const cId = (charId || 'steven').toLowerCase();
   const imgUrl = (typeof PORTRAIT_IMAGES !== 'undefined' && PORTRAIT_IMAGES[cId]) ? PORTRAIT_IMAGES[cId] : '';
@@ -18628,6 +18774,11 @@ function getGuardianAvatarHtml(charId, size = 44) {
     return `<div class="guardian-avatar-frame" data-char="${cId}" style="width:${size}px;height:${size}px;border-radius:${radius}px;background:radial-gradient(circle at 50% 25%, ${theme}33, rgba(15,23,42,0.92));border:1.5px solid ${theme}88;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.45);">
       <img src="${imgUrl}" alt="${cId}" style="width:116%;height:116%;object-fit:cover;object-position:50% 16%;display:block;pointer-events:none;" />
     </div>`;
+  }
+  const villainSvg = VILLAIN_PORTRAITS[cId] ||
+    ((cId.startsWith('boss_') || cId.includes('corrupt') || cId === 'villain') ? VILLAIN_PORTRAITS.corrupted_gem : '');
+  if (villainSvg) {
+    return `<span class="guardian-svg-wrap villain-portrait-wrap" data-char="${cId}" style="width:${size}px;height:${size}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:${radius}px;overflow:hidden;">${villainSvg}</span>`;
   }
   const svg = GUARDIAN_PORTRAITS[cId] || GUARDIAN_PORTRAITS.steven;
   return `<span class="guardian-svg-wrap" style="width:${size}px;height:${size}px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">${svg}</span>`;
@@ -20071,6 +20222,13 @@ class StevenUniverseGame {
     this.creditsActive = false;
     this.creditsSpeed = 1;
     this.resolutionPreset = SafeStorage.getItem('su_resolutionPreset') || 'auto';
+    const savedGfx = SafeStorage.getItem('su_graphicsQuality');
+    this.graphicsQuality = ['low', 'medium', 'high'].includes(savedGfx) ? savedGfx : 'high';
+    const savedFps = parseInt(SafeStorage.getItem('su_targetFps') || '0', 10);
+    this.targetFps = [0, 30, 60, 120].includes(savedFps) ? savedFps : 0;
+    this.fastPerfMode = this.graphicsQuality === 'low';
+    this.gfxShadowMult = this.graphicsQuality === 'low' ? 0 : (this.graphicsQuality === 'medium' ? 0.5 : 1.0);
+    this._lastRenderedFrameTime = 0;
 
     this.keysP1 = {
       left: false, right: false, jump: false,
@@ -20087,6 +20245,8 @@ class StevenUniverseGame {
     this.lastTime = performance.now();
     this.initEventListeners();
     this.initInteractiveHoverPhysics();
+    this.applyGraphicsPreset(this.graphicsQuality, { persist: false });
+    this.setTargetFps(this.targetFps, { persist: false });
     this.applyResolution(this.resolutionPreset);
     this.updateLobbyGuardian();
     this.updateLobbyDifficulty();
@@ -20874,7 +21034,35 @@ class StevenUniverseGame {
     if (who === 'party') who = 'steven';
     if (who === 'partner') who = (this.player2 && this.player2.activeChar) ? this.player2.activeChar : 'garnet';
     if (who === 'villain') {
+      const nUpper = String(line.n || '').toUpperCase();
+      const stageBossIds = {
+        1: 'boss_centipeetle',
+        2: 'boss_giant_bird',
+        3: 'boss_cluster_titan',
+        4: 'boss_cluster_core',
+        5: 'boss_forge_guardian',
+        6: 'boss_jasper',
+        7: 'boss_agate_warden',
+        8: 'boss_topaz_fusion',
+        9: 'boss_robonoid_titan',
+        10: 'boss_white_diamond'
+      };
+      let vId = line.vId || '';
+      if (!vId) {
+        if (nUpper.includes('CENTIPEETLE')) vId = 'boss_centipeetle';
+        else if (nUpper.includes('BIRD') || nUpper.includes('SPIRE')) vId = 'boss_giant_bird';
+        else if (nUpper.includes('AMALGAM') || nUpper.includes('KINDERGARTEN')) vId = 'boss_cluster_titan';
+        else if (nUpper.includes('CLUSTER') || nUpper.includes('GEO-WEAPON')) vId = 'boss_cluster_core';
+        else if (nUpper.includes('FORGE') || nUpper.includes('SENTINEL')) vId = 'boss_forge_guardian';
+        else if (nUpper.includes('JASPER')) vId = 'boss_jasper';
+        else if (nUpper.includes('AGATE')) vId = 'boss_agate_warden';
+        else if (nUpper.includes('TOPAZ')) vId = 'boss_topaz_fusion';
+        else if (nUpper.includes('ROBONOID')) vId = 'boss_robonoid_titan';
+        else if (nUpper.includes('WHITE DIAMOND')) vId = 'boss_white_diamond';
+        else vId = stageBossIds[this.stageIndex] || 'corrupted_gem';
+      }
       return {
+        id: vId,
         villain: true,
         name: line.n || 'CORRUPTED GEM',
         icon: line.i || '💎',
@@ -21609,6 +21797,20 @@ class StevenUniverseGame {
 
   gameLoop(currentTime) {
     try {
+      // Frame Rate Limit enforcement (30 / 60 / 120 FPS, or 0 = UNLIMITED)
+      if (this.targetFps > 0 && this.state === 'playing') {
+        const minFrameMs = 1000 / this.targetFps;
+        if (!this._lastRenderedFrameTime) this._lastRenderedFrameTime = currentTime;
+        const elapsedMs = currentTime - this._lastRenderedFrameTime;
+        if (elapsedMs < minFrameMs * 0.92) {
+          requestAnimationFrame((t) => this.gameLoop(t));
+          return;
+        }
+        this._lastRenderedFrameTime = currentTime - (elapsedMs % minFrameMs);
+      } else {
+        this._lastRenderedFrameTime = currentTime;
+      }
+
       if (!this.lastTime) this.lastTime = currentTime;
       const rawDt = (currentTime - this.lastTime) / 1000;
       this.lastTime = currentTime;
@@ -22702,7 +22904,7 @@ class StevenUniverseGame {
       this.currentHeartsP2 = this.maxHearts;
       const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
       this.enemyManager.reset(this.stageIndex, diff, this.pickups);
-      this.audio.playMusic('battle');
+      this.audio.playStageMusic(this.stageIndex, false);
       this.updateHUD();
       this.updateActionBar();
       this.startStageWave();
@@ -25163,14 +25365,14 @@ class StevenUniverseGame {
       if (!this.audio.ctx || this.audio.ctx.state !== 'running') this.audio.init();
       this.releaseKeysOnModifierChange(e);
 
-      // Modal Navigation Hotkeys (Arcade Intermission, Story Cutscene, Credits)
+      // Modal Navigation Hotkeys (Arcade Intermission, Story Cutscene, Story Puzzle, Credits)
       if (this.arcadeWavePending || this.state === 'arcade_wait') {
         if (e.code === 'Enter' || e.code === 'NumpadEnter') {
           e.preventDefault();
           this.continueArcadeWave();
           return;
         }
-        if (e.code === 'Escape' || e.code === 'Backspace' || e.code === 'KeyR') {
+        if (e.code === 'Escape' || e.code === 'Backspace') {
           e.preventDefault();
           this.gemOutArcade();
           return;
@@ -25183,18 +25385,122 @@ class StevenUniverseGame {
           this.advanceCutscene();
           return;
         }
-        if (e.code === 'Escape') {
+        if (e.code === 'Escape' || e.code === 'Backspace') {
           e.preventDefault();
-          this.finishCutscene();
+          this.cutsceneActive = false;
+          this.cutsceneData = null;
+          this.cutsceneOnDone = null;
+          this.showTitleScreen();
           return;
         }
         return;
       }
+      if (this.puzzleActive || this.state === 'puzzle') {
+        if (e.code === 'Escape' || e.code === 'Backspace') {
+          e.preventDefault();
+          this.puzzleActive = false;
+          this.puzzleState = null;
+          this.showTitleScreen();
+          return;
+        }
+      }
       if (this.creditsActive || this.state === 'credits') {
-        if (e.code === 'Escape' || e.code === 'Enter') {
+        if (e.code === 'Escape' || e.code === 'Backspace' || e.code === 'Enter') {
           e.preventDefault();
           this.closeCreditsScreen();
           return;
+        }
+        return;
+      }
+
+      // Pause-Only Restart Shortcut [R] (Strictly disabled during active gameplay!)
+      if (e.code === 'KeyR' && this.state === 'paused') {
+        e.preventDefault();
+        this.audio.playSfx('warpPad');
+        if (this.gameMode === 'arcade') {
+          this.startArcadeRun(this.arcadeMapStage || 1);
+        } else if (this.gameMode === 'practice') {
+          this.startNewGame('practice');
+        } else {
+          this.startNewGame('story', { stage: this.stageIndex || 1 });
+        }
+        return;
+      }
+
+      // Main Menu Shortcut [Esc / Return (Backspace)] for End Screens & Non-Pause Overlays
+      if (e.code === 'Escape' || e.code === 'Backspace') {
+        // In-game FIRST: Escape toggles Pause <-> Playing ONLY (never quits to Main Menu from Pause; Backspace ignored)
+        if (this.state === 'playing' || this.state === 'paused') {
+          if (e.code === 'Escape') {
+            if (this.state === 'playing') {
+              this.state = 'paused';
+              this.releaseAllInputs();
+              this.setOverlaysVisible(false);
+              if (this.syncVolumeUI) this.syncVolumeUI();
+              document.getElementById('pauseScreen').style.display = 'flex';
+              const touchBox = document.getElementById('touchControls');
+              if (touchBox) touchBox.style.display = 'none';
+            } else {
+              this.state = 'playing';
+              this.releaseAllInputs();
+              this.setOverlaysVisible(true);
+              this.lastTime = performance.now();
+              document.getElementById('pauseScreen').style.display = 'none';
+              const touchBox = document.getElementById('touchControls');
+              if (touchBox && this.isRealMobile) {
+                touchBox.classList.add('active');
+                touchBox.style.display = 'flex';
+              }
+            }
+          }
+          return;
+        }
+
+        const isShown = (id) => {
+          const el = document.getElementById(id);
+          return !!(el && el.style && el.style.display && el.style.display !== 'none');
+        };
+
+        if (isShown('quitScreen') || this.state === 'gameover' || this.state === 'victory' || isShown('gameOverScreen') || isShown('victoryScreen') || isShown('arcadeResultScreen')) {
+          e.preventDefault();
+          this.audio.playSfx('menuTap');
+          this.showTitleScreen();
+          return;
+        }
+        if (isShown('characterSelectScreen')) {
+          e.preventDefault();
+          if (this.playerMode === '2p' && this.charSelectActiveTab === 'p2') {
+            this.selectedCharP2 = this.tempSelectedChar || this.selectedCharP2;
+            SafeStorage.setItem('su_selectedCharP2', this.selectedCharP2);
+          } else {
+            this.selectedCharP1 = this.tempSelectedChar || this.selectedCharP1;
+            this.selectedChar = this.selectedCharP1;
+            SafeStorage.setItem('su_selectedChar', this.selectedCharP1);
+          }
+          this.updateLobbyGuardian();
+          document.getElementById('characterSelectScreen').style.display = 'none';
+          this.audio.playSfx('cookie');
+          return;
+        }
+        if (isShown('settingsScreen')) {
+          e.preventDefault();
+          SafeStorage.setItem('su_graphicsQuality', this.graphicsQuality || 'high');
+          SafeStorage.setItem('su_targetFps', String(this.targetFps || 0));
+          SafeStorage.setItem('su_fastPerf', this.fastPerfMode ? '1' : '0');
+          SafeStorage.setItem('su_screenShake', this.screenShakeEnabled ? '1' : '0');
+          SafeStorage.setItem('su_mobileTouch', this.isRealMobile ? '1' : '0');
+          document.getElementById('settingsScreen').style.display = 'none';
+          this.audio.playSfx('cookie');
+          return;
+        }
+        const closeableModals = ['episodeSelectScreen', 'mapSelectScreen', 'difficultyScreen', 'howToPlayScreen', 'bubbleRoomScreen', 'controlsScreen', 'creditsScreen', 'fusionGuideScreen', 'installAppModal'];
+        for (const modalId of closeableModals) {
+          if (isShown(modalId)) {
+            e.preventDefault();
+            document.getElementById(modalId).style.display = 'none';
+            this.audio.playSfx('menuTap');
+            return;
+          }
         }
         return;
       }
@@ -25268,67 +25574,7 @@ class StevenUniverseGame {
         }
       }
 
-      if (e.code === 'Escape') {
-        // If Guardian Select Modal is open, auto-save and close
-        const charModal = document.getElementById('characterSelectScreen');
-        if (charModal && charModal.style.display !== 'none' && charModal.style.display !== '') {
-          if (this.playerMode === '2p' && this.charSelectActiveTab === 'p2') {
-            this.selectedCharP2 = this.tempSelectedChar || this.selectedCharP2;
-            SafeStorage.setItem('su_selectedCharP2', this.selectedCharP2);
-          } else {
-            this.selectedCharP1 = this.tempSelectedChar || this.selectedCharP1;
-            this.selectedChar = this.selectedCharP1;
-            SafeStorage.setItem('su_selectedChar', this.selectedCharP1);
-          }
-          this.updateLobbyGuardian();
-          charModal.style.display = 'none';
-          this.audio.playSfx('cookie');
-          return;
-        }
-
-        // If Settings Modal is open, auto-save and close
-        const settingsModal = document.getElementById('settingsScreen');
-        if (settingsModal && settingsModal.style.display !== 'none' && settingsModal.style.display !== '') {
-          SafeStorage.setItem('su_fastPerf', this.fastPerfMode ? '1' : '0');
-          SafeStorage.setItem('su_screenShake', this.screenShakeEnabled ? '1' : '0');
-          SafeStorage.setItem('su_mobileTouch', this.isRealMobile ? '1' : '0');
-          settingsModal.style.display = 'none';
-          this.audio.playSfx('cookie');
-          return;
-        }
-
-        // If Other modals open, close them
-        const otherModals = ['controlsScreen', 'creditsScreen', 'fusionGuideScreen'];
-        for (const modalId of otherModals) {
-          const m = document.getElementById(modalId);
-          if (m && m.style.display !== 'none' && m.style.display !== '') {
-            m.style.display = 'none';
-            return;
-          }
-        }
-
-        // In-game Pause Toggle with clean lastTime synchronization
-        if (this.state === 'playing') {
-          this.state = 'paused';
-          this.releaseAllInputs();
-          this.setOverlaysVisible(false);
-          if (this.syncVolumeUI) this.syncVolumeUI();
-          document.getElementById('pauseScreen').style.display = 'flex';
-          const touchBox = document.getElementById('touchControls');
-          if (touchBox) touchBox.style.display = 'none';
-        } else if (this.state === 'paused') {
-          this.state = 'playing';
-          this.releaseAllInputs();
-          this.setOverlaysVisible(true);
-          this.lastTime = performance.now();
-          document.getElementById('pauseScreen').style.display = 'none';
-          const touchBox = document.getElementById('touchControls');
-          if (touchBox && this.isRealMobile) {
-            touchBox.classList.add('active');
-            touchBox.style.display = 'flex';
-          }
-        }
-      }
+      // Combat key handling (Escape / Backspace / Pause-R already handled above)
     });
 
     // If the window loses focus, the keyup never arrives and the hero would keep
@@ -25565,7 +25811,13 @@ class StevenUniverseGame {
     });
     safeClick('btnRestartStage', () => {
       this.audio.playSfx('warpPad');
-      this.startNewGame(this.gameMode);
+      if (this.gameMode === 'arcade') {
+        this.startArcadeRun(this.arcadeMapStage || 1);
+      } else if (this.gameMode === 'practice') {
+        this.startNewGame('practice');
+      } else {
+        this.startNewGame('story', { stage: this.stageIndex || 1 });
+      }
     });
     safeClick('btnQuitToMenu', () => {
       this.audio.playSfx('menuTap');
@@ -25703,7 +25955,6 @@ class StevenUniverseGame {
     const settingsModal = document.getElementById('settingsScreen');
     const btnSettingSound = document.getElementById('btnSettingSound');
     const btnSettingMusic = document.getElementById('btnSettingMusic');
-    const btnSettingPerf = document.getElementById('btnSettingPerf');
     const btnSettingShake = document.getElementById('btnSettingShake');
     const btnSettingTouch = document.getElementById('btnSettingTouch');
 
@@ -25763,8 +26014,7 @@ class StevenUniverseGame {
       pauseSliderMusic.addEventListener('input', (e) => onMusicInput(e.target.value));
     }
 
-    this.fastPerfMode = false;
-    this.screenShakeEnabled = true;
+    this.screenShakeEnabled = SafeStorage.getItem('su_screenShake') !== '0';
 
     // Jukebox Background Music (BGM) Track Selector Listeners (Lobby, Settings & Pause)
     const selectBgm = document.getElementById('selectBgmTrack');
@@ -25830,10 +26080,10 @@ class StevenUniverseGame {
       syncBgmUI();
       if (btnSettingSound) btnSettingSound.textContent = this.audio.soundEnabled ? 'Sound Effects: ON' : 'Sound Effects: OFF';
       if (btnSettingMusic) btnSettingMusic.textContent = this.audio.musicEnabled ? 'Synth Music (BGM): ON' : 'Synth Music (BGM): OFF';
-      if (btnSettingPerf) btnSettingPerf.textContent = this.fastPerfMode ? 'Fast Performance Mode: ON' : 'Fast Performance Mode: OFF';
       if (btnSettingShake) btnSettingShake.textContent = this.screenShakeEnabled ? 'Screen Shake: ON' : 'Screen Shake: OFF';
       if (btnSettingTouch) btnSettingTouch.textContent = this.isRealMobile ? 'Mobile Controls: FORCED ON' : 'Mobile Controls: AUTO';
       this.switchSettingsTab('audio');
+      this.syncGraphicsUI();
       this.syncResolutionUI();
       if (settingsModal) settingsModal.style.display = 'flex';
     });
@@ -25842,6 +26092,20 @@ class StevenUniverseGame {
       tabBtn.addEventListener('click', () => {
         this.audio.playSfx('menuTap');
         this.switchSettingsTab(tabBtn.dataset.stab || 'audio');
+      });
+    });
+
+    document.querySelectorAll('.gfx-btn[data-gfx]').forEach(gfxBtn => {
+      gfxBtn.addEventListener('click', () => {
+        this.audio.playSfx('menuTap');
+        this.applyGraphicsPreset(gfxBtn.dataset.gfx || 'high');
+      });
+    });
+
+    document.querySelectorAll('.fps-btn[data-fps]').forEach(fpsBtn => {
+      fpsBtn.addEventListener('click', () => {
+        this.audio.playSfx('menuTap');
+        this.setTargetFps(parseInt(fpsBtn.dataset.fps || '0', 10));
       });
     });
 
@@ -25882,15 +26146,10 @@ class StevenUniverseGame {
       if (btnSettingMusic) btnSettingMusic.textContent = enabled ? 'Synth Music (BGM): ON' : 'Synth Music (BGM): OFF';
     });
 
-    safeClick('btnSettingPerf', () => {
-      this.audio.playSfx('menuTap');
-      this.fastPerfMode = !this.fastPerfMode;
-      if (btnSettingPerf) btnSettingPerf.textContent = this.fastPerfMode ? 'Fast Performance Mode: ON' : 'Fast Performance Mode: OFF';
-    });
-
     safeClick('btnSettingShake', () => {
       this.audio.playSfx('menuTap');
       this.screenShakeEnabled = !this.screenShakeEnabled;
+      SafeStorage.setItem('su_screenShake', this.screenShakeEnabled ? '1' : '0');
       if (btnSettingShake) btnSettingShake.textContent = this.screenShakeEnabled ? 'Screen Shake: ON' : 'Screen Shake: OFF';
     });
 
@@ -26158,6 +26417,55 @@ class StevenUniverseGame {
     });
   }
 
+  syncGraphicsUI() {
+    document.querySelectorAll('.gfx-btn[data-gfx]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.gfx === (this.graphicsQuality || 'high'));
+    });
+    document.querySelectorAll('.fps-btn[data-fps]').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.fps || '0', 10) === (this.targetFps || 0));
+    });
+    const statusEl = document.getElementById('gfxPresetStatus');
+    if (statusEl) {
+      const qLabel = (this.graphicsQuality || 'high').toUpperCase();
+      const fpsLabel = this.targetFps > 0 ? `${this.targetFps} FPS cap` : 'uncapped frame rate';
+      const detailDesc = this.graphicsQuality === 'low'
+        ? 'lightweight particles, reduced stars/clouds, no shadow glow'
+        : this.graphicsQuality === 'medium'
+          ? 'balanced particle density and moderate glow effects'
+          : 'full particle density and gem glow effects';
+      statusEl.textContent = `${qLabel} graphics (${detailDesc}) · ${fpsLabel}.`;
+    }
+  }
+
+  applyGraphicsPreset(tier = 'high', opts = {}) {
+    const valid = ['low', 'medium', 'high'].includes(tier) ? tier : 'high';
+    this.graphicsQuality = valid;
+    this.fastPerfMode = valid === 'low';
+    this.gfxShadowMult = valid === 'low' ? 0 : (valid === 'medium' ? 0.5 : 1.0);
+    if (this.particles && typeof this.particles.setQualityPreset === 'function') {
+      this.particles.setQualityPreset(valid);
+    }
+    if (this.environment) {
+      this.environment.quality = valid;
+    }
+    if (opts.persist !== false) {
+      SafeStorage.setItem('su_graphicsQuality', valid);
+      SafeStorage.setItem('su_fastPerf', this.fastPerfMode ? '1' : '0');
+    }
+    this.syncGraphicsUI();
+  }
+
+  setTargetFps(fps = 0, opts = {}) {
+    const parsed = parseInt(fps, 10);
+    const valid = [0, 30, 60, 120].includes(parsed) ? parsed : 0;
+    this.targetFps = valid;
+    this._lastRenderedFrameTime = 0;
+    if (opts.persist !== false) {
+      SafeStorage.setItem('su_targetFps', String(valid));
+    }
+    this.syncGraphicsUI();
+  }
+
   syncResolutionUI() {
     document.querySelectorAll('.res-btn[data-res]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.res === (this.resolutionPreset || 'auto'));
@@ -26176,7 +26484,6 @@ class StevenUniverseGame {
   syncCharModalMeta() {
     const mode = this.selectedEntryMode || 'story';
     const badge = document.getElementById('modeDiffBadge');
-    const desc = document.getElementById('modeDiffDesc');
     const popup = document.getElementById('modeDiffPopup');
     const epBtn = document.getElementById('btnCharEpisodes');
     const playBtn = document.getElementById('btnConfirmChar');
@@ -26189,19 +26496,16 @@ class StevenUniverseGame {
     if (mode === 'arcade') {
       if (popup) popup.classList.add('arcade-mode');
       if (badge) badge.textContent = 'ARCADE MODE';
-      if (desc) desc.textContent = 'FAST-PACED, QUICK PROGRESSION, SCORE-BASED · ENDLESS WAVES & BOSSES';
       if (epBtn) epBtn.style.display = 'none';
       if (playBtn) playBtn.textContent = 'NEXT: MAP SELECTION ➔';
     } else if (mode === 'practice') {
       if (popup) popup.classList.remove('arcade-mode');
       if (badge) badge.textContent = 'PRACTICE MODE';
-      if (desc) desc.textContent = 'FREE TRAINING DOJO · TARGET DUMMIES · INFINITE ENERGY · FUSION PRACTICE';
       if (epBtn) epBtn.style.display = 'none';
       if (playBtn) playBtn.textContent = 'ENTER PRACTICE DOJO ➔';
     } else {
       if (popup) popup.classList.remove('arcade-mode');
       if (badge) badge.textContent = 'STORY MODE';
-      if (desc) desc.textContent = 'COMBAT, PUZZLES, DIALOGUE & CUTSCENES · EPISODES 1 TO 10';
       if (epBtn) epBtn.style.display = 'inline-flex';
       if (playBtn) playBtn.textContent = 'PLAY STORY (EP 1–10) ➔';
     }

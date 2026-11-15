@@ -1586,24 +1586,6 @@ body.mobile-device .touch-controls.active {
     0 4px 14px rgba(0, 0, 0, 0.85);
 }
 
-.menu-sub-hint {
-  display: block;
-  font-family: var(--su-font-main);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.6px;
-  color: #fde68a;
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: opacity 0.22s ease, max-height 0.22s ease;
-}
-
-.menu-link-btn:hover .menu-sub-hint {
-  opacity: 0.9;
-  max-height: 18px;
-}
-
 /* Shared Mouse-Responsive Floating Light for incoming cards & interactive elements */
 .hover-float {
   transition:
@@ -4155,13 +4137,12 @@ option {
    CUTSCENES, PUZZLES, 3-TAB SETTINGS, CREDITS
    ========================================================== */
 
-/* Mode Difference Intro Popup Banner inside Character Select */
+/* Mode Badge Header inside Character Select */
 .mode-diff-popup {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
+  justify-content: center;
+  padding: 8px 16px;
   margin-bottom: 12px;
   border-radius: 12px;
   background: linear-gradient(135deg, rgba(251, 191, 36, 0.16), rgba(244, 63, 94, 0.18));
@@ -4176,13 +4157,8 @@ option {
   font-family: var(--su-font-display);
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   color: #fde68a;
-}
-.mode-diff-desc {
-  font-size: 12px;
-  font-weight: 700;
-  color: #e2e8f0;
 }
 
 .char-top-controls {
@@ -4653,6 +4629,68 @@ option {
   border-color: #38bdf8;
   background: rgba(14, 165, 233, 0.22);
   color: #ffffff;
+}
+
+.gfx-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.fps-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gfx-btn,
+.fps-btn {
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-family: var(--su-font-display);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.gfx-btn-title {
+  font-size: 13px;
+  letter-spacing: 0.8px;
+  color: inherit;
+}
+
+.gfx-btn-sub {
+  font-family: var(--su-font-main);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  opacity: 0.78;
+}
+
+.gfx-btn:hover,
+.fps-btn:hover {
+  transform: translateY(-2px);
+  border-color: #fde68a;
+  box-shadow: 0 6px 16px rgba(255, 200, 110, 0.22);
+}
+
+.gfx-btn.active,
+.fps-btn.active {
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.28), rgba(244, 63, 94, 0.22));
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.28);
 }
 
 /* Rolling Credits Overlay Screen (JS-driven for glitch-free hold speedup) */
