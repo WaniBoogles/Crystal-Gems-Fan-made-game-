@@ -56,9 +56,9 @@
           <div class="hud-hearts" id="hudHearts" title="Health">
             <!-- Dynamically populated hearts -->
           </div>
-          <div class="hud-harmony-container" title="Overdrive Power-Up Meter">
+          <div class="hud-harmony-container" title="Gem Surge Power-Up Meter">
             <div class="hud-harmony-label">
-              <span id="overdriveLabel">STEVEN OVERDRIVE</span>
+              <span id="overdriveLabel">STEVEN DIAMOND SURGE</span>
               <span id="harmonyPercent">0%</span>
             </div>
             <div class="hud-harmony-bar-bg">
@@ -66,8 +66,8 @@
             </div>
           </div>
           <div class="hud-btn-row">
-            <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to enter Overdrive!">
-              <span class="overdrive-text" id="btnOverdriveText">OVERDRIVE [U]</span>
+            <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to unleash Gem Surge!">
+              <span class="overdrive-text" id="btnOverdriveText">GEM SURGE [U]</span>
             </button>
             <button id="btnFuseHud" class="btn-fuse-hud disabled" type="button" title="Fuse Gems when Sync reaches 100%!">
               <span class="fuse-btn-text" id="btnFuseText">FUSE [V]</span>
@@ -135,17 +135,17 @@
           <div class="hud-hearts" id="hudHeartsP2" title="P2 Health">
             <!-- Dynamically populated hearts -->
           </div>
-          <div class="hud-harmony-container" title="P2 Overdrive Meter">
+          <div class="hud-harmony-container" title="P2 Gem Surge Meter">
             <div class="hud-harmony-label">
-              <span id="overdriveLabelP2">GARNET OVERDRIVE</span>
+              <span id="overdriveLabelP2">GARNET FUTURE SURGE</span>
               <span id="harmonyPercentP2">0%</span>
             </div>
             <div class="hud-harmony-bar-bg">
               <div class="hud-harmony-bar-fill" id="harmonyBarFillP2"></div>
             </div>
           </div>
-          <button id="btnOverdriveP2" class="btn-overdrive-hud disabled" title="Press [O] when 100% full to enter Overdrive!">
-            <span class="overdrive-text" id="btnOverdriveTextP2">OVERDRIVE [O]</span>
+          <button id="btnOverdriveP2" class="btn-overdrive-hud disabled" title="Press [O] when 100% full to unleash Gem Surge!">
+            <span class="overdrive-text" id="btnOverdriveTextP2">GEM SURGE [O]</span>
           </button>
         </div>
         <div class="hud-avatar-frame" id="hudAvatarFrameP2">
@@ -258,11 +258,11 @@
         <button class="touch-btn touch-move" id="touchRight" aria-label="Move Right">▶</button>
       </div>
 
-      <!-- Right Hand: Action Cluster (Jump, Attack, Special, Skill, Overdrive) -->
+      <!-- Right Hand: Action Cluster (Jump, Attack, Special, Skill, Gem Surge) -->
       <div class="touch-actions" id="touchActions">
-        <button class="touch-btn btn-overdrive" id="touchOverdrive" aria-label="Pink Overdrive Power-Up">
-          <span class="touch-icon">OD</span>
-          <span class="touch-lbl">OVERDRIVE</span>
+        <button class="touch-btn btn-overdrive" id="touchOverdrive" aria-label="Gem Surge Power-Up">
+          <span class="touch-icon">GS</span>
+          <span class="touch-lbl">SURGE</span>
         </button>
         <button class="touch-btn btn-skill" id="touchSkill" aria-label="Gem Skill & Heal">
           <div class="touch-cooldown-overlay" id="touchCdSkill"></div>
@@ -322,10 +322,20 @@
           <span class="jukebox-now-playing">SOUNDTRACK:</span>
         </div>
         <select id="lobbySelectBgm" class="su-select lobby-select-bgm" title="Select and play any Steven Universe theme">
-          <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-          <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-          <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-          <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+          <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+          <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+          <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+          <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+          <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+          <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+          <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+          <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+          <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+          <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+          <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+          <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+          <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+          <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
           <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
         </select>
         <button id="btnLobbyPlayMusic" class="btn-lobby-music playing" type="button" title="Play or Pause Soundtrack">
@@ -604,10 +614,20 @@
                 ACTIVE SOUNDTRACK (JUKEBOX)
               </label>
               <select id="selectBgmTrack" class="su-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 12px; border: 1.5px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+                <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+                <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+                <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+                <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+                <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+                <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+                <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+                <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+                <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
                 <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
               <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
@@ -687,7 +707,7 @@
         <div class="cutin-portrait" id="cutinPortraitRight"></div>
       </div>
       <div class="cutin-banner">
-        <div class="cutin-kicker" id="cutinKicker">PINK OVERDRIVE</div>
+        <div class="cutin-kicker" id="cutinKicker">GEM SURGE</div>
         <div class="cutin-name" id="cutinName">GARNET</div>
         <div class="cutin-quote" id="cutinQuote"></div>
       </div>
@@ -713,8 +733,8 @@
               <p><b>A</b> and <b>D</b> to move, <b>W</b> or <b>Space</b> to jump (twice for a double jump). <b>J</b> throws your combo, <b>K</b> fires your special, <b>L</b> calls up your signature move. Hold <b>S</b> to guard.</p>
             </div>
             <div class="guide-item" style="border-color: #ff6097; background: rgba(255, 20, 147, 0.12);">
-              <h3 style="color: #ff6097;">Pink Overdrive Power-Up (Future State)</h3>
-              <p>Build your Overdrive meter by poofing monsters and collecting gems. When full (100%), press <b>[F]</b> or tap <b>OVERDRIVE</b> to enter the glowing Pink State for 12 seconds: <b>+85% Speed, 2X Damage, 3X Faster Cooldowns, and 50% Damage Resistance</b>!</p>
+              <h3 style="color: #ff6097;">Gem Surge Power-Up (Future Resonance)</h3>
+              <p>Build your Gem Surge meter by poofing monsters and collecting gems. When full (100%), press <b>[U]</b> (or <b>[R]</b>/<b>[O]</b> in 2P) or tap <b>SURGE</b> to enter Gem Surge for 12 seconds: <b>+85% Speed, 2X Damage, 3X Faster Cooldowns, and 50% Damage Resistance</b> — and works seamlessly during Fusion!</p>
             </div>
             <div class="guide-item">
               <h3>Top Row Guardians</h3>
@@ -741,7 +761,7 @@
             </div>
             <div class="guide-item">
               <h3>Gem Power-Ups &amp; Healing Hearts</h3>
-              <p>Defeat corrupted monsters to poof them! Monsters have a <b>35–40% chance to drop healing Hearts (or Cookie Cats)</b> to restore your HP, while raw gemstones can be collected for an instant <b>Gem Power-Up (+25% Overdrive & +500 PTS)</b> and safely stored in the Crystal Temple!</p>
+              <p>Defeat corrupted monsters to poof them! Monsters have a <b>35–40% chance to drop healing Hearts (or Cookie Cats)</b> to restore your HP, while raw gemstones can be collected for an instant <b>Gem Power-Up (+25% Gem Surge & +500 PTS)</b> and safely stored in the Crystal Temple!</p>
             </div>
             <div class="guide-item">
               <h3>10 Episodes Across Seasons 1 - 5</h3>
@@ -849,10 +869,20 @@
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
               <span style="font-size: 11px; font-weight: 700; color: #a5f3fc;">Soundtrack:</span>
               <select id="pauseSelectBgmTrack" class="su-select" style="width: 100%; padding: 6px 10px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 11px; border: 1.2px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+                <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+                <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+                <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+                <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+                <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+                <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+                <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+                <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+                <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
                 <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
             </div>

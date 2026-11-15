@@ -4088,9 +4088,9 @@ option {
           <div class="hud-hearts" id="hudHearts" title="Health">
             <!-- Dynamically populated hearts -->
           </div>
-          <div class="hud-harmony-container" title="Overdrive Power-Up Meter">
+          <div class="hud-harmony-container" title="Gem Surge Power-Up Meter">
             <div class="hud-harmony-label">
-              <span id="overdriveLabel">STEVEN OVERDRIVE</span>
+              <span id="overdriveLabel">STEVEN DIAMOND SURGE</span>
               <span id="harmonyPercent">0%</span>
             </div>
             <div class="hud-harmony-bar-bg">
@@ -4098,8 +4098,8 @@ option {
             </div>
           </div>
           <div class="hud-btn-row">
-            <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to enter Overdrive!">
-              <span class="overdrive-text" id="btnOverdriveText">OVERDRIVE [U]</span>
+            <button id="btnOverdrive" class="btn-overdrive-hud disabled" title="Press [U] or [R] when 100% full to unleash Gem Surge!">
+              <span class="overdrive-text" id="btnOverdriveText">GEM SURGE [U]</span>
             </button>
             <button id="btnFuseHud" class="btn-fuse-hud disabled" type="button" title="Fuse Gems when Sync reaches 100%!">
               <span class="fuse-btn-text" id="btnFuseText">FUSE [V]</span>
@@ -4167,17 +4167,17 @@ option {
           <div class="hud-hearts" id="hudHeartsP2" title="P2 Health">
             <!-- Dynamically populated hearts -->
           </div>
-          <div class="hud-harmony-container" title="P2 Overdrive Meter">
+          <div class="hud-harmony-container" title="P2 Gem Surge Meter">
             <div class="hud-harmony-label">
-              <span id="overdriveLabelP2">GARNET OVERDRIVE</span>
+              <span id="overdriveLabelP2">GARNET FUTURE SURGE</span>
               <span id="harmonyPercentP2">0%</span>
             </div>
             <div class="hud-harmony-bar-bg">
               <div class="hud-harmony-bar-fill" id="harmonyBarFillP2"></div>
             </div>
           </div>
-          <button id="btnOverdriveP2" class="btn-overdrive-hud disabled" title="Press [O] when 100% full to enter Overdrive!">
-            <span class="overdrive-text" id="btnOverdriveTextP2">OVERDRIVE [O]</span>
+          <button id="btnOverdriveP2" class="btn-overdrive-hud disabled" title="Press [O] when 100% full to unleash Gem Surge!">
+            <span class="overdrive-text" id="btnOverdriveTextP2">GEM SURGE [O]</span>
           </button>
         </div>
         <div class="hud-avatar-frame" id="hudAvatarFrameP2">
@@ -4290,11 +4290,11 @@ option {
         <button class="touch-btn touch-move" id="touchRight" aria-label="Move Right">▶</button>
       </div>
 
-      <!-- Right Hand: Action Cluster (Jump, Attack, Special, Skill, Overdrive) -->
+      <!-- Right Hand: Action Cluster (Jump, Attack, Special, Skill, Gem Surge) -->
       <div class="touch-actions" id="touchActions">
-        <button class="touch-btn btn-overdrive" id="touchOverdrive" aria-label="Pink Overdrive Power-Up">
-          <span class="touch-icon">OD</span>
-          <span class="touch-lbl">OVERDRIVE</span>
+        <button class="touch-btn btn-overdrive" id="touchOverdrive" aria-label="Gem Surge Power-Up">
+          <span class="touch-icon">GS</span>
+          <span class="touch-lbl">SURGE</span>
         </button>
         <button class="touch-btn btn-skill" id="touchSkill" aria-label="Gem Skill & Heal">
           <div class="touch-cooldown-overlay" id="touchCdSkill"></div>
@@ -4354,10 +4354,20 @@ option {
           <span class="jukebox-now-playing">SOUNDTRACK:</span>
         </div>
         <select id="lobbySelectBgm" class="su-select lobby-select-bgm" title="Select and play any Steven Universe theme">
-          <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-          <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-          <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-          <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+          <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+          <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+          <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+          <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+          <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+          <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+          <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+          <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+          <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+          <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+          <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+          <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+          <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+          <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
           <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
         </select>
         <button id="btnLobbyPlayMusic" class="btn-lobby-music playing" type="button" title="Play or Pause Soundtrack">
@@ -4636,10 +4646,20 @@ option {
                 ACTIVE SOUNDTRACK (JUKEBOX)
               </label>
               <select id="selectBgmTrack" class="su-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 12px; border: 1.5px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+                <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+                <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+                <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+                <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+                <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+                <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+                <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+                <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+                <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
                 <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
               <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.3;">
@@ -4719,7 +4739,7 @@ option {
         <div class="cutin-portrait" id="cutinPortraitRight"></div>
       </div>
       <div class="cutin-banner">
-        <div class="cutin-kicker" id="cutinKicker">PINK OVERDRIVE</div>
+        <div class="cutin-kicker" id="cutinKicker">GEM SURGE</div>
         <div class="cutin-name" id="cutinName">GARNET</div>
         <div class="cutin-quote" id="cutinQuote"></div>
       </div>
@@ -4745,8 +4765,8 @@ option {
               <p><b>A</b> and <b>D</b> to move, <b>W</b> or <b>Space</b> to jump (twice for a double jump). <b>J</b> throws your combo, <b>K</b> fires your special, <b>L</b> calls up your signature move. Hold <b>S</b> to guard.</p>
             </div>
             <div class="guide-item" style="border-color: #ff6097; background: rgba(255, 20, 147, 0.12);">
-              <h3 style="color: #ff6097;">Pink Overdrive Power-Up (Future State)</h3>
-              <p>Build your Overdrive meter by poofing monsters and collecting gems. When full (100%), press <b>[F]</b> or tap <b>OVERDRIVE</b> to enter the glowing Pink State for 12 seconds: <b>+85% Speed, 2X Damage, 3X Faster Cooldowns, and 50% Damage Resistance</b>!</p>
+              <h3 style="color: #ff6097;">Gem Surge Power-Up (Future Resonance)</h3>
+              <p>Build your Gem Surge meter by poofing monsters and collecting gems. When full (100%), press <b>[U]</b> (or <b>[R]</b>/<b>[O]</b> in 2P) or tap <b>SURGE</b> to enter Gem Surge for 12 seconds: <b>+85% Speed, 2X Damage, 3X Faster Cooldowns, and 50% Damage Resistance</b> — and works seamlessly during Fusion!</p>
             </div>
             <div class="guide-item">
               <h3>Top Row Guardians</h3>
@@ -4773,7 +4793,7 @@ option {
             </div>
             <div class="guide-item">
               <h3>Gem Power-Ups &amp; Healing Hearts</h3>
-              <p>Defeat corrupted monsters to poof them! Monsters have a <b>35–40% chance to drop healing Hearts (or Cookie Cats)</b> to restore your HP, while raw gemstones can be collected for an instant <b>Gem Power-Up (+25% Overdrive & +500 PTS)</b> and safely stored in the Crystal Temple!</p>
+              <p>Defeat corrupted monsters to poof them! Monsters have a <b>35–40% chance to drop healing Hearts (or Cookie Cats)</b> to restore your HP, while raw gemstones can be collected for an instant <b>Gem Power-Up (+25% Gem Surge & +500 PTS)</b> and safely stored in the Crystal Temple!</p>
             </div>
             <div class="guide-item">
               <h3>10 Episodes Across Seasons 1 - 5</h3>
@@ -4881,10 +4901,20 @@ option {
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
               <span style="font-size: 11px; font-weight: 700; color: #a5f3fc;">Soundtrack:</span>
               <select id="pauseSelectBgmTrack" class="su-select" style="width: 100%; padding: 6px 10px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 11px; border: 1.2px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="distant_shore" selected>"That Distant Shore" (Lapis Peace Theme)</option>
-                <option value="mirror_gem">"I Am Lapis Lazuli" (The Mirror Gem Suite)</option>
-                <option value="lapis_tower">"Lapis' Flight / Tower of Water"</option>
-                <option value="defenders_deep">"Defenders of the Deep" (Water Clone Battle)</option>
+                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
+                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
+                <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
+                <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
+                <option value="stage_4">Ep 4: "Mantle Pressure" (The Cluster)</option>
+                <option value="stage_5">Ep 5: "Bismuth's Anvil Forge"</option>
+                <option value="stage_6">Ep 6: "Shattered Frost" (Frozen North)</option>
+                <option value="stage_7">Ep 7: "Starlight Sanctuary" (Space Zoo)</option>
+                <option value="stage_8">Ep 8: "Aquamarine Imperial March"</option>
+                <option value="stage_9">Ep 9: "Off-Color Pursuit" (The Trial)</option>
+                <option value="stage_10">Ep 10: "Change Your Mind" (Diamond Finale)</option>
+                <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
                 <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
               </select>
             </div>
@@ -4997,16 +5027,19 @@ class GemAudioEngine {
     this.sfxVolume = parseFloat(getVal('su_sfxVol', '0.8'));
     this.musicVolume = parseFloat(getVal('su_musicVol', '0.7'));
     this.bgmOverrideManual = getVal('su_bgmManual', 'false') === 'true';
-    let storedBgm = getVal('su_selectedBgm', 'distant_shore');
-    if (!storedBgm || storedBgm === 'auto' || storedBgm === 'menu') storedBgm = 'distant_shore';
+    let storedBgm = getVal('su_selectedBgm', 'auto');
+    if (!this.bgmOverrideManual || !storedBgm || storedBgm === 'menu' || storedBgm === 'distant_shore' && !this.bgmOverrideManual) {
+      storedBgm = 'auto';
+    }
     this.selectedBgm = storedBgm;
     this.musicInterval = null;
     this.musicBeat = 0;
-    this.currentTrack = storedBgm;
+    this.currentTrack = 'intro_launch';
     this.lastStageIndex = 1;
     this.isManuallyPaused = false;
     this.isResuming = false;
     this.hasAwakened = false;
+    this._noiseBuffer = null;
     this.sfxBuffers = {};
     this._sfxLoaded = false;
   }
@@ -5027,6 +5060,16 @@ class GemAudioEngine {
           this.musicGainNode = this.ctx.createGain();
           this.musicGainNode.gain.setValueAtTime(this.musicEnabled ? this.musicVolume : 0, this.ctx.currentTime);
           this.musicGainNode.connect(this.ctx.destination);
+
+          // Pre-build short white-noise buffer once for synth percussion
+          try {
+            const sampleRate = this.ctx.sampleRate || 44100;
+            const len = Math.floor(sampleRate * 0.25);
+            const buf = this.ctx.createBuffer(1, len, sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+            this._noiseBuffer = buf;
+          } catch (ne) {}
         } catch (e) {
           console.warn("Audio gain init error:", e);
         }
@@ -5053,6 +5096,31 @@ class GemAudioEngine {
         }
       }
     }
+  }
+
+  unlockFromGesture() {
+    this.init();
+    if (!this.ctx) return false;
+    try {
+      // Prime 1 silent sample synchronously inside user gesture for Chromium / Safari autoplay compliance
+      if (this.ctx.state === 'suspended' && typeof this.ctx.createBuffer === 'function') {
+        const silent = this.ctx.createBuffer(1, 1, 22050);
+        const src = this.ctx.createBufferSource();
+        src.buffer = silent;
+        src.connect(this.ctx.destination);
+        src.start(0);
+      }
+      if (this.ctx.state === 'suspended') {
+        this.ctx.resume().then(() => {
+          if (this.ctx && this.ctx.state === 'running') {
+            this.onAudioRunning();
+          }
+        }).catch(() => {});
+      } else if (this.ctx.state === 'running') {
+        this.onAudioRunning();
+      }
+    } catch (e) {}
+    return this.ctx.state === 'running';
   }
 
   loadAuthenticSfx() {
@@ -5154,27 +5222,28 @@ class GemAudioEngine {
   }
 
   setBgmOverride(trackId) {
-    this.selectedBgm = trackId || 'auto';
-    this.bgmOverrideManual = true;
+    const nextTrack = trackId || 'auto';
+    this.selectedBgm = nextTrack;
+    this.bgmOverrideManual = nextTrack !== 'auto';
     if (typeof SafeStorage !== 'undefined' && SafeStorage.setItem) {
-      SafeStorage.setItem('su_bgmManual', 'true');
-    }
-    this.isManuallyPaused = false;
-    if (typeof SafeStorage !== 'undefined' && SafeStorage.setItem) {
+      SafeStorage.setItem('su_bgmManual', this.bgmOverrideManual ? 'true' : 'false');
       SafeStorage.setItem('su_selectedBgm', this.selectedBgm);
     }
+    this.isManuallyPaused = false;
     if (!this.musicEnabled) return;
     this.init();
+    const g = (typeof window !== 'undefined') ? window.game : null;
+    const isBoss = typeof this.currentTrack === 'string' && this.currentTrack.startsWith('boss_');
     if (this.selectedBgm === 'auto') {
-      if (this.currentTrack === 'menu' || !this.currentTrack) {
+      if (g && g.state === 'practice') {
         this.playTrackById('distant_shore', false);
-      } else if (this.currentTrack === 'practice') {
-        this.playTrackById('distant_shore', false);
+      } else if (!g || g.state === 'title' || this.currentTrack === 'menu' || this.currentTrack === 'intro_launch' || !this.currentTrack) {
+        this.playTrackById('intro_launch', false);
       } else {
-        this.playStageMusic(this.lastStageIndex || 1, this.currentTrack.startsWith('boss_'));
+        this.playStageMusic(this.lastStageIndex || 1, isBoss);
       }
     } else {
-      this.playTrackById(this.selectedBgm, this.currentTrack.startsWith('boss_'));
+      this.playTrackById(this.selectedBgm, isBoss);
     }
   }
 
@@ -5775,293 +5844,546 @@ class GemAudioEngine {
 
   getTrackProfile(trackId) {
     const profiles = {
-      // 1. "That Distant Shore" (Lapis' Peaceful Solo Song) - DEFAULT FOR MAIN MENU & PRACTICE
-      // Gentle, tender 3/4 waltz with soft crystalline chime notes and warm resonant trail
-      'distant_shore': {
-        name: 'That Distant Shore (Lapis Peace Theme)',
-        tempo: 90,
+      // 0. "Temple Sunset" - DEFAULT RELAXING LAUNCH INTRO THEME
+      // Warm, soothing Beach City dusk ballad: soft bell-chime ukulele plucks, lush Cmaj9 -> Fmaj7 -> G6 chords,
+      // gentle rests for breathing space, and delicate brushed wood-shaker pulse.
+      'intro_launch': {
+        name: 'Temple Sunset (Relaxing Launch Intro)',
+        tempo: 82,
         leadType: 'sine',
         bassType: 'sine',
         harmType: 'triangle',
-        leadVol: 0.135,
-        bassVol: 0.175,
-        harmVol: 0.080,
-        noteAttack: 0.02,
-        noteDecay: 0.44,
-        bassDecay: 0.55,
-        harmDecay: 0.50,
+        filterFreq: 1950,
+        leadDetune: 4,
+        leadVol: 0.125,
+        bassVol: 0.165,
+        harmVol: 0.075,
+        drumVol: 0.045,
+        noteAttack: 0.028,
+        noteDecay: 0.56,
+        bassDecay: 0.72,
+        harmDecay: 0.65,
+        harmStep: 4,
+        bassStep: 4,
+        drumPattern: ['chime_perc', null, 'shaker', null, null, null, 'shaker', null],
+        melody: [
+          392.0, 493.88, 523.25, 0,     587.33, 523.25, 493.88, 392.0,
+          329.63, 392.0, 440.0, 0,      392.0, 329.63, 293.66, 0,
+          349.23, 440.0, 523.25, 659.25, 587.33, 523.25, 440.0, 0,
+          392.0, 493.88, 587.33, 523.25, 493.88, 440.0, 392.0, 0,
+          261.63, 329.63, 392.0, 523.25, 493.88, 440.0, 392.0, 0,
+          293.66, 349.23, 440.0, 523.25, 493.88, 392.0, 329.63, 293.66
+        ],
+        bass: [130.81, 130.81, 164.81, 164.81, 174.61, 174.61, 196.0, 196.0, 110.0, 110.0, 146.83, 196.0],
+        harmonics: [523.25, 659.25, 698.46, 783.99, 659.25, 698.46]
+      },
+
+      // 1. "That Distant Shore" (Lapis' Peaceful Solo Song)
+      // Gentle, tender 3/4 crystal waltz
+      'distant_shore': {
+        name: 'That Distant Shore (Lapis Peace Theme)',
+        tempo: 88,
+        leadType: 'sine',
+        bassType: 'sine',
+        harmType: 'triangle',
+        filterFreq: 2100,
+        leadVol: 0.130,
+        bassVol: 0.170,
+        harmVol: 0.075,
+        drumVol: 0.04,
+        noteAttack: 0.022,
+        noteDecay: 0.46,
+        bassDecay: 0.58,
+        harmDecay: 0.52,
         harmStep: 3,
         bassStep: 3,
+        drumPattern: ['chime_perc', null, null, 'shaker', null, null],
         melody: [
-          261.63, 329.63, 392.0, 440.0, 392.0, 329.63, 293.66, 261.63,
-          220.0, 261.63, 329.63, 392.0, 349.23, 329.63, 293.66, 261.63,
+          261.63, 329.63, 392.0, 440.0, 0, 329.63, 293.66, 261.63,
+          220.0, 261.63, 329.63, 392.0, 349.23, 329.63, 293.66, 0,
           293.66, 349.23, 440.0, 523.25, 440.0, 349.23, 329.63, 293.66,
-          261.63, 329.63, 392.0, 523.25, 440.0, 392.0, 349.23, 329.63
+          261.63, 329.63, 392.0, 523.25, 440.0, 392.0, 349.23, 0
         ],
         bass: [130.81, 164.81, 174.61, 130.81, 146.83, 164.81, 130.81, 164.81],
         harmonics: [523.25, 659.25, 698.46, 783.99]
       },
 
-      // 2. "Defenders of the Deep" / "Water Clone Battle"
-      // Driving synth action melody with heroic brass stabs & battle surge
+      // Episode 1: Beach City & Ocean Skirmish ("Defenders of the Deep")
+      // Bright heroic boardwalk synth-pop action in F Minor/Dorian with punchy 4-on-floor kick & backbeat snare
       'defenders_deep': {
-        name: 'Defenders of the Deep (Water Clone Battle)',
-        tempo: 136,
+        name: 'Defenders of the Deep (Beach City Action)',
+        tempo: 132,
         leadType: 'sawtooth',
         bassType: 'triangle',
         harmType: 'sine',
-        leadVol: 0.130,
+        filterFreq: 2800,
+        leadDetune: 5,
+        leadVol: 0.115,
         bassVol: 0.175,
-        harmVol: 0.080,
+        harmVol: 0.075,
+        drumVol: 0.11,
         noteAttack: 0.01,
-        noteDecay: 0.22,
-        bassDecay: 0.32,
-        harmDecay: 0.30,
-        harmStep: 2,
-        bassStep: 4,
+        noteDecay: 0.24,
+        bassDecay: 0.28,
+        harmDecay: 0.26,
+        harmStep: 4,
+        bassStep: 2,
+        drumPattern: ['kick', 'hihat', 'snare', 'hihat', 'kick', 'hihat', 'snare', 'hihat'],
         melody: [
-          349.23, 415.3, 523.25, 622.25, 698.46, 622.25, 523.25, 415.3,
-          466.16, 554.37, 698.46, 830.61, 783.99, 698.46, 622.25, 554.37,
-          523.25, 622.25, 783.99, 932.33, 830.61, 783.99, 698.46, 622.25,
-          698.46, 830.61, 1046.5, 1244.51, 1108.73, 1046.5, 932.33, 830.61
+          349.23, 0, 523.25, 622.25, 698.46, 0, 622.25, 523.25,
+          466.16, 523.25, 466.16, 415.3, 392.0, 0, 415.3, 466.16,
+          523.25, 622.25, 698.46, 783.99, 830.61, 783.99, 698.46, 0,
+          622.25, 523.25, 466.16, 415.3, 392.0, 466.16, 523.25, 0
         ],
-        bass: [87.31, 69.3, 77.78, 65.41, 87.31, 103.83, 116.54, 130.81],
+        bass: [87.31, 174.61, 87.31, 130.81, 77.78, 155.56, 65.41, 130.81, 87.31, 174.61, 103.83, 207.65, 98.0, 196.0, 87.31, 130.81],
         harmonics: [523.25, 698.46, 830.61, 1046.5]
       },
 
-      // 3. "Amethyst's Drum / Opal's Theme"
-      // Heavy combat waves, syncopated funk breakbeats, and Opal's mystic recurve bow riffs
+      // Fusion / Amethyst's Drum / Opal's Theme
+      // Syncopated funk breakbeat with sliding square bass and crystal bow riffs
       'opal_theme': {
         name: "Amethyst's Drum / Opal's Theme",
-        tempo: 144,
+        tempo: 142,
         leadType: 'triangle',
         bassType: 'square',
-        harmType: 'triangle',
-        leadVol: 0.138,
-        bassVol: 0.180,
-        harmVol: 0.080,
-        noteAttack: 0.015,
-        noteDecay: 0.26,
-        bassDecay: 0.32,
-        harmDecay: 0.30,
-        harmStep: 2,
+        harmType: 'sine',
+        filterFreq: 2400,
+        leadVol: 0.135,
+        bassVol: 0.145,
+        harmVol: 0.075,
+        drumVol: 0.115,
+        noteAttack: 0.012,
+        noteDecay: 0.24,
+        bassDecay: 0.22,
+        harmDecay: 0.28,
+        harmStep: 4,
         bassStep: 2,
+        drumPattern: ['kick', null, 'hihat', 'kick', 'snare', 'hihat', null, 'snare'],
         melody: [
-          293.66, 349.23, 392.0, 440.0, 523.25, 587.33, 523.25, 440.0,
-          392.0, 349.23, 293.66, 349.23, 392.0, 466.16, 440.0, 392.0,
-          349.23, 293.66, 261.63, 293.66, 349.23, 392.0, 440.0, 523.25,
-          587.33, 698.46, 659.25, 587.33, 523.25, 440.0, 392.0, 440.0
+          293.66, 0, 440.0, 392.0, 523.25, 587.33, 0, 523.25,
+          440.0, 392.0, 349.23, 0, 440.0, 392.0, 349.23, 293.66,
+          261.63, 293.66, 349.23, 440.0, 523.25, 0, 659.25, 587.33,
+          523.25, 440.0, 392.0, 349.23, 293.66, 349.23, 440.0, 0
         ],
-        bass: [73.42, 73.42, 87.31, 98.0, 110.0, 65.41, 73.42, 87.31],
+        bass: [73.42, 146.83, 87.31, 98.0, 110.0, 73.42, 65.41, 87.31],
         harmonics: [440.0, 587.33, 698.46, 880.0, 1046.5]
       },
 
-      // 4. "I Am Lapis Lazuli" (The Mirror Gem Suite)
-      // Dark, powerful orchestral build with frantic hydrokinetic piano runs
+      // Mirror Gem Suite
       'mirror_gem': {
         name: 'I Am Lapis Lazuli (The Mirror Gem Suite)',
-        tempo: 148,
+        tempo: 146,
         leadType: 'triangle',
         bassType: 'sawtooth',
         harmType: 'sine',
-        leadVol: 0.138,
-        bassVol: 0.185,
-        harmVol: 0.080,
+        filterFreq: 2600,
+        leadVol: 0.132,
+        bassVol: 0.140,
+        harmVol: 0.075,
+        drumVol: 0.09,
         noteAttack: 0.01,
-        noteDecay: 0.28,
-        bassDecay: 0.38,
+        noteDecay: 0.26,
+        bassDecay: 0.34,
         harmDecay: 0.35,
-        harmStep: 2,
+        harmStep: 4,
         bassStep: 4,
+        drumPattern: ['kick', 'hihat', 'snare', 'hihat'],
         melody: [
-          277.18, 329.63, 415.3, 554.37, 622.25, 554.37, 415.3, 329.63,
-          261.63, 329.63, 392.0, 523.25, 587.33, 523.25, 392.0, 329.63,
+          277.18, 329.63, 415.3, 554.37, 622.25, 554.37, 415.3, 0,
+          261.63, 329.63, 392.0, 523.25, 587.33, 523.25, 392.0, 0,
           246.94, 311.13, 369.99, 493.88, 554.37, 493.88, 369.99, 311.13,
-          277.18, 415.3, 554.37, 830.61, 932.33, 830.61, 554.37, 415.3
+          277.18, 415.3, 554.37, 830.61, 932.33, 830.61, 554.37, 0
         ],
         bass: [69.3, 65.41, 61.74, 69.3, 73.42, 69.3, 65.41, 69.3],
         harmonics: [415.3, 554.37, 659.25, 830.61, 932.33]
       },
 
-      // 5. "Lapis' Flight / Tower of Water"
-      // Soaring strings & immense ocean terraforming theme reaching into the stratosphere
+      // Episode 2: Galaxy Warp & Ancient Spire ("Lapis' Flight / Tower of Water")
+      // Cosmic D-Lydian shimmering float with wide airy space, harp shimmer & drifting warp pulse
       'lapis_tower': {
-        name: "Lapis' Flight / Tower of Water",
-        tempo: 126,
+        name: "Galaxy Warp / Tower of Water (Episode 2)",
+        tempo: 108,
         leadType: 'sine',
         bassType: 'triangle',
-        harmType: 'sawtooth',
+        harmType: 'sine',
+        filterFreq: 3100,
+        leadDetune: 7,
         leadVol: 0.132,
-        bassVol: 0.170,
-        harmVol: 0.075,
-        noteAttack: 0.02,
-        noteDecay: 0.36,
-        bassDecay: 0.42,
-        harmDecay: 0.40,
+        bassVol: 0.160,
+        harmVol: 0.082,
+        drumVol: 0.075,
+        noteAttack: 0.025,
+        noteDecay: 0.44,
+        bassDecay: 0.50,
+        harmDecay: 0.48,
         harmStep: 2,
         bassStep: 4,
+        drumPattern: ['kick', null, 'shaker', null, 'chime_perc', null, 'shaker', 'hihat'],
         melody: [
-          293.66, 349.23, 440.0, 587.33, 659.25, 587.33, 440.0, 349.23,
-          392.0, 466.16, 587.33, 783.99, 698.46, 587.33, 466.16, 392.0,
-          440.0, 523.25, 659.25, 880.0, 783.99, 659.25, 523.25, 440.0,
-          587.33, 698.46, 880.0, 1174.66, 1046.5, 880.0, 698.46, 659.25
+          293.66, 0, 440.0, 554.37, 659.25, 0, 587.33, 440.0,
+          392.0, 440.0, 587.33, 739.99, 659.25, 587.33, 440.0, 0,
+          369.99, 440.0, 587.33, 880.0, 0, 739.99, 659.25, 587.33,
+          554.37, 0, 440.0, 392.0, 329.63, 293.66, 0, 440.0
         ],
-        bass: [73.42, 98.0, 110.0, 73.42, 87.31, 130.81, 98.0, 73.42],
-        harmonics: [440.0, 587.33, 698.46, 880.0, 1174.66]
+        bass: [73.42, 110.0, 98.0, 146.83, 92.5, 110.0, 82.41, 73.42],
+        harmonics: [587.33, 739.99, 880.0, 1174.66]
       },
 
-      // Menu fallback alias
+      // Menu alias maps to soothing Launch Intro
       'menu': {
-        name: 'That Distant Shore (Lapis Peace Theme)',
-        tempo: 90,
+        name: 'Temple Sunset (Relaxing Launch Intro)',
+        tempo: 82,
         leadType: 'sine',
         bassType: 'sine',
         harmType: 'triangle',
-        leadVol: 0.135,
-        bassVol: 0.175,
-        harmVol: 0.080,
-        noteAttack: 0.02,
-        noteDecay: 0.44,
-        bassDecay: 0.55,
-        harmDecay: 0.50,
-        harmStep: 3,
-        bassStep: 3,
+        filterFreq: 1950,
+        leadDetune: 4,
+        leadVol: 0.125,
+        bassVol: 0.165,
+        harmVol: 0.075,
+        drumVol: 0.045,
+        noteAttack: 0.028,
+        noteDecay: 0.56,
+        bassDecay: 0.72,
+        harmDecay: 0.65,
+        harmStep: 4,
+        bassStep: 4,
+        drumPattern: ['chime_perc', null, 'shaker', null, null, null, 'shaker', null],
         melody: [
-          261.63, 329.63, 392.0, 440.0, 392.0, 329.63, 293.66, 261.63,
-          220.0, 261.63, 329.63, 392.0, 349.23, 329.63, 293.66, 261.63,
-          293.66, 349.23, 440.0, 523.25, 440.0, 349.23, 329.63, 293.66,
-          261.63, 329.63, 392.0, 523.25, 440.0, 392.0, 349.23, 329.63
+          392.0, 493.88, 523.25, 0, 587.33, 523.25, 493.88, 392.0,
+          329.63, 392.0, 440.0, 0, 392.0, 329.63, 293.66, 0,
+          349.23, 440.0, 523.25, 659.25, 587.33, 523.25, 440.0, 0,
+          392.0, 493.88, 587.33, 523.25, 493.88, 440.0, 392.0, 0
         ],
-        bass: [130.81, 164.81, 174.61, 130.81, 146.83, 164.81, 130.81, 164.81],
+        bass: [130.81, 164.81, 174.61, 196.0, 110.0, 146.83, 196.0, 130.81],
         harmonics: [523.25, 659.25, 698.46, 783.99]
       },
 
-      // Stage Themes 3..7, 9, 10
+      // Episode 3: Prime Kindergarten ("Hollow Canyons")
+      // Eerie Phrygian Dominant wooden marimba plucks, sparse hollow canyon silences & creeping sub tension
       'stage_3': {
+        name: 'Hollow Canyons (Prime Kindergarten)',
+        tempo: 94,
+        leadType: 'triangle',
+        bassType: 'sine',
+        harmType: 'sine',
+        filterFreq: 1450,
+        leadVol: 0.130,
+        bassVol: 0.165,
+        harmVol: 0.068,
+        drumVol: 0.085,
+        noteAttack: 0.008,
+        noteDecay: 0.22,
+        bassDecay: 0.62,
+        harmDecay: 0.45,
+        harmStep: 6,
+        bassStep: 4,
+        drumPattern: ['chime_perc', null, null, 'shaker', null, 'chime_perc', null, 'hihat'],
+        melody: [
+          261.63, 0, 277.18, 329.63, 0, 392.0, 349.23, 0,
+          277.18, 261.63, 0, 207.65, 220.0, 0, 0, 0,
+          392.0, 415.3, 392.0, 329.63, 277.18, 0, 349.23, 329.63,
+          277.18, 261.63, 246.94, 0, 261.63, 0, 329.63, 0
+        ],
+        bass: [65.41, 69.3, 65.41, 51.91, 65.41, 77.78, 69.3, 65.41],
+        harmonics: [329.63, 415.3, 523.25, 554.37]
+      },
+
+      // Episode 4: Subterranean Mantle Drill — The Cluster
+      // Slow crushing geothermal rumble: deep Locrian tritone dread, heavy sub-boom heartbeats & dark filtered saw
+      'stage_4': {
+        name: 'Mantle Pressure (The Cluster)',
+        tempo: 78,
+        leadType: 'sawtooth',
+        bassType: 'sine',
+        harmType: 'triangle',
+        filterFreq: 880,
+        leadDetune: 9,
+        leadVol: 0.105,
+        bassVol: 0.210,
+        harmVol: 0.065,
+        drumVol: 0.13,
+        noteAttack: 0.045,
+        noteDecay: 0.48,
+        bassDecay: 0.68,
+        harmDecay: 0.55,
+        harmStep: 4,
+        bassStep: 2,
+        drumPattern: ['sub_boom', null, null, 'sub_boom', null, null, 'kick', 'shaker'],
+        melody: [
+          185.0, 0, 0, 196.0, 261.63, 0, 246.94, 0,
+          185.0, 0, 220.0, 196.0, 185.0, 0, 0, 0,
+          277.18, 261.63, 0, 220.0, 246.94, 196.0, 185.0, 0,
+          146.83, 0, 185.0, 196.0, 185.0, 0, 0, 0
+        ],
+        bass: [46.25, 46.25, 65.41, 49.0, 46.25, 46.25, 55.0, 46.25],
+        harmonics: [261.63, 369.99, 293.66, 392.0]
+      },
+
+      // Episode 5: Bismuth's Burning Forge
+      // Heavy industrial anvil groove: metallic FM anvil clangs, crunchy E-minor pentatonic riffs & relentless drive
+      'stage_5': {
+        name: "Bismuth's Anvil Forge (Episode 5)",
+        tempo: 130,
+        leadType: 'square',
+        bassType: 'sawtooth',
+        harmType: 'triangle',
+        filterFreq: 1850,
+        leadVol: 0.105,
+        bassVol: 0.155,
+        harmVol: 0.072,
+        drumVol: 0.125,
+        noteAttack: 0.008,
+        noteDecay: 0.20,
+        bassDecay: 0.24,
+        harmDecay: 0.25,
+        harmStep: 4,
+        bassStep: 2,
+        drumPattern: ['kick', 'hihat', 'anvil', 'hihat', 'kick', 'snare', 'anvil', 'kick'],
+        melody: [
+          329.63, 329.63, 0, 392.0, 440.0, 392.0, 329.63, 0,
+          293.66, 329.63, 392.0, 493.88, 0, 440.0, 392.0, 329.63,
+          659.25, 0, 587.33, 493.88, 440.0, 493.88, 392.0, 0,
+          329.63, 392.0, 440.0, 493.88, 587.33, 659.25, 493.88, 0
+        ],
+        bass: [82.41, 82.41, 98.0, 110.0, 82.41, 73.42, 98.0, 123.47],
+        harmonics: [493.88, 659.25, 783.99, 987.77]
+      },
+
+      // Episode 6: The Frozen North & Corrupted Jasper
+      // Crystalline frozen celesta chimes over taut cold bass & crisp icy snaps
+      'stage_6': {
+        name: 'Shattered Frost (Frozen North)',
         tempo: 92,
         leadType: 'sine',
         bassType: 'triangle',
         harmType: 'sine',
-        leadVol: 0.042,
-        bassVol: 0.075,
-        harmVol: 0.022,
+        filterFreq: 3600,
+        leadDetune: 3,
+        leadVol: 0.135,
+        bassVol: 0.150,
+        harmVol: 0.080,
+        drumVol: 0.075,
+        noteAttack: 0.006,
+        noteDecay: 0.42,
+        bassDecay: 0.40,
+        harmDecay: 0.52,
         harmStep: 4,
         bassStep: 4,
-        melody: [261.63, 311.13, 392.0, 466.16, 246.94, 293.66, 369.99, 440.0, 233.08, 277.18, 349.23, 415.3, 261.63, 311.13, 392.0, 523.25],
-        bass: [65.41, 77.78, 87.31, 98.0],
-        harmonics: [392.0, 466.16, 523.25, 622.25]
+        drumPattern: ['chime_perc', null, 'hihat', null, 'kick', null, 'hihat', 'chime_perc'],
+        melody: [
+          493.88, 0, 739.99, 0, 587.33, 659.25, 0, 587.33,
+          440.0, 0, 659.25, 493.88, 369.99, 0, 0, 0,
+          783.99, 739.99, 659.25, 0, 587.33, 554.37, 493.88, 0,
+          369.99, 440.0, 493.88, 0, 739.99, 987.77, 0, 0
+        ],
+        bass: [123.47, 98.0, 110.0, 92.5, 123.47, 130.81, 110.0, 123.47],
+        harmonics: [739.99, 987.77, 1174.66, 880.0]
       },
-      'stage_4': {
-        tempo: 76,
-        leadType: 'sawtooth',
-        bassType: 'sine',
-        harmType: 'square',
-        leadVol: 0.042,
-        bassVol: 0.075,
-        harmVol: 0.020,
-        harmStep: 4,
-        bassStep: 4,
-        melody: [185.0, 220.0, 277.18, 369.99, 196.0, 246.94, 293.66, 392.0, 207.65, 261.63, 311.13, 415.3, 220.0, 277.18, 329.63, 440.0],
-        bass: [92.5, 98.0, 103.83, 110.0],
-        harmonics: [369.99, 440.0, 554.37, 739.99]
-      },
-      'stage_5': {
-        tempo: 124,
-        leadType: 'square',
-        bassType: 'square',
-        harmType: 'sawtooth',
-        leadVol: 0.044,
-        bassVol: 0.075,
-        harmVol: 0.022,
-        harmStep: 4,
-        bassStep: 4,
-        melody: [329.63, 392.0, 493.88, 659.25, 369.99, 440.0, 554.37, 739.99, 392.0, 493.88, 587.33, 783.99, 329.63, 493.88, 659.25, 987.77],
-        bass: [164.81, 185.0, 196.0, 164.81],
-        harmonics: [493.88, 659.25, 783.99, 987.77]
-      },
-      'stage_6': {
-        tempo: 84,
-        leadType: 'sine',
-        bassType: 'sine',
-        harmType: 'triangle',
-        leadVol: 0.046,
-        bassVol: 0.080,
-        harmVol: 0.022,
-        harmStep: 4,
-        bassStep: 4,
-        melody: [246.94, 293.66, 369.99, 493.88, 261.63, 329.63, 392.0, 523.25, 220.0, 277.18, 329.63, 440.0, 246.94, 369.99, 493.88, 739.99],
-        bass: [123.47, 130.81, 110.0, 123.47],
-        harmonics: [493.88, 587.33, 739.99, 987.77]
-      },
+
+      // Episode 7: Pink Diamond's Space Zoo
+      // Deceptively serene 3/4 floating starlight waltz (24-step cycle) with glossy chime bells & light brushed pulse
       'stage_7': {
-        tempo: 120,
+        name: 'Starlight Sanctuary (Space Zoo)',
+        tempo: 114,
         leadType: 'sine',
         bassType: 'sine',
-        harmType: 'sine',
-        leadVol: 0.042,
-        bassVol: 0.065,
-        harmVol: 0.020,
-        harmStep: 4,
-        bassStep: 4,
-        melody: [392.0, 466.16, 587.33, 783.99, 349.23, 440.0, 523.25, 698.46, 311.13, 392.0, 466.16, 622.25, 392.0, 523.25, 659.25, 783.99],
-        bass: [196.0, 174.61, 155.56, 196.0],
-        harmonics: [587.33, 783.99, 932.33, 1174.66]
+        harmType: 'triangle',
+        filterFreq: 2500,
+        leadVol: 0.130,
+        bassVol: 0.155,
+        harmVol: 0.078,
+        drumVol: 0.06,
+        noteAttack: 0.025,
+        noteDecay: 0.42,
+        bassDecay: 0.50,
+        harmDecay: 0.46,
+        harmStep: 3,
+        bassStep: 3,
+        drumPattern: ['kick', null, 'shaker', 'chime_perc', null, 'shaker'],
+        melody: [
+          392.0, 493.88, 587.33, 659.25, 587.33, 493.88,
+          440.0, 523.25, 659.25, 783.99, 659.25, 523.25,
+          369.99, 440.0, 587.33, 739.99, 587.33, 0,
+          392.0, 493.88, 659.25, 783.99, 659.25, 0
+        ],
+        bass: [98.0, 123.47, 110.0, 130.81, 92.5, 110.0, 98.0, 146.83],
+        harmonics: [587.33, 783.99, 880.0, 987.77]
       },
-      // Episode 8: the Homeworld abduction shore — imperial, marching, cold
+
+      // Episode 8: Homeworld Abduction Shore
+      // Cold imperial harmonic-minor brass march with disciplined military snare cadence
       'stage_8': {
-        tempo: 112,
+        name: 'Aquamarine Imperial March (Episode 8)',
+        tempo: 116,
         leadType: 'sawtooth',
         bassType: 'square',
         harmType: 'triangle',
-        leadVol: 0.046,
-        bassVol: 0.082,
-        harmVol: 0.024,
-        harmStep: 3,
+        filterFreq: 1650,
+        leadVol: 0.108,
+        bassVol: 0.145,
+        harmVol: 0.070,
+        drumVol: 0.12,
+        noteAttack: 0.015,
+        noteDecay: 0.25,
+        bassDecay: 0.28,
+        harmDecay: 0.30,
+        harmStep: 4,
         bassStep: 2,
-        melody: [261.63, 311.13, 349.23, 311.13, 261.63, 233.08, 220.0, 233.08,
-                 261.63, 311.13, 392.0, 349.23, 311.13, 261.63, 233.08, 220.0,
-                 207.65, 233.08, 261.63, 311.13, 349.23, 392.0, 349.23, 311.13,
-                 261.63, 293.66, 311.13, 349.23, 392.0, 349.23, 311.13, 261.63],
-        bass: [130.81, 130.81, 116.54, 110.0, 130.81, 146.83, 130.81, 116.54],
-        harmonics: [523.25, 622.25, 698.46, 783.99]
+        drumPattern: ['kick', 'snare', 'snare', 'hihat', 'kick', null, 'snare', 'snare'],
+        melody: [
+          261.63, 0, 261.63, 311.13, 392.0, 0, 311.13, 246.94,
+          261.63, 311.13, 392.0, 415.3, 392.0, 0, 349.23, 311.13,
+          207.65, 246.94, 261.63, 311.13, 392.0, 415.3, 493.88, 0,
+          523.25, 493.88, 415.3, 392.0, 311.13, 246.94, 261.63, 0
+        ],
+        bass: [65.41, 65.41, 77.78, 61.74, 65.41, 98.0, 103.83, 61.74],
+        harmonics: [392.0, 523.25, 622.25, 783.99]
       },
+
+      // Episode 9: The Homeworld Trial & Off-Colors
+      // Frantic chromatic chase tension: nervous staccato synth, hurried syncopated breakbeat & dissonant alarm stabs
       'stage_9': {
-        tempo: 140,
+        name: 'Off-Color Pursuit (The Trial)',
+        tempo: 138,
         leadType: 'sawtooth',
         bassType: 'square',
         harmType: 'sawtooth',
-        leadVol: 0.046,
-        bassVol: 0.080,
-        harmVol: 0.024,
+        filterFreq: 2150,
+        leadDetune: 6,
+        leadVol: 0.105,
+        bassVol: 0.135,
+        harmVol: 0.058,
+        drumVol: 0.12,
+        noteAttack: 0.006,
+        noteDecay: 0.18,
+        bassDecay: 0.18,
+        harmDecay: 0.20,
         harmStep: 4,
-        bassStep: 4,
-        melody: [233.08, 277.18, 349.23, 466.16, 220.0, 261.63, 329.63, 440.0, 207.65, 246.94, 311.13, 415.3, 233.08, 349.23, 466.16, 698.46],
-        bass: [116.54, 110.0, 103.83, 116.54],
-        harmonics: [466.16, 554.37, 698.46, 932.33]
+        bassStep: 1,
+        drumPattern: ['kick', 'hihat', 'snare', 'kick', 'hihat', 'snare', 'kick', 'hihat'],
+        melody: [
+          466.16, 493.88, 466.16, 440.0, 466.16, 0, 554.37, 0,
+          466.16, 493.88, 554.37, 622.25, 554.37, 466.16, 415.3, 0,
+          349.23, 369.99, 415.3, 466.16, 554.37, 622.25, 698.46, 0,
+          830.61, 783.99, 698.46, 622.25, 554.37, 493.88, 466.16, 0
+        ],
+        bass: [116.54, 116.54, 123.47, 116.54, 103.83, 103.83, 110.0, 116.54],
+        harmonics: [466.16, 554.37, 698.46, 739.99]
       },
+
+      // Episode 10: Change Your Mind — White Diamond Mecha
+      // Epic multi-octave climax in D Minor -> Heroic Major lift, intense cinematic drums & triumphant peak
       'stage_10': {
-        tempo: 156,
+        name: 'Change Your Mind (Diamond Finale)',
+        tempo: 150,
         leadType: 'sawtooth',
         bassType: 'sawtooth',
-        harmType: 'square',
-        leadVol: 0.052,
-        bassVol: 0.090,
-        harmVol: 0.028,
+        harmType: 'triangle',
+        filterFreq: 3200,
+        leadDetune: 8,
+        leadVol: 0.122,
+        bassVol: 0.155,
+        harmVol: 0.085,
+        drumVol: 0.135,
+        noteAttack: 0.008,
+        noteDecay: 0.24,
+        bassDecay: 0.26,
+        harmDecay: 0.34,
         harmStep: 2,
         bassStep: 2,
-        melody: [293.66, 369.99, 440.0, 587.33, 329.63, 415.3, 493.88, 659.25, 369.99, 466.16, 554.37, 739.99, 440.0, 554.37, 659.25, 880.0],
-        bass: [146.83, 164.81, 185.0, 220.0],
-        harmonics: [587.33, 739.99, 880.0, 1174.66]
+        drumPattern: ['kick', 'hihat', 'snare', 'kick', 'sub_boom', 'hihat', 'snare', 'anvil'],
+        melody: [
+          293.66, 0, 440.0, 523.25, 587.33, 659.25, 698.46, 0,
+          587.33, 698.46, 880.0, 0, 783.99, 698.46, 659.25, 587.33,
+          523.25, 587.33, 659.25, 783.99, 880.0, 987.77, 1046.5, 0,
+          1174.66, 0, 1046.5, 932.33, 880.0, 739.99, 880.0, 1174.66
+        ],
+        bass: [73.42, 73.42, 87.31, 98.0, 65.41, 65.41, 98.0, 110.0, 73.42, 92.5, 110.0, 146.83],
+        harmonics: [587.33, 698.46, 880.0, 1046.5, 1174.66, 880.0]
       }
     };
 
     if (profiles[trackId]) return profiles[trackId];
-    if (trackId === 'practice' || trackId === 'menu' || trackId === 'auto') return profiles['distant_shore'];
+    if (trackId === 'practice') return profiles['distant_shore'];
+    if (trackId === 'menu' || trackId === 'auto') return profiles['intro_launch'];
     if (trackId === 'fusion') return profiles['opal_theme'];
     if (trackId === 'stage_1') return profiles['defenders_deep'];
     if (trackId === 'stage_2') return profiles['lapis_tower'];
-    if (trackId === 'stage_8') return profiles['mirror_gem'];
-    return profiles['distant_shore'];
+    return profiles['intro_launch'];
+  }
+
+  triggerDrum(type, t, vol = 0.1) {
+    if (!this.ctx || !type || vol <= 0) return;
+    try {
+      const dest = this.getMusicDestination();
+      if (type === 'kick' || type === 'sub_boom') {
+        const osc = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        const isSub = type === 'sub_boom';
+        const dur = isSub ? 0.28 : 0.12;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isSub ? 88 : 138, t);
+        osc.frequency.exponentialRampToValueAtTime(isSub ? 30 : 42, t + dur);
+        g.gain.setValueAtTime(vol * (isSub ? 1.35 : 1.15), t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        osc.connect(g);
+        g.connect(dest);
+        osc.start(t);
+        osc.stop(t + dur + 0.02);
+      } else if (type === 'snare' || type === 'hihat' || type === 'shaker') {
+        if (this._noiseBuffer) {
+          const src = this.ctx.createBufferSource();
+          src.buffer = this._noiseBuffer;
+          const filter = this.ctx.createBiquadFilter();
+          const g = this.ctx.createGain();
+          if (type === 'snare') {
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(1750, t);
+            filter.Q.setValueAtTime(0.9, t);
+            g.gain.setValueAtTime(vol * 0.85, t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+            src.connect(filter); filter.connect(g); g.connect(dest);
+            src.start(t); src.stop(t + 0.12);
+          } else {
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(type === 'hihat' ? 6200 : 4200, t);
+            const dur = type === 'hihat' ? 0.045 : 0.075;
+            g.gain.setValueAtTime(vol * (type === 'hihat' ? 0.38 : 0.30), t);
+            g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+            src.connect(filter); filter.connect(g); g.connect(dest);
+            src.start(t); src.stop(t + dur + 0.01);
+          }
+        }
+        if (type === 'snare') {
+          const body = this.ctx.createOscillator();
+          const bg = this.ctx.createGain();
+          body.type = 'triangle';
+          body.frequency.setValueAtTime(185, t);
+          body.frequency.exponentialRampToValueAtTime(92, t + 0.07);
+          bg.gain.setValueAtTime(vol * 0.55, t);
+          bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+          body.connect(bg); bg.connect(dest);
+          body.start(t); body.stop(t + 0.09);
+        }
+      } else if (type === 'anvil' || type === 'chime_perc') {
+        const isAnvil = type === 'anvil';
+        const f1 = isAnvil ? 512 : 760;
+        const f2 = isAnvil ? 741 : 1140;
+        const dur = isAnvil ? 0.18 : 0.09;
+        [f1, f2].forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = isAnvil ? 'triangle' : 'sine';
+          osc.frequency.setValueAtTime(freq, t);
+          if (!isAnvil) osc.frequency.exponentialRampToValueAtTime(freq * 0.88, t + dur);
+          g.gain.setValueAtTime(vol * (isAnvil ? (idx === 0 ? 0.65 : 0.42) : (idx === 0 ? 0.45 : 0.2)), t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+          osc.connect(g); g.connect(dest);
+          osc.start(t); osc.stop(t + dur + 0.02);
+        });
+      }
+    } catch (e) {}
   }
 
   playTrackById(trackId, isBoss = false, isWaveAlert = false) {
@@ -6071,11 +6393,11 @@ class GemAudioEngine {
     this.currentTrack = trackId;
 
     const theme = this.getTrackProfile(trackId);
-    const effectiveTempo = isBoss ? Math.round(theme.tempo * 1.15) : (isWaveAlert ? Math.round(theme.tempo * 1.08) : theme.tempo);
+    const effectiveTempo = isBoss ? Math.round(theme.tempo * 1.12) : (isWaveAlert ? Math.round(theme.tempo * 1.06) : theme.tempo);
     const intervalMs = (60 / effectiveTempo) * 250;
 
     this.musicBeat = 0;
-    this.fadeInMusic(1.0);
+    this.fadeInMusic(0.9);
 
     this.musicInterval = setInterval(() => {
       if (!this.ctx || !this.musicEnabled) return;
@@ -6104,23 +6426,45 @@ class GemAudioEngine {
         const noteIdx = this.musicBeat % melody.length;
         const freq = melody[noteIdx];
 
-        // 1. Lead voice with smooth attack and musical sustain
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.type = theme.leadType || 'triangle';
-        osc.frequency.setValueAtTime(freq, t);
+        // 1. Filtered Lead Voice (supports musical rests when freq <= 0)
+        if (freq && freq > 0) {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = theme.leadType || 'triangle';
+          osc.frequency.setValueAtTime(freq, t);
 
-        const leadVol = (isBoss ? 1.25 : 1.0) * (theme.leadVol || 0.045);
-        const leadAttack = theme.noteAttack || 0.015;
-        const leadDecay = theme.noteDecay || 0.22;
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.linearRampToValueAtTime(leadVol, t + leadAttack);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + leadDecay);
+          const leadVol = (isBoss ? 1.18 : 1.0) * (theme.leadVol || 0.085);
+          const leadAttack = theme.noteAttack || 0.015;
+          const leadDecay = theme.noteDecay || 0.24;
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(leadVol, t + leadAttack);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + leadDecay);
 
-        osc.connect(gain);
-        gain.connect(this.getMusicDestination());
-        osc.start(t);
-        osc.stop(t + leadDecay + 0.02);
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime((theme.filterFreq || 2400) + (isBoss ? 700 : 0), t);
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.getMusicDestination());
+          osc.start(t);
+          osc.stop(t + leadDecay + 0.02);
+
+          // Optional chorus detune layer for lush cosmic/finale tracks
+          if (theme.leadDetune) {
+            const osc2 = this.ctx.createOscillator();
+            const g2 = this.ctx.createGain();
+            osc2.type = theme.leadType || 'sine';
+            osc2.frequency.setValueAtTime(freq, t);
+            osc2.detune.setValueAtTime(theme.leadDetune, t);
+            g2.gain.setValueAtTime(0.0001, t);
+            g2.gain.linearRampToValueAtTime(leadVol * 0.48, t + leadAttack);
+            g2.gain.exponentialRampToValueAtTime(0.0001, t + leadDecay);
+            osc2.connect(g2);
+            g2.connect(this.getMusicDestination());
+            osc2.start(t);
+            osc2.stop(t + leadDecay + 0.02);
+          }
+        }
 
         // 2. Chords / Shimmer harmonics with gentle envelope
         const harmStep = theme.harmStep || (isBoss ? 2 : 4);
@@ -6130,7 +6474,7 @@ class GemAudioEngine {
           const hIdx = Math.floor((this.musicBeat / harmStep) % harmonics.length);
           hOsc.type = theme.harmType || 'sine';
           hOsc.frequency.setValueAtTime(harmonics[hIdx], t);
-          const hVol = theme.harmVol || (isBoss ? 0.035 : 0.022);
+          const hVol = theme.harmVol || (isBoss ? 0.045 : 0.032);
           const hDecay = theme.harmDecay || (harmStep * 0.14);
           hGain.gain.setValueAtTime(0.0001, t);
           hGain.gain.linearRampToValueAtTime(hVol, t + 0.02);
@@ -6149,19 +6493,36 @@ class GemAudioEngine {
           const bIdx = Math.floor((this.musicBeat / bassStep) % bass.length);
           const bFreq = bass[bIdx];
 
-          bassOsc.type = theme.bassType || 'square';
-          bassOsc.frequency.setValueAtTime(bFreq, t);
+          if (bFreq && bFreq > 0) {
+            bassOsc.type = theme.bassType || 'triangle';
+            bassOsc.frequency.setValueAtTime(bFreq, t);
+            const bassFilter = this.ctx.createBiquadFilter();
+            bassFilter.type = 'lowpass';
+            bassFilter.frequency.setValueAtTime(620 + (isBoss ? 220 : 0), t);
 
-          const bassVol = (isBoss ? 1.2 : 1.0) * (theme.bassVol || 0.075);
-          const bDecay = theme.bassDecay || 0.35;
-          bassGain.gain.setValueAtTime(0.0001, t);
-          bassGain.gain.linearRampToValueAtTime(bassVol, t + 0.02);
-          bassGain.gain.exponentialRampToValueAtTime(0.0001, t + bDecay);
+            const bassVol = (isBoss ? 1.15 : 1.0) * (theme.bassVol || 0.11);
+            const bDecay = theme.bassDecay || 0.35;
+            bassGain.gain.setValueAtTime(0.0001, t);
+            bassGain.gain.linearRampToValueAtTime(bassVol, t + 0.018);
+            bassGain.gain.exponentialRampToValueAtTime(0.0001, t + bDecay);
 
-          bassOsc.connect(bassGain);
-          bassGain.connect(this.getMusicDestination());
-          bassOsc.start(t);
-          bassOsc.stop(t + bDecay + 0.02);
+            bassOsc.connect(bassFilter);
+            bassFilter.connect(bassGain);
+            bassGain.connect(this.getMusicDestination());
+            bassOsc.start(t);
+            bassOsc.stop(t + bDecay + 0.02);
+          }
+        }
+
+        // 4. Per-stage Percussion Groove (kick / snare / hihat / anvil / sub_boom / shaker)
+        const pattern = theme.drumPattern;
+        if (pattern && pattern.length > 0) {
+          const dHit = pattern[this.musicBeat % pattern.length];
+          if (dHit) {
+            this.triggerDrum(dHit, t, (isBoss ? 1.2 : 1.0) * (theme.drumVol || 0.08));
+          } else if (isBoss && this.musicBeat % 4 === 2) {
+            this.triggerDrum('hihat', t, 0.06);
+          }
         }
 
         this.musicBeat++;
@@ -6177,25 +6538,21 @@ class GemAudioEngine {
     const stageNum = Math.max(1, Math.min(10, parseInt(stageIndex, 10) || 1));
     this.lastStageIndex = stageNum;
 
-    // One track per episode, picked for that map's atmosphere. (The old code asked
-    // for 'boss_N' and 'stage_8' profiles that never existed, so boss fights and
-    // the Homeworld shore silently fell back to the menu theme.)
     const STAGE_TRACKS = {
       1: 'defenders_deep',   // Beach City — bright, heroic boardwalk skirmish
-      2: 'lapis_tower',      // Galaxy Warp — vast, drifting, ancient
-      3: 'stage_3',          // Kindergarten — hollow, eerie, slow
-      4: 'stage_4',          // The Cluster — deep, heavy, ominous
-      5: 'stage_5',          // Forge — industrial, hammering, hot
-      6: 'stage_6',          // Frozen North — icy, sparse, glassy
-      7: 'stage_7',          // Space Zoo — elegant, lilting waltz
-      8: 'stage_8',          // Homeworld shore — imperial, marching
-      9: 'stage_9',          // Trial / Off-Colors — tense, chromatic
-      10: 'stage_10'         // Change Your Mind — full heroic finale
+      2: 'lapis_tower',      // Galaxy Warp — vast, drifting, cosmic Lydian
+      3: 'stage_3',          // Kindergarten — hollow Phrygian marimba & eerie pauses
+      4: 'stage_4',          // The Cluster — deep mantle sub-boom & Locrian pressure
+      5: 'stage_5',          // Forge — industrial metallic anvil percussion & grit
+      6: 'stage_6',          // Frozen North — sparse icy celesta & crisp frost
+      7: 'stage_7',          // Space Zoo — floaty 3/4 serene starlight waltz
+      8: 'stage_8',          // Homeworld shore — cold imperial military march
+      9: 'stage_9',          // Trial / Off-Colors — frantic chromatic pursuit
+      10: 'stage_10'         // Change Your Mind — epic multi-octave finale
     };
     const trackId = STAGE_TRACKS[stageNum] || 'defenders_deep';
     this.currentTrack = trackId;
 
-    // Only an explicit jukebox pick overrides the level's own theme.
     if (this.bgmOverrideManual && this.selectedBgm && this.selectedBgm !== 'auto') {
       return this.playTrackById(this.selectedBgm, isBoss);
     }
@@ -6217,14 +6574,16 @@ class GemAudioEngine {
     this.init();
     this.stopMusic();
 
-    let targetTrack = (this.selectedBgm && this.selectedBgm !== 'auto') ? this.selectedBgm : null;
+    let targetTrack = (this.bgmOverrideManual && this.selectedBgm && this.selectedBgm !== 'auto') ? this.selectedBgm : null;
     if (!targetTrack) {
-      if (trackName === 'practice' || trackName === 'menu') {
+      if (trackName === 'menu' || trackName === 'intro_launch') {
+        targetTrack = 'intro_launch';
+      } else if (trackName === 'practice') {
         targetTrack = 'distant_shore';
       } else if (trackName === 'fusion') {
         targetTrack = 'opal_theme';
       } else {
-        targetTrack = trackName || 'distant_shore';
+        targetTrack = trackName || 'intro_launch';
       }
     }
     return this.playTrackById(targetTrack, false);
@@ -7136,63 +7495,63 @@ class ParticleSystem {
 
 const OVERDRIVE_THEMES = {
   steven: {
-    name: 'STEVEN OVERDRIVE',
-    short: 'STEVEN',
-    msg: 'STEVEN OVERDRIVE: DIAMOND HYPER STATE!',
+    name: 'STEVEN DIAMOND SURGE',
+    short: 'DIAMOND SURGE',
+    msg: 'PINK DIAMOND SURGE: FUTURE HYPER STATE!',
     color: '#ff1493'
   },
   garnet: {
-    name: 'GARNET OVERDRIVE',
-    short: 'GARNET',
-    msg: 'GARNET OVERDRIVE: DUAL RESONANCE!',
+    name: 'GARNET FUTURE SURGE',
+    short: 'FUTURE SURGE',
+    msg: 'GARNET FUTURE SURGE: DUAL RESONANCE!',
     color: '#ef4444'
   },
   amethyst: {
-    name: 'AMETHYST OVERDRIVE',
-    short: 'AMETHYST',
-    msg: 'AMETHYST OVERDRIVE: VOLCANIC QUARTZ!',
+    name: 'AMETHYST QUARTZ SURGE',
+    short: 'QUARTZ SURGE',
+    msg: 'AMETHYST QUARTZ SURGE: VOLCANIC FURY!',
     color: '#a855f7'
   },
   pearl: {
-    name: 'PEARL OVERDRIVE',
-    short: 'PEARL',
-    msg: 'PEARL OVERDRIVE: PRISMATIC RADIANCE!',
+    name: 'PEARL PRISM SURGE',
+    short: 'PRISM SURGE',
+    msg: 'PEARL PRISM SURGE: PRISMATIC RADIANCE!',
     color: '#22d3ee'
   },
   bismuth: {
-    name: 'BISMUTH OVERDRIVE',
-    short: 'BISMUTH',
-    msg: 'BISMUTH OVERDRIVE: MOLTEN FORGEMASTER!',
+    name: 'BISMUTH FORGE SURGE',
+    short: 'FORGE SURGE',
+    msg: 'BISMUTH FORGE SURGE: MOLTEN FORGEMASTER!',
     color: '#f97316'
   },
   peridot: {
-    name: 'PERIDOT OVERDRIVE',
-    short: 'PERIDOT',
-    msg: 'PERIDOT OVERDRIVE: FERROKINETIC OVERCLOCK!',
+    name: 'PERIDOT FERRO SURGE',
+    short: 'FERRO SURGE',
+    msg: 'PERIDOT FERRO SURGE: MAGNETIC OVERCLOCK!',
     color: '#22c55e'
   },
   lapis: {
-    name: 'LAPIS OVERDRIVE',
-    short: 'LAPIS',
-    msg: 'LAPIS OVERDRIVE: OCEAN EMPRESS HYDRO-SURGE!',
+    name: 'LAPIS HYDRO SURGE',
+    short: 'HYDRO SURGE',
+    msg: 'LAPIS HYDRO SURGE: OCEAN EMPRESS TIDE!',
     color: '#0ea5e9'
   },
   rose: {
-    name: 'ROSE OVERDRIVE',
-    short: 'ROSE',
-    msg: 'ROSE OVERDRIVE: CELESTIAL DIAMOND MANDALA!',
+    name: 'ROSE CELESTIAL SURGE',
+    short: 'CELESTIAL SURGE',
+    msg: 'ROSE CELESTIAL SURGE: DIAMOND MANDALA!',
     color: '#f43f5e'
   },
   connie: {
-    name: 'CONNIE OVERDRIVE',
-    short: 'CONNIE',
-    msg: 'CONNIE OVERDRIVE: KNIGHT OF THE CRYSTAL GEMS!',
+    name: 'CONNIE KNIGHT SURGE',
+    short: 'KNIGHT SURGE',
+    msg: 'CONNIE KNIGHT SURGE: CRYSTAL BLADE FOCUS!',
     color: '#ec4899'
   },
   jasper: {
-    name: 'JASPER OVERDRIVE',
-    short: 'JASPER',
-    msg: 'JASPER OVERDRIVE: SUPREME BETA QUARTZ JUGGERNAUT!',
+    name: 'JASPER APEX SURGE',
+    short: 'APEX SURGE',
+    msg: 'JASPER APEX SURGE: SUPREME BETA JUGGERNAUT!',
     color: '#ea580c'
   }
 };
@@ -8603,7 +8962,11 @@ const PROJECTILE_TYPE_ELEMENTS = {
   comboRosePulse: 'fairy', comboGauntletQuake: 'fight', comboWhipCyclone: 'dark',
   comboSpearFlurry: 'steel', comboAnvilEcho: 'steel', comboMagneticBurst: 'steel',
   comboTidalLash: 'water', comboRoseThorn: 'fairy', comboCrescentSlash: 'fight',
-  comboSeismicSlam: 'fight', flaskRobonoid: 'steel'
+  comboSeismicSlam: 'fight', flaskRobonoid: 'steel',
+  fusionOpalArrow: 'psychic', fusionCelestialRain: 'fairy',
+  comboSwordStarWave: 'fairy', comboYoYoStar: 'fight', comboPrismBeam: 'psychic',
+  comboSolarWave: 'fire', comboFlailQuake: 'fight', comboShowtimeWave: 'psychic',
+  comboGlacialClaw: 'water', comboRainbowVeil: 'fairy'
 };
 
 // Enemy defensive typings (corrupted gems skew DARK; forged/robotic units skew STEEL).
@@ -8647,92 +9010,209 @@ function typeEffectLabel(mult) {
 
 const HERO_COMBO_PROFILES = {
   steven: {
-    label: 'Rose Punch Combo',
-    cadence: [0.20, 0.19, 0.32],
-    damage: [1.0, 1.15, 1.6],
-    range: [0, 4, 12],
-    knock: [0.95, 1.0, 1.5],
-    finisher: { label: 'STAR SHIELD PULSE!', type: 'comboRosePulse', damage: 16, width: 130, height: 90, speed: 300, knockX: 300, knockY: -150, color: '#ff6097' }
+    label: 'Shield Waltz Combo',
+    cadence: [0.19, 0.18, 0.22, 0.32],
+    damage: [1.0, 1.12, 1.32, 1.72],
+    range: [0, 4, 8, 16],
+    knock: [0.9, 1.0, 1.25, 1.6],
+    lunge: [95, 130, 160, 210],
+    moves: ['Shield Jab', 'Spinning Shield Hook', 'Star Uppercut!', 'STAR SHIELD PULSE!'],
+    finisher: { label: 'STAR SHIELD PULSE!', type: 'comboRosePulse', damage: 18, width: 140, height: 95, speed: 340, knockX: 320, knockY: -170, color: '#ff6097' }
   },
   garnet: {
-    label: 'Gauntlet Boxing Combo',
-    cadence: [0.24, 0.22, 0.38],
-    damage: [1.05, 1.2, 1.75],
-    range: [0, 3, 10],
-    knock: [1.1, 1.15, 1.7],
-    finisher: { label: 'GAUNTLET QUAKE!', type: 'comboGauntletQuake', damage: 20, width: 170, height: 70, speed: 260, knockX: 380, knockY: -260, color: '#ef4444' }
+    label: 'Twin Gauntlet Rush',
+    cadence: [0.22, 0.20, 0.24, 0.36],
+    damage: [1.05, 1.18, 1.42, 1.85],
+    range: [0, 4, 8, 14],
+    knock: [1.05, 1.15, 1.45, 1.8],
+    lunge: [110, 145, 185, 250],
+    moves: ['Left Haymaker', 'Body Blow Cross', 'Dragon Upper!', 'GAUNTLET QUAKE!'],
+    finisher: { label: 'GAUNTLET QUAKE!', type: 'comboGauntletQuake', damage: 22, width: 185, height: 75, speed: 290, knockX: 400, knockY: -270, color: '#ef4444' }
   },
   amethyst: {
-    label: 'Dual Whip Flurry',
-    cadence: [0.16, 0.15, 0.26],
-    damage: [0.95, 1.05, 1.5],
-    range: [6, 10, 18],
-    knock: [0.85, 0.9, 1.35],
-    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 15, width: 160, height: 100, speed: 220, knockX: 260, knockY: -180, color: '#c084fc' }
+    label: 'Whip & Spin Mixup',
+    cadence: [0.15, 0.14, 0.18, 0.26],
+    damage: [0.95, 1.05, 1.28, 1.62],
+    range: [8, 12, 16, 22],
+    knock: [0.85, 0.92, 1.15, 1.45],
+    lunge: [90, 110, 150, 190],
+    moves: ['Whip Snap', 'Ankle Sweep', 'Dual Whip Lift', 'WHIP CYCLONE!'],
+    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 17, width: 170, height: 105, speed: 260, knockX: 280, knockY: -195, color: '#c084fc' }
   },
   pearl: {
-    label: 'Spear Thrust Combo',
-    cadence: [0.15, 0.14, 0.26],
-    damage: [0.9, 0.95, 1.5],
-    range: [8, 12, 20],
-    knock: [0.8, 0.85, 1.3],
-    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 13, damage: 9, speed: 380, knockX: 240, knockY: -120, color: '#22d3ee' }
+    label: 'Ballet Spear Art',
+    cadence: [0.14, 0.13, 0.16, 0.25],
+    damage: [0.9, 1.0, 1.25, 1.58],
+    range: [10, 14, 18, 26],
+    knock: [0.8, 0.85, 1.1, 1.38],
+    lunge: [115, 130, 170, 210],
+    moves: ['Foil Jab', 'Pirouette Cut', 'Skyward Vault Thrust', 'SPEAR FLURRY!'],
+    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 10, speed: 440, knockX: 260, knockY: -140, color: '#22d3ee' }
   },
   bismuth: {
-    label: 'Forge Hammer Slams',
-    cadence: [0.27, 0.26, 0.42],
-    damage: [1.1, 1.25, 1.85],
-    range: [0, 2, 8],
-    knock: [1.2, 1.3, 1.8],
-    finisher: { label: 'ANVIL ECHO!', type: 'comboAnvilEcho', damage: 22, width: 180, height: 80, speed: 250, knockX: 420, knockY: -280, color: '#f97316' }
+    label: 'Forge Breaker Chain',
+    cadence: [0.25, 0.24, 0.28, 0.40],
+    damage: [1.1, 1.25, 1.48, 1.95],
+    range: [0, 3, 6, 12],
+    knock: [1.15, 1.3, 1.55, 1.9],
+    lunge: [90, 130, 170, 240],
+    moves: ['Iron Forearm', 'Anvil Hook', 'Rising Forge Upper!', 'ANVIL ECHO!'],
+    finisher: { label: 'ANVIL ECHO!', type: 'comboAnvilEcho', damage: 24, width: 190, height: 85, speed: 270, knockX: 440, knockY: -290, color: '#f97316' }
   },
   peridot: {
-    label: 'Ferrokinetic Scrap Barrage',
-    cadence: [0.18, 0.17, 0.30],
-    damage: [0.95, 1.05, 1.45],
-    range: [10, 14, 22],
-    knock: [0.75, 0.8, 1.2],
-    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 14, width: 150, height: 120, speed: 200, knockX: 210, knockY: -190, color: '#84cc16' }
+    label: 'Ferro-Tech Sequence',
+    cadence: [0.17, 0.16, 0.19, 0.28],
+    damage: [0.95, 1.06, 1.28, 1.55],
+    range: [12, 16, 20, 28],
+    knock: [0.75, 0.85, 1.05, 1.3],
+    lunge: [70, 95, -60, 130],
+    moves: ['Shard Jab', 'Gyro Saw Spin', 'Magnet Snap Back', 'MAGNETIC BURST!'],
+    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 16, width: 160, height: 125, speed: 260, knockX: 230, knockY: -200, color: '#84cc16' }
   },
   lapis: {
-    label: 'Hydro Whip Lash',
-    cadence: [0.17, 0.16, 0.28],
-    damage: [1.0, 1.1, 1.55],
-    range: [8, 12, 20],
-    knock: [0.9, 0.95, 1.4],
-    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 16, width: 170, height: 90, speed: 300, knockX: 320, knockY: -220, color: '#38bdf8' }
+    label: 'Hydro-Lance Flow',
+    cadence: [0.16, 0.15, 0.19, 0.27],
+    damage: [1.0, 1.12, 1.32, 1.65],
+    range: [10, 14, 20, 26],
+    knock: [0.9, 0.98, 1.22, 1.48],
+    lunge: [85, 110, 135, 180],
+    moves: ['Water Blade', 'Riptide Low Sweep', 'Geyser Lift!', 'TIDAL LASH!'],
+    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 18, width: 180, height: 95, speed: 340, knockX: 340, knockY: -230, color: '#38bdf8' }
   },
   rose: {
-    label: 'Broadsword & Shield Sweep',
-    cadence: [0.24, 0.22, 0.36],
-    damage: [1.05, 1.2, 1.7],
-    range: [0, 4, 10],
-    knock: [1.05, 1.15, 1.6],
-    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 18, width: 170, height: 90, speed: 280, knockX: 340, knockY: -200, color: '#f43f5e' }
+    label: 'Diamond Knight Waltz',
+    cadence: [0.22, 0.20, 0.25, 0.35],
+    damage: [1.05, 1.18, 1.4, 1.78],
+    range: [2, 6, 10, 16],
+    knock: [1.05, 1.15, 1.35, 1.65],
+    lunge: [95, 135, 165, 220],
+    moves: ['Hilt Strike', 'Rose Cross Cleave', 'Valiant Rising Cut', 'ROSE THORN SWEEP!'],
+    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 20, width: 180, height: 95, speed: 310, knockX: 350, knockY: -210, color: '#f43f5e' }
   },
   connie: {
-    label: "Knight's Fencing Combo",
-    cadence: [0.16, 0.15, 0.27],
-    damage: [0.95, 1.05, 1.55],
-    range: [8, 14, 24],
-    knock: [0.85, 0.9, 1.4],
-    finisher: { label: 'CRESCENT SLASH!', type: 'comboCrescentSlash', damage: 15, width: 160, height: 70, speed: 420, knockX: 300, knockY: -160, color: '#ec4899' }
+    label: 'Maheswaran Iaido',
+    cadence: [0.15, 0.14, 0.18, 0.26],
+    damage: [0.95, 1.08, 1.3, 1.65],
+    range: [10, 16, 20, 28],
+    knock: [0.85, 0.92, 1.18, 1.45],
+    lunge: [120, 150, 185, 240],
+    moves: ['Scabbard Draw', 'Diagonal Cross Cut', 'Vaulting Crescent', 'CRESCENT SLASH!'],
+    finisher: { label: 'CRESCENT SLASH!', type: 'comboCrescentSlash', damage: 17, width: 170, height: 75, speed: 460, knockX: 310, knockY: -175, color: '#ec4899' }
   },
   jasper: {
     label: 'Beta Quartz Brawler',
-    cadence: [0.28, 0.26, 0.44],
-    damage: [1.15, 1.3, 1.95],
-    range: [0, 2, 8],
-    knock: [1.25, 1.35, 1.9],
-    finisher: { label: 'SEISMIC HAYMAKER!', type: 'comboSeismicSlam', damage: 24, width: 190, height: 70, speed: 240, knockX: 460, knockY: -300, color: '#ea580c' }
+    cadence: [0.26, 0.24, 0.28, 0.42],
+    damage: [1.15, 1.3, 1.55, 2.05],
+    range: [0, 4, 8, 14],
+    knock: [1.2, 1.35, 1.6, 2.0],
+    lunge: [125, 160, 205, 280],
+    moves: ['Shoulder Check', 'Rib-Crusher Hook', 'Spinning Heel Slam', 'SEISMIC HAYMAKER!'],
+    finisher: { label: 'SEISMIC HAYMAKER!', type: 'comboSeismicSlam', damage: 26, width: 200, height: 75, speed: 270, knockX: 480, knockY: -310, color: '#ea580c' }
   }
 };
 
-// Fused heroes get a heavier, slower chain — a fusion hits like a boss.
+// Distinct Tekken-style 4-hit combos for all 9 Crystal Gem Fusions!
+const FUSION_COMBO_PROFILES = {
+  stevonnie: {
+    label: 'Sword-Shield Dance',
+    cadence: [0.18, 0.17, 0.21, 0.30],
+    damage: [1.0, 1.15, 1.38, 1.78],
+    range: [8, 14, 20, 28],
+    knock: [0.95, 1.1, 1.35, 1.7],
+    lunge: [120, 155, 195, 250],
+    moves: ['Shield Jab', 'Acrobatic Low Kick', 'Rose Blade Launcher', 'DUAL STARBURST SLASH!'],
+    finisher: { label: 'STARBURST WAVE!', type: 'comboSwordStarWave', damage: 28, width: 190, height: 95, speed: 440, knockX: 380, knockY: -220, color: '#ec4899' }
+  },
+  smoky: {
+    label: 'Triple Yo-Yo Cyclone',
+    cadence: [0.18, 0.17, 0.20, 0.29],
+    damage: [1.0, 1.14, 1.35, 1.75],
+    range: [14, 20, 26, 34],
+    knock: [0.95, 1.05, 1.3, 1.65],
+    lunge: [95, 130, 155, 195],
+    moves: ['Yo-Yo Snap', 'Cross-String Whip', 'Low Hurricane Spin', 'STAR YO-YO TEMPEST!'],
+    finisher: { label: 'YO-YO TEMPEST!', type: 'comboYoYoStar', count: 2, spread: 26, radius: 22, damage: 20, speed: 560, knockX: 350, knockY: -200, color: '#a855f7' }
+  },
+  rainbow2: {
+    label: 'Parasol Showtime',
+    cadence: [0.16, 0.15, 0.19, 0.27],
+    damage: [0.98, 1.12, 1.34, 1.72],
+    range: [10, 16, 22, 30],
+    knock: [0.9, 1.02, 1.28, 1.6],
+    lunge: [110, 140, 175, 220],
+    moves: ['Umbrella Tip Thrust', 'Dancing Boot Kick', 'Prism Baton Twirl', 'RAINBOW STAR BEAM!'],
+    finisher: { label: 'PRISM STAR BEAM!', type: 'comboPrismBeam', count: 3, spread: 24, radius: 16, damage: 15, speed: 540, knockX: 310, knockY: -180, color: '#38bdf8' }
+  },
+  sunstone: {
+    label: 'Solar Varsity Beatdown',
+    cadence: [0.21, 0.19, 0.23, 0.34],
+    damage: [1.06, 1.2, 1.44, 1.88],
+    range: [4, 8, 14, 20],
+    knock: [1.1, 1.22, 1.5, 1.9],
+    lunge: [115, 155, 205, 270],
+    moves: ['Double Palm Strike', 'Burning Low Sweep', 'Suplex Piston Upper!', 'SOLAR FLARE SLAM!'],
+    finisher: { label: 'SOLAR FLARE!', type: 'comboSolarWave', damage: 32, width: 200, height: 105, speed: 360, knockX: 430, knockY: -260, color: '#ea580c' }
+  },
+  sugilite: {
+    label: 'Flail Wrecking Rampage',
+    cadence: [0.25, 0.24, 0.28, 0.40],
+    damage: [1.15, 1.32, 1.58, 2.08],
+    range: [12, 18, 24, 34],
+    knock: [1.2, 1.38, 1.7, 2.15],
+    lunge: [115, 160, 210, 275],
+    moves: ['Heavy Plumb Jab', 'Quad-Arm Backhand', 'Overhead Crushing Drop', 'SEISMIC FLAIL BREAKER!'],
+    finisher: { label: 'FLAIL BREAKER!', type: 'comboFlailQuake', damage: 38, width: 230, height: 110, speed: 310, knockX: 520, knockY: -330, color: '#9333ea' }
+  },
+  sardonyx: {
+    label: 'Showtime Hammer Waltz',
+    cadence: [0.22, 0.20, 0.24, 0.35],
+    damage: [1.05, 1.22, 1.45, 1.9],
+    range: [8, 14, 22, 30],
+    knock: [1.05, 1.2, 1.45, 1.85],
+    lunge: [105, 145, 185, 240],
+    moves: ['Gentleman Cane Poke', 'Pirouette Hammer Spin', 'Tuxedo Uppercut', 'SHOWSTOPPER GRAND SLAM!'],
+    finisher: { label: 'SHOWSTOPPER!', type: 'comboShowtimeWave', damage: 32, width: 210, height: 105, speed: 370, knockX: 440, knockY: -260, color: '#fb7185' }
+  },
+  opal: {
+    label: 'Celestial Longbow Art',
+    cadence: [0.16, 0.15, 0.19, 0.27],
+    damage: [0.95, 1.1, 1.35, 1.85],
+    range: [20, 24, 28, 36],
+    knock: [0.85, 0.95, 1.2, 1.55],
+    lunge: [60, 80, -110, 95],
+    moves: ['Swift Star Arrow', 'Twin Spread Volley', 'Vaulting Backstep Snipe', 'STARLIGHT GREAT-ARROW!'],
+    finisher: null
+  },
+  malachite: {
+    label: 'Abyssal 6-Limb Maul',
+    cadence: [0.22, 0.21, 0.25, 0.36],
+    damage: [1.1, 1.26, 1.52, 1.98],
+    range: [10, 16, 22, 30],
+    knock: [1.1, 1.28, 1.55, 1.95],
+    lunge: [120, 165, 210, 275],
+    moves: ['Claw Rending Slash', 'Four-Hand Ground Sweep', 'Glacial Fang Uppercut', 'GLACIAL SPIRE CRUSH!'],
+    finisher: { label: 'GLACIAL SPIRE!', type: 'comboGlacialClaw', damage: 36, width: 210, height: 120, speed: 340, knockX: 460, knockY: -290, color: '#2dd4bf' }
+  },
+  rainbowClassic: {
+    label: '80s Prism Grace',
+    cadence: [0.17, 0.16, 0.20, 0.28],
+    damage: [1.0, 1.15, 1.38, 1.78],
+    range: [8, 14, 20, 28],
+    knock: [0.95, 1.1, 1.35, 1.72],
+    lunge: [110, 145, 180, 230],
+    moves: ['Ribbon Palm Thrust', 'Pirouette High Kick', 'Prism Veil Spin', 'PRISMATIC ROSE FINALE!'],
+    finisher: { label: 'PRISM VEIL!', type: 'comboRainbowVeil', damage: 30, width: 195, height: 105, speed: 410, knockX: 390, knockY: -230, color: '#f43f5e' }
+  }
+};
+
+// Default Fusion fallback chain
 const FUSION_COMBO_PROFILE = {
-  cadence: [0.22, 0.20, 0.34],
-  damage: [1.0, 1.15, 1.65],
-  knock: [1.0, 1.15, 1.7]
+  label: 'Fusion Resonance Chain',
+  cadence: [0.20, 0.19, 0.23, 0.33],
+  damage: [1.0, 1.15, 1.4, 1.8],
+  knock: [1.0, 1.15, 1.4, 1.75],
+  lunge: [105, 140, 180, 240],
+  moves: ['Synergy Strike', 'Resonance Hook', 'Prism Launcher', 'HARMONY FINISHER!']
 };
 
 // Per-fusion power identity: Sugilite hits hardest but shortest, Sardonyx lasts
@@ -8778,13 +9258,16 @@ class PlayerHero {
     this.specialCooldown = 0;
     this.skillCooldown = 0;
 
-    // Freebuff combo-chain state: timing window, reach, damage and finisher
+    // Tekken-style combo-chain state: timing window, step impulses, reach, damage and finisher
     this.comboStep = 0;
     this.comboStepTimer = 0;
     this.comboLinkBonus = 0;
     this.attackDamageMult = 1;
     this.attackRangeBonus = 0;
     this.attackKnockMult = 1;
+    this.comboImpulseVx = 0;
+    this.comboImpulseTimer = 0;
+    this.comboMoveName = '';
 
     // Steven Bubble Shield state (Fully movable!)
     this.isShielding = false;
@@ -8912,14 +9395,16 @@ class PlayerHero {
     if (audio) audio.playSfx('overdrive');
     if (particles) {
       const titles = {
-        steven: { msg: '⚡ PINK OVERDRIVE (SU FUTURE)!', color: '#ff1493' },
-        garnet: { msg: '🔥 DUAL RESONANCE (RUBY & SAPPHIRE)!', color: '#ef4444' },
-        amethyst: { msg: '🟣 VOLCANIC QUARTZ SUPERCHARGED!', color: '#a855f7' },
-        pearl: { msg: '⚔️ PRISMATIC HOLOGRAM RADIANCE!', color: '#22d3ee' },
-        bismuth: { msg: '🌋 MOLTEN FORGEMASTER OVERDRIVE!', color: '#f97316' },
-        peridot: { msg: '⚡ FERROKINETIC OVERCLOCK!', color: '#22c55e' },
-        lapis: { msg: '🌊 OCEAN EMPRESS HYDRO-SURGE!', color: '#0ea5e9' },
-        rose: { msg: '🌹 CELESTIAL DIAMOND MANDALA!', color: '#f43f5e' }
+        steven: { msg: '⚡ PINK DIAMOND SURGE (SU FUTURE)!', color: '#ff1493' },
+        garnet: { msg: '🔥 DUAL RESONANCE GEM SURGE!', color: '#ef4444' },
+        amethyst: { msg: '🟣 VOLCANIC QUARTZ SURGE!', color: '#a855f7' },
+        pearl: { msg: '⚔️ PRISMATIC HOLOGRAM SURGE!', color: '#22d3ee' },
+        bismuth: { msg: '🌋 MOLTEN FORGEMASTER SURGE!', color: '#f97316' },
+        peridot: { msg: '⚡ FERROKINETIC GEM SURGE!', color: '#22c55e' },
+        lapis: { msg: '🌊 OCEAN EMPRESS HYDRO SURGE!', color: '#0ea5e9' },
+        rose: { msg: '🌹 CELESTIAL DIAMOND SURGE!', color: '#f43f5e' },
+        connie: { msg: '🗡️ CRYSTAL KNIGHT SURGE!', color: '#ec4899' },
+        jasper: { msg: '🔶 SUPREME BETA QUARTZ SURGE!', color: '#ea580c' }
       };
       const t = titles[this.activeChar] || titles.steven;
       particles.addDamageText(this.x, this.y - 75, `${t.msg} (2X POWER)`, true, t.color);
@@ -8932,7 +9417,7 @@ class PlayerHero {
     this.isPinkOverdrive = false;
     this.pinkOverdriveTimer = 0;
     if (particles) {
-      particles.addDamageText(this.x, this.y - 65, 'OVERDRIVE ENDED', false, '#cbd5e1');
+      particles.addDamageText(this.x, this.y - 65, 'GEM SURGE ENDED', false, '#cbd5e1');
     }
   }
 
@@ -9088,16 +9573,16 @@ class PlayerHero {
       if (this.specialCooldown > 0) this.specialCooldown -= dt * 2;
       if (this.skillCooldown > 0) this.skillCooldown -= dt * 2;
 
-      // Spawn glowing pink ghost afterimages (Throttled for ultra smooth 60 FPS)
+      // Spawn glowing Gem Surge ghost afterimages only while in motion (capped & throttled for 60 FPS)
       this.afterimageTimer += dt;
-      if (this.afterimageTimer >= 0.12 && this.afterimages.length < 3) {
+      if ((Math.abs(this.vx) > 25 || Math.abs(this.vy) > 25) && this.afterimageTimer >= 0.14 && this.afterimages.length < 2) {
         this.afterimageTimer = 0;
         this.afterimages.push({
           x: this.x,
           y: this.y,
           facing: this.facing,
-          life: 0.24,
-          maxLife: 0.24
+          life: 0.22,
+          maxLife: 0.22
         });
       }
 
@@ -9173,20 +9658,29 @@ class PlayerHero {
     }
     this.wasGrounded = this.isGrounded;
 
-    // Fluid Horizontal Movement (NEVER AUTO-RUNS: STRICT ZERO VELOCITY WHEN IDLE!)
+    // Fluid Horizontal Movement (Responsive ramp + Tekken strike step impulse, zero drift when idle)
+    const targetVx = input.left ? -speed : (input.right ? speed : (this.isSpinDashing ? this.facing * 480 : 0));
+    if (this.comboImpulseTimer > 0) {
+      this.comboImpulseTimer = Math.max(0, this.comboImpulseTimer - dt);
+      if (this.comboImpulseTimer <= 0) this.comboImpulseVx = 0;
+    }
     if (this.isDodging) {
       // Movement velocity is handled smoothly by dodge physics
     } else if (input.left) {
-      this.vx = -speed;
       this.facing = -1;
-      this.walkAnim += dt * 14;
+      const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
+      this.vx = this.vx + (targetVx - this.vx) * blend;
+      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
     } else if (input.right) {
-      this.vx = speed;
       this.facing = 1;
-      this.walkAnim += dt * 14;
+      const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
+      this.vx = this.vx + (targetVx - this.vx) * blend;
+      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
     } else {
       if (this.isSpinDashing) {
         this.vx = this.facing * 480;
+      } else if (this.comboImpulseTimer > 0 && Math.abs(this.comboImpulseVx) > 8) {
+        this.vx = this.comboImpulseVx * (this.comboImpulseTimer / 0.16);
       } else {
         this.vx = 0;
         this.walkAnim = 0;
@@ -9500,41 +9994,108 @@ class PlayerHero {
     }
   }
 
-  // --- [J] ATTACK COMBO (10 GUARDIANS) ---
+  // --- [J] TEKKEN-STYLE 4-HIT COMBO (10 GUARDIANS & 9 FUSIONS) ---
   executeAttackJ(audioEngine, particles, projectiles) {
     this.isAttacking = true;
     this.attackType = 'J';
     this.actionType = 'punch';
 
-    // Freebuff: per-hero chain with real timing windows and finisher payoffs
-    const profile = (this.isFusion && this.fusionData) ? FUSION_COMBO_PROFILE : (HERO_COMBO_PROFILES[this.activeChar] || HERO_COMBO_PROFILES.steven);
-    this.comboStep = (this.comboStepTimer > 0) ? (this.comboStep + 1) % 3 : 0;
-    const isFinisher = (this.comboStep === 2);
+    const profile = (this.isFusion && this.fusionData)
+      ? (FUSION_COMBO_PROFILES[this.fusionData.id] || FUSION_COMBO_PROFILE)
+      : (HERO_COMBO_PROFILES[this.activeChar] || HERO_COMBO_PROFILES.steven);
+    const chainLen = (profile.cadence && profile.cadence.length) || 3;
+    this.comboStep = (this.comboStepTimer > 0) ? (this.comboStep + 1) % chainLen : 0;
+    const isFinisher = (this.comboStep === chainLen - 1);
     const perfectLink = (this.comboStepTimer > 0.12 && this.comboStep > 0);
     this.comboLinkBonus = perfectLink ? 0.12 : 0;
     this.attackCombo = this.comboStep;
-    this.comboStepTimer = profile.cadence[this.comboStep] + 0.34;
+    this.comboStepTimer = profile.cadence[this.comboStep] + 0.36;
     this.attackDamageMult = profile.damage[this.comboStep] * (1 + this.comboLinkBonus);
-    this.attackRangeBonus = profile.range ? profile.range[this.comboStep] : 0;
+    this.attackRangeBonus = profile.range ? (profile.range[this.comboStep] || 0) : 0;
     this.attackKnockMult = profile.knock[this.comboStep];
-    this.actionDuration = isFinisher ? 0.34 : (this.comboStep === 0 ? 0.26 : 0.24);
+    this.actionDuration = isFinisher ? 0.34 : (this.comboStep === 0 ? 0.25 : (this.comboStep === 1 ? 0.24 : 0.27));
     this.actionTimer = this.actionDuration;
     this.attackCooldown = profile.cadence[this.comboStep];
 
+    const moveLabel = (profile.moves && profile.moves[this.comboStep]) || '';
+    this.comboMoveName = moveLabel;
+    const lungeSpd = (profile.lunge && profile.lunge[this.comboStep] !== undefined) ? profile.lunge[this.comboStep] : 110;
+    this.comboImpulseVx = this.facing * lungeSpd;
+    this.comboImpulseTimer = 0.15;
+
+    if (particles && moveLabel) {
+      const col = (this.isFusion && this.fusionData?.color) || (OVERDRIVE_THEMES[this.activeChar]?.color) || '#fde047';
+      const stepTag = isFinisher ? `★ ${moveLabel}` : `${this.comboStep + 1}: ${moveLabel}`;
+      particles.addDamageText(this.x, this.y - (this.isFusion ? 112 : 84), stepTag, isFinisher, col);
+    }
     if (perfectLink && particles) {
-      particles.addDamageText(this.x, this.y - 92, '⭐ PERFECT LINK!', false, '#fde047');
+      particles.addDamageText(this.x, this.y - (this.isFusion ? 132 : 104), '⭐ PERFECT LINK!', false, '#fde047');
     }
 
-    if (isFinisher && projectiles && !this.isFusion) {
+    if (isFinisher && projectiles) {
       this.spawnComboFinisher(audioEngine, particles, projectiles);
       if (typeof this.onComboFinisher === 'function') this.onComboFinisher(this.activeChar, perfectLink, this);
     }
 
     if (this.isFusion && this.fusionData) {
       const f = this.fusionData;
+      const odMult = this.isPinkOverdrive ? (this.dualOverdrive ? 2.5 : 2.0) : 1.0;
+      const dmgMult = odMult * (this.hasSynergyBuff ? 1.25 : 1.0) * (1 + this.comboLinkBonus);
       if (f.id === 'opal') {
+        // Opal Long-Range Bow String: fires actual seeking starlight arrows at distant targets on every combo step!
+        this.actionType = 'throw';
         audioEngine.playSfx('laser');
-        if (particles) particles.addThrustPierce(this.x + this.facing * 50, this.y - 35, this.facing, '#818cf8');
+        const arrowY = this.y - 54;
+        const arrowX = this.x + this.facing * 42;
+        if (projectiles) {
+          if (this.comboStep === 0) {
+            // 1: Swift Star Arrow
+            projectiles.push({
+              x: arrowX, y: arrowY,
+              vx: this.facing * 940, vy: 0,
+              radius: 17, damage: Math.round(48 * dmgMult),
+              type: 'fusionOpalArrow', color: '#67e8f9', life: 1.45,
+              homing: 380, pierceLeft: 1, knockX: 210, knockY: -90, hitText: 'STAR ARROW!'
+            });
+          } else if (this.comboStep === 1) {
+            // 2: Twin Spread Volley
+            for (const vy of [-80, 80]) {
+              projectiles.push({
+                x: arrowX, y: arrowY,
+                vx: this.facing * 960, vy,
+                radius: 17, damage: Math.round(42 * dmgMult),
+                type: 'fusionOpalArrow', color: '#a5b4fc', life: 1.45,
+                homing: 420, pierceLeft: 1, knockX: 240, knockY: -120, hitText: 'TWIN VOLLEY!'
+              });
+            }
+          } else if (this.comboStep === 2) {
+            // 3: Vaulting Backstep Snipe (graceful archer leap back + fast piercing arrow)
+            if (this.isGrounded) this.vy = Math.min(this.vy, -190);
+            projectiles.push({
+              x: arrowX, y: arrowY - 6,
+              vx: this.facing * 1060, vy: -35,
+              radius: 20, damage: Math.round(68 * dmgMult),
+              type: 'fusionOpalArrow', color: '#c084fc', life: 1.55,
+              homing: 480, pierceLeft: 2, knockX: 310, knockY: -190, hitText: 'SNIPE PIERCE!'
+            });
+          } else {
+            // 4: Finisher - Great Starlight Piercer + 2 Wingman Arrows
+            for (const cfg of [{ vy: 0, r: 26, dmg: 96, p: 4 }, { vy: -120, r: 16, dmg: 42, p: 2 }, { vy: 120, r: 16, dmg: 42, p: 2 }]) {
+              projectiles.push({
+                x: arrowX, y: arrowY,
+                vx: this.facing * 1120, vy: cfg.vy,
+                radius: cfg.r, damage: Math.round(cfg.dmg * dmgMult),
+                type: 'fusionOpalArrow', color: cfg.r > 20 ? '#fde047' : '#818cf8', life: 1.65,
+                homing: 520, pierceLeft: cfg.p, knockX: 420, knockY: -240, hitText: 'STARLIGHT GREAT-ARROW!'
+              });
+            }
+          }
+        }
+        if (particles) {
+          particles.addThrustPierce(arrowX + this.facing * 14, arrowY, this.facing, '#818cf8');
+          particles.addSparkle(arrowX + this.facing * 14, arrowY, '#67e8f9', isFinisher ? 22 : 12, 5);
+        }
+        return;
       }
       else if (f.id === 'stevonnie' || f.id === 'rainbowClassic' || f.id === 'rainbow2') {
         audioEngine.playSfx('sword');
@@ -9645,12 +10206,14 @@ class PlayerHero {
   // Freebuff finisher: each Guardian's third hit releases their signature weapon
   // technique as a short-range wave, flurry or shockwave based on canon.
   spawnComboFinisher(audioEngine, particles, projectiles) {
-    const profile = HERO_COMBO_PROFILES[this.activeChar];
+    const profile = (this.isFusion && this.fusionData)
+      ? (FUSION_COMBO_PROFILES[this.fusionData.id] || FUSION_COMBO_PROFILE)
+      : HERO_COMBO_PROFILES[this.activeChar];
     if (!profile || !profile.finisher || !projectiles) return;
     const f = profile.finisher;
     const dir = this.facing;
     const count = f.count || 1;
-    const dmgScale = (this.isPinkOverdrive ? 2.0 : 1.0) * (this.hasSynergyBuff ? 1.25 : 1.0);
+    const dmgScale = (this.isPinkOverdrive ? 2.0 : 1.0) * (this.hasSynergyBuff ? 1.25 : 1.0) * (this.isFusion ? 1.35 : 1.0);
 
     for (let i = 0; i < count; i++) {
       const offsetY = count > 1 ? (i - (count - 1) / 2) * (f.spread || 0) : 0;
@@ -9665,7 +10228,7 @@ class PlayerHero {
         damage: Math.round((f.damage || 14) * dmgScale),
         type: f.type,
         color: f.color || '#fbbf24',
-        life: 0.18,
+        life: this.isFusion ? 0.34 : 0.22,
         hitText: f.label,
         knockX: f.knockX || 280,
         knockY: f.knockY || -120,
@@ -10422,27 +10985,32 @@ class PlayerHero {
       }
       particles.addSparkle(this.x, slamY - 40, '#fdba74', 22, 6);
     } else if (fid === 'opal') {
-      // Opal: Multi-Arrow Volley (5 Spread Light Arrows)!
+      // Opal: Long-Range Seeking 5-Arrow Volley (reaches clear across the arena!)
       audioEngine.playSfx('laser');
-      const angles = [-130, -65, 0, 65, 130];
+      const angles = [-140, -70, 0, 70, 140];
       for (const vy of angles) {
         projectiles.push({
-          x: this.x + this.facing * 35,
-          y: slamY - 40,
-          vx: this.facing * 680,
+          x: this.x + this.facing * 42,
+          y: slamY - 54,
+          vx: this.facing * 920,
           vy: vy,
-          radius: 19,
-          damage: Math.round(84 * dmgMult),
+          radius: 20,
+          damage: Math.round(92 * dmgMult),
           type: 'fusionOpalArrow',
           color: '#818cf8',
-          life: 1.2
+          life: 1.55,
+          homing: 460,
+          pierceLeft: 2,
+          knockX: 320,
+          knockY: -180,
+          hitText: 'OPAL VOLLEY!'
         });
       }
       if (particles) {
-        particles.addThrustPierce(this.x + this.facing * 35, slamY - 40, this.facing, '#818cf8');
-        particles.addHitSpark(this.x + this.facing * 38, slamY - 40, '#67e8f9', 24, 0);
+        particles.addThrustPierce(this.x + this.facing * 42, slamY - 54, this.facing, '#818cf8');
+        particles.addHitSpark(this.x + this.facing * 45, slamY - 54, '#67e8f9', 26, 0);
       }
-      particles.addSparkle(this.x, slamY - 40, '#c084fc', 24, 6);
+      particles.addSparkle(this.x, slamY - 52, '#c084fc', 24, 6);
     } else if (fid === 'malachite') {
       // Malachite: Glacial Ice Hand Slam at current elevation!
       audioEngine.playSfx('water');
@@ -10639,27 +11207,52 @@ class PlayerHero {
       }
       particles.addSparkle(this.x, slamY - 50, '#fdba74', 36, 9);
     } else if (fid === 'opal') {
-      // Opal: Celestial Light Rain (24 Golden Light Arrows)!
+      // Opal: Long-Range Celestial Light Rain (rains forward across distant targets + 3 piercing horizon arrows)!
       audioEngine.playSfx('laser');
-      const startX = Math.max(80, this.x - 300);
-      for (let a = 0; a < 24; a++) {
+      for (let a = 0; a < 22; a++) {
+        const forwardDist = 90 + a * 34;
+        const rainX = Math.max(40, this.x + this.facing * forwardDist);
         projectiles.push({
-          x: startX + a * 26,
-          y: slamY - 320 - (a % 4) * 40,
-          vx: (Math.random() - 0.5) * 80,
-          vy: 680 + Math.random() * 120,
-          radius: 18,
-          damage: Math.round(46 * dmgMult),
+          x: rainX,
+          y: slamY - 360 - (a % 4) * 38,
+          vx: this.facing * 140 + (Math.random() - 0.5) * 60,
+          vy: 740 + Math.random() * 120,
+          radius: 20,
+          damage: Math.round(52 * dmgMult),
           type: 'fusionCelestialRain',
           color: '#818cf8',
-          life: 1.1
+          life: 1.35,
+          homing: 320,
+          pierceLeft: 2,
+          knockX: 280,
+          knockY: -200,
+          hitText: 'CELESTIAL RAIN!'
+        });
+      }
+      // Plus 3 ultra-long-range horizon starlight arrows to snipe distant enemies directly!
+      for (const vy of [-55, 0, 55]) {
+        projectiles.push({
+          x: this.x + this.facing * 45,
+          y: slamY - 56,
+          vx: this.facing * 1050,
+          vy,
+          radius: 22,
+          damage: Math.round(88 * dmgMult),
+          type: 'fusionOpalArrow',
+          color: '#fde047',
+          life: 1.55,
+          homing: 520,
+          pierceLeft: 3,
+          knockX: 380,
+          knockY: -220,
+          hitText: 'STARLIGHT SNIPE!'
         });
       }
       if (particles) {
-        particles.addThrustPierce(this.x + this.facing * 40, slamY - 50, this.facing, '#818cf8');
-        particles.addHitSpark(this.x, slamY - 70, '#fde047', 28, Math.PI / 4);
+        particles.addThrustPierce(this.x + this.facing * 45, slamY - 54, this.facing, '#818cf8');
+        particles.addHitSpark(this.x + this.facing * 45, slamY - 68, '#fde047', 28, Math.PI / 4);
       }
-      particles.addSparkle(this.x, slamY - 50, '#c084fc', 35, 9);
+      particles.addSparkle(this.x, slamY - 52, '#c084fc', 35, 9);
     } else if (fid === 'malachite') {
       // Malachite: Abyssal Tsunami Cage (centered on Malachite at slamY)!
       audioEngine.playSfx('water');
@@ -10828,35 +11421,39 @@ class PlayerHero {
       const strike = this.getStrikeCurve(animP);
       const posStrike = Math.max(0, strike);
       if (this.actionType === 'punch') {
-        // Snappy 3-Hit Combo Kinetics with Anticipation Coil, Strike Snap & Squash/Stretch!
-        const combo = this.attackCombo;
+        // Tekken-Style 4-Hit Combo Kinetics (Jab -> Low Sweep -> Skyward Launcher -> Ground Smash Finisher!)
+        const combo = this.attackCombo || 0;
         if (combo === 0) {
-          // Hit 1: Quick coil back -> explosive forward thrust/jab
           actionLunge = strike * 20;
           actionLiftY = -posStrike * 3;
           actionTorsoTilt = strike * 0.16;
           actionScaleX = 1 + posStrike * 0.05;
           actionScaleY = 1 - posStrike * 0.03;
         } else if (combo === 1) {
-          // Hit 2: Wide rotational sweep / rising slash
-          actionLunge = strike * 18;
-          actionLiftY = -posStrike * 4;
-          actionTorsoTilt = -strike * 0.18;
-          actionScaleX = 1 + posStrike * 0.04;
+          actionLunge = strike * 20;
+          actionLiftY = posStrike * 4;
+          actionTorsoTilt = -strike * 0.19;
+          actionScaleX = 1 + posStrike * 0.05;
+        } else if (combo === 2) {
+          actionLunge = strike * 22;
+          actionLiftY = -posStrike * 15;
+          actionTorsoTilt = -posStrike * 0.16;
+          actionScaleX = 1 - posStrike * 0.03;
+          actionScaleY = 1 + posStrike * 0.07;
         } else {
-          // Hit 3: Weighty aerial cleave / seismic finisher!
-          actionLunge = strike * 28;
-          if (animP < 0.42) {
-            const leap = Math.sin((animP / 0.42) * (Math.PI / 2));
-            actionLiftY = -20 * leap;
-            actionTorsoTilt = -0.22 * leap;
-            actionScaleY = 1 + 0.06 * leap;
+          // Hit 4: Weighty aerial cleave / seismic finisher!
+          actionLunge = strike * 32;
+          if (animP < 0.40) {
+            const leap = Math.sin((animP / 0.40) * (Math.PI / 2));
+            actionLiftY = -22 * leap;
+            actionTorsoTilt = -0.24 * leap;
+            actionScaleY = 1 + 0.07 * leap;
           } else {
-            const slam = Math.sin(((animP - 0.42) / 0.58) * Math.PI);
-            actionLiftY = 8 * slam;
-            actionTorsoTilt = 0.28 * slam;
-            actionScaleX = 1 + 0.07 * slam;
-            actionScaleY = 1 - 0.06 * slam;
+            const slam = Math.sin(((animP - 0.40) / 0.60) * Math.PI);
+            actionLiftY = 10 * slam;
+            actionTorsoTilt = 0.30 * slam;
+            actionScaleX = 1 + 0.08 * slam;
+            actionScaleY = 1 - 0.07 * slam;
           }
         }
       } else if (this.actionType === 'throw') {
@@ -13520,8 +14117,10 @@ class PlayerHero {
       ctx.closePath();
       ctx.fill();
     } else {
-      // Ready En-Garde Poise with continuous spear breath sway
+      // Ready En-Garde Poise with continuous spear breath sway + balanced left hand
       const pSw = motion.armSwingF * 10;
+      const bSw = motion.armSwingB * 8;
+      this.drawArticulatedArm(ctx, -6, -64 + bob, -13 - bSw * 0.3, -55 + bob, -11 - bSw * 0.5, -46 + bob, '#5eead4', '#fff7ed', 5.2, 4.4, '#fff7ed', 3.4);
       spearBaseX = 10 + pSw * 0.45;
       spearBaseY = -48 + bob + pSw * 0.25;
       spearAngle = -0.22 + motion.armSwingF * 0.08;
@@ -16322,21 +16921,50 @@ class PlayerHero {
     if (this.actionTimer > 0 && this.actionDuration > 0) {
       animP = Math.min(1, Math.max(0, 1 - (this.actionTimer / this.actionDuration)));
       const strike = this.getStrikeCurve(animP);
+      const posStrike = Math.max(0, strike);
+      const combo = this.attackCombo || 0;
       if (this.actionType === 'punch') {
-        actionLunge = strike * 30;
-        actionLiftY = -Math.max(0, strike) * 6;
-        actionTorsoTilt = strike * 0.16;
-        actionScaleX = 1 + strike * 0.08;
-        actionScaleY = 1 - strike * 0.05;
+        if (combo === 0) {
+          actionLunge = strike * 26;
+          actionLiftY = -posStrike * 4;
+          actionTorsoTilt = strike * 0.15;
+          actionScaleX = 1 + posStrike * 0.06;
+          actionScaleY = 1 - posStrike * 0.04;
+        } else if (combo === 1) {
+          actionLunge = strike * 24;
+          actionLiftY = posStrike * 5;
+          actionTorsoTilt = -strike * 0.16;
+          actionScaleX = 1 + posStrike * 0.06;
+        } else if (combo === 2) {
+          actionLunge = strike * 26;
+          actionLiftY = -posStrike * 14;
+          actionTorsoTilt = -posStrike * 0.14;
+          actionScaleY = 1 + posStrike * 0.06;
+        } else {
+          actionLunge = strike * 34;
+          if (animP < 0.38) {
+            const leap = Math.sin((animP / 0.38) * (Math.PI / 2));
+            actionLiftY = -20 * leap;
+            actionTorsoTilt = -0.20 * leap;
+            actionScaleY = 1 + 0.07 * leap;
+          } else {
+            const slam = Math.sin(((animP - 0.38) / 0.62) * Math.PI);
+            actionLiftY = 10 * slam;
+            actionTorsoTilt = 0.24 * slam;
+            actionScaleX = 1 + 0.08 * slam;
+            actionScaleY = 1 - 0.06 * slam;
+          }
+        }
       } else if (this.actionType === 'throw') {
-        actionLunge = strike * 22;
-        actionTorsoTilt = strike * 0.12;
-        actionScaleX = 1 + strike * 0.06;
-        actionScaleY = 1 - strike * 0.04;
+        const bowBackstep = (fusion.id === 'opal') ? -14 * posStrike : 22 * strike;
+        actionLunge = bowBackstep;
+        actionTorsoTilt = (fusion.id === 'opal') ? -posStrike * 0.09 : strike * 0.14;
+        actionScaleX = 1 + posStrike * 0.05;
+        actionScaleY = 1 - posStrike * 0.03;
       } else if (this.actionType === 'skill') {
         const pulse = Math.sin(animP * Math.PI);
-        actionLiftY = -pulse * 16;
-        actionTorsoTilt = -pulse * 0.10;
+        actionLiftY = -pulse * 18;
+        actionTorsoTilt = -pulse * 0.12;
         actionScaleX = 1 - pulse * 0.04;
         actionScaleY = 1 + pulse * 0.07;
       }
@@ -16491,28 +17119,37 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Sculpted Tapered Legs: Contoured Indigo Denim -> Teal Rolled Cuffs -> Coral High-Tops
+    // 2. Sculpted Honey-Tan Barefoot Legs & Rolled Blue Denim Shorts (matches Stevonnie.png!)
     const drawStevonnieLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -29 + bob + ly);
       ctx.rotate(rot);
       const jeanCol = darken ? '#1e40af' : '#2563eb';
       const jeanShade = darken ? '#172554' : '#1d4ed8';
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 14, 5.8, 4.7, jeanCol, jeanShade, 1);
-      // Rolled aqua-teal cuff
-      ctx.fillStyle = darken ? '#0f766e' : '#14b8a6';
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 10.5, 6.0, 5.2, jeanCol, jeanShade, 1);
+      // Rolled light-denim cuff
+      ctx.fillStyle = darken ? '#3b82f6' : '#60a5fa';
       ctx.beginPath();
-      ctx.ellipse(0, 14.5, 5.4, 2.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 11, 5.6, 2.4, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Ankle skin & stylized cel sneaker
-      this.drawCelTaperedLimb(ctx, 0, 15.5, 0, 21, 3.8, 3.3, '#d4976a', '#b6784e', 1);
-      this.drawCelBoot(ctx, 0.5, 25.5, 9.5, 6.2, darken ? '#be123c' : '#f43f5e', '#f8fafc');
+      // Bare warm-honey calf + barefoot contoured toes!
+      this.drawCelTaperedLimb(ctx, 0, 12.5, 0, 26, 4.1, 3.3, darken ? '#c28358' : '#d4976a', '#a16640', 1);
+      ctx.fillStyle = darken ? '#c28358' : '#d4976a';
+      ctx.strokeStyle = '#7c4a2a';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-3.2, 25);
+      ctx.quadraticCurveTo(3.5, 24.5, 7.2, 27.2);
+      ctx.quadraticCurveTo(7.5, 29.5, -2.5, 29.2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
       ctx.restore();
     };
     drawStevonnieLeg(-6.5 + legs.backX, legs.backY, legs.backRot, true);
     drawStevonnieLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Rear Arm + Glowing Bracelet + Rose's Crystalline Shield
+    // 3. Rear Arm + Pink Glow Bracelet + Rose's Crystalline Shield
     const m = this.getCharacterMotionState();
     const poise = Math.max(0, strike) * 9 + m.armSwingB * 10;
     if (isShieldStance) {
@@ -16530,13 +17167,13 @@ class PlayerHero {
       this.drawMiniStar(ctx, 0, 0, 9);
       ctx.restore();
     } else {
-      const shHx = -26 - poise;
-      const shHy = -51 + bob + m.armSwingB * 6;
-      this.drawArticulatedArm(ctx, -11, -56 + bob, -19 - poise * 0.5, -58 + bob + m.armSwingB * 4, shHx, shHy, '#e11d48', '#d4976a', 6.5, 5.2, '#d4976a', 4.0);
+      const shHx = -24 - poise;
+      const shHy = -49 + bob + m.armSwingB * 6;
+      this.drawArticulatedArm(ctx, -11, -56 + bob, -18 - poise * 0.5, -56 + bob + m.armSwingB * 4, shHx, shHy, '#e11d48', '#d4976a', 6.5, 5.2, '#d4976a', 4.0);
       // Pink glow bracelet
       ctx.fillStyle = '#f472b6';
       ctx.beginPath();
-      ctx.arc(shHx + 3, shHy - 1, 2.6, 0, Math.PI * 2);
+      ctx.ellipse(shHx + 3, shHy - 1, 3.2, 2.2, 0.3, 0, Math.PI * 2);
       ctx.fill();
       ctx.save();
       ctx.translate(shHx, shHy);
@@ -16630,13 +17267,22 @@ class PlayerHero {
     ctx.ellipse(-2.5, -88 + bob, 3.2, 1.0, -0.15, 0, Math.PI * 2);
     ctx.fill();
 
-    // 6. Front Arm + Rose's Broadsword (Faceted Cel Outline + Rose Guard)
-    const handX = 14 + strike * 19;
-    const handY = -46 + bob - strike * 7;
+    // 6. Front Arm + Cyan Glow Bracelet + Rose's Broadsword (Tekken multi-angle sword guard & slashes)
+    const comboStep = this.attackCombo || 0;
+    const isAct = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill');
+    const handX = 14 + strike * (comboStep === 0 ? 22 : 18);
+    const handY = -46 + bob - strike * (comboStep === 2 ? 14 : 6);
     this.drawArticulatedArm(ctx, 11.5, -56 + bob, 14.5 + strike * 9, -50 + bob, handX, handY, '#f43f5e', '#d4976a', 6.8, 5.2, '#d4976a', 4.3);
+    // Cyan Connie glow bracelet on sword wrist
+    ctx.fillStyle = '#22d3ee';
+    ctx.beginPath();
+    ctx.ellipse(handX - 3.5, handY - 1, 3.2, 2.2, -0.3, 0, Math.PI * 2);
+    ctx.fill();
     ctx.save();
     ctx.translate(handX, handY);
-    const swordSwing = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? -0.35 + strike * 1.55 + (actionType === 'skill' ? 0.9 : 0) : 0.28;
+    const swordSwing = isAct
+      ? (comboStep === 0 ? (Math.PI * 0.42 + strike * 0.4) : comboStep === 1 ? (-Math.PI * 0.1 + strike * 1.35) : (-0.55 + strike * 1.85))
+      : 0.26;
     ctx.rotate(swordSwing);
     ctx.fillStyle = '#9f1239';
     ctx.strokeStyle = '#4c0519';
@@ -16699,10 +17345,10 @@ class PlayerHero {
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
-    // 1. BACK LAYER: Tousled puffy taupe-plum locks swaying behind neck
+    // 1. BACK LAYER: Tousled puffy chocolate-brown curls swaying behind neck (matches Smoky Quartz.png!)
     const swX = hair.swayX * 0.85;
     const swY = hair.swayY * 0.45;
-    ctx.fillStyle = '#241b29';
+    ctx.fillStyle = '#291c19';
     ctx.beginPath();
     ctx.moveTo(6, -90 + bob);
     ctx.bezierCurveTo(-14, -96 + bob, -28 + swX * 0.5, -82 + bob, -26 + swX * 0.8, -64 + bob + swY);
@@ -16710,53 +17356,61 @@ class PlayerHero {
     ctx.lineTo(9, -66 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#3f2f47';
+    ctx.fillStyle = '#4a322c';
     ctx.beginPath();
     ctx.ellipse(-12 + swX * 0.35, -75 + bob, 7.5, 4.2, -0.45, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Sculpted Ripped Plum-Charcoal Leggings & Rounded Boots
+    // 2. Sculpted Denim Shorts w/ Lavender Frayed Hem + Dark Tights & White Slip-On Sneakers (matches Smoky Quartz.png!)
     const drawSmokyLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -26 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 14.5, 6.8, 5.2, darken ? '#1e102d' : '#2e1065', '#0f0717', 1);
-      // Kneecap star cutout revealing smoky quartz skin
-      ctx.fillStyle = darken ? '#736266' : '#8b797d';
-      this.drawMiniStar(ctx, 0.5, 8.5, 3.2);
-      this.drawCelTaperedLimb(ctx, 0, 14, 0, 20, 4.4, 3.9, darken ? '#736266' : '#8b797d', '#5c494f', 1);
-      this.drawCelBoot(ctx, 0.5, 24.5, 9.5, 6, darken ? '#3b0764' : '#4c1d95', '#e9d5ff');
+      // Indigo shorts leg + jagged pastel lavender frayed cuff
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 9.5, 7.2, 6.2, darken ? '#1e3a8a' : '#2563eb', '#172554', 1);
+      ctx.fillStyle = '#c4b5fd';
+      ctx.beginPath();
+      ctx.moveTo(-6.5, 9);
+      ctx.lineTo(-3, 12.2); ctx.lineTo(0, 9.2); ctx.lineTo(3.2, 12.4); ctx.lineTo(6.5, 9);
+      ctx.closePath();
+      ctx.fill();
+      // Taupe-plum knee skin & dark tights + clean white slip-on sneaker
+      this.drawCelTaperedLimb(ctx, 0, 10.5, 0, 14.5, 4.9, 4.5, darken ? '#7c656b' : '#8b797d', '#5c494f', 1);
+      this.drawCelTaperedLimb(ctx, 0, 14, 0, 21, 4.4, 3.8, '#18181b', '#09090b', 1);
+      this.drawCelBoot(ctx, 0.5, 25, 9.5, 5.5, '#f8fafc', '#18181b');
       ctx.restore();
     };
     drawSmokyLeg(-7.5 + legs.backX, legs.backY, legs.backRot, true);
     drawSmokyLeg(8 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Contoured Charcoal/Plum Split-Top Torso (Broad quartz silhouette, sculpted waist)
+    // 3. Exposed Taupe Belly + Cropped Dark Tee w/ Orange/Red Stripes & Horizontal Keyhole Gem Cutout
+    ctx.fillStyle = '#8b797d';
+    ctx.beginPath();
+    ctx.ellipse(0, -25.5 + bob, 13.5, 5.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fda4af';
+    this.drawMiniStar(ctx, 1.5, -26.5 + bob, 4.0);
+
     ctx.fillStyle = '#18181b';
     ctx.beginPath();
     ctx.moveTo(-17, -61 + bob);
     ctx.quadraticCurveTo(0, -64 + bob, 17, -61 + bob);
-    ctx.bezierCurveTo(18, -46 + bob, 15, -30 + bob, 12.5, -24 + bob);
-    ctx.quadraticCurveTo(0, -22 + bob, -13, -24 + bob);
-    ctx.bezierCurveTo(-16, -34 + bob, -18, -48 + bob, -17, -61 + bob);
+    ctx.bezierCurveTo(18, -46 + bob, 16, -34 + bob, 13.5, -29 + bob);
+    ctx.quadraticCurveTo(0, -27 + bob, -13.5, -29 + bob);
+    ctx.bezierCurveTo(-16, -35 + bob, -18, -48 + bob, -17, -61 + bob);
     ctx.closePath();
     ctx.fill();
-
-    ctx.fillStyle = '#4c1d95';
-    ctx.beginPath();
-    ctx.moveTo(-1, -62 + bob);
-    ctx.quadraticCurveTo(9, -63 + bob, 17, -61 + bob);
-    ctx.bezierCurveTo(18, -46 + bob, 15, -30 + bob, 12.5, -24 + bob);
-    ctx.lineTo(-4, -23.5 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = '#f43f5e';
-    this.drawMiniStar(ctx, 2, -44 + bob, 8.4);
-    ctx.fillStyle = '#c084fc';
-    this.drawMiniStar(ctx, 1.5, -55 + bob, 4.2);
-    ctx.fillStyle = '#fda4af';
-    this.drawMiniStar(ctx, 1.5, -28.5 + bob, 4.0);
+    // Red/Orange/Gold curved collar trim around horizontal keyhole cutout
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.ellipse(0.5, -52 + bob, 9.2, 4.4, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.ellipse(0.5, -52 + bob, 10.6, 5.4, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#8b797d';
+    ctx.beginPath(); ctx.ellipse(0.5, -52 + bob, 7.6, 3.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#a855f7';
+    this.drawMiniStar(ctx, 1.5, -52 + bob, 4.2);
 
     // 4. Sculpted Neck + Lineless Cel Face + Cheek Freckles + Mischievous Fang Smile!
     this.drawCelTaperedLimb(ctx, 0, -60 + bob, 0.5, -67 + bob, 5.2, 4.6, '#8b797d', '#6d5c60', 1);
@@ -16783,8 +17437,8 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Sculpted tousled bangs + 3-tone specular cel sheen + dark outline
-    ctx.fillStyle = '#241b29';
+    // Sculpted tousled chocolate-brown curls + warm highlight
+    ctx.fillStyle = '#291c19';
     ctx.strokeStyle = '#09090b';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
@@ -16796,62 +17450,61 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#584166';
+    ctx.fillStyle = '#5c3f38';
     ctx.beginPath();
     ctx.ellipse(-1, -88.5 + bob, 7.2, 2.5, -0.1, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#a78bfa';
+    ctx.fillStyle = '#8b685e';
     ctx.beginPath();
     ctx.ellipse(-2, -89 + bob, 3.2, 1.0, -0.1, 0, Math.PI * 2);
     ctx.fill();
 
-    // 5. THREE ARTICULATED ARMS + String-Tethered Beveled Cel Yo-Yos
+    // 5. THREE ARTICULATED ARMS (2 from rear shoulder, 1 front) + Giant Brown/Cream Star Yo-Yo!
     const mSmoky = this.getCharacterMotionState();
     const spinRot = mSmoky.t * 15;
     const swB = mSmoky.armSwingB * 12;
     const swF = mSmoky.armSwingF * 12;
 
-    const drawCelYoyo = (yx, yy, r, bodyCol, starCol, angle) => {
+    const drawCelYoyo = (yx, yy, r, angle) => {
       ctx.save();
       ctx.translate(yx, yy);
       ctx.rotate(angle);
-      ctx.fillStyle = bodyCol;
-      ctx.strokeStyle = '#2e1065';
-      ctx.lineWidth = 1.6;
+      ctx.fillStyle = '#78350f';
+      ctx.strokeStyle = '#291c19';
+      ctx.lineWidth = 1.8;
       ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-      ctx.strokeStyle = '#f3e8ff';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath(); ctx.arc(0, 0, r * 0.72, -0.8, 0.8); ctx.stroke();
-      ctx.fillStyle = starCol;
-      this.drawMiniStar(ctx, 0, 0, r * 0.5);
+      ctx.fillStyle = '#b45309';
+      ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.22, r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fef3c7';
+      this.drawMiniStar(ctx, 0, 0, r * 0.56);
       ctx.restore();
     };
 
     const yo1x = -29 - swB;
     const yo1y = -55 + bob + Math.sin(mSmoky.t * 4) * 3;
     this.drawArticulatedArm(ctx, -14, -56 + bob, -22 - swB * 0.4, -63 + bob, yo1x, yo1y, '#18181b', '#8b797d', 7.4, 5.8, '#8b797d', 4.3);
-    drawCelYoyo(yo1x, yo1y, 8.8, '#c084fc', '#fde047', spinRot * 1.2);
+    drawCelYoyo(yo1x, yo1y, 8.8, spinRot * 1.2);
 
     const yo2x = -24 + swF * 0.8;
     const yo2y = -31 + bob + Math.cos(mSmoky.t * 4.4) * 3.5;
     this.drawArticulatedArm(ctx, -14, -51 + bob, -20 + swF * 0.4, -43 + bob, yo2x, yo2y, '#18181b', '#8b797d', 7.0, 5.4, '#8b797d', 4.1);
-    drawCelYoyo(yo2x, yo2y, 9.2, '#9333ea', '#f3e8ff', -spinRot);
+    drawCelYoyo(yo2x, yo2y, 9.2, -spinRot);
 
-    // Front Primary Yo-Yo Whip
-    const yoyoReach = 32 + strike * 40;
+    // Front Primary Brown Star Yo-Yo Whip
+    const yoyoReach = 34 + strike * 42;
     const yoyoY = -37 + bob - strike * 7;
     const handX = 14 + strike * 15;
     const handY = -45 + bob - strike * 4;
-    this.drawArticulatedArm(ctx, 13, -55 + bob, 16 + strike * 8, -49 + bob, handX, handY, '#f43f5e', '#8b797d', 7.5, 6.2, '#8b797d', 4.6);
+    this.drawArticulatedArm(ctx, 13, -55 + bob, 16 + strike * 8, -49 + bob, handX, handY, '#ef4444', '#8b797d', 7.5, 6.2, '#8b797d', 4.6);
 
-    ctx.strokeStyle = '#e9d5ff';
-    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(handX, handY);
     ctx.quadraticCurveTo(handX + strike * 16, -45 + bob, yoyoReach, yoyoY);
     ctx.stroke();
 
-    drawCelYoyo(yoyoReach, yoyoY, 13.5, '#a855f7', '#fde047', spinRot * 1.6);
+    drawCelYoyo(yoyoReach, yoyoY, 14.0, spinRot * 1.6);
   }
 
   // --- 3. RAINBOW QUARTZ 2.0 (Steven + Pearl) ---
@@ -16869,30 +17522,29 @@ class PlayerHero {
     ctx.quadraticCurveTo(-8, -68 + bob, -2, -76 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#f472b6';
+    ctx.fillStyle = '#c4b5fd';
     ctx.beginPath();
     ctx.moveTo(-8, -94 + bob);
     ctx.bezierCurveTo(-20 + swX * 0.4, -98 + bob, -16 + swX * 0.5, -80 + bob, -4, -84 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // 2. Slender Dancer Legs: Rolled denim shorts + mismatched magenta & aqua boots
+    // 2. Slender Dancer Legs: Rolled denim jeans + TALL PASTEL-PINK BOOTS (matches Rainbow Quartz 2.0.png!)
     const drawRainbowLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -28 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 10, 5.4, 4.7, darken ? '#1e40af' : '#2563eb', '#172554', 1);
-      ctx.fillStyle = '#60a5fa';
-      ctx.beginPath(); ctx.ellipse(0, 10.5, 5.3, 2.3, 0, 0, Math.PI * 2); ctx.fill();
-      this.drawCelTaperedLimb(ctx, 0, 11.5, 0, 18.5, 3.6, 3.1, '#fce7f3', '#fbcfe8', 1);
-      this.drawCelBoot(ctx, 0.5, 24, 9.2, 6.2, darken ? '#ec4899' : '#06b6d4', '#ffffff', '#f8fafc');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 12.5, 5.4, 4.6, darken ? '#1e40af' : '#2563eb', '#172554', 1);
+      ctx.fillStyle = '#93c5fd';
+      ctx.beginPath(); ctx.ellipse(0, 12.5, 5.2, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+      this.drawCelBoot(ctx, 0.5, 24, 9.6, 13.5, darken ? '#ec4899' : '#f472b6', '#fdf2f8', '#fbcfe8');
       ctx.restore();
     };
     drawRainbowLeg(-5.5 + legs.backX, legs.backY, legs.backRot, true);
     drawRainbowLeg(6 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Slender Fitted Mint-Seafoam Jacket over Coral Star Shirt
-    ctx.fillStyle = '#2dd4bf';
+    // 3. Fitted Mint-Seafoam Blazer over Red Yellow-Star Tee & Exposed Midriff (matches Rainbow Quartz 2.0.png!)
+    ctx.fillStyle = '#5eead4';
     ctx.beginPath();
     ctx.moveTo(-13, -64 + bob);
     ctx.quadraticCurveTo(0, -66 + bob, 14, -64 + bob);
@@ -16902,7 +17554,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     // Hard cel back shade
-    ctx.fillStyle = '#0d9488';
+    ctx.fillStyle = '#14b8a6';
     ctx.beginPath();
     ctx.moveTo(-13, -64 + bob);
     ctx.lineTo(-4, -64.5 + bob);
@@ -16911,73 +17563,61 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Inner V-neck shirt + sharp tailored collar lapels
-    ctx.fillStyle = '#fb7185';
+    // Inner red tee + exposed peach midriff + sharp tailored blazer lapels
+    ctx.fillStyle = '#f43f5e';
     ctx.beginPath();
     ctx.moveTo(-6.5, -64 + bob);
     ctx.lineTo(7, -64 + bob);
-    ctx.lineTo(0.5, -43 + bob);
+    ctx.lineTo(4.5, -36 + bob);
+    ctx.lineTo(-4.5, -36 + bob);
     ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#fde2e4';
+    ctx.beginPath();
+    ctx.ellipse(0.5, -30.5 + bob, 6.2, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#99f6e4';
     ctx.beginPath();
-    ctx.moveTo(-11, -64 + bob); ctx.lineTo(-2, -52 + bob); ctx.lineTo(-8, -48 + bob); ctx.closePath();
-    ctx.moveTo(11, -64 + bob); ctx.lineTo(3, -52 + bob); ctx.lineTo(9, -48 + bob); ctx.closePath();
+    ctx.moveTo(-11, -64 + bob); ctx.lineTo(-4, -50 + bob); ctx.lineTo(-9, -46 + bob); ctx.closePath();
+    ctx.moveTo(11, -64 + bob); ctx.lineTo(5, -50 + bob); ctx.lineTo(10, -46 + bob); ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1, -54 + bob, 4.3);
+    this.drawMiniStar(ctx, 1, -50 + bob, 4.6);
     ctx.fillStyle = '#f472b6';
-    this.drawMiniStar(ctx, 1, -31.5 + bob, 4.1);
+    this.drawMiniStar(ctx, 1, -30.5 + bob, 4.0);
 
-    // 4. Sculpted Neck + Pointed-Nose Fair Cel Face + 4 Expressive Eyes + Lavender Shades!
-    this.drawCelTaperedLimb(ctx, 0, -63 + bob, 0.5, -70 + bob, 3.6, 3.2, '#fce7f3', '#f9a8d4', 1);
+    // 4. Sculpted Neck + Pointed-Nose Warm-Peach Cel Face + 4 Expressive Eyes + Pastel Lavender Curl Pompadour!
+    this.drawCelTaperedLimb(ctx, 0, -63 + bob, 0.5, -70 + bob, 3.6, 3.2, '#fde2e4', '#f9a8d4', 1);
     this.drawCelFace(ctx, {
       cx: 0.5, cy: -78.5 + bob, rx: 11.4, ry: 12.6,
-      skin: '#fce7f3', shadow: '#f5d0e6',
-      eyeY: -74.5 + bob, eyeXBack: -2.0, eyeXFront: 5.5, eyeW: 2.3, eyeH: 2.6,
-      irisCol: '#0284c7', browCol: '#9d174d',
-      noseStyle: 'pointed', noseX: 5, noseY: -75.5 + bob,
-      mouthY: -69.5 + bob, mouthStyle: 'auto',
-      gemForehead: { shape: 'oval', col: '#ffffff', x: 1.2, y: -86 + bob, w: 2.6, h: 3.4 }
+      skin: '#fde2e4', shadow: '#f5d0e6',
+      eyeY: -75.5 + bob, eyeXBack: -2.0, eyeXFront: 5.5, eyeW: 2.3, eyeH: 2.6,
+      irisCol: '#0284c7', browCol: '#7c3aed',
+      noseStyle: 'pointed', noseX: 5.4, noseY: -76.5 + bob,
+      mouthY: -69.5 + bob, mouthStyle: 'grin',
+      gemForehead: { shape: 'oval', col: '#ffffff', x: 1.2, y: -86.5 + bob, w: 2.5, h: 3.3 },
+      extraEyes: [
+        { x: -2.4, y: -81 + bob, w: 2.2, h: 2.4, iris: '#38bdf8' },
+        { x: 5.8, y: -81 + bob, w: 2.2, h: 2.4, iris: '#38bdf8' }
+      ]
     });
 
-    // Lavender translucent round shades + metallic purple rim + crisp specular diagonal
-    ctx.save();
-    ctx.fillStyle = 'rgba(192, 132, 252, 0.84)';
-    ctx.strokeStyle = '#581c87';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(5.8, -81 + bob, 3.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(-2.5, -81 + bob, 3.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.1;
-    ctx.beginPath();
-    ctx.moveTo(4.2, -82.5 + bob); ctx.lineTo(7.0, -79.8 + bob);
-    ctx.moveTo(-4.0, -82.5 + bob); ctx.lineTo(-1.2, -79.8 + bob);
-    ctx.stroke();
-    ctx.restore();
-
-    // Sweeping pastel-pink/lavender pompadour crest with crisp rose outline
-    ctx.fillStyle = '#f472b6';
-    ctx.strokeStyle = '#9d174d';
+    // Sweeping pastel-lavender curly pompadour crest (matches Rainbow Quartz 2.0.png!)
+    ctx.fillStyle = '#ddd6fe';
+    ctx.strokeStyle = '#6d28d9';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-12, -83 + bob);
-    ctx.bezierCurveTo(-14, -95 + bob, 1, -99 + bob, 11, -91 + bob);
-    ctx.bezierCurveTo(16, -87 + bob, 11, -83 + bob, 4, -86 + bob);
-    ctx.bezierCurveTo(-2, -88 + bob, -8, -85 + bob, -12, -83 + bob);
+    ctx.moveTo(-12.5, -83 + bob);
+    ctx.bezierCurveTo(-15, -96 + bob, 2, -101 + bob, 12, -91.5 + bob);
+    ctx.bezierCurveTo(16, -87 + bob, 10, -83 + bob, 4, -86.5 + bob);
+    ctx.bezierCurveTo(-2, -88.5 + bob, -8, -85.5 + bob, -12.5, -83 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#fdf2f8';
+    ctx.fillStyle = '#f5f3ff';
     ctx.beginPath();
-    ctx.ellipse(1, -92.5 + bob, 5.5, 2.0, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(1, -93 + bob, 5.5, 2.0, -0.2, 0, Math.PI * 2);
     ctx.fill();
 
     // 5. Arms + Rainbow Parasol that Morphs into a Rainbow Star Blaster during Attacks!
@@ -17025,56 +17665,71 @@ class PlayerHero {
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
-    // 1. Sturdy Athletic Denim Shorts & Crimson-Flame High-Tops
+    // 1. Sturdy Cuffed Denim Shorts & Coral-Red Flip-Flops (matches Sunstone.webp!)
     const drawSunstoneLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -28 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 11, 6.8, 5.4, darken ? '#1e3a8a' : '#2563eb', '#172554', 1);
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 11.5, 6.8, 5.4, darken ? '#1e3a8a' : '#2563eb', '#172554', 1);
       ctx.fillStyle = '#60a5fa';
-      ctx.beginPath(); ctx.ellipse(0, 11.5, 6.1, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-      this.drawCelTaperedLimb(ctx, 0, 12.5, 0, 18.5, 4.6, 4.0, darken ? '#9a3412' : '#ea580c', '#7c2d12', 1);
-      this.drawCelBoot(ctx, 0.5, 24, 10.5, 6.8, darken ? '#991b1b' : '#dc2626', '#ffffff', '#fbbf24');
+      ctx.beginPath(); ctx.ellipse(0, 12, 6.1, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      this.drawCelTaperedLimb(ctx, 0, 13, 0, 23, 4.6, 3.8, darken ? '#c2410c' : '#ea580c', '#7c2d12', 1);
+      // Bare orange foot + coral-red flip-flop strap & sole
+      ctx.fillStyle = '#fb923c';
+      ctx.beginPath(); ctx.ellipse(1.5, 24.5, 6.5, 3.0, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(-5, 26.2, 13.5, 2.8);
+      ctx.strokeStyle = '#be123c';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath(); ctx.moveTo(-2, 23.5); ctx.lineTo(4.5, 26.2); ctx.stroke();
       ctx.restore();
     };
     drawSunstoneLeg(-9 + legs.backX, legs.backY, legs.backRot, true);
     drawSunstoneLeg(9 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. Sculpted Athletic Denim Vest + Yellow Star + Navel Ember Gem
-    ctx.fillStyle = '#334155';
+    // 2. Exposed Orange Tummy w/ Navel Gem + Open Pink Varsity Jacket over Black Yellow-Star Crop Top!
+    ctx.fillStyle = '#f97316';
     ctx.beginPath();
-    ctx.moveTo(-20, -65 + bob);
-    ctx.quadraticCurveTo(0, -69 + bob, 20, -65 + bob);
-    ctx.quadraticCurveTo(18.5, -45 + bob, 14.5, -26 + bob);
-    ctx.quadraticCurveTo(0, -23.5 + bob, -14.5, -26 + bob);
-    ctx.quadraticCurveTo(-18.5, -45 + bob, -20, -65 + bob);
+    ctx.ellipse(0, -32 + bob, 14.5, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f472b6';
+    this.drawMiniStar(ctx, 1, -30.5 + bob, 4.5);
+
+    ctx.fillStyle = '#18181b';
+    ctx.beginPath();
+    ctx.moveTo(-16, -64 + bob);
+    ctx.quadraticCurveTo(0, -68 + bob, 16, -64 + bob);
+    ctx.lineTo(14.5, -39 + bob);
+    ctx.lineTo(-14.5, -39 + bob);
     ctx.closePath();
     ctx.fill();
-    // Cel back torso shadow
-    ctx.fillStyle = '#1e293b';
+    // Open Hot-Pink Varsity Jacket Panels w/ White Trim
+    ctx.fillStyle = '#ec4899';
     ctx.beginPath();
-    ctx.moveTo(-20, -65 + bob);
-    ctx.lineTo(-6, -67 + bob);
-    ctx.lineTo(-7, -25 + bob);
-    ctx.lineTo(-14.5, -26 + bob);
-    ctx.closePath();
+    ctx.moveTo(-21, -65 + bob); ctx.lineTo(-9, -65 + bob); ctx.lineTo(-10, -37 + bob); ctx.lineTo(-17, -38 + bob); ctx.closePath();
+    ctx.moveTo(21, -65 + bob); ctx.lineTo(9, -65 + bob); ctx.lineTo(10, -37 + bob); ctx.lineTo(17, -38 + bob); ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(-9, -65 + bob); ctx.lineTo(-10, -37 + bob); ctx.moveTo(9, -65 + bob); ctx.lineTo(10, -37 + bob); ctx.stroke();
 
     ctx.fillStyle = '#ffd166';
-    this.drawMiniStar(ctx, 1, -48 + bob, 11);
+    this.drawMiniStar(ctx, 1, -51 + bob, 8.8);
 
-    // 3. FOUR ARTICULATED ARMS (2 Thin Upper Flame Arms + 2 Pink-Varsity Boxing Gauntlets!)
+    // 3. FOUR ARTICULATED ARMS (2 Thin Lower Burgundy-Gloved Arms + 2 Massive Pink-Varsity Boxing Arms!)
     const mSun = this.getCharacterMotionState();
     const sSwF = mSun.armSwingF * 13;
     const sSwB = mSun.armSwingB * 13;
-    this.drawArticulatedArm(ctx, -16, -63 + bob, -26 - sSwB * 0.4, -74 + bob, -28 - sSwB, -88 + bob + sSwB * 0.3, '#ea580c', '#f97316', 6.5, 5.4, '#fde047', 5.2);
-    this.drawArticulatedArm(ctx, -14, -49 + bob, -24 + sSwB * 0.3, -44 + bob, -21 + sSwB * 0.7, -30 + bob + Math.abs(sSwB) * 0.3, '#f472b6', '#ea580c', 11.2, 8.8, '#ea580c', 7.4);
-    this.drawArticulatedArm(ctx, 15, -63 + bob, 25 + sSwF * 0.3, -70 + bob, 29 + sSwF, -82 + bob - sSwF * 0.3, '#f97316', '#fde047', 6.5, 5.4, '#fde047', 5.2);
+    // Lower thin orange arms with burgundy fingerless gloves
+    this.drawArticulatedArm(ctx, -15, -45 + bob, -23 - sSwB * 0.4, -40 + bob, -26 - sSwB, -30 + bob + sSwB * 0.3, '#ea580c', '#881337', 5.2, 4.4, '#881337', 4.6);
+    this.drawArticulatedArm(ctx, 15, -45 + bob, 22 + sSwF * 0.3, -40 + bob, 26 + sSwF, -30 + bob - sSwF * 0.3, '#f97316', '#881337', 5.2, 4.4, '#881337', 4.6);
+    // Massive Pink Varsity upper punching arms
+    this.drawArticulatedArm(ctx, -16, -61 + bob, -26 - sSwB * 0.3, -68 + bob, -28 - sSwB * 0.7, -80 + bob + Math.abs(sSwB) * 0.3, '#ec4899', '#ec4899', 11.4, 9.2, '#f97316', 7.6);
 
-    const reach = strike * 40;
-    const fx = 22 + reach + sSwF * 0.65;
-    const fy = -41 + bob - strike * 7 + sSwF * 0.35;
-    this.drawArticulatedArm(ctx, 14.5, -49 + bob, 18.5 + reach * 0.45 + sSwF * 0.3, -45 + bob, fx, fy, '#f472b6', '#ea580c', 12, 9.5, '#ea580c', 8.5);
+    const reach = strike * 42;
+    const fx = 24 + reach + sSwF * 0.65;
+    const fy = -54 + bob - strike * 7 + sSwF * 0.35;
+    this.drawArticulatedArm(ctx, 16, -61 + bob, 20 + reach * 0.45 + sSwF * 0.3, -57 + bob, fx, fy, '#ec4899', '#ec4899', 12, 9.6, '#ea580c', 8.5);
 
     // Crisp Varsity Striped Cuff
     ctx.fillStyle = '#ffffff';
@@ -17193,20 +17848,22 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Massive Tapered Titan Legs & Stomping Boots
+    // 2. Massive Tapered Dark-Indigo Shorts w/ Purple Star Knee Cutouts & Stomping Boots (matches Sugilite.jpeg!)
     const drawSugiliteLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -31 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 17, 9.2, 6.8, darken ? '#2e1065' : '#3b0764', '#140529', 1);
-      this.drawCelBoot(ctx, 1, 27, 13, 9, darken ? '#4a044e' : '#581c87', '#e9d5ff', '#7e22ce');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 18, 9.4, 7.0, darken ? '#1e1b4b' : '#312e81', '#0f0717', 1);
+      ctx.fillStyle = '#a855f7';
+      this.drawMiniStar(ctx, 1, 10, 4.2);
+      this.drawCelBoot(ctx, 1, 27, 13, 9, darken ? '#3b0764' : '#4c1d95', '#e9d5ff', '#7e22ce');
       ctx.restore();
     };
     drawSugiliteLeg(-11 + legs.backX, legs.backY, legs.backRot, true);
     drawSugiliteLeg(11 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Broad Tapered V-Shape Titan Torso & Amethyst Chest Gem
-    ctx.fillStyle = '#581c87';
+    // 3. Broad Shredded Purple/Indigo Vest Torso & Keyhole Chest Amethyst Gem (matches Sugilite.jpeg!)
+    ctx.fillStyle = '#6b21a8';
     ctx.beginPath();
     ctx.moveTo(-25, -75 + bob);
     ctx.quadraticCurveTo(0, -80 + bob, 25, -75 + bob);
@@ -17215,40 +17872,39 @@ class PlayerHero {
     ctx.bezierCurveTo(-19, -34 + bob, -24, -52 + bob, -25, -75 + bob);
     ctx.closePath();
     ctx.fill();
-    // Cel back shadow plane + crimson/plum vest panel
-    ctx.fillStyle = '#3b0764';
+    // Indigo vest sides & teardrop keyhole window
+    ctx.fillStyle = '#1e1b4b';
     ctx.beginPath();
     ctx.moveTo(-25, -75 + bob);
-    ctx.lineTo(-9, -77 + bob);
-    ctx.lineTo(-7, -27 + bob);
+    ctx.lineTo(-10, -76 + bob);
+    ctx.lineTo(-4, -34 + bob);
     ctx.lineTo(-15, -28 + bob);
     ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#4a044e';
-    ctx.beginPath();
-    ctx.moveTo(-19, -63 + bob);
-    ctx.lineTo(19, -63 + bob);
-    ctx.lineTo(15, -34 + bob);
-    ctx.lineTo(-15, -34 + bob);
+    ctx.moveTo(25, -75 + bob);
+    ctx.lineTo(10, -76 + bob);
+    ctx.lineTo(5, -34 + bob);
+    ctx.lineTo(15, -28 + bob);
     ctx.closePath();
     ctx.fill();
-
-    ctx.fillStyle = '#a855f7';
-    this.drawMiniStar(ctx, 1, -60 + bob, 7.2);
+    ctx.fillStyle = '#9333ea';
+    this.drawMiniStar(ctx, 0.5, -59 + bob, 6.8);
     ctx.fillStyle = '#f3e8ff';
-    this.drawMiniStar(ctx, -0.5, -61.5 + bob, 2.4);
+    this.drawMiniStar(ctx, -0.5, -60.5 + bob, 2.3);
 
-    // 4. FOUR MUSCULAR ARMS (continuous roar flex + flail swing)
+    // 4. FOUR STRIPE-BANDED MUSCULAR ARMS
     const mSug = this.getCharacterMotionState();
     const ugB = mSug.armSwingB * 13;
     const ugF = mSug.armSwingF * 13;
-    this.drawArticulatedArm(ctx, -20, -73 + bob, -32 - ugB * 0.4, -87 + bob, -34 - ugB, -104 + bob + ugB * 0.25, '#4c1d95', '#6b21a8', 11, 9, '#6b21a8', 7);
-    this.drawArticulatedArm(ctx, -18, -54 + bob, -28 + ugB * 0.3, -51 + bob, -24 + ugB * 0.6, -35 + bob, '#4c1d95', '#6b21a8', 10, 8.2, '#6b21a8', 7);
-    this.drawArticulatedArm(ctx, 19, -73 + bob, 31 + ugF * 0.4, -85 + bob, 33 + ugF, -101 + bob - ugF * 0.25, '#581c87', '#6b21a8', 11, 9, '#6b21a8', 7);
+    this.drawArticulatedArm(ctx, -20, -73 + bob, -32 - ugB * 0.4, -87 + bob, -34 - ugB, -104 + bob + ugB * 0.25, '#3b0764', '#7e22ce', 11, 9, '#6b21a8', 7);
+    this.drawArticulatedArm(ctx, -18, -54 + bob, -28 + ugB * 0.3, -51 + bob, -24 + ugB * 0.6, -35 + bob, '#3b0764', '#7e22ce', 10, 8.2, '#6b21a8', 7);
+    this.drawArticulatedArm(ctx, 19, -73 + bob, 31 + ugF * 0.4, -85 + bob, 33 + ugF, -101 + bob - ugF * 0.25, '#4c1d95', '#7e22ce', 11, 9, '#6b21a8', 7);
 
-    const handX = 22 + strike * 15 + ugF * 0.55;
+    const handX = 22 + strike * 16 + ugF * 0.55;
     const handY = -48 + bob - strike * 6 + ugF * 0.35;
-    this.drawArticulatedArm(ctx, 18, -54 + bob, 22 + strike * 8 + ugF * 0.25, -51 + bob, handX, handY, '#581c87', '#6b21a8', 11, 9, '#6b21a8', 7.5);
+    this.drawArticulatedArm(ctx, 18, -54 + bob, 22 + strike * 8 + ugF * 0.25, -51 + bob, handX, handY, '#4c1d95', '#7e22ce', 11, 9, '#6b21a8', 7.5);
+    // Banded plum wrist cuffs on front arms
+    ctx.fillStyle = '#9333ea';
+    ctx.beginPath(); ctx.ellipse(handX - 5, handY - 3, 4.2, 6.2, 0.3, 0, Math.PI * 2); ctx.fill();
 
     // 5. Sculpted Broad Jaw Face (`drawCelFace`) + 5 Sharp Eyes + Pointed Cyan Visor + Fanged Sneer!
     this.drawCelTaperedLimb(ctx, 0, -74 + bob, 0.5, -80 + bob, 7.5, 6.8, '#6b21a8', '#4c1d95', 1);
@@ -17281,7 +17937,7 @@ class PlayerHero {
     ctx.fill();
     ctx.stroke();
 
-    // Translucent Cyan Pointed Kamina Visor + Crisp Metallic Rim & Specular
+    // Translucent Cyan Pointed Kamina Visor + Exposed 3rd Magenta Forehead Eye (matches Sugilite.jpeg!)
     ctx.fillStyle = 'rgba(56, 189, 248, 0.78)';
     ctx.strokeStyle = '#0284c7';
     ctx.lineWidth = 1.5;
@@ -17299,34 +17955,41 @@ class PlayerHero {
     ctx.beginPath();
     ctx.moveTo(4, -91 + bob); ctx.lineTo(15, -97 + bob); ctx.lineTo(10.5, -88 + bob); ctx.closePath();
     ctx.fill();
+    // Glowing 3rd forehead magenta eye above visor
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath(); ctx.ellipse(0.5, -97.5 + bob, 3.0, 2.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(0.8, -97.5 + bob, 1.1, 0, Math.PI * 2); ctx.fill();
 
-    // 6. WEAPON: Colossal Spiked Star-Flail Wrecking Ball with Metallic Rim
+    // 6. WEAPON: Dark Whip Cord + Garnet's Colossal Spiked Purple-Crimson Gauntlet Wrecking Ball!
     ctx.save();
     ctx.translate(handX, handY);
-    const flailX = 28 + strike * 34;
-    const flailY = 16 - strike * 23;
-    ctx.strokeStyle = '#c084fc';
-    ctx.lineWidth = 3.6;
+    const flailX = 28 + strike * 36;
+    const flailY = 16 - strike * 25;
+    ctx.strokeStyle = '#312e81';
+    ctx.lineWidth = 4.2;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.quadraticCurveTo(flailX * 0.5, -14 * strike, flailX, flailY);
     ctx.stroke();
 
-    ctx.fillStyle = '#7e22ce';
-    ctx.strokeStyle = '#2e1065';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(flailX, flailY, 16.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#c084fc';
-    ctx.beginPath(); ctx.arc(flailX - 3.5, flailY - 4, 7.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#f3e8ff';
+    ctx.fillStyle = '#581c87';
+    ctx.strokeStyle = '#1e102d';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(flailX, flailY, 17.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#a21caf';
+    ctx.beginPath(); ctx.arc(flailX + 3, flailY - 3, 9.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#facc15';
+    this.drawMiniStar(ctx, flailX, flailY, 5.2);
+    ctx.fillStyle = '#e9d5ff';
     ctx.strokeStyle = '#3b0764';
     ctx.lineWidth = 1.2;
     for (let s = 0; s < 6; s++) {
       const a = s * Math.PI / 3 + strike * 1.5;
       ctx.beginPath();
-      ctx.moveTo(flailX + Math.cos(a) * 15, flailY + Math.sin(a) * 15);
-      ctx.lineTo(flailX + Math.cos(a) * 26, flailY + Math.sin(a) * 26);
-      ctx.lineTo(flailX + Math.cos(a + 0.32) * 15, flailY + Math.sin(a + 0.32) * 15);
+      ctx.moveTo(flailX + Math.cos(a) * 16, flailY + Math.sin(a) * 16);
+      ctx.lineTo(flailX + Math.cos(a) * 27, flailY + Math.sin(a) * 27);
+      ctx.lineTo(flailX + Math.cos(a + 0.34) * 16, flailY + Math.sin(a + 0.34) * 16);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -17339,27 +18002,27 @@ class PlayerHero {
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
-    // 1. BACK LAYER: Sculpted Beveled 3-Tone Tangerine Coiffure + Cel Rim & Outline
-    ctx.fillStyle = '#ea580c';
-    ctx.strokeStyle = '#7c2d12';
+    // 1. BACK LAYER: Smooth Curved Pale-Peach Dorito Coiffure (matches Sardonyx.png!)
+    ctx.fillStyle = '#fdba74';
+    ctx.strokeStyle = '#9a3412';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(0, -120 + bob);
-    ctx.quadraticCurveTo(18, -102 + bob, 25, -83 + bob);
+    ctx.quadraticCurveTo(20, -104 + bob, 25, -83 + bob);
     ctx.quadraticCurveTo(0, -79 + bob, -25, -83 + bob);
-    ctx.quadraticCurveTo(-18, -102 + bob, 0, -120 + bob);
+    ctx.quadraticCurveTo(-20, -104 + bob, 0, -120 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#fb923c';
+    ctx.fillStyle = '#fed7aa';
     ctx.beginPath();
     ctx.moveTo(0, -119 + bob);
     ctx.lineTo(0, -82 + bob);
     ctx.lineTo(-24, -83 + bob);
-    ctx.quadraticCurveTo(-17, -101 + bob, 0, -119 + bob);
+    ctx.quadraticCurveTo(-18, -102 + bob, 0, -119 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#fed7aa';
+    ctx.fillStyle = '#ffedd5';
     ctx.beginPath();
     ctx.moveTo(-2, -112 + bob);
     ctx.lineTo(-4, -88 + bob);
@@ -17367,27 +18030,23 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Ultra-Tall Tapered Tuxedo Legs & Crisp White Showbiz Spats
+    // 2. Ultra-Tall Maroon-Burgundy Tuxedo Trousers & Pointed Black-White Showbiz Heels
     const drawSardonyxLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -34 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 21, 5.2, 3.8, darken ? '#020617' : '#0f172a', '#020617', 1);
-      this.drawCelBoot(ctx, 0.5, 29, 9.5, 9, '#f8fafc', '#0f172a', '#e2e8f0');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 22, 5.2, 3.6, darken ? '#4c0519' : '#6b0f26', '#2a040f', 1);
+      this.drawCelBoot(ctx, 1, 29, 9.5, 6.5, '#0f172a', '#f8fafc', '#4c0519');
       ctx.restore();
     };
     drawSardonyxLeg(-6.5 + legs.backX, legs.backY, legs.backRot, true);
     drawSardonyxLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Slender Contoured Tuxedo Coat & Flowing Tailcoat + Bowtie + Midriff
-    ctx.fillStyle = '#fb923c';
+    // 3. Tuxedo Coat w/ Coral Underside Tails + White Vest & Cummerbund + Red Bowtie
+    ctx.fillStyle = '#fb7185';
     ctx.beginPath();
-    ctx.moveTo(-9, -43 + bob); ctx.lineTo(9, -43 + bob);
-    ctx.lineTo(8, -33 + bob); ctx.lineTo(-8, -33 + bob);
-    ctx.closePath();
+    ctx.moveTo(-14, -42 + bob); ctx.lineTo(-22, -21 + bob); ctx.lineTo(-7, -30 + bob); ctx.closePath();
     ctx.fill();
-
-    // Flowing dark tuxedo coat tails
     ctx.fillStyle = '#0f172a';
     ctx.beginPath();
     ctx.moveTo(-16, -76 + bob);
@@ -17397,14 +18056,11 @@ class PlayerHero {
     ctx.bezierCurveTo(-14, -44 + bob, -15, -58 + bob, -16, -76 + bob);
     ctx.closePath();
     ctx.fill();
-    // Crisp coat tails flare
-    ctx.beginPath();
-    ctx.moveTo(-14, -42 + bob); ctx.lineTo(-20, -24 + bob); ctx.lineTo(-8, -32 + bob); ctx.closePath();
-    ctx.fill();
-    // Dress shirt triangle + Ruby bowtie + gold star lapel button
     ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(0, -37 + bob, 11, 3.2, 0, 0, Math.PI * 2); ctx.fill();
+    // White dress shirt triangle + Ruby bowtie + yellow chest star
     ctx.beginPath();
-    ctx.moveTo(-6, -76 + bob); ctx.lineTo(6, -76 + bob); ctx.lineTo(0.5, -56 + bob); ctx.closePath();
+    ctx.moveTo(-6, -76 + bob); ctx.lineTo(6, -76 + bob); ctx.lineTo(0.5, -52 + bob); ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#e11d48';
     ctx.beginPath();
@@ -17413,27 +18069,27 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1, -60 + bob, 3.8);
+    this.drawMiniStar(ctx, 1, -59 + bob, 4.2);
 
-    // 4. Sculpted Neck + Pointed-Nose Peach Cel Face + 4 Expressive Eyes + Ruby Shades!
-    this.drawCelTaperedLimb(ctx, 0, -75 + bob, 0.5, -80 + bob, 3.8, 3.4, '#fb923c', '#ea580c', 1);
+    // 4. Sculpted Neck + Warm Crimson-Burgundy Cel Face (`Sardonyx.png`!) + 4 Eyes + Ruby Shades!
+    this.drawCelTaperedLimb(ctx, 0, -75 + bob, 0.5, -80 + bob, 3.8, 3.4, '#be123c', '#881337', 1);
     this.drawCelFace(ctx, {
       cx: 0.5, cy: -87 + bob, rx: 11.6, ry: 12.6,
-      skin: '#fb923c', shadow: '#ea580c',
+      skin: '#be123c', shadow: '#881337',
       eyeY: -83.5 + bob, eyeXBack: -2.0, eyeXFront: 5.5, eyeW: 2.2, eyeH: 2.5,
-      irisCol: '#1e293b', browCol: '#9a3412',
+      irisCol: '#0f172a', browCol: '#4c0519',
       noseStyle: 'pointed', noseX: 5, noseY: -84.5 + bob,
       mouthY: -79 + bob, mouthStyle: 'grin',
       gemForehead: { shape: 'oval', col: '#ffffff', x: 1, y: -94.5 + bob, w: 2.5, h: 3.3 },
       extraEyes: [
-        { x: -2.5, y: -88 + bob, w: 2.1, h: 2.3, iris: '#1e293b' },
-        { x: 5.8, y: -88 + bob, w: 2.1, h: 2.3, iris: '#1e293b' }
+        { x: -2.5, y: -88 + bob, w: 2.1, h: 2.3, iris: '#0f172a' },
+        { x: 5.8, y: -88 + bob, w: 2.1, h: 2.3, iris: '#0f172a' }
       ]
     });
 
     // Ruby Translucent Butterfly Glasses + Crisp Rim & Specular
     ctx.fillStyle = 'rgba(244, 63, 94, 0.78)';
-    ctx.strokeStyle = '#9f1239';
+    ctx.strokeStyle = '#4c0519';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(0.5, -87.5 + bob);
@@ -17450,50 +18106,38 @@ class PlayerHero {
     ctx.moveTo(4, -89.5 + bob); ctx.lineTo(10.5, -92.5 + bob); ctx.lineTo(8, -84.5 + bob); ctx.closePath();
     ctx.fill();
 
-    // 5. FOUR ARTICULATED ARMS + Colossal Theatrical Faceted Star-Hammer
+    // 5. FOUR CRIMSON ARMS w/ White Tuxedo Cuffs + Double-Garnet-Fist Star War Hammer
     const mSar = this.getCharacterMotionState();
     const sB = mSar.armSwingB * 10;
     const sF = mSar.armSwingF * 10;
-    this.drawArticulatedArm(ctx, -14, -74 + bob, -24 - sB * 0.4, -82 + bob, -28 - sB, -96 + bob + sB * 0.3, '#0f172a', '#ffffff', 6, 4.8, '#ffffff', 4);
-    this.drawArticulatedArm(ctx, 14, -74 + bob, 22 + sF * 0.4, -84 + bob, 26 + sF, -98 + bob - sF * 0.3, '#0f172a', '#ffffff', 6, 4.8, '#ffffff', 4);
+    this.drawArticulatedArm(ctx, -14, -74 + bob, -24 - sB * 0.4, -82 + bob, -28 - sB, -96 + bob + sB * 0.3, '#0f172a', '#ffffff', 6, 4.8, '#be123c', 4);
+    this.drawArticulatedArm(ctx, 14, -74 + bob, 22 + sF * 0.4, -84 + bob, 26 + sF, -98 + bob - sF * 0.3, '#0f172a', '#ffffff', 6, 4.8, '#be123c', 4);
 
     const handX = 16 + strike * 15 + sF * 0.5;
     const handY = -56 + bob - strike * 4 + sF * 0.3;
-    this.drawArticulatedArm(ctx, -10, -56 + bob, 2, -54 + bob, handX - 4, handY, '#0f172a', '#ffffff', 5.8, 4.8, '#ffffff', 3.9);
-    this.drawArticulatedArm(ctx, 12, -56 + bob, 16 + strike * 6, -52 + bob, handX + 4, handY, '#0f172a', '#ffffff', 6, 4.8, '#ffffff', 4);
+    this.drawArticulatedArm(ctx, -10, -56 + bob, 2, -54 + bob, handX - 4, handY, '#0f172a', '#ffffff', 5.8, 4.8, '#be123c', 3.9);
+    this.drawArticulatedArm(ctx, 12, -56 + bob, 16 + strike * 6, -52 + bob, handX + 4, handY, '#0f172a', '#ffffff', 6, 4.8, '#be123c', 4);
 
     ctx.save();
     ctx.translate(handX, handY);
     ctx.rotate(strike * 1.3 + mSar.armSwingF * 0.14);
-    this.drawCelTaperedLimb(ctx, 0, 26, 0, -48, 3.0, 2.6, '#f43f5e', '#be123c', 1);
-    // Faceted beveled mallet barrel (not plain box)
-    ctx.fillStyle = '#fb7185';
-    ctx.strokeStyle = '#9f1239';
+    this.drawCelTaperedLimb(ctx, 0, 26, 0, -48, 3.0, 2.6, '#f43f5e', '#881337', 1);
+    // Garnet double-gauntlet mallet head + top star crest
+    ctx.fillStyle = '#9f1239';
+    ctx.strokeStyle = '#4c0519';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(-19, -57);
-    ctx.lineTo(-14, -61);
-    ctx.lineTo(14, -61);
-    ctx.lineTo(19, -57);
-    ctx.lineTo(19, -38);
-    ctx.lineTo(14, -34);
-    ctx.lineTo(-14, -34);
-    ctx.lineTo(-19, -38);
+    ctx.moveTo(-21, -57); ctx.lineTo(-14, -62); ctx.lineTo(14, -62); ctx.lineTo(21, -57);
+    ctx.lineTo(21, -38); ctx.lineTo(14, -34); ctx.lineTo(-14, -34); ctx.lineTo(-21, -38);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#f43f5e';
-    ctx.beginPath();
-    ctx.moveTo(-19, -45); ctx.lineTo(19, -45); ctx.lineTo(19, -38); ctx.lineTo(14, -34); ctx.lineTo(-14, -34); ctx.lineTo(-19, -38); ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#fde047';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-16, -60); ctx.lineTo(-16, -35);
-    ctx.moveTo(16, -60); ctx.lineTo(16, -35);
-    ctx.stroke();
+    ctx.fillStyle = '#e11d48';
+    ctx.fillRect(-16, -58, 32, 10);
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 0, -47.5, 6.2);
+    this.drawMiniStar(ctx, 0, -63, 6.8);
+    this.drawMiniStar(ctx, -12, -47, 4.2);
+    this.drawMiniStar(ctx, 12, -47, 4.2);
     ctx.restore();
   }
 
@@ -17503,12 +18147,14 @@ class PlayerHero {
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
-    // 1. BACK LAYER: Sculpted High Top-Knot & Long Flowing Ivory Ponytail with Cel Sheen
+    // 1. BACK LAYER: Pale-Cream High Ponytail + 2 Bound Shoulder-Tails w/ Gold Rings (matches Opal.webp!)
     const swX = hair.swayX * 0.85;
     const swY = hair.swayY * 0.5;
-    ctx.fillStyle = '#f8fafc';
-    ctx.beginPath(); ctx.arc(-2.5, -101 + bob, 8.2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#e2e8f0';
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#a16207';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(-2.5, -101 + bob, 8.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fef3c7';
     ctx.beginPath();
     ctx.moveTo(-4, -99 + bob);
     ctx.bezierCurveTo(-24 + swX * 0.4, -92 + bob, -32 + swX * 0.8, -68 + bob, -26 + swX, -45 + bob + swY);
@@ -17516,80 +18162,89 @@ class PlayerHero {
     ctx.bezierCurveTo(-7 + swX * 0.7, -28 + bob, -12 + swX * 0.4, -56 + bob, 2, -84 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-10, -92 + bob);
-    ctx.bezierCurveTo(-22 + swX * 0.5, -70 + bob, -16 + swX * 0.85, -42 + bob, -19 + swX, -19 + bob + swY);
-    ctx.bezierCurveTo(-15 + swX * 0.7, -38 + bob, -13 + swX * 0.5, -62 + bob, -4, -84 + bob);
-    ctx.closePath();
-    ctx.fill();
+    ctx.stroke();
+    // Bound shoulder framing hair tails cinched with golden rings
+    for (const [tx, ty] of [[-12.5, -78], [11.5, -78]]) {
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath();
+      ctx.moveTo(tx - 2.6, ty + bob);
+      ctx.quadraticCurveTo(tx + swX * 0.2, ty + 20 + bob, tx - 1 + swX * 0.25, ty + 33 + bob);
+      ctx.lineTo(tx + 3.2 + swX * 0.25, ty + 32 + bob);
+      ctx.quadraticCurveTo(tx + 2.8, ty + 16 + bob, tx + 2.6, ty + bob);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(tx - 2.5, ty + 14 + bob, 5.5, 2.5);
+    }
 
-    // 2. Graceful Tapered Lilac Dancer Legs + Teal Crisscross Wraps & Boots
+    // 2. Plum-Mauve Leggings + Pale-Yellow Ankle Boots (matches Opal.webp!)
     const drawOpalLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -33 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 23, 5.2, 3.5, darken ? '#a5b4fc' : '#c7d2fe', '#818cf8', 1);
-      ctx.strokeStyle = '#2dd4bf';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-4, 10); ctx.lineTo(4, 15);
-      ctx.moveTo(4, 15); ctx.lineTo(-4, 20);
-      ctx.stroke();
-      this.drawCelBoot(ctx, 0.5, 29, 8.5, 5, darken ? '#0f766e' : '#14b8a6', '#ccfbf1');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 23, 5.2, 3.5, darken ? '#581c87' : '#6b4c7a', '#3b0764', 1);
+      this.drawCelBoot(ctx, 0.5, 29, 8.8, 5.5, darken ? '#eab308' : '#fef08a', '#ffffff', '#fde047');
       ctx.restore();
     };
     drawOpalLeg(-6 + legs.backX, legs.backY, legs.backRot, true);
     drawOpalLeg(6.5 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // Draped Mint-Aqua Sleeveless Tunic & Lilac Sash Ribbons
-    ctx.fillStyle = '#2dd4bf';
+    // 3. Mint Halter Top -> Deep-Teal Corset -> Long Mint Front Tabard Skirt w/ Big YELLOW 5-Pt Star!
+    ctx.fillStyle = '#5eead4';
     ctx.beginPath();
-    ctx.moveTo(-13.5, -74 + bob);
-    ctx.quadraticCurveTo(0, -76 + bob, 13.5, -74 + bob);
-    ctx.bezierCurveTo(13, -55 + bob, 14, -40 + bob, 12.5, -31 + bob);
-    ctx.quadraticCurveTo(0, -29 + bob, -12.5, -31 + bob);
-    ctx.bezierCurveTo(-14, -40 + bob, -13, -55 + bob, -13.5, -74 + bob);
+    ctx.moveTo(-13, -74 + bob);
+    ctx.quadraticCurveTo(0, -76 + bob, 13, -74 + bob);
+    ctx.lineTo(11, -55 + bob);
+    ctx.lineTo(-11, -55 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#0d9488';
+    // Teal corset waist
+    ctx.fillStyle = '#115e59';
     ctx.beginPath();
-    ctx.moveTo(-13.5, -74 + bob); ctx.lineTo(-5, -74 + bob); ctx.lineTo(-5.5, -30 + bob); ctx.lineTo(-12.5, -31 + bob); ctx.closePath();
-    ctx.fill();
-
-    // Violet Hip Sash & Swaying Ribbon Tails
-    ctx.fillStyle = '#c084fc';
-    ctx.beginPath();
-    ctx.ellipse(0, -46 + bob, 14.2, 3.6, -0.06, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(-13, -45 + bob);
-    ctx.quadraticCurveTo(-18 + swX * 0.4, -34 + bob, -15 + swX * 0.6, -22 + bob);
-    ctx.lineTo(-9 + swX * 0.4, -24 + bob);
+    ctx.moveTo(-11.5, -55 + bob);
+    ctx.lineTo(11.5, -55 + bob);
+    ctx.lineTo(9.5, -42 + bob);
+    ctx.lineTo(0.5, -39 + bob);
+    ctx.lineTo(-9.5, -42 + bob);
     ctx.closePath();
     ctx.fill();
+    // Long flowing mint tabard skirt down to knees + iconic Yellow 5-Point Star
+    ctx.fillStyle = '#5eead4';
+    ctx.strokeStyle = '#0f766e';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-10, -43 + bob);
+    ctx.lineTo(10, -43 + bob);
+    ctx.quadraticCurveTo(13, -24 + bob, 11 + swX * 0.2, -13 + bob);
+    ctx.lineTo(-10 + swX * 0.2, -13 + bob);
+    ctx.quadraticCurveTo(-12, -24 + bob, -10, -43 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#fde047';
+    this.drawMiniStar(ctx, 1.5, -26 + bob, 9.2);
 
-    // Amethyst Star-Cutout Chest Gem
+    // Amethyst Chest Gem framed in dark purple diamond/ring cutout
     ctx.fillStyle = '#a855f7';
-    this.drawMiniStar(ctx, 1.2, -62 + bob, 5.2);
+    this.drawMiniStar(ctx, 1.2, -64 + bob, 5.2);
     ctx.fillStyle = '#f3e8ff';
-    this.drawMiniStar(ctx, 0.4, -63 + bob, 2.0);
+    this.drawMiniStar(ctx, 0.4, -65 + bob, 2.0);
 
-    // 3. Sculpted Neck & Graceful Opal Cel Face (`drawCelFace`)
-    this.drawCelTaperedLimb(ctx, 0, -73 + bob, 0.5, -78 + bob, 3.6, 3.2, '#c7d2fe', '#a5b4fc', 1);
+    // 4. Sculpted Neck & Graceful Opal Cel Face
+    this.drawCelTaperedLimb(ctx, 0, -73 + bob, 0.5, -78 + bob, 3.6, 3.2, '#d8b4fe', '#a855f7', 1);
     this.drawCelFace(ctx, {
       cx: 0.5, cy: -85.5 + bob, rx: 11.5, ry: 12.6,
-      skin: '#c7d2fe', shadow: '#a5b4fc',
+      skin: '#ddd6fe', shadow: '#c4b5fd',
       eyeY: -85.5 + bob, eyeXBack: -2.0, eyeXFront: 5.5, eyeW: 2.3, eyeH: 2.8,
       irisCol: '#06b6d4', browCol: '#6366f1',
-      noseStyle: 'pointed', noseX: 5.2, noseY: -83.5 + bob,
+      noseStyle: 'pointed', noseX: 5.4, noseY: -83.5 + bob,
       mouthY: -78 + bob, mouthStyle: 'smirk',
       gemForehead: { shape: 'oval', col: '#ffffff', x: 1, y: -92.5 + bob, w: 2.6, h: 3.5 }
     });
 
-    // Parted Pearl-White Bangs Framing Forehead Gem + Crisp Cel Outline
-    ctx.fillStyle = '#f8fafc';
-    ctx.strokeStyle = '#64748b';
+    // Parted Cream Bangs Framing Forehead Gem
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#a16207';
     ctx.lineWidth = 1.4;
     ctx.beginPath();
     ctx.moveTo(-12.5, -84 + bob);
@@ -17601,41 +18256,54 @@ class PlayerHero {
     ctx.fill();
     ctx.stroke();
 
-    // 4. FOUR ARMS + Luminous Crystal Recurve Bow & Charged Arrow!
+    // 5. FOUR LILAC ARMS + Ornate Gold-Hilted Aqua/Periwinkle Greatbow (matches Opal.webp!)
     const mOpal = this.getCharacterMotionState();
-    const oPull = Math.sin(mOpal.t * 2.6) * 2.5;
-    const bowX = 23 + strike * 10 + oPull * 0.4;
-    const bowY = -58 + bob + oPull * 0.3;
-    const drawPull = -8 - strike * 16 - oPull;
+    const comboOpal = this.attackCombo || 0;
+    const isFiring = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill');
+    const oPull = isFiring ? (comboOpal === 2 ? 4 : 7) : Math.sin(mOpal.t * 2.6) * 2.5;
+    const bowX = 25 + strike * 11 + oPull * 0.35;
+    const bowY = -58 + bob + (comboOpal === 2 && isFiring ? -8 : 0);
+    const drawPull = -10 - strike * 18 - oPull;
 
-    this.drawArticulatedArm(ctx, 10, -70 + bob, 18, -66 + bob, bowX, bowY - 14, '#2dd4bf', '#c7d2fe', 5.8, 4.6, '#c7d2fe', 3.7);
-    this.drawArticulatedArm(ctx, 10, -56 + bob, 16, -56 + bob, bowX, bowY + 14, '#2dd4bf', '#c7d2fe', 5.8, 4.6, '#c7d2fe', 3.7);
-    this.drawArticulatedArm(ctx, -10, -70 + bob, -4, -62 + bob, bowX + drawPull, bowY, '#0d9488', '#c7d2fe', 5.8, 4.6, '#c7d2fe', 3.7);
-    this.drawArticulatedArm(ctx, -10, -56 + bob, -2, -56 + bob, bowX + drawPull, bowY, '#0d9488', '#c7d2fe', 5.8, 4.6, '#c7d2fe', 3.7);
+    this.drawArticulatedArm(ctx, 10, -70 + bob, 19, -66 + bob, bowX, bowY - 12, '#2dd4bf', '#ddd6fe', 5.8, 4.6, '#ddd6fe', 3.7);
+    this.drawArticulatedArm(ctx, 10, -56 + bob, 17, -56 + bob, bowX, bowY + 12, '#2dd4bf', '#ddd6fe', 5.8, 4.6, '#ddd6fe', 3.7);
+    this.drawArticulatedArm(ctx, -10, -70 + bob, -2, -62 + bob, bowX + drawPull, bowY - 2, '#0d9488', '#ddd6fe', 5.8, 4.6, '#ddd6fe', 3.7);
+    this.drawArticulatedArm(ctx, -10, -56 + bob, -2, -56 + bob, bowX + drawPull, bowY + 2, '#0d9488', '#ddd6fe', 5.8, 4.6, '#ddd6fe', 3.7);
 
     ctx.save();
     ctx.translate(bowX, bowY);
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 5.4;
+    if (isFiring && comboOpal === 2) ctx.rotate(-0.18);
+    else if (isFiring && comboOpal === 1) ctx.rotate(0.10);
+    // Angled aqua & periwinkle bow limbs + gold grip handle
+    ctx.strokeStyle = '#6366f1';
+    ctx.lineWidth = 5.8;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(8, -48);
-    ctx.bezierCurveTo(-14, -20, -14, 20, 8, 48);
+    ctx.moveTo(10, -49);
+    ctx.lineTo(-4, -22);
+    ctx.lineTo(-2, 0);
+    ctx.lineTo(-4, 22);
+    ctx.lineTo(10, 49);
     ctx.stroke();
-    ctx.strokeStyle = '#67e8f9';
-    ctx.lineWidth = 3.0;
+    ctx.strokeStyle = '#5eead4';
+    ctx.lineWidth = 3.2;
     ctx.stroke();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
-    ctx.lineWidth = 1.6;
+    // Gold center bow grip
+    ctx.fillStyle = '#fde047';
+    ctx.strokeStyle = '#a16207';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect(-5, -10, 7, 20, 3); ctx.fill(); ctx.stroke();
+    // Drawn luminous bowstring + glowing arrow
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.94)';
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.moveTo(8, -48); ctx.lineTo(drawPull, 0); ctx.lineTo(8, 48);
+    ctx.moveTo(10, -49); ctx.lineTo(drawPull, 0); ctx.lineTo(10, 49);
     ctx.stroke();
-    // Glowing Light Arrow + Prism Rim
-    this.drawCelTaperedLimb(ctx, drawPull, 0, 34, 0, 1.8, 1.8, '#67e8f9');
+    this.drawCelTaperedLimb(ctx, drawPull, 0, 36, 0, 1.9, 1.9, '#67e8f9');
     ctx.fillStyle = '#fde047';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.1;
-    ctx.beginPath(); ctx.moveTo(31, -6.5); ctx.lineTo(44, 0); ctx.lineTo(31, 6.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(32, -6.5); ctx.lineTo(46, 0); ctx.lineTo(32, 6.5); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
 
@@ -17677,22 +18345,32 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Quadruple Sculpted Centaur Walking Limbs
-    const drawMalachiteLeg = (lx, ly, rot, darken) => {
+    // 2. Four Gripping Monstrous Claw Hand-Feet on the Ground (NO boots — matches Malachite.png!)
+    const drawMalachiteHandFoot = (lx, ly, rot, darken) => {
       ctx.save();
-      ctx.translate(lx, -26 + bob + ly);
+      ctx.translate(lx, -25 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 18, 6.2, 4.5, darken ? '#0f766e' : '#0d9488', '#064e3b', 1);
-      this.drawCelBoot(ctx, 0.5, 24.5, 9.5, 6, '#047857', '#6ee7b7');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 19, 6.4, 5.2, darken ? '#0f766e' : '#2dd4bf', '#064e3b', 1);
+      // Splayed clawed spider-hand palm + fingers gripping ground
+      ctx.fillStyle = darken ? '#0d9488' : '#5eead4';
+      ctx.strokeStyle = '#064e3b';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(0, 21, 9.5, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      for (const fx of [-6.5, -2, 2.5, 7]) {
+        ctx.beginPath(); ctx.moveTo(fx - 1.5, 22); ctx.lineTo(fx, 27); ctx.lineTo(fx + 2, 22); ctx.closePath(); ctx.fill();
+      }
       ctx.restore();
     };
-    drawMalachiteLeg(-22 + legs.backX * 0.8, legs.backY, legs.backRot, true);
-    drawMalachiteLeg(-8 + legs.backX, legs.backY, legs.backRot, false);
-    drawMalachiteLeg(6 + legs.frontX * 0.8, legs.frontY, legs.frontRot, true);
-    drawMalachiteLeg(20 + legs.frontX, legs.frontY, legs.frontRot, false);
+    drawMalachiteHandFoot(-21 + legs.backX * 0.8, legs.backY, legs.backRot, true);
+    drawMalachiteHandFoot(-7.5 + legs.backX, legs.backY, legs.backRot, false);
+    drawMalachiteHandFoot(7 + legs.frontX * 0.8, legs.frontY, legs.frontRot, true);
+    drawMalachiteHandFoot(21 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 3. Monstrous Tapered Teal-Jade Juggernaut Torso w/ Tiger Markings & Diamond Belt
-    ctx.fillStyle = '#2dd4bf';
+    // 3. Monstrous Neon-Mint Juggernaut Torso w/ Dark-Teal X-Halter, Swirls & Yellow Diamond Belt
+    ctx.fillStyle = '#5eead4';
     ctx.beginPath();
     ctx.moveTo(-26, -77 + bob);
     ctx.quadraticCurveTo(0, -82 + bob, 26, -77 + bob);
@@ -17701,14 +18379,21 @@ class PlayerHero {
     ctx.bezierCurveTo(-21, -34 + bob, -25, -54 + bob, -26, -77 + bob);
     ctx.closePath();
     ctx.fill();
+    // Dark forest-green X-halter top & tiger markings
+    ctx.fillStyle = '#065f46';
+    ctx.beginPath();
+    ctx.moveTo(-21, -77 + bob); ctx.lineTo(0, -56 + bob); ctx.lineTo(21, -77 + bob);
+    ctx.lineTo(14, -55 + bob); ctx.lineTo(15, -35 + bob); ctx.lineTo(-15, -35 + bob); ctx.lineTo(-14, -55 + bob);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#0f766e';
     ctx.beginPath();
-    ctx.moveTo(-25, -67 + bob); ctx.lineTo(-8, -69 + bob); ctx.lineTo(-10, -62 + bob); ctx.lineTo(-24, -61 + bob); ctx.closePath();
-    ctx.moveTo(25, -60 + bob); ctx.lineTo(8, -58 + bob); ctx.lineTo(9, -52 + bob); ctx.lineTo(24, -53 + bob); ctx.closePath();
-    ctx.moveTo(-22, -50 + bob); ctx.lineTo(-4, -49 + bob); ctx.lineTo(-6, -43 + bob); ctx.lineTo(-21, -44 + bob); ctx.closePath();
+    ctx.moveTo(-25, -67 + bob); ctx.lineTo(-9, -68 + bob); ctx.lineTo(-11, -61 + bob); ctx.lineTo(-24, -61 + bob); ctx.closePath();
+    ctx.moveTo(25, -60 + bob); ctx.lineTo(9, -58 + bob); ctx.lineTo(10, -52 + bob); ctx.lineTo(24, -53 + bob); ctx.closePath();
     ctx.fill();
+    // Yellow Diamond Belt
     ctx.fillStyle = '#fde047';
-    this.drawDiamondInsignia(ctx, 1, -40 + bob, 6.8);
+    this.drawDiamondInsignia(ctx, 1, -39 + bob, 8.0);
 
     // 4. Hydro-Ice Clawed Thrashing Arms
     const mMal = this.getCharacterMotionState();
@@ -17796,21 +18481,28 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 2. Tapered 80s Dancer Legs + Magenta Leg Warmers + Pastel Ballet Slippers
+    // 2. Pink Tights + Scrunched Hot-Pink & Lavender Leg Warmers + Bare Toes (matches Rainbow Quartz.webp!)
     const drawClassicLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -31 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 14, 5.2, 4.2, darken ? '#d8b4fe' : '#e9d5ff', '#c084fc', 1);
-      this.drawCelTaperedLimb(ctx, 0, 12, 0, 21.5, 5.4, 5.0, darken ? '#db2777' : '#ec4899', '#9d174d', 1);
-      this.drawCelBoot(ctx, 0.5, 25, 8.5, 4.5, '#fda4af', '#fff1f2');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 14, 5.2, 4.2, darken ? '#f472b6' : '#f9a8d4', '#db2777', 1);
+      // Scrunched 80s leg warmer layers
+      ctx.fillStyle = darken ? '#9333ea' : '#c084fc';
+      ctx.beginPath(); ctx.ellipse(0, 13.5, 5.8, 3.0, 0, 0, Math.PI * 2); ctx.fill();
+      this.drawCelTaperedLimb(ctx, 0, 14, 0, 23, 5.6, 5.0, darken ? '#db2777' : '#ec4899', '#9d174d', 1);
+      // Pointed bare dancer foot
+      ctx.fillStyle = '#fed7aa';
+      ctx.beginPath(); ctx.ellipse(1.5, 26, 6.2, 2.7, 0.15, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     };
     drawClassicLeg(-6 + legs.backX, legs.backY, legs.backRot, true);
     drawClassicLeg(6.5 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // Sculpted 80s Crimson Leotard + Teal Sash Belt + Rose Navel Gem
-    ctx.fillStyle = '#f43f5e';
+    // White Strapless Leotard + Translucent Cyan Off-Shoulder Wrap Veil + Teal Sash Belt (matches Rainbow Quartz.webp!)
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(-13, -70 + bob);
     ctx.quadraticCurveTo(0, -72 + bob, 13, -70 + bob);
@@ -17819,12 +18511,22 @@ class PlayerHero {
     ctx.quadraticCurveTo(-13, -52 + bob, -13, -70 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#5eead4';
-    ctx.beginPath(); ctx.ellipse(0, -45 + bob, 13, 3.6, -0.05, 0, Math.PI * 2); ctx.fill();
+    ctx.stroke();
+    // Translucent cyan wrap veil across bust/shoulders
+    ctx.fillStyle = 'rgba(103, 232, 249, 0.65)';
+    ctx.beginPath();
+    ctx.moveTo(-15, -68 + bob);
+    ctx.quadraticCurveTo(0, -61 + bob, 15, -68 + bob);
+    ctx.lineTo(14, -56 + bob);
+    ctx.quadraticCurveTo(0, -50 + bob, -14, -56 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#14b8a6';
+    ctx.beginPath(); ctx.ellipse(0, -45 + bob, 12.5, 3.6, -0.05, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fda4af';
     this.drawMiniStar(ctx, 1, -37.5 + bob, 5.0);
 
-    // 3. Sculpted Neck & Graceful Cel Face (`drawCelFace`) + 4 Expressive Eyes!
+    // 3. Sculpted Neck & Graceful Cel Face + 4 Expressive Eyes + Lavender-Violet Eye Mask!
     this.drawCelTaperedLimb(ctx, 0, -69 + bob, 0.5, -74 + bob, 3.8, 3.3, '#fed7aa', '#fdba74', 1);
     this.drawCelFace(ctx, {
       cx: 0.5, cy: -81 + bob, rx: 11.8, ry: 12.6,
@@ -17839,6 +18541,14 @@ class PlayerHero {
         { x: 5.5, y: -83.5 + bob, w: 2.1, h: 2.3, iris: '#f43f5e' }
       ]
     });
+    // Signature Lavender-Violet Translucent Eye Mask!
+    ctx.fillStyle = 'rgba(167, 139, 250, 0.52)';
+    ctx.strokeStyle = '#7c3aed';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(2, -81 + bob, 11.2, 4.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
 
     // Feathered 80s Blonde-Pink Crown Bangs + Crisp Cel Outline & Specular Crest
     ctx.fillStyle = '#fbcfe8';
@@ -19944,7 +20654,7 @@ class EnemyManager {
         this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType));
         const sparkColor = player.isPinkOverdrive ? '#f43f5e' : ((typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[player.activeChar]?.color) || '#fde047');
         particles.addImpactSparks(e.x, e.y - e.height / 2, player.facing, sparkColor, 12);
-        if (player.comboStep === 2 || player.attackType === 'L' || player.isFusion) {
+        if (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion) {
           particles.addImpactFrame(e.x, e.y - e.height / 2, sparkColor, player.isFusion ? 200 : 155);
           if (['connie', 'rose', 'pearl'].includes(player.activeChar) || (player.isFusion && ['stevonnie', 'rainbow2', 'rainbowClassic'].includes(player.fusionData?.id))) {
             particles.addDoubleSlashX(e.x - player.facing * 12, e.y - e.height / 2, player.facing, sparkColor);
@@ -20017,7 +20727,7 @@ class EnemyManager {
         // Heavier chain steps launch further; finishers add extra lift
         e.vx *= (player.attackKnockMult || 1);
         if (this.knockbackResist) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
-        if (player.comboStep === 2 && e.vy) e.vy *= 1.15;
+        if (player.comboStep >= 2 && e.vy) e.vy *= 1.15;
         e.attackTimer = 0;
 
         // Airborne Juggle State: Striking airborne enemies in mid-air suspends both aloft
@@ -20096,6 +20806,11 @@ class EnemyManager {
       }
 
       if (isHit) {
+        if (p.pierceLeft && p.pierceLeft > 0) {
+          p.hitSet = p.hitSet || new Set();
+          if (p.hitSet.has(e)) continue;
+          p.hitSet.add(e);
+        }
 
       // 2. Throttle persistent AoE projectiles so they do not deal damage on every single frame to the same enemy
       const isPersistentAoE = (p.type === 'purpleGeyser' || p.type === 'tidalWave' || p.type === 'moltenShockwave' || p.type === 'seismicShockwave' || p.type === 'giantGauntletSlam' || p.type === 'bubbleShockwave' || p.type === 'roseShockwave' || p.type === 'magneticVortex' || p.type === 'connieShadowSlash' || p.type === 'fusionRoseSwordWave' || p.type === 'fusionCyclone' || p.type === 'fusionPrismCannon' || p.type === 'fusionSupernova' || p.type === 'fusionFlailCataclysm' || p.type === 'fusionShowstopper' || p.type === 'fusionTsunamiCage' || p.type === 'fusionPrismRose');
@@ -20230,6 +20945,8 @@ class EnemyManager {
           particles.addLightningArc(e.x - 15, e.y, e.x + 15, e.y - e.height, '#c084fc');
           particles.addDamageText(e.x, e.y - e.height - 25, 'VIOLET GEYSER!', true, '#c084fc');
           particles.addSparkle(e.x, e.y - 30, '#fde047', 12, 4);
+        } else if (p.pierceLeft && p.pierceLeft > 1) {
+          p.pierceLeft -= 1;
         } else if (!isPersistentAoE && p.type !== 'amethystSpinDashHit' && p.type !== 'jasperSpinDashHit') {
           projectiles.splice(pIdx, 1);
         }
@@ -24154,112 +24871,112 @@ class StevenUniverseGame {
     };
     this.updateLobbyMusicButton = updateLobbyMusicButton;
 
-    // Start playing current active track
+    const getLobbyTrack = () => (
+      this.audio.bgmOverrideManual && this.audio.selectedBgm && this.audio.selectedBgm !== 'auto'
+        ? this.audio.selectedBgm
+        : 'intro_launch'
+    );
+
+    // Arm the intro launch theme right away (even while suspended, scheduler awaits 'running')
     this.audio.playMusic('menu');
 
     let hasAudioUnlocked = false;
     const unlockEvents = ['pointerdown', 'mousedown', 'touchstart', 'keydown', 'click'];
 
-    const unlockMenuAudio = (e) => {
-      this.audio.init();
-      if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
-        this.audio.ctx.resume().then(() => {
-          if (this.audio.ctx && this.audio.ctx.state === 'running') {
-            this.audio.onAudioRunning();
-            if (!this.audio.isManuallyPaused) {
-              updateLobbyMusicButton(true);
-              if (this.state === 'title' && !this.audio.musicInterval) {
-                const trk = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
-                this.audio.playTrackById(trk, false);
-              }
-            }
-            cleanupUnlockListeners();
-          }
-        }).catch(() => {});
-      } else if (this.audio.ctx && this.audio.ctx.state === 'running') {
-        this.audio.onAudioRunning();
-        if (!this.audio.isManuallyPaused) {
-          updateLobbyMusicButton(true);
-          if (this.state === 'title' && !this.audio.musicInterval) {
-            const trk = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
-            this.audio.playTrackById(trk, false);
-          }
-        }
-        cleanupUnlockListeners();
-      }
-    };
-    const unlockAndPlay = unlockMenuAudio;
-
     const cleanupUnlockListeners = () => {
       if (!hasAudioUnlocked) {
         hasAudioUnlocked = true;
-        unlockEvents.forEach(evt => window.removeEventListener(evt, unlockMenuAudio));
+        unlockEvents.forEach(evt => {
+          window.removeEventListener(evt, unlockMenuAudio, true);
+          if (typeof document !== 'undefined') document.removeEventListener(evt, unlockMenuAudio, true);
+        });
       }
       const promptEl = document.getElementById('audioUnlockPrompt');
       if (promptEl) promptEl.style.display = 'none';
     };
 
-    const tryAutoPlay = () => {
-      this.audio.init();
-      const promptEl = document.getElementById('audioUnlockPrompt');
-      if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
-        if (promptEl && !this.audio.isManuallyPaused) promptEl.style.display = 'block';
-        this.audio.ctx.resume().then(() => {
-          if (this.audio.ctx && this.audio.ctx.state === 'running') {
-            this.audio.onAudioRunning();
-            if (!this.audio.isManuallyPaused) {
-              updateLobbyMusicButton(true);
-            }
-            cleanupUnlockListeners();
-          }
-        }).catch(() => {});
-      } else if (this.audio.ctx && this.audio.ctx.state === 'running') {
-        if (promptEl) promptEl.style.display = 'none';
-        this.audio.onAudioRunning();
-        if (!this.audio.isManuallyPaused) {
-          updateLobbyMusicButton(true);
+    const onContextUnlocked = () => {
+      this.audio.onAudioRunning();
+      if (!this.audio.isManuallyPaused) {
+        if (this.state === 'title' && !this.audio.musicInterval) {
+          this.audio.playTrackById(getLobbyTrack(), false);
         }
-        cleanupUnlockListeners();
+        updateLobbyMusicButton(true);
+      }
+      cleanupUnlockListeners();
+    };
+
+    const unlockMenuAudio = () => {
+      // Must unlock & trigger silent buffer synchronously inside user-gesture stack
+      const runningNow = this.audio.unlockFromGesture();
+      if (runningNow) {
+        onContextUnlocked();
+      } else if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
+        this.audio.ctx.resume().then(() => {
+          if (this.audio.ctx && this.audio.ctx.state === 'running') onContextUnlocked();
+        }).catch(() => {});
       }
     };
 
-    // Immediate attempt on boot. If the engine allows audio right away, the lobby
-    // track starts on its own; otherwise the first click/keypress unlocks it.
+    const tryAutoPlay = () => {
+      this.audio.init();
+      const promptEl = document.getElementById('audioUnlockPrompt');
+      if (this.audio.ctx && this.audio.ctx.state === 'running') {
+        if (promptEl) promptEl.style.display = 'none';
+        onContextUnlocked();
+      } else if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
+        updateLobbyMusicButton(false);
+        if (promptEl && !this.audio.isManuallyPaused) promptEl.style.display = 'block';
+        this.audio.ctx.resume().then(() => {
+          if (this.audio.ctx && this.audio.ctx.state === 'running') onContextUnlocked();
+        }).catch(() => {});
+      }
+    };
+
+    // Immediate boot attempt + capture-phase first-gesture unlock across the whole page
     tryAutoPlay();
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('DOMContentLoaded', tryAutoPlay, { once: true });
+      window.addEventListener('load', tryAutoPlay, { once: true });
+      window.addEventListener('pageshow', tryAutoPlay);
+      unlockEvents.forEach(evt => {
+        window.addEventListener(evt, unlockMenuAudio, { capture: true, passive: true });
+        if (typeof document !== 'undefined') {
+          document.addEventListener(evt, unlockMenuAudio, { capture: true, passive: true });
+        }
+      });
+    }
+
     const ensureLobbyMusic = () => {
       if (this.state !== 'title' || this.audio.isManuallyPaused) return;
       if (!this.audio.ctx || this.audio.ctx.state !== 'running') return;
       if (!this.audio.musicInterval) {
-        const trk = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
-        this.audio.playTrackById(trk, false);
+        this.audio.playTrackById(getLobbyTrack(), false);
       }
       if (this.audio.musicGainNode) {
         try { this.audio.musicGainNode.gain.setValueAtTime(this.audio.musicVolume, this.audio.ctx.currentTime); } catch (e) {}
       }
+      updateLobbyMusicButton(true);
     };
-    window.addEventListener('pointerdown', ensureLobbyMusic, { passive: true });
-    window.addEventListener('keydown', ensureLobbyMusic, { passive: true });
-    setTimeout(ensureLobbyMusic, 600);
-    setTimeout(ensureLobbyMusic, 2500);
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('focus', tryAutoPlay, { passive: true });
+    }
+    setTimeout(tryAutoPlay, 300);
+    setTimeout(ensureLobbyMusic, 800);
+    setTimeout(ensureLobbyMusic, 2400);
 
     // Polling auto-resume interval during first 10 seconds of boot
     let autoAttempts = 0;
     const autoResumeTimer = setInterval(() => {
       autoAttempts++;
       if (this.audio.ctx && this.audio.ctx.state === 'running') {
-        this.audio.onAudioRunning();
-        if (!this.audio.isManuallyPaused) updateLobbyMusicButton(true);
-        cleanupUnlockListeners();
+        onContextUnlocked();
         clearInterval(autoResumeTimer);
       } else {
         tryAutoPlay();
       }
       if (autoAttempts > 40) clearInterval(autoResumeTimer);
     }, 250);
-
-    unlockEvents.forEach(evt => {
-      window.addEventListener(evt, unlockMenuAudio, { passive: true });
-    });
 
     // Strict mobile detection: Only enable touch controls on actual phones/tablets (Android / Xiaomi / iOS)
     this.isRealMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (window.innerWidth <= 950 && 'ontouchstart' in window);
@@ -25809,7 +26526,9 @@ class StevenUniverseGame {
 
     // Update Canonical Gem Fusion Timer
     if (this.isFused) {
-      this.fusionTimer -= dt;
+      this.fusionTimer = Math.max(0, this.fusionTimer - dt);
+      this.hyperAttackTimer = this.isHyperAttack ? Math.max(0, this.hyperAttackTimer) : 0;
+      this.updateFusionHUD();
       if (this.fusionTimer <= 0) {
         this.unfuseGems();
       }
@@ -26056,6 +26775,28 @@ class StevenUniverseGame {
     // 3. Update Projectiles
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
+      if (p.homing && this.enemyManager && this.enemyManager.enemies && this.enemyManager.enemies.length > 0 && !p.type.startsWith('enemy')) {
+        let bestE = null;
+        let bestDist = 860;
+        for (const e of this.enemyManager.enemies) {
+          if (e.isPoofed) continue;
+          const ey = e.y - (e.height || 50) * 0.5;
+          const dist = Math.hypot(e.x - p.x, ey - p.y);
+          if (dist < bestDist) {
+            bestDist = dist;
+            bestE = e;
+          }
+        }
+        if (bestE) {
+          const tx = bestE.x - p.x;
+          const ty = (bestE.y - (bestE.height || 50) * 0.5) - p.y;
+          const d = Math.hypot(tx, ty) || 1;
+          const spd = Math.hypot(p.vx || 0, p.vy || 0) || 880;
+          const steer = Math.min(1, dt * (p.homing / 110));
+          p.vx = (p.vx || 0) + ((tx / d) * spd - (p.vx || 0)) * steer;
+          p.vy = (p.vy || 0) + ((ty / d) * spd - (p.vy || 0)) * steer;
+        }
+      }
       p.x += (p.vx || 0) * dt;
       p.y += (p.vy || 0) * dt;
       p.life -= dt;
@@ -26360,38 +27101,42 @@ class StevenUniverseGame {
     const isFusedOd = !!(this.isFused && this.player && this.player.isFusion && this.player.fusionData);
     const otherActive = playerId === 'p2' ? this.isOverdriveActive : this.isOverdriveActiveP2;
     const theme = OVERDRIVE_THEMES[hero.activeChar] || OVERDRIVE_THEMES.steven;
+
+    // Zero-lag optimization: apply Gem Surge stat buff immediately while the portrait flash plays
+    this.applyOverdrive(playerId);
+
     if (isFusedOd) {
       const f = this.player.fusionData;
       this.startCutin({
-        kicker: otherActive ? 'DUAL FUSION OVERDRIVE' : 'FUSION OVERDRIVE',
+        kicker: otherActive ? 'DUAL FUSION GEM SURGE' : 'FUSION GEM SURGE',
         kickerColor: f.color || theme.color,
         charId: hero.activeChar,
         centerPortraitId: f.id,
         portraitId: (f.gems && f.gems[0]) || hero.activeChar,
         secondPortraitId: (f.gems && f.gems[1]) || null,
-        name: `${(f.name || theme.name).toUpperCase()} OVERDRIVE`,
-        quote: otherActive ? 'DUAL OVERDRIVE · 2.5× POWER · OVERCLOCKED FUSION' : 'FUSION OVERDRIVE · 2× POWER · 12 SECONDS',
+        name: `${(f.name || theme.name).toUpperCase()} SURGE`,
+        quote: otherActive ? 'DUAL GEM SURGE · 2.5× POWER · OVERCLOCKED FUSION' : 'FUSION GEM SURGE · 2× POWER · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
-        duration: 0.95,
+        duration: 0.72,
         freeze: 0,
-        onDone: () => this.applyOverdrive(playerId)
+        onDone: () => {}
       });
     } else {
       this.startCutin({
-        kicker: 'PINK OVERDRIVE',
+        kicker: 'GEM SURGE',
         kickerColor: theme.color,
         charId: hero.activeChar,
         name: theme.name,
-        quote: 'PINK STATE · 2× POWER · 12 SECONDS',
+        quote: 'GEM SURGE · 2× POWER · +85% SPEED · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
-        duration: 1.05,
+        duration: 0.75,
         freeze: 0,
-        onDone: () => this.applyOverdrive(playerId)
+        onDone: () => {}
       });
     }
   }
 
-  // The actual power-up, played after the portrait cut-in finishes.
+  // Apply the Gem Surge power-up immediately upon activation.
   applyOverdrive(playerId = 'p1') {
     if (this.state !== 'playing') return;
     if (this.audio) this.audio.duckMusic(0.75, 1.2);
@@ -26410,8 +27155,8 @@ class StevenUniverseGame {
       const dualNow = isFusedBody && this.isOverdriveActiveP2;
       if (isFusedBody) {
         this.player.dualOverdrive = dualNow;
-        this.hyperAttackTimer = Math.min(20, (this.hyperAttackTimer || 0) + 1.5);
-        this.fusionTimer = this.hyperAttackTimer;
+        this.fusionTimer = Math.min(20, (this.fusionTimer || this.hyperAttackTimer || 8) + 1.5);
+        if (this.isHyperAttack) this.hyperAttackTimer = this.fusionTimer;
         if (dualNow) {
           this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
           if (this.player2) this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
@@ -26419,10 +27164,10 @@ class StevenUniverseGame {
       }
       const fCol = (isFusedBody && this.player.fusionData?.color) || theme.color;
       this.particles.addPoof(this.player.x, this.player.y - 30, fCol);
-      this.particles.addSparkle(this.player.x, this.player.y - 30, '#ffffff', isFusedBody ? 42 : 32, 8);
+      this.particles.addSparkle(this.player.x, this.player.y - 30, '#ffffff', isFusedBody ? 36 : 26, 8);
       const label = dualNow
-        ? '🌟 DUAL FUSION OVERDRIVE! (2.5X POWER) 🌟'
-        : (isFusedBody ? '💎 FUSION OVERDRIVE! (2X POWER)' : `${theme.msg} (2X POWER)`);
+        ? '🌟 DUAL FUSION GEM SURGE! (2.5X POWER) 🌟'
+        : (isFusedBody ? `💎 ${(this.player.fusionData?.name || 'FUSION').toUpperCase()} GEM SURGE! (2X POWER)` : `${theme.msg} (2X POWER)`);
       this.particles.addDamageText(this.player.x, this.player.y - (isFusedBody ? 95 : 65), label, true, fCol);
     } else if (playerId === 'p2' && this.player2) {
       if (this.isOverdriveActiveP2) return;
@@ -26437,11 +27182,11 @@ class StevenUniverseGame {
       const theme = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
       const dualNow = isFusedBody && this.isOverdriveActive;
       if (isFusedBody && this.player) {
-        // Apply Overdrive directly onto the fused hero body controlled by both players
+        // Apply Gem Surge directly onto the fused hero body controlled by both players
         this.player.activatePinkOverdrive(this.overdriveDuration);
         this.player.dualOverdrive = dualNow;
-        this.hyperAttackTimer = Math.min(20, (this.hyperAttackTimer || 0) + 1.5);
-        this.fusionTimer = this.hyperAttackTimer;
+        this.fusionTimer = Math.min(20, (this.fusionTimer || this.hyperAttackTimer || 8) + 1.5);
+        if (this.isHyperAttack) this.hyperAttackTimer = this.fusionTimer;
         if (dualNow) {
           this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
           this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
@@ -26450,10 +27195,10 @@ class StevenUniverseGame {
       const targetPl = isFusedBody ? this.player : this.player2;
       const fCol = (isFusedBody && this.player.fusionData?.color) || theme.color;
       this.particles.addPoof(targetPl.x, targetPl.y - 30, fCol);
-      this.particles.addSparkle(targetPl.x, targetPl.y - 30, '#ffffff', isFusedBody ? 42 : 32, 8);
+      this.particles.addSparkle(targetPl.x, targetPl.y - 30, '#ffffff', isFusedBody ? 36 : 26, 8);
       const label = dualNow
-        ? '🌟 DUAL FUSION OVERDRIVE! (2.5X POWER) 🌟'
-        : (isFusedBody ? '💎 FUSION OVERDRIVE! (2X POWER)' : `${theme.msg} (2X POWER)`);
+        ? '🌟 DUAL FUSION GEM SURGE! (2.5X POWER) 🌟'
+        : (isFusedBody ? `💎 ${(this.player.fusionData?.name || 'FUSION').toUpperCase()} GEM SURGE! (2X POWER)` : `${theme.msg} (2X POWER)`);
       this.particles.addDamageText(targetPl.x, targetPl.y - (isFusedBody ? 95 : 65), label, true, fCol);
     }
 
@@ -27938,7 +28683,15 @@ class StevenUniverseGame {
         : charData.icon;
     }
 
-    const odTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
+    const baseOdTheme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
+    const isFusedHud = !!(this.isFused && this.player.isFusion && this.player.fusionData);
+    const odTheme = isFusedHud
+      ? {
+          name: `${(this.player.fusionData.name || 'FUSION').toUpperCase()} SURGE`,
+          short: 'FUSION SURGE',
+          color: this.player.fusionData.color || baseOdTheme.color
+        }
+      : baseOdTheme;
     const odLabel = d.odLabel;
     if (odLabel && odLabel.textContent !== odTheme.name) odLabel.textContent = odTheme.name;
 
@@ -28186,14 +28939,11 @@ class StevenUniverseGame {
       this.player2AttackCooldown = 0.22 * cdScale;
       this.triggerSlotAnimation('slotP2_J');
       this.player.facing = this.player.facing || 1;
-      this.player.isAttacking = true;
-      this.player.attackTimer = 0.22;
-      this.player.attackFrame = 0.25;
-      this.player.attackType = 'j';
-      this.audio.playSfx('punch');
-      this.particles.addSparkle(this.player.x + this.player.facing * 40, this.player.y - 40, this.player.fusionData.color || '#ec4899', 12, 4);
-      const moveName = coop?.p2?.j?.name || 'Synergy Strike';
-      this.particles.addDamageText(this.player.x, this.player.y - 65, `${moveName}!`, false, this.player.fusionData.color || '#ec4899');
+      if (typeof this.player.executeAttackJ === 'function') {
+        this.player.executeAttackJ(this.audio, this.particles, this.projectiles);
+      }
+      const moveName = coop?.p2?.j?.name || this.player.comboMoveName || 'Synergy Strike';
+      this.particles.addDamageText(this.player.x, this.player.y - 82, `${moveName}!`, false, this.player.fusionData.color || '#ec4899');
     } else if (slot === 'k') {
       this.player2SpecialCooldown = 0.85 * cdScale;
       this.triggerSlotAnimation('slotP2_K');
@@ -28247,6 +28997,7 @@ class StevenUniverseGame {
       this.fusionPlayable = true;
       this.isHyperAttack = false;
       this.fusionTimer = Math.max(10.0, this.hyperAttackTimer);
+      this.hyperAttackTimer = 0;
       this.player.actionType = null;
       this.player.actionTimer = 0;
       this.particles.addDamageText(this.player.x, this.player.y - 150, '💎 SHARED KIT UNLOCKED — PLAY AS THE FUSION!', true, '#f472b6');
@@ -28582,7 +29333,9 @@ class StevenUniverseGame {
 
     if (this.isHyperAttack || this.isFused) {
       if (container) container.style.display = 'flex';
-      const timerVal = Math.max(0, this.hyperAttackTimer || this.fusionTimer || 0);
+      const timerVal = this.isHyperAttack
+        ? Math.max(0, this.hyperAttackTimer || 0)
+        : Math.max(0, this.fusionTimer || 0);
       const remainingPct = Math.max(0, (timerVal / (this.hyperAttackDuration || 12.0)) * 100);
       if (fillEl) {
         fillEl.style.width = `${remainingPct}%`;
@@ -29573,8 +30326,8 @@ class StevenUniverseGame {
     const lobbySelectBgm = document.getElementById('lobbySelectBgm');
 
     const syncBgmUI = () => {
-      let cur = this.audio.selectedBgm || 'distant_shore';
-      if (cur === 'auto' || cur === 'menu') cur = 'distant_shore';
+      let cur = this.audio.bgmOverrideManual ? (this.audio.selectedBgm || 'auto') : 'auto';
+      if (cur === 'menu') cur = 'auto';
       if (selectBgm) selectBgm.value = cur;
       if (pauseSelectBgm) pauseSelectBgm.value = cur;
       if (lobbySelectBgm) lobbySelectBgm.value = cur;
@@ -29582,7 +30335,8 @@ class StevenUniverseGame {
         if (el && typeof el.syncDropdownLabel === 'function') el.syncDropdownLabel();
       });
       if (this.updateLobbyMusicButton) {
-        this.updateLobbyMusicButton(!!this.audio.musicInterval && !this.audio.isManuallyPaused);
+        const ctxRunning = !!(this.audio.ctx && this.audio.ctx.state === 'running');
+        this.updateLobbyMusicButton(ctxRunning && !!this.audio.musicInterval && !this.audio.isManuallyPaused);
       }
     };
     syncBgmUI();
@@ -29611,14 +30365,14 @@ class StevenUniverseGame {
         if (e.stopPropagation) e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       }
-      this.audio.init();
-      if (this.audio.musicInterval) {
+      this.audio.unlockFromGesture();
+      if (this.audio.musicInterval && this.audio.ctx && this.audio.ctx.state === 'running') {
         this.audio.isManuallyPaused = true;
         this.audio.stopMusic();
         if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(false);
       } else {
         this.audio.isManuallyPaused = false;
-        const cur = (this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'distant_shore';
+        const cur = (this.audio.bgmOverrideManual && this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'intro_launch';
         this.audio.playTrackById(cur, false);
         if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(true);
       }
