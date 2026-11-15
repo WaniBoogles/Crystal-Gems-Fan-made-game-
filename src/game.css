@@ -119,15 +119,13 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 8px 14px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .hud-avatar-frame {
@@ -547,13 +545,11 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 5px 12px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
   align-self: flex-start;
   margin-top: 3px;
   flex-shrink: 0;
@@ -582,36 +578,43 @@ html, body {
   letter-spacing: 0.5px;
 }
 
-/* Center Panel: Stage & Objective */
+/* Center Panel: Compact Stage Header, Simple Gem Wave Line & Boss HP */
 .hud-center-panel {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background: rgba(15, 23, 42, 0.85);
+  align-items: stretch;
+  gap: 3px;
+  background: rgba(15, 23, 42, 0.84);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 6px 16px;
-  border-radius: 16px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  min-width: 320px;
-  max-width: 440px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 6px 14px 7px 14px;
+  border-radius: 12px;
+  width: 340px;
+  max-width: 90vw;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.38);
+}
+
+.hud-center-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
 }
 
 .hud-stage-badge {
   font-family: var(--su-font-display);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   color: #f8fafc;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .hud-objective-text {
-  font-size: 10px;
-  font-weight: 600;
-  color: #94a3b8;
-  margin-top: 2px;
+  display: none;
 }
 
 /* Mid-Right Panel: Quick Actions */
@@ -619,13 +622,11 @@ html, body {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 4px 8px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
   align-self: flex-start;
   margin-top: 3px;
   flex-shrink: 0;
@@ -677,13 +678,11 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(15, 23, 42, 0.88);
   padding: 5px 10px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   pointer-events: auto;
   opacity: 0.94;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -2338,73 +2337,75 @@ body.mobile-device .touch-controls.active {
 }
 
 /* ==========================================================
-   TOP-CENTER BOSS HEALTH BAR (ACTIVE ON LEVEL 5 & BOSS BATTLES)
+   TOP-CENTER BOSS HEALTH BAR (INTEGRATED SLIM BAR)
    ========================================================== */
 .boss-health-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  width: 390px;
-  max-width: 88vw;
+  align-items: stretch;
+  width: 100%;
   margin-top: 4px;
-  background: rgba(15, 23, 42, 0.88);
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  border-radius: 12px;
-  padding: 7px 14px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 5px 0 0 0;
+  background: transparent;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .boss-health-container.story-mode-boss {
-  margin-top: 14px;
+  margin-top: 4px;
 }
 
 .boss-title-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   width: 100%;
   font-family: var(--su-font-display);
-  font-size: 11px;
+  font-size: 10.5px;
   color: #f1f5f9;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .boss-skull {
-  font-size: 14px;
-  margin-right: 6px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(244, 63, 94, 0.22);
+  color: #fda4af;
 }
 
 .boss-name {
   flex: 1;
   text-align: left;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.4px;
   color: #fda4af;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .boss-hp-digits {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   color: #e2e8f0;
-  background: rgba(30, 41, 59, 0.7);
-  padding: 2px 7px;
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .boss-hp-track {
   width: 100%;
-  height: 10px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 6px;
+  height: 7px;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 999px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .boss-hp-fill {
@@ -2546,8 +2547,8 @@ body.mobile-device .touch-controls.active {
    ========================================================== */
 .combo-display {
   position: absolute;
-  top: 178px;
-  left: 32px;
+  top: 214px;
+  left: 26px;
   z-index: 25;
   pointer-events: none;
   display: flex;
@@ -3058,129 +3059,91 @@ body.mobile-device .touch-controls.active {
 }
 
 /* ==========================================================
-   PLANTS VS. ZOMBIES STYLE WAVE PROGRESSION METER & ALERTS
+   SIMPLE FLAT-GEM WAVE PROGRESSION BAR
    ========================================================== */
 .pvz-wave-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 290px;
-  max-width: 90vw;
-  margin-top: 4px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 4px 12px 6px 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-
-.pvz-wave-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   width: 100%;
-  font-family: var(--su-font-display);
-  font-size: 10px;
-  color: #fed7aa;
-  letter-spacing: 0.5px;
-  margin-bottom: 2px;
+  margin-top: 2px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 
 .pvz-wave-label {
-  color: #fde047;
-  text-shadow: 0 0 6px rgba(253, 224, 71, 0.6);
+  font-family: var(--su-font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #cbd5e1;
+  text-shadow: none;
+  white-space: nowrap;
 }
 
 .pvz-wave-status {
-  font-size: 9px;
-  color: #94a3b8;
-  font-weight: 800;
-  text-transform: uppercase;
+  display: none;
 }
 
 .pvz-wave-track-wrapper {
   position: relative;
   width: 100%;
-  height: 20px;
-  padding: 0 6px;
+  height: 16px;
+  padding: 0 5px;
 }
 
 .pvz-wave-track {
   position: relative;
   width: 100%;
-  height: 11px;
-  top: 4px;
-  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 32%, #94a3b8 74%, #475569 100%);
-  border: 2px solid #0f172a;
-  border-radius: 5px;
+  height: 4px;
+  top: 6px;
+  background: rgba(148, 163, 184, 0.28);
+  border: none;
+  border-radius: 999px;
   overflow: visible;
-  box-shadow: inset 0 2px 0 #38bdf8, 0 3px 6px rgba(0, 0, 0, 0.55);
+  box-shadow: none;
 }
-
-/* Platform-matched Wave Line Themes */
-.pvz-wave-track::before,
-.pvz-wave-track::after {
-  content: '';
-  position: absolute;
-  top: -7px;
-  width: 6px;
-  height: 6px;
-  background: #fef08a;
-  transform: rotate(45deg);
-  box-shadow: 0 0 6px rgba(254, 240, 138, 0.85);
-}
-.pvz-wave-track::before { left: 2px; }
-.pvz-wave-track::after { right: 2px; }
 
 .pvz-wave-track[data-platform="wood"] {
-  background: repeating-linear-gradient(90deg, rgba(69, 26, 3, 0.45) 0 1px, transparent 1px 28px),
-              linear-gradient(180deg, #f59e0b 0%, #b45309 35%, #5c2306 100%);
-  border-color: #2d1406;
-  box-shadow: inset 0 2px 0 #fde68a, 0 3px 6px rgba(0, 0, 0, 0.6);
+  background: rgba(217, 119, 6, 0.34);
 }
 
 .pvz-wave-track[data-platform="stone"] {
-  background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 30%, #94a3b8 72%, #475569 100%);
-  border-color: #0f172a;
-  box-shadow: inset 0 2px 0 #38bdf8, 0 3px 6px rgba(0, 0, 0, 0.55);
+  background: rgba(148, 163, 184, 0.28);
 }
 
 .pvz-wave-track[data-platform="metal"] {
-  background: linear-gradient(180deg, #64748b 0%, #334155 45%, #0f172a 100%);
-  border-color: #020617;
-  box-shadow: inset 0 2px 0 #94a3b8, inset 0 -2px 0 #eab308, 0 3px 6px rgba(0, 0, 0, 0.65);
+  background: rgba(100, 116, 139, 0.36);
 }
 
 .pvz-wave-track[data-platform="obsidian"] {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.35) 0%, transparent 25%, rgba(249, 115, 22, 0.35) 55%, transparent 75%),
-              linear-gradient(180deg, #2e1065 0%, #0f051d 100%);
-  border-color: #3b0764;
-  box-shadow: inset 0 2px 0 #f97316, 0 3px 8px rgba(249, 115, 22, 0.4);
+  background: rgba(168, 85, 247, 0.32);
 }
 
 .pvz-wave-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, rgba(255, 96, 151, 0.72) 0%, rgba(168, 85, 247, 0.72) 55%, rgba(56, 189, 248, 0.85) 100%);
-  border-radius: 3px;
-  transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: 0 0 8px rgba(255, 96, 151, 0.55);
+  background: #38bdf8;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+  box-shadow: none;
 }
 
 .pvz-wave-flag {
   position: absolute;
-  top: -5px;
-  width: 16px;
-  height: 16px;
+  top: -4px;
+  width: 12px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translateX(-50%);
   pointer-events: none;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.85));
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  filter: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
   user-select: none;
 }
 
@@ -3191,47 +3154,37 @@ body.mobile-device .touch-controls.active {
 }
 
 .pvz-wave-flag.passed {
-  opacity: 0.55;
-  transform: translateX(-50%) scale(0.86);
+  opacity: 0.45;
+  transform: translateX(-50%) scale(0.88);
 }
 
 .pvz-wave-flag.flag-boss {
-  width: 19px;
-  height: 19px;
-  top: -7px;
-  animation: bossFlagPulse 1.5s ease-in-out infinite alternate;
-}
-
-@keyframes bossFlagPulse {
-  0% { transform: translateX(-50%) scale(1.0); }
-  100% { transform: translateX(-50%) scale(1.2); filter: drop-shadow(0 0 6px #f43f5e); }
+  width: 14px;
+  height: 14px;
+  top: -5px;
+  animation: none;
 }
 
 .pvz-wave-marker {
   position: absolute;
-  top: -7px;
-  width: 18px;
-  height: 18px;
+  top: -5px;
+  width: 13px;
+  height: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translateX(-50%);
-  filter: drop-shadow(0 0 5px rgba(253, 224, 71, 0.85));
-  transition: left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: none;
+  transition: left 0.25s ease;
   pointer-events: none;
   user-select: none;
-  animation: markerPulse 1.8s ease-in-out infinite alternate;
+  animation: none;
 }
 
 .pvz-wave-marker svg {
   width: 100%;
   height: 100%;
   display: block;
-}
-
-@keyframes markerPulse {
-  0% { transform: translateX(-50%) scale(0.95); }
-  100% { transform: translateX(-50%) scale(1.12); }
 }
 
 /* PvZ Dramatic "A Huge Wave is Approaching" Warning Banner */
@@ -4588,12 +4541,7 @@ option {
   color: #ffffff;
 }
 
-/* Rolling Credits Overlay Screen */
-@keyframes creditsScroll {
-  0% { transform: translateY(14%); }
-  100% { transform: translateY(-92%); }
-}
-
+/* Rolling Credits Overlay Screen (JS-driven for glitch-free hold speedup) */
 .credits-screen {
   background: radial-gradient(ellipse at center, #0f172a 0%, #050711 100%) !important;
   flex-direction: column;
@@ -4611,16 +4559,22 @@ option {
   border: 1px solid rgba(255, 214, 130, 0.16);
   mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  cursor: pointer;
 }
 .credits-track {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 26px;
-  padding: 8vh 28px 18vh 28px;
+  padding: 24px 28px 40px 28px;
   text-align: center;
   will-change: transform;
-  animation: creditsScroll 42s linear infinite;
+  transform: translate3d(0, 0, 0);
+}
+#btnCreditsSpeed.fast-active {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.35), rgba(244, 63, 94, 0.35));
+  border-color: #fde68a;
+  color: #ffffff;
 }
 .credits-block {
   max-width: 620px;

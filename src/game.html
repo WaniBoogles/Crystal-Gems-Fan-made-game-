@@ -88,34 +88,34 @@
         </div>
       </div>
 
-      <!-- Center: Stage & Mission Objective / Boss Health Bar -->
+      <!-- Center: Compact Stage, Simple Gem Wave Tracker & Boss Health Bar -->
       <div class="hud-center-panel" id="hudCenterPanel">
-        <div class="hud-stage-badge" id="hudStageBadge">STAGE 1: BEACH CITY</div>
-        <div class="hud-objective-text" id="hudObjectiveText">Defend Beach City from Corrupted Centipeetles!</div>
+        <div class="hud-center-top">
+          <div class="hud-stage-badge" id="hudStageBadge">STAGE 1: BEACH CITY</div>
+          <span class="pvz-wave-label" id="pvzWaveLabel">WAVE 1 / 4</span>
+        </div>
+        <div class="hud-objective-text" id="hudObjectiveText" style="display: none;">Defend Beach City from Corrupted Centipeetles!</div>
 
-        <!-- Stage-Themed Wave Progression Meter with Random Gem Milestones -->
+        <!-- Simple Flat Gem Wave Progression Meter -->
         <div class="pvz-wave-container" id="pvzWaveContainer">
-          <div class="pvz-wave-header">
-            <span class="pvz-wave-label" id="pvzWaveLabel">WAVE 1 / 4</span>
-            <span class="pvz-wave-status" id="pvzWaveStatus">APPROACHING</span>
-          </div>
+          <span class="pvz-wave-status" id="pvzWaveStatus" style="display: none;">WAVE 1</span>
           <div class="pvz-wave-track-wrapper">
             <div class="pvz-wave-track" id="pvzWaveTrack" data-platform="stone">
               <div class="pvz-wave-fill" id="pvzWaveFill" style="width: 0%;"></div>
               <div class="pvz-wave-flag flag-1" id="waveFlag1" style="left: 25%;" title="Wave 1"></div>
               <div class="pvz-wave-flag flag-2" id="waveFlag2" style="left: 50%;" title="Wave 2"></div>
-              <div class="pvz-wave-flag flag-3" id="waveFlag3" style="left: 75%;" title="Huge Wave 3!"></div>
-              <div class="pvz-wave-flag flag-boss" id="waveFlagBoss" style="left: 96%;" title="Final Boss Wave!"></div>
+              <div class="pvz-wave-flag flag-3" id="waveFlag3" style="left: 75%;" title="Wave 3"></div>
+              <div class="pvz-wave-flag flag-boss" id="waveFlagBoss" style="left: 96%;" title="Boss"></div>
               <div class="pvz-wave-marker" id="pvzWaveMarker" style="left: 0%;"></div>
             </div>
           </div>
         </div>
 
-        <!-- Top-Center Animated Boss Health Bar (Active on Level 5 and Boss Fights) -->
+        <!-- Integrated Slim Boss Health Bar -->
         <div id="bossHud" class="boss-health-container" style="display: none;">
           <div class="boss-title-row">
             <span class="boss-skull">BOSS</span>
-            <span class="boss-name" id="bossName">CORRUPTED JASPER & MOTHER CENTIPEETLE</span>
+            <span class="boss-name" id="bossName">BOSS</span>
             <span class="boss-hp-digits" id="bossHpDigits">1500 / 1500</span>
           </div>
           <div class="boss-hp-track">
@@ -700,7 +700,7 @@
         </div>
       </div>
       <div class="credits-footer-bar">
-        <button type="button" class="btn-secondary hover-float" id="btnCreditsSpeed">SPEED: 1X</button>
+        <button type="button" class="btn-secondary hover-float" id="btnCreditsSpeed" title="Hold button or [SPACE] / [↓] to fast-forward">HOLD TO SPEED UP (4X)</button>
         <button type="button" class="btn-primary hover-float" id="btnCreditsMenu">BACK TO MAIN MENU</button>
       </div>
     </div>

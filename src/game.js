@@ -2239,9 +2239,10 @@ class ParticleSystem {
     }
   }
 
-  draw(ctx) {
+  draw(ctx, camMinX = -Infinity, camMaxX = Infinity) {
     ctx.save();
     for (const p of this.particles) {
+      if (!p.isImpactFrame && !p.isVictoryRay && (p.x + 140 < camMinX || p.x - 140 > camMaxX)) continue;
       ctx.globalAlpha = Math.max(0, p.life);
       ctx.fillStyle = p.color;
 
@@ -2713,17 +2714,17 @@ class EnvironmentRenderer {
     ctx.save();
     const skyGradient = this.getSkyGradient(ctx, stageIndex, isPractice);
     ctx.fillStyle = skyGradient;
-    ctx.fillRect(-500, -200, (this.stageWidth || 2600) + 1000, this.height + 600);
+    ctx.fillRect(0, 0, this.canvasWidth, this.height);
 
-    // Parallax Twinkling Stars
+    // Parallax Twinkling Stars (fast batched rects)
     ctx.fillStyle = '#ffffff';
-    for (const s of this.stars) {
+    for (let i = 0; i < this.stars.length; i++) {
+      const s = this.stars[i];
       const sx = ((s.x - cameraX * 0.08) % this.canvasWidth + this.canvasWidth) % this.canvasWidth;
       const alpha = 0.4 + 0.6 * Math.sin(s.twinkle);
-      ctx.globalAlpha = Math.max(0.1, alpha);
-      ctx.beginPath();
-      ctx.arc(sx, s.y, s.radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.globalAlpha = alpha > 0.1 ? alpha : 0.1;
+      const d = s.radius * 1.8;
+      ctx.fillRect(sx - s.radius, s.y - s.radius, d, d);
     }
     ctx.globalAlpha = 1.0;
 
@@ -20680,28 +20681,23 @@ class StevenUniverseGame {
     this.enemyManager.spawnDummy(760);
   }
 
-  // --- PLANTS VS. ZOMBIES STYLE WAVE PROGRESSION & WARNINGS ---
+  // --- CLEAN FLAT-GEM WAVE PROGRESSION ---
   buildRandomWaveGemSVG(variantIdx = -1, isBoss = false) {
+    // Simple flat geometric gems with zero lighting/glow facets for a clean HUD
     const cuts = [
-      // 0: Peridot Triangle Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><polygon points="12,2 22,20 2,20" fill="${c1}" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/><polygon points="12,7 17,17 7,17" fill="${c2}" opacity="0.85"/><polygon points="12,2 14,9 9,11" fill="#ffffff" opacity="0.65"/></svg>`,
-      // 1: Rose Pentagon Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><polygon points="12,2 22,9 18,21 6,21 2,9" fill="${c1}" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/><polygon points="12,6 18,10 15,18 9,18 6,10" fill="${c2}" opacity="0.85"/><polygon points="12,2 17,8 12,10 7,8" fill="#ffffff" opacity="0.6"/></svg>`,
-      // 2: Amethyst Hexagon Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="${c1}" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/><polygon points="12,6 17,9 17,15 12,18 7,15 7,9" fill="${c2}" opacity="0.85"/><polygon points="12,2 19,6 12,8 5,6" fill="#ffffff" opacity="0.55"/></svg>`,
-      // 3: Diamond Lozenge Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><polygon points="12,1 21,12 12,23 3,12" fill="${c1}" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/><polygon points="12,5 17,12 12,19 7,12" fill="${c2}" opacity="0.9"/><polygon points="12,1 16,8 12,12 8,8" fill="#ffffff" opacity="0.72"/></svg>`,
-      // 4: Ruby Square / Shield Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="${c1}" stroke="#0f172a" stroke-width="1.6"/><polygon points="8,7 16,7 18,12 12,18 6,12" fill="${c2}" opacity="0.88"/><polygon points="4,4 11,4 8,9 4,9" fill="#ffffff" opacity="0.6"/></svg>`,
-      // 5: Lapis Teardrop Cut
-      (c1, c2) => `<svg viewBox="0 0 24 24"><path d="M12,2 C17,9 20,13 20,16.5 A8,8 0 0,1 4,16.5 C4,13 7,9 12,2 Z" fill="${c1}" stroke="#0f172a" stroke-width="1.6" stroke-linejoin="round"/><ellipse cx="12" cy="15.5" rx="4.2" ry="4.8" fill="${c2}" opacity="0.85"/><path d="M12,3 L14.5,11 L10,12 Z" fill="#ffffff" opacity="0.65"/></svg>`
+      (c1) => `<svg viewBox="0 0 24 24"><polygon points="12,3 21,20 3,20" fill="${c1}" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+      (c1) => `<svg viewBox="0 0 24 24"><polygon points="12,2 21,9 18,21 6,21 3,9" fill="${c1}" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+      (c1) => `<svg viewBox="0 0 24 24"><polygon points="12,2 21,7 21,17 12,22 3,17 3,7" fill="${c1}" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+      (c1) => `<svg viewBox="0 0 24 24"><polygon points="12,2 21,12 12,22 3,12" fill="${c1}" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+      (c1) => `<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="${c1}" stroke="#0f172a" stroke-width="1.8"/></svg>`,
+      (c1) => `<svg viewBox="0 0 24 24"><path d="M12,2 C17,9 20,13 20,16.5 A8,8 0 0,1 4,16.5 C4,13 7,9 12,2 Z" fill="${c1}" stroke="#0f172a" stroke-width="1.8" stroke-linejoin="round"/></svg>`
     ];
     const palettes = isBoss
-      ? [['#f43f5e', '#fecdd3'], ['#e11d48', '#fda4af'], ['#eab308', '#fef9c3'], ['#38bdf8', '#e0f2fe'], ['#e2e8f0', '#ffffff']]
-      : [['#22c55e', '#bbf7d0'], ['#a855f7', '#f3e8ff'], ['#f472b6', '#fce7f3'], ['#38bdf8', '#bae6fd'], ['#f97316', '#fed7aa'], ['#06b6d4', '#cffafe'], ['#facc15', '#fef9c3']];
+      ? ['#f43f5e', '#e11d48', '#f59e0b', '#38bdf8']
+      : ['#22c55e', '#a855f7', '#f472b6', '#38bdf8', '#f97316', '#facc15'];
     const ci = variantIdx >= 0 ? (variantIdx % cuts.length) : Math.floor(Math.random() * cuts.length);
-    const pal = palettes[Math.floor(Math.random() * palettes.length)];
-    return cuts[ci](pal[0], pal[1]);
+    const col = palettes[Math.floor(Math.random() * palettes.length)];
+    return cuts[ci](col);
   }
 
   updateWaveLine() {
@@ -20726,11 +20722,12 @@ class StevenUniverseGame {
 
     if (this.gameMode === 'practice' || this.stageIndex === 0) {
       if (d.container.style.display !== 'none') d.container.style.display = 'none';
+      if (d.labelEl && d.labelEl.textContent !== 'PRACTICE') d.labelEl.textContent = 'PRACTICE';
       return;
     }
     if (d.container.style.display !== 'flex') d.container.style.display = 'flex';
 
-    // Sync wave track style to the stage's platform material & roll random gems for this stage
+    // Sync wave track color hint to stage platform & populate simple unlit gems
     const stIdx = this.stageIndex || 1;
     const platTheme = (stIdx === 1) ? 'wood'
                     : (stIdx === 3 || stIdx === 5 || stIdx === 8 || stIdx === 9) ? 'metal'
@@ -20766,31 +20763,17 @@ class StevenUniverseGame {
     const curWave = this.enemyManager.wave || 1;
     const maxW = this.enemyManager.maxWaves || 4;
     const isBoss = this.enemyManager.isBossAlive;
-    const waveKey = `${curWave}_${maxW}_${isBoss}`;
+    const waveKey = `${this.gameMode}_${curWave}_${maxW}_${isBoss}`;
 
     if (this._lastWaveKey !== waveKey) {
       this._lastWaveKey = waveKey;
       if (d.labelEl) {
-        if (isBoss) {
-          d.labelEl.textContent = 'FINAL BOSS FIGHT';
-        } else if (curWave >= maxW) {
-          d.labelEl.textContent = `WAVE ${curWave} / ${maxW} · HUGE WAVE`;
+        if (this.gameMode === 'arcade') {
+          d.labelEl.textContent = isBoss ? `WAVE ${this.arcadeWave} · BOSS` : `WAVE ${this.arcadeWave}`;
         } else {
-          d.labelEl.textContent = `WAVE ${curWave} / ${maxW}`;
+          d.labelEl.textContent = isBoss ? 'BOSS' : `WAVE ${curWave} / ${maxW}`;
         }
-      }
-
-      if (d.statusEl) {
-        if (isBoss) {
-          d.statusEl.textContent = 'BOSS ENCOUNTER';
-          d.statusEl.style.color = '#f43f5e';
-        } else if (curWave >= maxW) {
-          d.statusEl.textContent = 'HUGE WAVE';
-          d.statusEl.style.color = '#fbbf24';
-        } else {
-          d.statusEl.textContent = 'APPROACHING';
-          d.statusEl.style.color = '#94a3b8';
-        }
+        d.labelEl.style.color = isBoss ? '#fda4af' : '#e2e8f0';
       }
     }
   }
@@ -21598,7 +21581,9 @@ class StevenUniverseGame {
         this.update(dt);
       }
 
-      this.render();
+      if (this.state !== 'title' && this.state !== 'credits') {
+        this.render();
+      }
     } catch (err) {
       console.error("Game loop error caught:", err);
       this.screenTransition = null;
@@ -22717,8 +22702,8 @@ class StevenUniverseGame {
       this.player2.draw(this.ctx);
     }
 
-    // Particle System & Hit Numbers
-    this.particles.draw(this.ctx);
+    // Particle System & Hit Numbers (culled to camera viewport for smooth FPS)
+    this.particles.draw(this.ctx, this.cameraX - 240, this.cameraX + this.canvas.width + 240);
 
     this.ctx.restore();
     this.ctx.restore(); // screen-shake transform
@@ -23951,26 +23936,38 @@ class StevenUniverseGame {
     const btnText = d.btnText;
     const touchOd = d.touchOd;
 
+    const hc = this._hudCache || (this._hudCache = {});
+
     if (this.isOverdriveActive) {
       const remainingPct = Math.max(0, (this.overdriveTimer / this.overdriveDuration) * 100);
-      if (fill) fill.style.width = `${remainingPct}%`;
-      if (pct) pct.textContent = `${Math.ceil(this.overdriveTimer)}s ACTIVE!`;
+      const fillW = `${remainingPct.toFixed(1)}%`;
+      const secLeft = Math.ceil(this.overdriveTimer);
+      const pctTxt = `${secLeft}s ACTIVE!`;
+      const btnCls = 'btn-overdrive-hud active';
+      const btnTxt = `${odTheme.short} ACTIVE (${secLeft}s)`;
+      if (fill && hc.p1W !== fillW) { fill.style.width = fillW; hc.p1W = fillW; }
+      if (pct && hc.p1Pct !== pctTxt) { pct.textContent = pctTxt; hc.p1Pct = pctTxt; }
       if (btnOverdrive) {
-        btnOverdrive.className = 'btn-overdrive-hud active';
-        if (btnText) btnText.textContent = `${odTheme.short} ACTIVE (${Math.ceil(this.overdriveTimer)}s)`;
+        if (hc.p1Cls !== btnCls) { btnOverdrive.className = btnCls; hc.p1Cls = btnCls; }
+        if (btnText && hc.p1Txt !== btnTxt) { btnText.textContent = btnTxt; hc.p1Txt = btnTxt; }
       }
-      if (touchOd) touchOd.classList.add('ready');
+      if (touchOd && hc.p1Touch !== true) { touchOd.classList.add('ready'); hc.p1Touch = true; }
     } else {
-      if (fill) fill.style.width = `${this.starPowerMeter}%`;
-      if (pct) pct.textContent = `${Math.floor(this.starPowerMeter)}%`;
+      const fillW = `${this.starPowerMeter.toFixed(1)}%`;
+      const pctTxt = `${Math.floor(this.starPowerMeter)}%`;
       const isReady = this.starPowerMeter >= 100 || this.gameMode === 'practice';
+      const btnCls = `btn-overdrive-hud ${isReady ? 'ready' : 'disabled'}`;
+      const btnTxt = isReady ? `${odTheme.short} READY! [${this.playerMode === '2p' ? 'R' : 'U'}]` : odTheme.name;
+      if (fill && hc.p1W !== fillW) { fill.style.width = fillW; hc.p1W = fillW; }
+      if (pct && hc.p1Pct !== pctTxt) { pct.textContent = pctTxt; hc.p1Pct = pctTxt; }
       if (btnOverdrive) {
-        btnOverdrive.className = `btn-overdrive-hud ${isReady ? 'ready' : 'disabled'}`;
-        if (btnText) btnText.textContent = isReady ? `${odTheme.short} READY! [${this.playerMode === '2p' ? 'R' : 'U'}]` : odTheme.name;
+        if (hc.p1Cls !== btnCls) { btnOverdrive.className = btnCls; hc.p1Cls = btnCls; }
+        if (btnText && hc.p1Txt !== btnTxt) { btnText.textContent = btnTxt; hc.p1Txt = btnTxt; }
       }
-      if (touchOd) {
+      if (touchOd && hc.p1Touch !== isReady) {
         if (isReady) touchOd.classList.add('ready');
         else touchOd.classList.remove('ready');
+        hc.p1Touch = isReady;
       }
     }
 
@@ -24019,20 +24016,29 @@ class StevenUniverseGame {
 
       if (this.isOverdriveActiveP2) {
         const remainingPct = Math.max(0, (this.overdriveTimerP2 / this.overdriveDuration) * 100);
-        if (fillP2) fillP2.style.width = `${remainingPct}%`;
-        if (pctP2) pctP2.textContent = `${Math.ceil(this.overdriveTimerP2)}s ACTIVE!`;
+        const fillW = `${remainingPct.toFixed(1)}%`;
+        const secLeft = Math.ceil(this.overdriveTimerP2);
+        const pctTxt = `${secLeft}s ACTIVE!`;
+        const btnCls = 'btn-overdrive-hud active';
+        const btnTxt = `${odThemeP2.short} ACTIVE (${secLeft}s)`;
+        if (fillP2 && hc.p2W !== fillW) { fillP2.style.width = fillW; hc.p2W = fillW; }
+        if (pctP2 && hc.p2Pct !== pctTxt) { pctP2.textContent = pctTxt; hc.p2Pct = pctTxt; }
         if (btnOverdriveP2) {
-          btnOverdriveP2.className = 'btn-overdrive-hud active';
-          if (btnTextP2) btnTextP2.textContent = `${odThemeP2.short} ACTIVE (${Math.ceil(this.overdriveTimerP2)}s)`;
+          if (hc.p2Cls !== btnCls) { btnOverdriveP2.className = btnCls; hc.p2Cls = btnCls; }
+          if (btnTextP2 && hc.p2Txt !== btnTxt) { btnTextP2.textContent = btnTxt; hc.p2Txt = btnTxt; }
         }
       } else {
         const curP2 = this.starPowerMeterP2 || 0;
-        if (fillP2) fillP2.style.width = `${curP2}%`;
-        if (pctP2) pctP2.textContent = `${Math.floor(curP2)}%`;
+        const fillW = `${curP2.toFixed(1)}%`;
+        const pctTxt = `${Math.floor(curP2)}%`;
         const isReadyP2 = curP2 >= 100 || this.gameMode === 'practice';
+        const btnCls = `btn-overdrive-hud ${isReadyP2 ? 'ready' : 'disabled'}`;
+        const btnTxt = isReadyP2 ? `${odThemeP2.short} READY! [O]` : odThemeP2.name;
+        if (fillP2 && hc.p2W !== fillW) { fillP2.style.width = fillW; hc.p2W = fillW; }
+        if (pctP2 && hc.p2Pct !== pctTxt) { pctP2.textContent = pctTxt; hc.p2Pct = pctTxt; }
         if (btnOverdriveP2) {
-          btnOverdriveP2.className = `btn-overdrive-hud ${isReadyP2 ? 'ready' : 'disabled'}`;
-          if (btnTextP2) btnTextP2.textContent = isReadyP2 ? `${odThemeP2.short} READY! [O]` : odThemeP2.name;
+          if (hc.p2Cls !== btnCls) { btnOverdriveP2.className = btnCls; hc.p2Cls = btnCls; }
+          if (btnTextP2 && hc.p2Txt !== btnTxt) { btnTextP2.textContent = btnTxt; hc.p2Txt = btnTxt; }
         }
       }
     }
@@ -25424,8 +25430,8 @@ class StevenUniverseGame {
     safeClick('btnPuzzleHint', () => this.showPuzzleHint());
     safeClick('btnPuzzleReset', () => this.resetCurrentPuzzle());
     safeClick('btnPuzzleSkip', () => this.skipCurrentPuzzle());
-    // Credits Buttons
-    safeClick('btnCreditsSpeed', () => this.toggleCreditsSpeed());
+    // Credits Buttons (Hold-to-Speedup + Main Menu)
+    this.bindCreditsHoldControls();
     safeClick('btnCreditsMenu', () => {
       this.audio.playSfx('menuTap');
       this.closeCreditsScreen();
@@ -26226,14 +26232,14 @@ class StevenUniverseGame {
 
     const badge = document.getElementById('hudStageBadge');
     if (badge) {
-      badge.textContent = `ARCADE · ${mapInfo.name.toUpperCase()} · WAVE ${this.arcadeWave}`;
+      badge.textContent = `ARCADE · ${mapInfo.name.toUpperCase()}`;
       badge.style.display = 'block';
     }
     const objText = document.getElementById('hudObjectiveText');
     if (objText) {
-      objText.textContent = `Endless Rush Wave ${this.arcadeWave} — Score: ${this.score}`;
-      objText.style.display = 'block';
+      objText.style.display = 'none';
     }
+    this.arcadeDefeatedBossThisWave = false;
 
     const count = Math.min(12, 3 + Math.floor(this.arcadeWave * 1.4));
     const allMixPool = ['centipeetle', 'acid_centipeetle', 'winged_centipeetle', 'blade_quartz', 'spire_harpy', 'cluster', 'obsidian', 'volcanic_firebird', 'ice_monster', 'snow_monster', 'carnelian_enforcer', 'destabilizer_soldier', 'robonoid_scout'];
@@ -26277,6 +26283,18 @@ class StevenUniverseGame {
 
   onArcadeWaveCleared() {
     if (this.gameMode !== 'arcade' || this.arcadeWavePending) return;
+    const bossEvery = this.arcadeBossEvery || 3;
+    const isCheckpointWave = (this.arcadeWave % bossEvery === 0) || !!this.arcadeDefeatedBossThisWave;
+    this.arcadeDefeatedBossThisWave = false;
+
+    if (!isCheckpointWave) {
+      this.score += 150;
+      if (this.audio) this.audio.playSfx('cookie');
+      this.updateHUD();
+      this.startArcadeWave(this.arcadeWave + 1);
+      return;
+    }
+
     this.arcadeWavePending = true;
     this.state = 'arcade_wait';
     this.releaseAllInputs();
@@ -26288,7 +26306,7 @@ class StevenUniverseGame {
     const sc = document.getElementById('arcadeWaveScore');
     const bub = document.getElementById('arcadeWaveBubbled');
     if (title) title.textContent = `WAVE ${this.arcadeWave} CLEARED!`;
-    if (sub) sub.textContent = `Next wave (#${this.arcadeWave + 1}) ramps up intensity. Continue for +1 Heart or Gem Out with your score!`;
+    if (sub) sub.textContent = `Boss Checkpoint Cleared! Next set (#${this.arcadeWave + 1}) ramps up intensity. Continue for +1 Heart or Gem Out with your score!`;
     if (sc) sc.textContent = String(this.score);
     if (bub) bub.textContent = String(this.bubbledGemsCount);
     if (modal) modal.style.display = 'flex';
@@ -26975,22 +26993,100 @@ class StevenUniverseGame {
     }
   }
 
+  bindCreditsHoldControls() {
+    if (this._creditsHoldBound) return;
+    this._creditsHoldBound = true;
+    const speedBtn = document.getElementById('btnCreditsSpeed');
+    const viewport = document.querySelector('#creditsScreen .credits-viewport');
+    const startFast = (e) => {
+      if (!this.creditsActive) return;
+      if (e && e.cancelable && e.type === 'touchstart') e.preventDefault();
+      this.setCreditsSpeedUp(true);
+    };
+    const stopFast = () => {
+      if (this.creditsSpeedUp) this.setCreditsSpeedUp(false);
+    };
+    [speedBtn, viewport].forEach((target) => {
+      if (!target) return;
+      target.addEventListener('pointerdown', startFast);
+      target.addEventListener('mousedown', startFast);
+      target.addEventListener('touchstart', startFast, { passive: false });
+      target.addEventListener('pointerleave', stopFast);
+      target.addEventListener('pointercancel', stopFast);
+    });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pointerup', stopFast);
+      window.addEventListener('mouseup', stopFast);
+      window.addEventListener('touchend', stopFast);
+      window.addEventListener('blur', stopFast);
+      window.addEventListener('keydown', (e) => {
+        if (!this.creditsActive) return;
+        if (e.code === 'Space' || e.code === 'ArrowDown') {
+          e.preventDefault();
+          this.setCreditsSpeedUp(true);
+        }
+      });
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowDown') stopFast();
+      });
+    }
+  }
+
+  setCreditsSpeedUp(active) {
+    this.creditsSpeedUp = !!active;
+    this.creditsSpeed = this.creditsSpeedUp ? 4 : 1;
+    const speedBtn = document.getElementById('btnCreditsSpeed');
+    if (speedBtn) {
+      if (this.creditsSpeedUp) {
+        speedBtn.classList.add('fast-active');
+        speedBtn.textContent = '⏩ SPEEDING UP (4X)';
+      } else {
+        speedBtn.classList.remove('fast-active');
+        speedBtn.textContent = 'HOLD TO SPEED UP (4X)';
+      }
+    }
+  }
+
   openCreditsScreen() {
     this.hideAllScreens();
     this.creditsActive = true;
     this.state = 'credits';
-    this.creditsSpeed = 1;
+    this.setCreditsSpeedUp(false);
+    this.bindCreditsHoldControls();
     this.releaseAllInputs();
     const screen = document.getElementById('creditsScreen');
     const track = document.getElementById('creditsTrack');
-    const speedBtn = document.getElementById('btnCreditsSpeed');
-    if (speedBtn) speedBtn.textContent = 'SPEED: 1X';
+    const viewport = document.querySelector('#creditsScreen .credits-viewport');
+    if (screen) screen.style.display = 'flex';
+    const vpH = (viewport && viewport.clientHeight) ? viewport.clientHeight : 520;
+    this.creditsScrollY = Math.round(vpH * 0.32);
     if (track) {
       track.style.animation = 'none';
-      void track.offsetWidth;
-      track.style.animation = 'creditsScroll 42s linear infinite';
+      track.style.transform = `translate3d(0, ${this.creditsScrollY}px, 0)`;
     }
-    if (screen) screen.style.display = 'flex';
+    this._creditsLastTs = 0;
+    if (this._creditsRaf) cancelAnimationFrame(this._creditsRaf);
+    const stepCredits = (ts) => {
+      if (!this.creditsActive) {
+        this._creditsRaf = 0;
+        return;
+      }
+      if (!this._creditsLastTs) this._creditsLastTs = ts;
+      const dt = Math.min(0.05, Math.max(0.001, (ts - this._creditsLastTs) / 1000));
+      this._creditsLastTs = ts;
+      const tr = document.getElementById('creditsTrack');
+      const vp = document.querySelector('#creditsScreen .credits-viewport');
+      const curVpH = (vp && vp.clientHeight) ? vp.clientHeight : 520;
+      const trH = (tr && tr.scrollHeight) ? tr.scrollHeight : 1400;
+      const pxPerSec = this.creditsSpeedUp ? 220 : 44;
+      this.creditsScrollY -= pxPerSec * dt;
+      if (this.creditsScrollY < -(trH + 40)) {
+        this.creditsScrollY = curVpH - 30;
+      }
+      if (tr) tr.style.transform = `translate3d(0, ${this.creditsScrollY.toFixed(1)}px, 0)`;
+      this._creditsRaf = requestAnimationFrame(stepCredits);
+    };
+    this._creditsRaf = requestAnimationFrame(stepCredits);
     if (this.audio) {
       this.audio.isManuallyPaused = false;
       this.audio.playTrackById('intro_launch', false);
@@ -26998,18 +27094,16 @@ class StevenUniverseGame {
   }
 
   toggleCreditsSpeed() {
-    this.creditsSpeed = this.creditsSpeed === 1 ? 2 : 1;
-    const track = document.getElementById('creditsTrack');
-    const speedBtn = document.getElementById('btnCreditsSpeed');
-    if (speedBtn) speedBtn.textContent = `SPEED: ${this.creditsSpeed}X`;
-    if (track) {
-      track.style.animationDuration = this.creditsSpeed === 2 ? '21s' : '42s';
-    }
-    if (this.audio) this.audio.playSfx('menuTap');
+    this.setCreditsSpeedUp(!this.creditsSpeedUp);
   }
 
   closeCreditsScreen() {
     this.creditsActive = false;
+    this.setCreditsSpeedUp(false);
+    if (this._creditsRaf) {
+      cancelAnimationFrame(this._creditsRaf);
+      this._creditsRaf = 0;
+    }
     const screen = document.getElementById('creditsScreen');
     if (screen) screen.style.display = 'none';
     this.showTitleScreen();
