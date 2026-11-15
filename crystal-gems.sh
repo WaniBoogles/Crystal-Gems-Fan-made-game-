@@ -93,7 +93,11 @@ class CrystalGemsWindow(Gtk.Window):
         rgba.parse("#0f0a1c")
         self.override_background_color(Gtk.StateFlags.NORMAL, rgba)
 
-        self.webview = WebKit2.WebView()
+        try:
+            policies = WebKit2.WebsitePolicies(autoplay=WebKit2.AutoplayPolicy.ALLOW)
+            self.webview = WebKit2.WebView(website_policies=policies)
+        except Exception:
+            self.webview = WebKit2.WebView()
         self.webview.override_background_color(Gtk.StateFlags.NORMAL, rgba)
 
         settings = self.webview.get_settings()
@@ -150,15 +154,15 @@ fi
 
 # ---- Fallback: browser kiosk / app mode --------------------------------------
 FILE_URL="file://$HTML"
-if command -v firefox >/dev/null 2>&1; then
-  echo "▶ Launching Crystal Gems! in Firefox kiosk mode…"
-  exec firefox --kiosk "$FILE_URL"
-fi
 if command -v chromium >/dev/null 2>&1; then
   exec chromium --app="$FILE_URL" --start-fullscreen --autoplay-policy=no-user-gesture-required
 fi
 if command -v google-chrome >/dev/null 2>&1; then
   exec google-chrome --app="$FILE_URL" --start-fullscreen --autoplay-policy=no-user-gesture-required
+fi
+if command -v firefox >/dev/null 2>&1; then
+  echo "▶ Launching Crystal Gems! in Firefox kiosk mode…"
+  exec firefox --kiosk "$FILE_URL"
 fi
 
 echo "▶ Opening Crystal Gems! in your default browser…"

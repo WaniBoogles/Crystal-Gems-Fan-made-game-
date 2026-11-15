@@ -338,9 +338,9 @@
           <option value="mirror_gem">"I Am Lapis Lazuli" (Mirror Gem Suite)</option>
           <option value="opal_theme">"Amethyst's Drum / Opal's Theme"</option>
         </select>
-        <button id="btnLobbyPlayMusic" class="btn-lobby-music playing" type="button" title="Play or Pause Soundtrack">
-          <span id="lobbyMusicPlayIcon">⏸</span>
-          <span id="lobbyMusicPlayText">PAUSE</span>
+        <button id="btnLobbyPlayMusic" class="btn-lobby-music" type="button" title="Play or Pause Soundtrack">
+          <span id="lobbyMusicPlayIcon">▶</span>
+          <span id="lobbyMusicPlayText">PLAY</span>
         </button>
       </div>
 
@@ -349,7 +349,7 @@
         <span>CLICK ANYWHERE TO START SOUNDTRACK</span>
       </div>
 
-      <div class="title-content hover-float">
+      <div class="title-content">
         <div class="title-logo-container">
           <div class="star-badge"><svg viewBox="0 0 24 24" width="34" height="34" style="display:block;"><polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="#fde047" stroke="#eab308" stroke-width="1.2"/></svg></div>
           <h1 class="main-title">CRYSTAL GEMS!</h1>
@@ -365,6 +365,11 @@
           <button id="btnStoryModeEntry" class="menu-link-btn" type="button" title="Campaign Episodes 1 to 10 with Lore Puzzles & Cutscenes">
             STORY MODE
             <span class="menu-sub-hint">EPISODES 1–10 · PUZZLES · DIALOGUE · CUTSCENES</span>
+          </button>
+
+          <button id="btnPracticeModeEntry" class="menu-link-btn" type="button" title="Free Training Dojo with Target Dummies & Infinite Energy">
+            PRACTICE MODE
+            <span class="menu-sub-hint">FREE DOJO · COMBOS · FUSION · INFINITE ENERGY</span>
           </button>
 
           <button id="btnOpenSettings" class="menu-link-btn" type="button" title="Configure Audio, Graphics & Resolution">
@@ -451,7 +456,6 @@
               <button type="button" class="pill-action-btn" id="btnCharPlayerMode" title="Toggle Solo 1P or Co-Op 2P">PLAYERS: <span id="charPlayerModeLabel">1P SOLO</span></button>
             </div>
             <div class="char-control-group">
-              <button type="button" class="pill-action-btn" id="btnCharPractice" style="display: none;">PRACTICE DOJO</button>
               <button type="button" class="pill-action-btn" id="btnCharEpisodes">EPISODE CHAPTERS</button>
             </div>
           </div>

@@ -1497,6 +1497,12 @@ body.mobile-device .touch-controls.active {
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.title-content:hover {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 .main-menu-nav {
   display: flex;
   flex-direction: column;

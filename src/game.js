@@ -33,6 +33,8 @@ class GemAudioEngine {
     this.isManuallyPaused = false;
     this.isResuming = false;
     this.hasAwakened = false;
+    this._pendingFadeIn = 0;
+    this.onRunningHook = null;
     this._noiseBuffer = null;
     this.sfxBuffers = {};
     this._sfxLoaded = false;
@@ -44,6 +46,16 @@ class GemAudioEngine {
       if (AudioCtx) {
         try {
           this.ctx = new AudioCtx();
+          const handleStateChange = () => {
+            if (this.ctx && this.ctx.state === 'running') {
+              this.onAudioRunning();
+            }
+          };
+          if (typeof this.ctx.addEventListener === 'function') {
+            this.ctx.addEventListener('statechange', handleStateChange);
+          } else {
+            this.ctx.onstatechange = handleStateChange;
+          }
           
           // SFX Master Gain: Set directly to sfxVolume so SFX is always crisp and audible
           this.sfxGainNode = this.ctx.createGain();
@@ -155,29 +167,48 @@ class GemAudioEngine {
         this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
       } catch (e) {}
     }
-    if (!this.ctx || !this.musicGainNode || !this.musicEnabled) return;
-
-    if (firstTime) {
-      // First play of the session: nice 1s fade-in from silence.
-      this.fadeInMusic(1.0);
-    } else if (this.musicGainNode.gain.value < this.musicVolume * 0.98) {
-      // Woken up again (tab focus, suspended context): top the track straight back up.
-      // Never call fadeInMusic() here — that restarts from ~0 and ducks the music on
-      // every single keypress, which is exactly what players were hearing.
-      try {
-        this.musicGainNode.gain.setValueAtTime(this.musicVolume, this.ctx.currentTime);
-      } catch (e) {}
+    if (this.ctx && this.musicGainNode && this.musicEnabled && !this.isManuallyPaused) {
+      if (this._pendingFadeIn > 0) {
+        const dur = this._pendingFadeIn;
+        this._pendingFadeIn = 0;
+        this.fadeInMusic(dur);
+      } else if (firstTime && this.musicInterval) {
+        this.fadeInMusic(0.85);
+      } else if (this.musicGainNode.gain.value < this.musicVolume * 0.95) {
+        try {
+          const t = this.ctx.currentTime;
+          this.musicGainNode.gain.cancelScheduledValues(t);
+          this.musicGainNode.gain.setValueAtTime(this.musicVolume, t);
+        } catch (e) {}
+      }
+    }
+    if (typeof this.onRunningHook === 'function') {
+      try { this.onRunningHook(); } catch (e) {}
     }
   }
 
   fadeInMusic(duration = 1.0) {
     if (!this.ctx || !this.musicGainNode || !this.musicEnabled) return;
+    if (this.ctx.state !== 'running') {
+      this._pendingFadeIn = duration;
+      try {
+        const t = this.ctx.currentTime;
+        this.musicGainNode.gain.cancelScheduledValues(t);
+        this.musicGainNode.gain.setValueAtTime(this.musicVolume, t);
+      } catch (e) {}
+      return;
+    }
+    this._pendingFadeIn = 0;
     try {
       const t = this.ctx.currentTime;
       const targetVol = this.musicVolume;
       this.musicGainNode.gain.cancelScheduledValues(t);
-      this.musicGainNode.gain.setValueAtTime(0.0001, t);
-      this.musicGainNode.gain.linearRampToValueAtTime(targetVol, t + duration);
+      if (duration > 0.05) {
+        this.musicGainNode.gain.setValueAtTime(0.001, t);
+        this.musicGainNode.gain.linearRampToValueAtTime(targetVol, t + duration);
+      } else {
+        this.musicGainNode.gain.setValueAtTime(targetVol, t);
+      }
     } catch (e) {
       if (this.musicGainNode && this.musicGainNode.gain) {
         try {
@@ -1383,7 +1414,7 @@ class GemAudioEngine {
   playTrackById(trackId, isBoss = false, isWaveAlert = false) {
     if (!this.musicEnabled) return;
     this.init();
-    this.stopMusic();
+    this.stopMusic(true);
     this.currentTrack = trackId;
 
     const theme = this.getTrackProfile(trackId);
@@ -1391,7 +1422,7 @@ class GemAudioEngine {
     const intervalMs = (60 / effectiveTempo) * 250;
 
     this.musicBeat = 0;
-    this.fadeInMusic(0.9);
+    this.fadeInMusic(0.75);
 
     this.musicInterval = setInterval(() => {
       if (!this.ctx || !this.musicEnabled) return;
@@ -1409,6 +1440,16 @@ class GemAudioEngine {
           });
         }
         return; // Never schedule oscillators while suspended to guarantee 0 jumpscare
+      }
+
+      if (!this.hasAwakened || this._pendingFadeIn > 0) {
+        this.onAudioRunning();
+      } else if (this.musicBeat >= 3 && !this.isManuallyPaused && this.musicGainNode && this.musicGainNode.gain.value < this.musicVolume * 0.9) {
+        try {
+          const gt = this.ctx.currentTime;
+          this.musicGainNode.gain.cancelScheduledValues(gt);
+          this.musicGainNode.gain.setValueAtTime(this.musicVolume, gt);
+        } catch (e) {}
       }
 
       try {
@@ -1583,17 +1624,21 @@ class GemAudioEngine {
     return this.playTrackById(targetTrack, false);
   }
 
-  stopMusic() {
+  stopMusic(immediate = false) {
+    const wasPlaying = !!this.musicInterval;
     if (this.musicInterval) {
       clearInterval(this.musicInterval);
       this.musicInterval = null;
     }
+    this._pendingFadeIn = 0;
     if (this.musicGainNode && this.ctx) {
       try {
         const t = this.ctx.currentTime;
         this.musicGainNode.gain.cancelScheduledValues(t);
-        this.musicGainNode.gain.setValueAtTime(this.musicGainNode.gain.value, t);
-        this.musicGainNode.gain.linearRampToValueAtTime(0, t + 0.08);
+        if (!immediate && wasPlaying) {
+          this.musicGainNode.gain.setValueAtTime(this.musicGainNode.gain.value, t);
+          this.musicGainNode.gain.linearRampToValueAtTime(0, t + 0.08);
+        }
       } catch (e) {}
     }
   }
@@ -20017,6 +20062,7 @@ class StevenUniverseGame {
 
     let hasAudioUnlocked = false;
     const unlockEvents = ['pointerdown', 'mousedown', 'touchstart', 'keydown', 'click'];
+    let lastHoverResumeMs = 0;
 
     const cleanupUnlockListeners = () => {
       if (!hasAudioUnlocked) {
@@ -20025,13 +20071,14 @@ class StevenUniverseGame {
           window.removeEventListener(evt, unlockMenuAudio, true);
           if (typeof document !== 'undefined') document.removeEventListener(evt, unlockMenuAudio, true);
         });
+        window.removeEventListener('mousemove', onHoverResume, true);
+        window.removeEventListener('wheel', unlockMenuAudio, true);
       }
       const promptEl = document.getElementById('audioUnlockPrompt');
       if (promptEl) promptEl.style.display = 'none';
     };
 
-    const onContextUnlocked = () => {
-      this.audio.onAudioRunning();
+    const syncRunningLobbyAudio = () => {
       if (!this.audio.isManuallyPaused) {
         if (this.state === 'title' && !this.audio.musicInterval) {
           this.audio.playTrackById(getLobbyTrack(), false);
@@ -20039,6 +20086,12 @@ class StevenUniverseGame {
         updateLobbyMusicButton(true);
       }
       cleanupUnlockListeners();
+    };
+    this.audio.onRunningHook = syncRunningLobbyAudio;
+
+    const onContextUnlocked = () => {
+      this.audio.onAudioRunning();
+      syncRunningLobbyAudio();
     };
 
     const unlockMenuAudio = () => {
@@ -20051,6 +20104,16 @@ class StevenUniverseGame {
           if (this.audio.ctx && this.audio.ctx.state === 'running') onContextUnlocked();
         }).catch(() => {});
       }
+    };
+
+    const onHoverResume = () => {
+      if (!this.audio.ctx || this.audio.ctx.state === 'running' || this.audio.isManuallyPaused) return;
+      const now = Date.now();
+      if (now - lastHoverResumeMs < 250) return;
+      lastHoverResumeMs = now;
+      this.audio.ctx.resume().then(() => {
+        if (this.audio.ctx && this.audio.ctx.state === 'running') onContextUnlocked();
+      }).catch(() => {});
     };
 
     const tryAutoPlay = () => {
@@ -20080,6 +20143,8 @@ class StevenUniverseGame {
           document.addEventListener(evt, unlockMenuAudio, { capture: true, passive: true });
         }
       });
+      window.addEventListener('mousemove', onHoverResume, { capture: true, passive: true });
+      window.addEventListener('wheel', unlockMenuAudio, { capture: true, passive: true });
     }
 
     const ensureLobbyMusic = () => {
@@ -20088,14 +20153,12 @@ class StevenUniverseGame {
       if (!this.audio.musicInterval) {
         this.audio.playTrackById(getLobbyTrack(), false);
       }
-      if (this.audio.musicGainNode) {
-        try { this.audio.musicGainNode.gain.setValueAtTime(this.audio.musicVolume, this.audio.ctx.currentTime); } catch (e) {}
-      }
       updateLobbyMusicButton(true);
     };
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('focus', tryAutoPlay, { passive: true });
     }
+    setTimeout(tryAutoPlay, 50);
     setTimeout(tryAutoPlay, 300);
     setTimeout(ensureLobbyMusic, 800);
     setTimeout(ensureLobbyMusic, 2400);
@@ -24885,11 +24948,8 @@ class StevenUniverseGame {
     }
     const lobbyTrack = (this.audio.bgmOverrideManual && this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'intro_launch';
     this.audio.playTrackById(lobbyTrack, false);
-    // A returning player should always land on music, not silence.
-    if (this.audio.ctx && this.audio.ctx.state === 'running' && this.audio.musicGainNode) {
-      try { this.audio.musicGainNode.gain.setValueAtTime(this.audio.musicVolume, this.audio.ctx.currentTime); } catch (e) {}
-    }
-    if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(true);
+    const ctxRunning = !!(this.audio.ctx && this.audio.ctx.state === 'running');
+    if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(ctxRunning && !this.audio.isManuallyPaused);
 
     // Reset Fusion state cleanly without spawning in-game unfuse poofs/particles
     this.isFused = false;
@@ -25288,6 +25348,10 @@ class StevenUniverseGame {
       this.audio.playSfx('warpPad');
       this.openCharacterSelect('story');
     });
+    safeClick('btnPracticeModeEntry', () => {
+      this.audio.playSfx('warpPad');
+      this.openCharacterSelect('practice');
+    });
     safeClick('btnOpenCredits', () => {
       this.audio.playSfx('warpPad');
       this.openCreditsScreen();
@@ -25303,11 +25367,6 @@ class StevenUniverseGame {
     safeClick('btnPlayerMode', () => {
       this.audio.playSfx('menuTap');
       this.togglePlayerMode();
-    });
-    safeClick('btnCharPractice', () => {
-      this.audio.playSfx('warpPad');
-      if (charModal) charModal.style.display = 'none';
-      this.startNewGame('practice');
     });
     safeClick('btnCharDiff', () => {
       this.audio.playSfx('menuTap');
@@ -25564,6 +25623,8 @@ class StevenUniverseGame {
       this.audio.playSfx('warpPad');
       if (this.selectedEntryMode === 'arcade') {
         this.openMapSelectScreen();
+      } else if (this.selectedEntryMode === 'practice') {
+        this.startNewGame('practice');
       } else {
         this.startNewGame('story', { stage: 1 });
       }
@@ -26048,7 +26109,6 @@ class StevenUniverseGame {
     const badge = document.getElementById('modeDiffBadge');
     const desc = document.getElementById('modeDiffDesc');
     const popup = document.getElementById('modeDiffPopup');
-    const pracBtn = document.getElementById('btnCharPractice');
     const epBtn = document.getElementById('btnCharEpisodes');
     const playBtn = document.getElementById('btnConfirmChar');
     const diffLabel = document.getElementById('charDiffLabel');
@@ -26061,21 +26121,25 @@ class StevenUniverseGame {
       if (popup) popup.classList.add('arcade-mode');
       if (badge) badge.textContent = 'ARCADE MODE';
       if (desc) desc.textContent = 'FAST-PACED, QUICK PROGRESSION, SCORE-BASED · ENDLESS WAVES & BOSSES';
-      if (pracBtn) pracBtn.style.display = 'inline-flex';
       if (epBtn) epBtn.style.display = 'none';
       if (playBtn) playBtn.textContent = 'NEXT: MAP SELECTION ➔';
+    } else if (mode === 'practice') {
+      if (popup) popup.classList.remove('arcade-mode');
+      if (badge) badge.textContent = 'PRACTICE MODE';
+      if (desc) desc.textContent = 'FREE TRAINING DOJO · TARGET DUMMIES · INFINITE ENERGY · FUSION PRACTICE';
+      if (epBtn) epBtn.style.display = 'none';
+      if (playBtn) playBtn.textContent = 'ENTER PRACTICE DOJO ➔';
     } else {
       if (popup) popup.classList.remove('arcade-mode');
       if (badge) badge.textContent = 'STORY MODE';
       if (desc) desc.textContent = 'COMBAT, PUZZLES, DIALOGUE & CUTSCENES · EPISODES 1 TO 10';
-      if (pracBtn) pracBtn.style.display = 'inline-flex';
       if (epBtn) epBtn.style.display = 'inline-flex';
       if (playBtn) playBtn.textContent = 'PLAY STORY (EP 1–10) ➔';
     }
   }
 
   openCharacterSelect(flowMode = 'story') {
-    this.selectedEntryMode = (flowMode === 'arcade') ? 'arcade' : 'story';
+    this.selectedEntryMode = (flowMode === 'arcade' || flowMode === 'practice') ? flowMode : 'story';
     this.syncCharModalMeta();
     if (this._openCharModalInternal) {
       this._openCharModalInternal();
