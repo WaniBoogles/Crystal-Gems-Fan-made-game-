@@ -19314,62 +19314,62 @@ const STORY_PUZZLE_CONFIGS = {
   1: {
     kind: 'pattern',
     title: 'TEMPLE DOOR HARMONY SEAL',
-    desc: 'Watch the 4 Crystal Gems chime in sequence, then click the same 4 tiles in exact order.',
-    hint: 'Track the chime order by color and weapon emblem. Need another look? Press RESET PUZZLE to replay the sequence.'
+    desc: 'Watch the 4 Crystal Gems glow one by one, then click them back in that exact order.',
+    hint: 'Say the order aloud by Gem color (Pink -> Red -> Blue -> Purple). Press RESET PUZZLE anytime to rewatch.'
   },
   2: {
     kind: 'memory',
     title: 'GALAXY WARP PRISM RESONANCE',
-    desc: 'Flip two Crystal tiles at a time to uncover and match all 4 hidden Gem insignia pairs.',
-    hint: 'Scan systematically from the top row downward and anchor each symbol to its corner slot so pairs never slip away.'
+    desc: 'Click two tiles to flip them over. Find all 4 matching Gem pairs to unlock the warp.',
+    hint: 'Go row by row from top-left to bottom-right so you always remember where each symbol sits.'
   },
   3: {
     kind: 'conduit',
     title: 'KINDERGARTEN INJECTOR BYPASS',
-    desc: 'Click pipe tiles to rotate 90° and form one unbroken circuit from IN (top-left) to OUT (bottom-right).',
-    hint: 'IN feeds into the left edge of the top-left tile, and OUT exits the right edge of the bottom-right tile. Watch lit pink pipes trace the flow!'
+    desc: 'Rotate the pipes to link ➔ IN (top-left) to OUT ➔ (bottom-right). Pink glow shows live power!',
+    hint: 'Step 1: Rotate top-left (➔ IN) until it catches the left arrow and glows pink. Step 2: Rotate the dark pipe right next to the pink end until power reaches OUT ➔.'
   },
   4: {
     kind: 'mirrors',
     title: 'MANTLE CLUSTER LIGHT PRISM',
-    desc: 'Click crystal mirrors (/ or \\) to bounce the Starlight beam around stone blockers into the bottom-right Diamond Lock.',
-    hint: '"/" bounces an East beam North and a South beam West. "\\" bends an East beam South and a South beam East—steer around the dark pillars!'
+    desc: 'Click mirrors (/ or \\) to bounce the Starlight beam from top-left ➔ into bottom-right LOCK.',
+    hint: 'Top-left fires light RIGHT. Set the first lit mirror to "\\" to turn the beam DOWN, then use another "\\" at the bottom to aim RIGHT into LOCK.'
   },
   5: {
     kind: 'conduit',
     title: "BISMUTH'S LAVA FORGE GATE",
-    desc: 'Click forge conduit tiles to rotate 90° and route molten energy continuously from IN (top-left) to OUT (bottom-right).',
-    hint: 'Start by aligning the IN tile horizontally on its left edge, then follow the lit energy elbow by elbow toward bottom-right OUT.'
+    desc: 'Rotate pipes so power flows unbroken from ➔ IN (top-left) to OUT ➔ (bottom-right).',
+    hint: 'Follow the glowing pink tip! Wherever the pink pipe points into a dark tile, click that dark tile to connect it toward OUT ➔.'
   },
   6: {
     kind: 'memory',
     title: 'NORTH SEA ICE SHARD SEAL',
-    desc: 'Flip frozen Crystal tiles two at a time to match all 4 ancient Gem pairs.',
-    hint: 'Remember the Ice Crystal and Forge Flame pairs first to shrink the board down to just two remaining pairs.'
+    desc: 'Flip two tiles at a time and match all 4 ancient Gem insignia pairs.',
+    hint: 'Focus on pairing the Ice Crystal and Forge Flame emblems first to clear half the board quickly.'
   },
   7: {
     kind: 'pattern',
     title: 'SPACE ZOO CONTAINMENT CODE',
-    desc: 'Memorize the 4-note Crystal chime pattern, then tap the matching Gem crests in the exact same order.',
-    hint: 'Watch the border highlight on each chime—only the 4 tiles light up, never repeats. Use RESET PUZZLE anytime to replay the chime.'
+    desc: 'Watch the 4-step Crystal chime sequence, then repeat the exact same order.',
+    hint: 'All 4 Gem tiles light up once per sequence—track each step cleanly and tap RESET PUZZLE if you want another preview.'
   },
   8: {
     kind: 'mirrors',
     title: 'AQUAMARINE SHUTTLE PRISM LOCK',
-    desc: 'Click the prism mirrors (/ or \\) to angle the light beam around Homeworld blockers straight into the Diamond Lock.',
-    hint: 'Follow the beam row 0 rightward: use "\\" to drop the beam Southward down columns, then another "\\" near the bottom row to aim East into the lock.'
+    desc: 'Click mirrors (/ or \\) to guide the yellow light beam around stone pillars into LOCK.',
+    hint: 'Follow the yellow beam: flip the mirror at the end of a lit beam to "\\" to steer RIGHT -> DOWN or DOWN -> RIGHT toward LOCK.'
   },
   9: {
     kind: 'conduit',
     title: 'OFF-COLORS ESCAPE CONDUIT',
-    desc: 'Click conduit tiles to rotate 90° and restore an unbroken Kindergarten power line from IN to OUT.',
-    hint: 'Keep an eye on the middle junction—an elbow facing both the top path and the right column connects IN straight to OUT.'
+    desc: 'Click pipes to rotate 90° and carry power from ➔ IN (top-left) all the way to OUT ➔ (bottom-right).',
+    hint: 'Start at ➔ IN on the top-left so its left end turns pink, then chase the lit end step by step down-right until OUT ➔ turns green!'
   },
   10: {
     kind: 'mirrors',
     title: 'DIAMOND STARLIGHT NEXUS',
-    desc: 'Click Starlight prism mirrors (/ or \\) to deflect the beam past Homeworld pillars into White Diamond’s Lock.',
-    hint: 'Drop the beam straight down on the far column or bounce across row 2 around the pillars—every lit step shows the exact beam path!'
+    desc: 'Click prism mirrors (/ or \\) to deflect the Starlight beam past pillars into White Diamond’s LOCK.',
+    hint: 'Keep "\\" mirrors at corners where you want RIGHT -> DOWN or DOWN -> RIGHT turns, skipping over any dark rock pillar.'
   }
 };
 
@@ -27325,6 +27325,15 @@ class StevenUniverseGame {
     }, 620);
   }
 
+  shufflePuzzleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
   buildPuzzleState() {
     if (!this.puzzleState) return;
     const { cfg, ep } = this.puzzleState;
@@ -27341,10 +27350,10 @@ class StevenUniverseGame {
         { label: 'PEARL SPEAR', color: '#38bdf8', key: 'pearl_spear' },
         { label: 'AMETHYST WHIP', color: '#a855f7', key: 'amethyst_whip' }
       ];
-      const sequence = ep === 7 ? [2, 0, 3, 1] : [0, 2, 1, 3];
+      const sequence = this.shufflePuzzleArray([0, 1, 2, 3]);
       this.puzzleState.data = { sequence, input: [], locked: false };
       board.style.gridTemplateColumns = 'repeat(2, 124px)';
-      if (status) status.textContent = `Step 0 / ${sequence.length} · Watch the Gem Chime`;
+      if (status) status.textContent = `Watch closely · Step 0 / ${sequence.length}`;
 
       const btns = gems.map((g, idx) => {
         const b = document.createElement('button');
@@ -27365,10 +27374,10 @@ class StevenUniverseGame {
       const pairs = ep === 6
         ? ['ice', 'forge', 'shield', 'diamond', 'ice', 'forge', 'shield', 'diamond']
         : ['star', 'wave', 'orb', 'bubble', 'star', 'wave', 'orb', 'bubble'];
-      const order = pairs.map((v, i) => ({ v, k: (i * 3 + ep) % 8 })).sort((a, b) => a.k - b.k).map(x => x.v);
+      const order = this.shufflePuzzleArray(pairs);
       this.puzzleState.data = { deck: order, revealed: [], matched: new Set(), busy: false };
       board.style.gridTemplateColumns = 'repeat(4, 74px)';
-      if (status) status.textContent = 'Pairs Matched: 0 / 4';
+      if (status) status.textContent = 'Pairs Matched: 0 / 4 · Click two tiles to flip';
 
       const qMarkup = this.getPuzzleEmblemSvg('question', 36);
       order.forEach((_, idx) => {
@@ -27382,41 +27391,115 @@ class StevenUniverseGame {
         board.appendChild(t);
       });
     } else if (cfg.kind === 'conduit') {
-      // Bitmask: N=1, E=2, S=4, W=8. Solution path (0,0) W|E -> (0,1) W|S -> (1,1) N|E -> (1,2) W|S -> (2,2) N|E
-      const template = [
-        { type: 'straight', base: 10, sol: 0, rot: 1 }, // (0,0) IN
-        { type: 'elbow', base: 6, sol: 1, rot: 0 },     // (0,1)
-        { type: 'elbow', base: 6, sol: 2, rot: 0 },     // (0,2)
-        { type: 'elbow', base: 6, sol: 0, rot: 2 },     // (1,0)
-        { type: 'elbow', base: 6, sol: 3, rot: 1 },     // (1,1)
-        { type: 'elbow', base: 6, sol: 1, rot: 3 },     // (1,2)
-        { type: 'straight', base: 10, sol: 0, rot: 1 }, // (2,0)
-        { type: 'elbow', base: 6, sol: 3, rot: 0 },     // (2,1)
-        { type: 'elbow', base: 6, sol: 3, rot: 1 }      // (2,2) OUT
-      ];
-      if (ep === 5) template[4].rot = 0;
-      if (ep === 9) template[1].rot = 3;
-      this.puzzleState.data = { cells: template.map(c => ({ ...c })), lit: new Set() };
+      // RNG shortest monotone circuit from (0,0) W-inlet to (2,2) E-outlet
+      const steps = this.shufflePuzzleArray(['R', 'R', 'D', 'D']);
+      const path = [0];
+      let pr = 0, pc = 0;
+      for (const s of steps) {
+        if (s === 'R') pc += 1;
+        else pr += 1;
+        path.push(pr * 3 + pc);
+      }
+      const maskToPiece = {
+        10: { type: 'straight', base: 10, sol: 0 },
+        5:  { type: 'straight', base: 10, sol: 1 },
+        6:  { type: 'elbow',    base: 6,  sol: 0 },
+        12: { type: 'elbow',    base: 6,  sol: 1 },
+        9:  { type: 'elbow',    base: 6,  sol: 2 },
+        3:  { type: 'elbow',    base: 6,  sol: 3 }
+      };
+      const pathSet = new Set(path);
+      const cells = Array.from({ length: 9 }, () => ({
+        type: Math.random() < 0.35 ? 'straight' : 'elbow',
+        base: 6,
+        sol: 0,
+        rot: Math.floor(Math.random() * 4),
+        isPath: false
+      }));
+      cells.forEach(c => { if (c.type === 'straight') c.base = 10; });
+
+      for (let k = 0; k < path.length; k++) {
+        const idx = path[k];
+        const r = Math.floor(idx / 3), c = idx % 3;
+        let inBit = 8;
+        if (k > 0) {
+          const prev = path[k - 1];
+          const prPrev = Math.floor(prev / 3), pcPrev = prev % 3;
+          inBit = (prPrev < r) ? 1 : (pcPrev < c ? 8 : (prPrev > r ? 4 : 2));
+        }
+        let outBit = 2;
+        if (k < path.length - 1) {
+          const next = path[k + 1];
+          const nrNext = Math.floor(next / 3), ncNext = next % 3;
+          outBit = (ncNext > c) ? 2 : (nrNext > r ? 4 : (ncNext < c ? 8 : 1));
+        }
+        const piece = maskToPiece[inBit | outBit] || maskToPiece[6];
+        cells[idx] = {
+          type: piece.type,
+          base: piece.base,
+          sol: piece.sol,
+          rot: piece.sol,
+          isPath: true
+        };
+      }
+
+      // Scramble 3 path tiles by only 1-2 clicks so each play is intuitive & fresh
+      const scramblePick = this.shufflePuzzleArray(path).slice(0, 3);
+      for (const idx of scramblePick) {
+        const cell = cells[idx];
+        const offset = cell.type === 'straight' ? 1 : (Math.random() < 0.65 ? 3 : 2);
+        cell.rot = (cell.sol + offset) % 4;
+      }
+
+      this.puzzleState.data = { cells, solutionPath: path, pathSet, lit: new Set() };
+      if (this.evaluateConduitPower()) {
+        cells[0].rot = (cells[0].rot + 1) % 4;
+      }
       board.style.gridTemplateColumns = 'repeat(3, 80px)';
       this.renderConduitBoard();
     } else if (cfg.kind === 'mirrors') {
-      // 4x4 Laser beam enters (0,0) heading East -> hits Diamond Lock at (3,3)
-      const layout = (ep === 8)
-        ? {
-            mirrors: { '0,1': '/', '3,1': '/', '1,3': '/' },
-            solutions: { '0,1': '\\', '3,1': '\\' },
-            blockers: ['1,2', '2,2']
-          }
-        : {
-            mirrors: { '0,2': '/', '2,2': '/', '2,3': '/', '1,1': '/' },
-            solutions: { '0,2': '\\', '2,2': '\\', '2,3': '\\' },
-            blockers: ['1,0', '3,1']
-          };
+      // RNG 4x4 beam path: Emitter (0,0) East -> corner mirrors '\\' -> Diamond Lock (3,3)
+      const c1 = 1 + Math.floor(Math.random() * 2);
+      const r1 = 1 + Math.floor(Math.random() * 3);
+      const solutions = {};
+      const beamCells = new Set(['0,0']);
+      for (let c = 1; c <= c1; c++) beamCells.add(`0,${c}`);
+      solutions[`0,${c1}`] = '\\';
+      for (let r = 1; r <= r1; r++) beamCells.add(`${r},${c1}`);
+      solutions[`${r1},${c1}`] = '\\';
+      if (r1 < 3) {
+        for (let c = c1 + 1; c <= 3; c++) beamCells.add(`${r1},${c}`);
+        solutions[`${r1},3`] = '\\';
+        for (let r = r1 + 1; r <= 3; r++) beamCells.add(`${r},3`);
+      } else {
+        for (let c = c1 + 1; c <= 3; c++) beamCells.add(`3,${c}`);
+      }
+
+      const spareCells = [];
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          const k = `${r},${c}`;
+          if (!beamCells.has(k) && k !== '0,0' && k !== '3,3') spareCells.push(k);
+        }
+      }
+      const shuffledSpare = this.shufflePuzzleArray(spareCells);
+      const blockers = shuffledSpare.slice(0, 2);
+      const mirrors = { ...solutions };
+      shuffledSpare.slice(2, 4).forEach(k => {
+        mirrors[k] = Math.random() < 0.5 ? '/' : '\\';
+      });
+
+      const solKeys = this.shufflePuzzleArray(Object.keys(solutions));
+      const flipCount = Math.min(solKeys.length, 2 + Math.floor(Math.random() * 2));
+      for (let i = 0; i < flipCount; i++) {
+        mirrors[solKeys[i]] = '/';
+      }
+
       this.puzzleState.data = {
         size: 4,
-        mirrors: { ...layout.mirrors },
-        solutions: { ...layout.solutions },
-        blockers: new Set(layout.blockers),
+        mirrors,
+        solutions,
+        blockers: new Set(blockers),
         beam: new Set(),
         reached: false
       };
@@ -27438,16 +27521,17 @@ class StevenUniverseGame {
         if (!this.puzzleActive || !this.puzzleState || this.puzzleState.gen !== gen || !d.btns || !d.btns[padIdx]) return;
         const btn = d.btns[padIdx];
         btn.classList.add('lit');
+        if (status) status.textContent = `Watch closely · Step ${step + 1} / ${d.sequence.length}`;
         if (this.audio) this.audio.playSfx('menuTap');
-        setTimeout(() => btn.classList.remove('lit'), 340);
+        setTimeout(() => btn.classList.remove('lit'), 380);
         if (step === d.sequence.length - 1) {
           setTimeout(() => {
             if (!this.puzzleActive || !this.puzzleState || this.puzzleState.gen !== gen) return;
             d.locked = false;
             if (status) status.textContent = `Your turn · Tap Step 1 / ${d.sequence.length}`;
-          }, 420);
+          }, 460);
         }
-      }, step * 520 + 200);
+      }, step * 580 + 200);
     });
   }
 
@@ -27496,7 +27580,10 @@ class StevenUniverseGame {
     }
     if (this.audio) this.audio.playSfx('menuTap');
 
-    if (d.revealed.length === 2) {
+    if (d.revealed.length === 1) {
+      const status = document.getElementById('puzzleStatusBar');
+      if (status) status.textContent = `Pairs Matched: ${d.matched.size / 2} / ${d.deck.length / 2} · Pick a matching tile`;
+    } else if (d.revealed.length === 2) {
       const [a, b] = d.revealed;
       if (d.deck[a] === d.deck[b]) {
         d.matched.add(a);
@@ -27521,7 +27608,7 @@ class StevenUniverseGame {
               tiles[i].classList.remove('lit');
             }
           });
-        }, 560);
+        }, 760);
       }
     }
   }
@@ -27585,8 +27672,11 @@ class StevenUniverseGame {
       btn.className = 'puzzle-tile' + (isLit ? ' lit' : '') + (isSolved && isLit ? ' solved' : '');
       btn.style.width = '80px';
       btn.style.height = '80px';
-      const tag = idx === 0 ? '<small style="position:absolute;top:3px;left:6px;font-size:9px;letter-spacing:0.6px;color:#38bdf8;">IN</small>'
-        : idx === 8 ? '<small style="position:absolute;bottom:3px;right:6px;font-size:9px;letter-spacing:0.6px;color:#34d399;">OUT</small>' : '';
+      const tag = idx === 0
+        ? '<small style="position:absolute;top:3px;left:5px;font-size:9px;font-weight:800;letter-spacing:0.5px;color:#38bdf8;pointer-events:none;">➔ IN</small>'
+        : idx === 8
+          ? '<small style="position:absolute;bottom:3px;right:5px;font-size:9px;font-weight:800;letter-spacing:0.5px;color:#34d399;pointer-events:none;">OUT ➔</small>'
+          : '';
       btn.innerHTML = `${tag}${this.getConduitPipeSvg(m, isLit, isSolved)}`;
       btn.addEventListener('click', () => {
         if (!this.puzzleActive) return;
@@ -27597,7 +27687,13 @@ class StevenUniverseGame {
       board.appendChild(btn);
     });
     if (status) {
-      status.textContent = isSolved ? 'CONDUIT ALIGNED' : `Click conduit tiles to rotate (${d.lit.size} powered)`;
+      if (isSolved) {
+        status.textContent = 'CONDUIT ALIGNED';
+      } else if (!d.lit.has(0)) {
+        status.textContent = 'Step 1: Click ➔ IN (top-left) so its pipe opens LEFT to catch power';
+      } else {
+        status.textContent = `Power active (${d.lit.size} lit) · Click dark pipes next to pink flow toward OUT ➔`;
+      }
     }
     if (isSolved && this.puzzleActive) this.completeCurrentPuzzle();
   }
@@ -27654,10 +27750,10 @@ class StevenUniverseGame {
         tile.style.height = '68px';
 
         if (isStart) {
-          tile.innerHTML = this.getPuzzleEmblemSvg('emitter', 38);
+          tile.innerHTML = `${this.getPuzzleEmblemSvg('emitter', 36)}<small style="position:absolute;top:2px;left:4px;font-size:8px;font-weight:800;color:#38bdf8;pointer-events:none;">IN ➔</small>`;
           tile.disabled = true;
         } else if (isEnd) {
-          tile.innerHTML = this.getPuzzleEmblemSvg('diamond', 38);
+          tile.innerHTML = `${this.getPuzzleEmblemSvg('diamond', 34)}<small style="position:absolute;bottom:2px;right:4px;font-size:8px;font-weight:800;color:${reached ? '#34d399' : '#38bdf8'};pointer-events:none;">LOCK</small>`;
           tile.style.borderColor = reached ? '#34d399' : '#38bdf8';
           tile.disabled = true;
         } else if (isBlk) {
@@ -27681,7 +27777,7 @@ class StevenUniverseGame {
     if (status) {
       status.textContent = reached
         ? 'DIAMOND LOCK ILLUMINATED'
-        : `Click prism mirrors to steer the light beam (${d.beam.size} lit)`;
+        : `Beam fires RIGHT from IN ➔ · Click / or \\ mirrors to reach LOCK (${d.beam.size} lit)`;
     }
     if (reached && this.puzzleActive) this.completeCurrentPuzzle();
   }
