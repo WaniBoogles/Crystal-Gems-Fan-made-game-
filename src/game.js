@@ -20379,12 +20379,11 @@ class StevenUniverseGame {
     const tryAutoPlay = () => {
       this.audio.init();
       const promptEl = document.getElementById('audioUnlockPrompt');
+      if (promptEl) promptEl.style.display = 'none';
       if (this.audio.ctx && this.audio.ctx.state === 'running') {
-        if (promptEl) promptEl.style.display = 'none';
         onContextUnlocked();
       } else if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
         updateLobbyMusicButton(false);
-        if (promptEl && !this.audio.isManuallyPaused) promptEl.style.display = 'block';
         this.audio.ctx.resume().then(() => {
           if (this.audio.ctx && this.audio.ctx.state === 'running') onContextUnlocked();
         }).catch(() => {});
@@ -20462,12 +20461,14 @@ class StevenUniverseGame {
     const titleScreen = document.getElementById('titleScreen');
     if (!splash) {
       this.splashActive = false;
+      this._splashGuardUntil = 0;
       return;
     }
 
     this.splashActive = true;
     this._splashFadingOut = false;
     this._splashTimers = [];
+    this._splashGuardUntil = 0;
     if (titleScreen) {
       titleScreen.classList.remove('splash-reveal');
       titleScreen.classList.add('splash-pending');
@@ -20480,8 +20481,13 @@ class StevenUniverseGame {
       if (this._onSplashSkipPointer && typeof window !== 'undefined') {
         window.removeEventListener('pointerdown', this._onSplashSkipPointer, true);
       }
+      if (this._onSplashSwallowClick && typeof window !== 'undefined') {
+        window.removeEventListener('click', this._onSplashSwallowClick, true);
+        window.removeEventListener('mousedown', this._onSplashSwallowClick, true);
+      }
       this._onSplashSkipKey = null;
       this._onSplashSkipPointer = null;
+      this._onSplashSwallowClick = null;
     };
 
     const finishSplash = () => {
@@ -20492,12 +20498,13 @@ class StevenUniverseGame {
       if (titleScreen) {
         titleScreen.classList.remove('splash-pending');
       }
+      if (typeof fitGameToViewport === 'function') fitGameToViewport();
     };
 
     const beginFadeOut = () => {
       if (this._splashFadingOut) return;
       this._splashFadingOut = true;
-      cleanupSkipListeners();
+      this._splashGuardUntil = Date.now() + 1400;
       this._splashTimers.forEach(t => clearTimeout(t));
       this._splashTimers = [];
 
@@ -20510,6 +20517,7 @@ class StevenUniverseGame {
           titleScreen.classList.remove('splash-pending');
           titleScreen.classList.add('splash-reveal');
         }
+        if (typeof fitGameToViewport === 'function') fitGameToViewport();
         const tDone = setTimeout(() => {
           finishSplash();
           if (titleScreen) {
@@ -20527,6 +20535,7 @@ class StevenUniverseGame {
     };
     this.finishStartupSplashImmediate = () => {
       this._splashFadingOut = true;
+      this._splashGuardUntil = 0;
       this._splashTimers.forEach(t => clearTimeout(t));
       this._splashTimers = [];
       finishSplash();
@@ -20536,22 +20545,35 @@ class StevenUniverseGame {
     this._onSplashSkipKey = (e) => {
       if (!this.splashActive) return;
       try { this.audio.unlockFromGesture(); } catch (err) {}
+      if (e && e.preventDefault) e.preventDefault();
       if (e && e.stopPropagation) e.stopPropagation();
       if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
       beginFadeOut();
     };
-    this._onSplashSkipPointer = () => {
+    this._onSplashSkipPointer = (e) => {
       if (!this.splashActive) return;
       try { this.audio.unlockFromGesture(); } catch (err) {}
+      if (e && e.preventDefault) e.preventDefault();
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
       beginFadeOut();
+    };
+    this._onSplashSwallowClick = (e) => {
+      if (this.splashActive || Date.now() < (this._splashGuardUntil || 0)) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (e && e.stopPropagation) e.stopPropagation();
+        if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
+      }
     };
 
     if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
       window.addEventListener('keydown', this._onSplashSkipKey, true);
       window.addEventListener('pointerdown', this._onSplashSkipPointer, true);
+      window.addEventListener('click', this._onSplashSwallowClick, true);
+      window.addEventListener('mousedown', this._onSplashSwallowClick, true);
     }
 
-    // Black screen -> "Crystal Gems!" fades in -> holds 3 seconds -> fades out -> Main Menu fades in
+    // Dark grey full screen -> "Crystal Gems!" fades in -> holds 3 seconds -> fades out -> Main Menu fades in
     const tIn = setTimeout(() => {
       if (!this.splashActive || this._splashFadingOut) return;
       splash.classList.add('phase-in');
@@ -25617,6 +25639,9 @@ class StevenUniverseGame {
           this.showTitleScreen();
           return;
         }
+        const blurActive = () => {
+          try { if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur(); } catch (err) {}
+        };
         if (isShown('characterSelectScreen')) {
           e.preventDefault();
           if (this.playerMode === '2p' && this.charSelectActiveTab === 'p2') {
@@ -25629,6 +25654,7 @@ class StevenUniverseGame {
           }
           this.updateLobbyGuardian();
           document.getElementById('characterSelectScreen').style.display = 'none';
+          blurActive();
           this.audio.playSfx('cookie');
           return;
         }
@@ -25640,6 +25666,7 @@ class StevenUniverseGame {
           SafeStorage.setItem('su_screenShake', this.screenShakeEnabled ? '1' : '0');
           SafeStorage.setItem('su_mobileTouch', this.isRealMobile ? '1' : '0');
           document.getElementById('settingsScreen').style.display = 'none';
+          blurActive();
           this.audio.playSfx('cookie');
           return;
         }
@@ -25648,6 +25675,7 @@ class StevenUniverseGame {
           if (isShown(modalId)) {
             e.preventDefault();
             document.getElementById(modalId).style.display = 'none';
+            blurActive();
             this.audio.playSfx('menuTap');
             return;
           }
@@ -25779,14 +25807,28 @@ class StevenUniverseGame {
     });
 
     // Helper for safe click bindings
+    const clearMenuButtonFocus = (el) => {
+      try {
+        if (el && typeof el.blur === 'function') el.blur();
+        if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+      } catch (e) {}
+    };
+
+    const menuNavIds = new Set(['btnArcadeMode', 'btnStoryModeEntry', 'btnPracticeModeEntry', 'btnOpenSettings', 'btnOpenCredits', 'btnQuitGame']);
     const safeClick = (id, fn) => {
       const el = document.getElementById(id);
       if (el) {
         let lastTime = 0;
         const trigger = (e) => {
+          if (menuNavIds.has(id) && (this.splashActive || Date.now() < (this._splashGuardUntil || 0))) {
+            return;
+          }
           const now = Date.now();
           if (now - lastTime < 250) return;
           lastTime = now;
+          clearMenuButtonFocus(el);
           try {
             this.audio.init();
             if (this.audio.ctx && this.audio.ctx.state === 'suspended') {
@@ -26536,6 +26578,12 @@ class StevenUniverseGame {
       if (this._activeHoverEl && this._activeHoverEl !== target) {
         this._activeHoverEl.style.setProperty('--mx', '0px');
         this._activeHoverEl.style.setProperty('--my', '0px');
+      }
+      // Clear lingering focus from clicked main menu buttons when navigating by mouse
+      if (target && target.classList && target.classList.contains('menu-link-btn') &&
+          document.activeElement && document.activeElement !== target &&
+          document.activeElement.classList && document.activeElement.classList.contains('menu-link-btn')) {
+        try { document.activeElement.blur(); } catch (err) {}
       }
       this._activeHoverEl = target;
       if (!target) return;
@@ -27769,8 +27817,8 @@ class StevenUniverseGame {
 // at any window size, with no HUD overflow on letterboxed viewports.
 // ---------------------------------------------------------------------------
 function fitGameToViewport() {
-  const w = window.innerWidth || 1280;
-  const h = window.innerHeight || 720;
+  const w = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 1280;
+  const h = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 720;
   const preset = (typeof window !== 'undefined' && window.__suResolutionPreset) || 'auto';
   let scale = Math.max(0.35, Math.min(w / 1280, h / 720));
   if (preset !== 'auto' && preset.includes('x')) {
@@ -27901,7 +27949,15 @@ function bootStevenUniverseGame() {
 window.addEventListener('resize', fitGameToViewport);
 window.addEventListener('orientationchange', fitGameToViewport);
 window.addEventListener('fullscreenchange', fitGameToViewport);
+if (typeof ResizeObserver === 'function' && document.documentElement) {
+  try {
+    new ResizeObserver(() => fitGameToViewport()).observe(document.documentElement);
+  } catch (e) {}
+}
 fitGameToViewport();
+setTimeout(fitGameToViewport, 60);
+setTimeout(fitGameToViewport, 220);
+setTimeout(fitGameToViewport, 500);
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', fitGameToViewport);
 }

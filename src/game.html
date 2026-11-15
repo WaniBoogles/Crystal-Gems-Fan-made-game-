@@ -27,6 +27,15 @@
     <p class="orientation-desc">Crystal Gems! is optimized for Landscape mode with two-thumb touch controls!</p>
   </div>
 
+  <!-- Cinematic Startup Splash Overlay (Full-Screen Dark Grey -> "Crystal Gems!" -> 3s or Key -> Game Fade-In) -->
+  <div id="startupSplash" class="startup-splash" role="presentation" aria-hidden="true">
+    <div class="startup-splash-logo" id="startupSplashLogo">
+      <div class="startup-splash-star">✦</div>
+      <h1 class="startup-splash-title">Crystal Gems!</h1>
+      <div class="startup-splash-sub">DEFEND BEACH CITY</div>
+    </div>
+  </div>
+
   <div id="game-container">
     <!-- Main Render Canvas (Widescreen 1280x720) -->
     <canvas id="gameCanvas" width="1280" height="720"></canvas>
@@ -300,17 +309,8 @@
     </div>
 
     <!-- UI Overlay Screens -->
-    <!-- 0. Cinematic Startup Splash Overlay (Black -> "Crystal Gems!" -> 3s or Key -> Game Fade-In) -->
-    <div id="startupSplash" class="startup-splash" role="presentation" aria-hidden="true">
-      <div class="startup-splash-logo" id="startupSplashLogo">
-        <div class="startup-splash-star">✦</div>
-        <h1 class="startup-splash-title">Crystal Gems!</h1>
-        <div class="startup-splash-sub">DEFEND BEACH CITY</div>
-      </div>
-    </div>
-
     <!-- 1. Start / Title Screen (Cinematic L4D2-Style Living Lobby) -->
-    <div id="titleScreen" class="overlay-screen">
+    <div id="titleScreen" class="overlay-screen splash-pending">
       <!-- Left 4 Dead 2 Inspired Living Background Landscape Showcase -->
       <div class="lobby-slideshow-container" id="lobbySlideshow" aria-hidden="true">
         <div class="lobby-slide slide-1 active"></div>

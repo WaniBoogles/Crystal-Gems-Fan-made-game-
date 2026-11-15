@@ -90,7 +90,7 @@ class CrystalGemsWindow(Gtk.Window):
                 pass
 
         rgba = Gdk.RGBA()
-        rgba.parse("#0f0a1c")
+        rgba.parse("#1e2127")
         self.override_background_color(Gtk.StateFlags.NORMAL, rgba)
 
         try:
@@ -120,6 +120,7 @@ class CrystalGemsWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
 
         if mode == "fullscreen":
+            self.maximize()
             self.fullscreen()
         else:
             self.set_default_size(1280, 800)

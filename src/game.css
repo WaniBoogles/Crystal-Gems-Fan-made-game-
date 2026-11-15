@@ -32,7 +32,7 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: radial-gradient(circle at center, #261642 0%, #0d071a 100%);
+  background: #14161a;
   font-family: var(--su-font-body);
   color: #ffffff;
   display: flex;
@@ -42,13 +42,10 @@ html, body {
 
 #game-container {
   position: relative;
-  /* Fixed 1280x720 design canvas; #game-container is scaled as a whole (canvas + HUD +
-     menus) by --gc-scale so every layout is pixel-identical in the native window and in
-     any browser, at any window size. No more HUD overflow on letterboxed viewports. */
+  /* Fixed 1280x720 design canvas; #game-container is scaled seamlessly to fill the
+     viewport via --gc-scale so every layout stays consistent at any monitor resolution. */
   width: 1280px;
   height: 720px;
-  /* Absolute + translate centring: flex centring fails when the fixed 1280x720 stage is
-     larger than the window (negative free space pins it to the top and clips the hotbar). */
   position: absolute;
   left: 50%;
   top: 50%;
@@ -58,9 +55,9 @@ html, body {
   transform-origin: center center;
   will-change: transform;
   contain: layout style paint;
-  background: #000;
-  box-shadow: 0 0 35px rgba(255, 96, 151, 0.35), 0 0 50px rgba(56, 189, 248, 0.18);
-  border-radius: 14px;
+  background: #14161a;
+  box-shadow: none;
+  border-radius: 0;
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -1542,23 +1539,11 @@ body.mobile-device .touch-controls.active {
 }
 
 .menu-link-btn::before {
-  content: "";
-  position: absolute;
-  inset: -6px -18px -6px -14px;
-  border-radius: 999px;
-  background: radial-gradient(ellipse at 32% 50%,
-    rgba(255, 214, 130, 0.36) 0%,
-    rgba(255, 118, 178, 0.16) 48%,
-    rgba(255, 214, 130, 0) 76%);
-  opacity: 0;
-  transform: scale(0.86);
-  transition: opacity 0.26s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-  z-index: -1;
+  display: none;
+  content: none;
 }
 
-.menu-link-btn:hover,
-.menu-link-btn:focus-visible {
+.menu-link-btn:hover {
   color: #fff7d6;
   letter-spacing: 3.1px;
   text-shadow:
@@ -1568,10 +1553,9 @@ body.mobile-device .touch-controls.active {
   transform: translate3d(calc(10px + var(--mx, 0) * 10px), calc(-4px + var(--my, 0) * 6px), 0) scale(1.06);
 }
 
-.menu-link-btn:hover::before,
-.menu-link-btn:focus-visible::before {
-  opacity: 1;
-  transform: scale(1.08);
+.menu-link-btn:focus,
+.menu-link-btn:focus-visible {
+  outline: none;
 }
 
 .menu-link-btn:active {
@@ -4759,10 +4743,12 @@ option {
    ========================================================== */
 #titleScreen.splash-pending {
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
 }
 
 #titleScreen.splash-reveal {
+  visibility: visible;
   animation: titleScreenFadeIn 0.85s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
@@ -4772,13 +4758,16 @@ option {
 }
 
 .startup-splash {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  background: #000000;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  background: #1e2127;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 99999;
   opacity: 1;
   transition: opacity 0.65s ease;
   cursor: pointer;
@@ -4811,7 +4800,7 @@ option {
 
 .startup-splash.phase-fade-out {
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .startup-splash.phase-fade-out .startup-splash-logo {
