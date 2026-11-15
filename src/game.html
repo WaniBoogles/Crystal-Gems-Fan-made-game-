@@ -574,15 +574,33 @@
 
     <!-- 1.56. Arcade Wave Intermission Popup (Continue [ENTER] vs Gem Out [RETURN]) -->
     <div id="arcadeWaveModal" class="overlay-screen modal-screen" style="display: none;">
-      <div class="arcade-wave-card hover-float">
-        <div class="star-badge" style="font-size: 36px; margin-bottom: 6px;">⭐</div>
-        <h2 id="arcadeWaveTitle" style="font-family: var(--su-font-display); color: #fde047; margin: 0 0 6px 0;">WAVE 1 CLEARED!</h2>
-        <p id="arcadeWaveSubtitle" style="color: #cbd5e1; font-size: 13px; margin: 0 0 12px 0;">
-          Ready for the next rush? You recover 1 Heart on Continue!
+      <div class="modal-card arcade-wave-card hover-float">
+        <div class="modal-header arcade-modal-header">
+          <div class="arcade-emblem-wrap" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="44" height="44">
+              <defs>
+                <linearGradient id="suWaveStarGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fef08a"/>
+                  <stop offset="55%" stop-color="#facc15"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="32" r="28" fill="#1e293b" stroke="#fde047" stroke-width="2.5"/>
+              <polygon points="32,10 38,24 53,26 42,36 45,51 32,44 19,51 22,36 11,26 26,24" fill="url(#suWaveStarGrad)" stroke="#78350f" stroke-width="2" stroke-linejoin="round"/>
+              <polygon points="32,17 35,26 44,28 37,34 39,43 32,39 25,43 27,34 20,28 29,26" fill="#fef9c3" opacity="0.35"/>
+            </svg>
+          </div>
+          <div class="arcade-header-text">
+            <span class="arcade-kicker">ARENA CHECKPOINT</span>
+            <h2 id="arcadeWaveTitle">WAVE 1 CLEARED</h2>
+          </div>
+        </div>
+        <p id="arcadeWaveSubtitle" class="arcade-sub-copy">
+          Checkpoint reached. Continue (+1 Heart) or Gem Out to bank your score.
         </p>
-        <div class="arcade-score-row" style="margin: 10px 0 6px; padding: 12px;">
-          <div class="arcade-stat-line" style="font-size: 15px;"><span>CURRENT SCORE:</span><b id="arcadeWaveScore">0</b></div>
-          <div class="arcade-stat-line" style="font-size: 15px;"><span>GEMS BUBBLED:</span><b id="arcadeWaveBubbled">0</b></div>
+        <div class="arcade-score-row">
+          <div class="arcade-stat-line"><span>CURRENT SCORE</span><b id="arcadeWaveScore">0</b></div>
+          <div class="arcade-stat-line"><span>GEMS BUBBLED</span><b id="arcadeWaveBubbled">0</b></div>
         </div>
         <div class="arcade-wave-actions">
           <button type="button" id="btnArcadeContinue" class="btn-primary hover-float">CONTINUE (ENTER)</button>
@@ -593,14 +611,35 @@
 
     <!-- 1.57. Arcade End Result Screen (Score, Gem Bubbled, Main Menu & Retry) -->
     <div id="arcadeResultScreen" class="overlay-screen modal-screen" style="display: none;">
-      <div class="arcade-result-card hover-float">
-        <div class="star-badge" style="font-size: 40px; margin-bottom: 6px;">💎</div>
-        <h2 id="arcadeResultTitle" style="font-family: var(--su-font-display); color: #ffffff; margin: 0 0 4px 0;">ARCADE COMPLETE</h2>
-        <p id="arcadeResultMapLabel" style="font-size: 12px; color: #94a3b8; margin: 0 0 12px 0;">Arena: Beach City Boardwalk</p>
+      <div class="modal-card arcade-result-card hover-float">
+        <div class="modal-header arcade-modal-header">
+          <div class="arcade-emblem-wrap" aria-hidden="true">
+            <svg viewBox="0 0 64 64" width="46" height="46">
+              <defs>
+                <linearGradient id="suGemResultGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#f9a8d4"/>
+                  <stop offset="50%" stop-color="#f472b6"/>
+                  <stop offset="100%" stop-color="#db2777"/>
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="32" r="28" fill="#1e293b" stroke="#f472b6" stroke-width="2.5"/>
+              <polygon points="32,12 50,24 44,50 20,50 14,24" fill="url(#suGemResultGrad)" stroke="#831843" stroke-width="2" stroke-linejoin="round"/>
+              <polygon points="32,18 42,27 38,44 26,44 22,27" fill="#fbcfe8" opacity="0.45"/>
+              <line x1="14" y1="24" x2="22" y2="27" stroke="#831843" stroke-width="1.6"/>
+              <line x1="50" y1="24" x2="42" y2="27" stroke="#831843" stroke-width="1.6"/>
+              <line x1="32" y1="12" x2="32" y2="18" stroke="#831843" stroke-width="1.6"/>
+            </svg>
+          </div>
+          <div class="arcade-header-text">
+            <span class="arcade-kicker" style="color: #f9a8d4;">ARCADE SUMMARY</span>
+            <h2 id="arcadeResultTitle">ARCADE COMPLETE</h2>
+          </div>
+        </div>
+        <p id="arcadeResultMapLabel" class="arcade-sub-copy">Arena: Beach City Boardwalk</p>
         <div class="arcade-score-row">
-          <div class="arcade-stat-line"><span>SCORE:</span><b id="arcadeResultScore">0</b></div>
-          <div class="arcade-stat-line"><span>GEM BUBBLED:</span><b id="arcadeResultBubbled">0</b></div>
-          <div class="arcade-stat-line" style="font-size: 13px; color: #94a3b8;"><span>WAVES SURVIVED:</span><b id="arcadeResultWaves" style="font-size: 16px; color: #38bdf8;">1</b></div>
+          <div class="arcade-stat-line"><span>SCORE</span><b id="arcadeResultScore">0</b></div>
+          <div class="arcade-stat-line"><span>GEM BUBBLED</span><b id="arcadeResultBubbled">0</b></div>
+          <div class="arcade-stat-line"><span>WAVES SURVIVED</span><b id="arcadeResultWaves" style="color: #38bdf8;">1</b></div>
         </div>
         <div class="arcade-wave-actions">
           <button type="button" id="btnArcadeMainMenu" class="btn-secondary hover-float">MAIN MENU</button>
@@ -633,17 +672,27 @@
     <!-- 1.59. Story Mode Interactive Gem Puzzle Modal -->
     <div id="storyPuzzleScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card puzzle-card hover-float">
-        <div class="modal-header">
-          <h2 id="puzzleTitle">TEMPLE PUZZLE CHALLENGE</h2>
-          <button class="btn-close" id="btnPuzzleSkip" title="Bypass puzzle (no bonus)">✕</button>
+        <div class="modal-header puzzle-header">
+          <div class="puzzle-title-group">
+            <span class="puzzle-ep-tag" id="puzzleEpTag">EPISODE 1 · PUZZLE</span>
+            <h2 id="puzzleTitle">TEMPLE PUZZLE CHALLENGE</h2>
+          </div>
+          <button class="btn-close" id="btnPuzzleSkip" title="Skip puzzle (no bonus)">✕</button>
         </div>
-        <div class="modal-body">
-          <p id="puzzleLoreDesc" style="font-size: 13px; color: #cbd5e1; margin: 0 0 8px 0; text-align: center;"></p>
-          <div class="puzzle-status-bar" id="puzzleStatusBar">Match the Crystal Gem sequence!</div>
+        <div class="modal-body puzzle-body">
+          <div class="puzzle-instruction-box">
+            <span class="puzzle-instr-label">HOW TO SOLVE</span>
+            <p id="puzzleLoreDesc" class="puzzle-lore-desc"></p>
+          </div>
+          <div class="puzzle-status-bar" id="puzzleStatusBar">Ready</div>
+          <div class="puzzle-hint-box" id="puzzleHintBox" style="display: none;">
+            <span class="puzzle-hint-label">GEM HINT</span>
+            <p id="puzzleHintText" class="puzzle-hint-text"></p>
+          </div>
           <div class="puzzle-board" id="puzzleBoard"></div>
         </div>
-        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: space-between;">
-          <button type="button" class="btn-secondary hover-float" id="btnPuzzleHint">HINT</button>
+        <div class="modal-footer puzzle-footer">
+          <button type="button" class="btn-secondary hover-float" id="btnPuzzleHint" aria-expanded="false">SHOW HINT</button>
           <button type="button" class="btn-secondary hover-float" id="btnPuzzleReset">RESET PUZZLE</button>
         </div>
       </div>

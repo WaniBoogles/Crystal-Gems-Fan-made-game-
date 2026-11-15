@@ -4296,69 +4296,96 @@ option {
 }
 
 /* Arcade Intermission Wave Continue / Gem Out Popup */
-.arcade-wave-card {
-  width: min(500px, 92vw);
+.arcade-wave-card,
+.arcade-result-card {
+  width: min(470px, 92vw);
   text-align: center;
-  padding: 26px 28px;
-  background: radial-gradient(circle at top, rgba(30, 41, 59, 0.96), rgba(11, 19, 41, 0.96));
-  border: 2px solid rgba(253, 224, 71, 0.5);
-  border-radius: 22px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.72), 0 0 36px rgba(255, 180, 90, 0.22);
+  padding: 22px 24px 20px;
+  background: rgba(15, 23, 42, 0.96);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-top: 3px solid #fde047;
+  border-radius: 18px;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, 0.78);
+}
+.arcade-result-card {
+  border-top-color: #f472b6;
+}
+.arcade-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  text-align: left;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.arcade-emblem-wrap {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.arcade-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.arcade-kicker {
+  font-family: var(--su-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  color: #fde047;
+}
+.arcade-modal-header h2 {
+  font-family: var(--su-font-display);
+  font-size: 20px;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: 0.4px;
+}
+.arcade-sub-copy {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0 0 12px 0;
+  text-align: left;
 }
 .arcade-wave-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   justify-content: center;
-  margin-top: 20px;
+  margin-top: 16px;
 }
 .arcade-wave-actions button {
   flex: 1;
-  padding: 13px 16px;
-  border-radius: 14px;
-  font-family: var(--su-font-display);
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  cursor: pointer;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
-}
-.arcade-wave-actions button:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(255, 200, 110, 0.35);
-}
-
-/* Arcade End Result Card (Score & Gem Bubbled + Main Menu / Retry) */
-.arcade-result-card {
-  width: min(460px, 92vw);
-  text-align: center;
-  padding: 30px 28px;
-  border-radius: 22px;
-  background: rgba(15, 23, 42, 0.94);
-  border: 2px solid rgba(255, 148, 186, 0.45);
-  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.75);
+  padding: 12px 14px;
+  font-size: 13px;
 }
 .arcade-score-row {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 18px 0 24px;
-  padding: 16px;
-  border-radius: 14px;
-  background: rgba(30, 41, 59, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 10px;
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .arcade-stat-line {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--su-font-display);
-  font-size: 18px;
-  color: #e2e8f0;
+  font-size: 14px;
+  color: #cbd5e1;
 }
 .arcade-stat-line b {
-  font-size: 24px;
+  font-size: 20px;
   color: #fde047;
-  text-shadow: 0 0 12px rgba(253, 224, 71, 0.45);
 }
 
 /* Story Cutscene Cinema Overlay */
@@ -4440,47 +4467,134 @@ option {
 
 /* Interactive Story Puzzle Overlay */
 .puzzle-card {
-  width: min(680px, 94vw);
+  width: min(560px, 94vw);
   padding: 20px 24px;
+  border-top: 3px solid #38bdf8;
+}
+.puzzle-header {
+  align-items: center;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.puzzle-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+.puzzle-ep-tag {
+  font-family: var(--su-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  color: #38bdf8;
+}
+.puzzle-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.puzzle-instruction-box {
+  background: rgba(30, 41, 59, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 3px solid #f472b6;
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+.puzzle-instr-label {
+  display: block;
+  font-family: var(--su-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #f9a8d4;
+  margin-bottom: 3px;
+}
+.puzzle-lore-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #e2e8f0;
+}
+.puzzle-hint-box {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.32);
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+.puzzle-hint-label {
+  display: block;
+  font-family: var(--su-font-display);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.1px;
+  color: #fde047;
+  margin-bottom: 3px;
+}
+.puzzle-hint-text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #fef08a;
 }
 .puzzle-board {
   display: grid;
   gap: 10px;
   justify-content: center;
-  margin: 14px auto;
+  margin: 4px auto;
 }
 .puzzle-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 2px solid rgba(255, 255, 255, 0.18);
-  background: rgba(30, 41, 59, 0.82);
+  background: rgba(30, 41, 59, 0.88);
   color: #ffffff;
   font-family: var(--su-font-display);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  padding: 4px;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
-.puzzle-tile:hover {
-  transform: translateY(-4px) scale(1.04);
+.puzzle-tile:disabled {
+  cursor: default;
+}
+.puzzle-tile:not(:disabled):hover {
+  transform: translateY(-2px);
   border-color: #fde047;
-  box-shadow: 0 8px 22px rgba(255, 200, 110, 0.35);
 }
 .puzzle-tile.lit, .puzzle-tile.matched {
-  border-color: #fde047;
-  background: linear-gradient(135deg, rgba(244, 114, 182, 0.45), rgba(56, 189, 248, 0.4));
-  box-shadow: 0 0 22px rgba(253, 224, 71, 0.5);
+  border-color: #f472b6;
+  background: rgba(244, 114, 182, 0.22);
+}
+.puzzle-tile.solved {
+  border-color: #34d399;
+  background: rgba(52, 211, 153, 0.2);
 }
 .puzzle-status-bar {
+  font-family: var(--su-font-display);
   font-size: 13px;
   font-weight: 700;
-  color: #a5f3fc;
-  min-height: 22px;
+  letter-spacing: 0.3px;
+  color: #7dd3fc;
+  min-height: 20px;
   text-align: center;
+}
+.puzzle-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.puzzle-footer button {
+  flex: 1;
 }
 
 /* Settings 3-Tab Switcher (Audio / Graphics / Resolution) */

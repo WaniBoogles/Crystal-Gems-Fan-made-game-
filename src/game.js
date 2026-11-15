@@ -14874,6 +14874,16 @@ class EnemyManager {
         }
         continue;
       }
+      // Failsafe: if any non-dummy enemy or Story/Arcade boss hits 0 HP via any path, ensure poof triggers cleanly
+      if (!e.isImmortalDummy && !e.isPoofed && !e.isPoofing && e.hp <= 0) {
+        e.hp = 0;
+        e.invulnerableTimer = 0;
+        e.breakoutBurstTimer = 0;
+        e.isPoofing = true;
+        e.poofTimer = 0.16;
+        e.maxPoofTime = 0.16;
+        continue;
+      }
       e.animTime += dt;
       if (e.spawnAnimTimer && e.spawnAnimTimer > 0) {
         e.spawnAnimTimer = Math.max(0, e.spawnAnimTimer - dt);
@@ -16073,7 +16083,23 @@ class EnemyManager {
     e.comboDamageTaken = (e.comboDamageTaken || 0) + finalDmg;
     e.lastComboHitTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-    // Loophole 1 Fix: Boss Super-Armor Breakout Burst
+    // Defeat check MUST run before Boss Super-Armor Breakout Burst so a fatal hit at 0 HP never skips poofing!
+    if (e.hp <= 0) {
+      e.hp = 0;
+      e.invulnerableTimer = 0;
+      e.breakoutBurstTimer = 0;
+      if (!e.isPoofed && !e.isPoofing) {
+        e.isPoofing = true;
+        e.poofTimer = 0.16;
+        e.maxPoofTime = 0.16;
+        if (this.gameRef && this.gameRef.triggerHitstop) {
+          this.gameRef.triggerHitstop(0.065, 5.0);
+        }
+      }
+      return;
+    }
+
+    // Loophole 1 Fix: Boss Super-Armor Breakout Burst (only while boss still has HP > 0)
     // If boss takes >= 20% of maxHp in a continuous combo, burst out with invulnerability & shockwave to break the lock
     if (e.isBoss && e.comboDamageTaken >= (e.maxHp * 0.20) && !e.isPoofed && !e.isPoofing) {
       e.invulnerableTimer = 0.75;
@@ -16093,19 +16119,6 @@ class EnemyManager {
         const pDir = p.x < e.x ? -1 : 1;
         p.vx = pDir * 380;
         p.vy = -180;
-      }
-      return;
-    }
-
-    if (e.hp <= 0) {
-      if (!e.isPoofed && !e.isPoofing) {
-        e.hp = 0;
-        e.isPoofing = true;
-        e.poofTimer = 0.16;
-        e.maxPoofTime = 0.16;
-        if (this.gameRef && this.gameRef.triggerHitstop) {
-          this.gameRef.triggerHitstop(0.065, 5.0);
-        }
       }
       return;
     }
@@ -19127,16 +19140,66 @@ const STORY_FINALE_CUTSCENE = {
 };
 
 const STORY_PUZZLE_CONFIGS = {
-  1: { kind: 'pattern', title: 'TEMPLE DOOR HARMONY SEAL', desc: 'Watch the Temple Door gemstones chime, then tap the exact 4-Gem sequence to unseal Beach City!' },
-  2: { kind: 'memory', title: 'GALAXY WARP PRISM RESONANCE', desc: 'Match the 4 fractured Crystal Gem pairs on the ancient warp pad to open the Sea Spire.' },
-  3: { kind: 'conduit', title: 'KINDERGARTEN INJECTOR BYPASS', desc: 'Click pipes to rotate and route Rose Energy from the top-left Core (IN) to the bottom-right Exit (OUT).' },
-  4: { kind: 'mirrors', title: 'MANTLE CLUSTER LIGHT PRISM', desc: 'Click mirror crystals (/ or \\) so Steven’s Pink Shield Beam reaches the Geo-Weapon Diamond Lock!' },
-  5: { kind: 'conduit', title: "BISMUTH'S LAVA FORGE GATE", desc: 'Rotate the molten conduit tiles to channel Bismuth Forge heat from IN to OUT.' },
-  6: { kind: 'memory', title: 'NORTH SEA ICE SHARD SEAL', desc: 'Uncover and match all 4 frozen Gem insignia pairs before Jasper charges!' },
-  7: { kind: 'pattern', title: 'SPACE ZOO AMETHYST DOOR CODE', desc: 'Memorize the Diamond Authority chime order and repeat it back to unlock the Zoo containment bay!' },
-  8: { kind: 'mirrors', title: 'AQUAMARINE SHUTTLE PRISM LOCK', desc: 'Angle the Homeworld prism mirrors to deflect Steven’s beam straight into the escape lock!' },
-  9: { kind: 'conduit', title: 'OFF-COLORS ESCAPE CONDUIT', desc: 'Re-route the decaying Homeworld Kindergarten power grid from IN to OUT for Lars & the Off-Colors!' },
-  10: { kind: 'mirrors', title: 'DIAMOND STARLIGHT NEXUS', desc: 'Align White Diamond’s prism reflectors to illuminate all pathways and reach the final confrontation!' }
+  1: {
+    kind: 'pattern',
+    title: 'TEMPLE DOOR HARMONY SEAL',
+    desc: 'Watch the 4 Crystal Gems chime in sequence, then click the same 4 tiles in exact order.',
+    hint: 'Track the chime order by color and weapon emblem. Need another look? Press RESET PUZZLE to replay the sequence.'
+  },
+  2: {
+    kind: 'memory',
+    title: 'GALAXY WARP PRISM RESONANCE',
+    desc: 'Flip two Crystal tiles at a time to uncover and match all 4 hidden Gem insignia pairs.',
+    hint: 'Scan systematically from the top row downward and anchor each symbol to its corner slot so pairs never slip away.'
+  },
+  3: {
+    kind: 'conduit',
+    title: 'KINDERGARTEN INJECTOR BYPASS',
+    desc: 'Click pipe tiles to rotate 90° and form one unbroken circuit from IN (top-left) to OUT (bottom-right).',
+    hint: 'IN feeds into the left edge of the top-left tile, and OUT exits the right edge of the bottom-right tile. Watch lit pink pipes trace the flow!'
+  },
+  4: {
+    kind: 'mirrors',
+    title: 'MANTLE CLUSTER LIGHT PRISM',
+    desc: 'Click crystal mirrors (/ or \\) to bounce the Starlight beam around stone blockers into the bottom-right Diamond Lock.',
+    hint: '"/" bounces an East beam North and a South beam West. "\\" bends an East beam South and a South beam East—steer around the dark pillars!'
+  },
+  5: {
+    kind: 'conduit',
+    title: "BISMUTH'S LAVA FORGE GATE",
+    desc: 'Click forge conduit tiles to rotate 90° and route molten energy continuously from IN (top-left) to OUT (bottom-right).',
+    hint: 'Start by aligning the IN tile horizontally on its left edge, then follow the lit energy elbow by elbow toward bottom-right OUT.'
+  },
+  6: {
+    kind: 'memory',
+    title: 'NORTH SEA ICE SHARD SEAL',
+    desc: 'Flip frozen Crystal tiles two at a time to match all 4 ancient Gem pairs.',
+    hint: 'Remember the Ice Crystal and Forge Flame pairs first to shrink the board down to just two remaining pairs.'
+  },
+  7: {
+    kind: 'pattern',
+    title: 'SPACE ZOO CONTAINMENT CODE',
+    desc: 'Memorize the 4-note Crystal chime pattern, then tap the matching Gem crests in the exact same order.',
+    hint: 'Watch the border highlight on each chime—only the 4 tiles light up, never repeats. Use RESET PUZZLE anytime to replay the chime.'
+  },
+  8: {
+    kind: 'mirrors',
+    title: 'AQUAMARINE SHUTTLE PRISM LOCK',
+    desc: 'Click the prism mirrors (/ or \\) to angle the light beam around Homeworld blockers straight into the Diamond Lock.',
+    hint: 'Follow the beam row 0 rightward: use "\\" to drop the beam Southward down columns, then another "\\" near the bottom row to aim East into the lock.'
+  },
+  9: {
+    kind: 'conduit',
+    title: 'OFF-COLORS ESCAPE CONDUIT',
+    desc: 'Click conduit tiles to rotate 90° and restore an unbroken Kindergarten power line from IN to OUT.',
+    hint: 'Keep an eye on the middle junction—an elbow facing both the top path and the right column connects IN straight to OUT.'
+  },
+  10: {
+    kind: 'mirrors',
+    title: 'DIAMOND STARLIGHT NEXUS',
+    desc: 'Click Starlight prism mirrors (/ or \\) to deflect the beam past Homeworld pillars into White Diamond’s Lock.',
+    hint: 'Drop the beam straight down on the far column or bounce across row 2 around the pillars—every lit step shows the exact beam path!'
+  }
 };
 
 const STORY_SCRIPT = {
@@ -26305,8 +26368,8 @@ class StevenUniverseGame {
     const sub = document.getElementById('arcadeWaveSubtitle');
     const sc = document.getElementById('arcadeWaveScore');
     const bub = document.getElementById('arcadeWaveBubbled');
-    if (title) title.textContent = `WAVE ${this.arcadeWave} CLEARED!`;
-    if (sub) sub.textContent = `Boss Checkpoint Cleared! Next set (#${this.arcadeWave + 1}) ramps up intensity. Continue for +1 Heart or Gem Out with your score!`;
+    if (title) title.textContent = `WAVE ${this.arcadeWave} CLEARED`;
+    if (sub) sub.textContent = `Boss checkpoint cleared. Wave ${this.arcadeWave + 1} awaits — Continue (+1 Heart) or Gem Out to bank your score.`;
     if (sc) sc.textContent = String(this.score);
     if (bub) bub.textContent = String(this.bubbledGemsCount);
     if (modal) modal.style.display = 'flex';
@@ -26543,11 +26606,151 @@ class StevenUniverseGame {
   }
 
   // ---- INTERACTIVE STORY GEM PUZZLES (4 DISTINCT SOLVABLE MECHANICS) ----
+  getPuzzleEmblemSvg(key, size = 34) {
+    const s = size;
+    const svgs = {
+      rose_shield: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <circle cx="32" cy="32" r="24" fill="#fb7185" stroke="#881337" stroke-width="3"/>
+        <circle cx="32" cy="32" r="16" fill="#fda4af" stroke="#be123c" stroke-width="2"/>
+        <polygon points="32,20 35.5,28.5 44.5,29 37.5,34.5 40,43.5 32,38.5 24,43.5 26.5,34.5 19.5,29 28.5,28.5" fill="#fff1f2" stroke="#9f1239" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>`,
+      garnet_gauntlet: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <path d="M18 26 Q18 14 32 14 Q46 14 46 26 L48 44 Q48 52 38 52 L26 52 Q16 52 16 44 Z" fill="#dc2626" stroke="#450a0a" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="20" y="16" width="6" height="10" rx="3" fill="#f87171" stroke="#450a0a" stroke-width="1.8"/>
+        <rect x="29" y="14" width="6" height="11" rx="3" fill="#f87171" stroke="#450a0a" stroke-width="1.8"/>
+        <rect x="38" y="16" width="6" height="10" rx="3" fill="#f87171" stroke="#450a0a" stroke-width="1.8"/>
+        <polygon points="32,29 39,36 32,43 25,36" fill="#fde047" stroke="#78350f" stroke-width="1.8"/>
+      </svg>`,
+      pearl_spear: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <line x1="14" y1="50" x2="40" y2="24" stroke="#bae6fd" stroke-width="5" stroke-linecap="round"/>
+        <polygon points="52,12 42,32 37,27 32,22" fill="#38bdf8" stroke="#0c4a6e" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="48,16 39,28 36,25" fill="#e0f2fe"/>
+        <ellipse cx="32" cy="32" rx="4.5" ry="4.5" fill="#f8fafc" stroke="#0369a1" stroke-width="2"/>
+      </svg>`,
+      amethyst_whip: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <path d="M16 48 C14 32 28 20 40 24 C48 27 46 39 36 38 C28 37 28 24 38 18 L50 14" fill="none" stroke="#c084fc" stroke-width="5" stroke-linecap="round"/>
+        <path d="M16 48 C14 32 28 20 40 24 C48 27 46 39 36 38" fill="none" stroke="#581c87" stroke-width="2" stroke-linecap="round"/>
+        <polygon points="52,13 46,19 45,12" fill="#e9d5ff" stroke="#581c87" stroke-width="1.6"/>
+        <circle cx="16" cy="48" r="5" fill="#a855f7" stroke="#3b0764" stroke-width="2"/>
+      </svg>`,
+      star: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <polygon points="32,10 38.5,24.5 54,26 42.5,36.5 45.5,52 32,44.5 18.5,52 21.5,36.5 10,26 25.5,24.5" fill="#facc15" stroke="#78350f" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="32,17 36,26.5 46,27.5 38.5,34 40.5,44 32,39.5" fill="#fef08a" opacity="0.65"/>
+      </svg>`,
+      diamond: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <polygon points="32,10 52,24 44,52 20,52 12,24" fill="#38bdf8" stroke="#0c4a6e" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="32,17 44,26 39,45 25,45 20,26" fill="#bae6fd" opacity="0.65"/>
+        <line x1="12" y1="24" x2="20" y2="26" stroke="#0369a1" stroke-width="1.8"/>
+        <line x1="52" y1="24" x2="44" y2="26" stroke="#0369a1" stroke-width="1.8"/>
+        <line x1="32" y1="10" x2="32" y2="17" stroke="#0369a1" stroke-width="1.8"/>
+      </svg>`,
+      ice: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <polygon points="32,8 46,20 46,44 32,56 18,44 18,20" fill="#7dd3fc" stroke="#075985" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="32,15 40,23 40,41 32,49 24,41 24,23" fill="#e0f2fe" opacity="0.7"/>
+        <line x1="32" y1="8" x2="32" y2="56" stroke="#0284c7" stroke-width="1.8"/>
+      </svg>`,
+      forge: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <path d="M32 10 C42 22 48 30 48 40 C48 49 41 54 32 54 C23 54 16 49 16 40 C16 32 22 25 25 22 C25 28 29 30 30 24 Z" fill="#fb923c" stroke="#7c2d12" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M32 27 C37 33 40 38 40 43 C40 47 36 50 32 50 C28 50 24 47 24 43 C24 38 28 33 32 27 Z" fill="#fde047"/>
+      </svg>`,
+      wave: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <path d="M10 44 C14 26 28 16 42 18 C36 22 34 28 38 32 C42 36 50 34 54 28 C52 44 40 52 24 52 C16 52 12 49 10 44 Z" fill="#0ea5e9" stroke="#0c4a6e" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M16 42 C20 30 30 24 37 24" fill="none" stroke="#e0f2fe" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>`,
+      orb: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <circle cx="32" cy="32" r="21" fill="#c084fc" stroke="#581c87" stroke-width="2.5"/>
+        <ellipse cx="26" cy="24" rx="7" ry="4" transform="rotate(-25 26 24)" fill="#f3e8ff" opacity="0.8"/>
+        <polygon points="32,26 36,32 32,38 28,32" fill="#e9d5ff" stroke="#6b21a8" stroke-width="1.5"/>
+      </svg>`,
+      bubble: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <circle cx="32" cy="32" r="21" fill="rgba(244,114,182,0.35)" stroke="#f472b6" stroke-width="3"/>
+        <path d="M20 24 A14 14 0 0 1 32 16" fill="none" stroke="#fbcfe8" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="32,25 38,32 32,39 26,32" fill="#f9a8d4" stroke="#9d174d" stroke-width="1.5"/>
+      </svg>`,
+      shield: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <path d="M16 14 L48 14 L48 34 C48 45 32 53 32 53 C32 53 16 45 16 34 Z" fill="#f472b6" stroke="#831843" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="32,22 35,29 42,30 36.5,34.5 38,41.5 32,37.5 26,41.5 27.5,34.5 22,30 29,29" fill="#fef08a"/>
+      </svg>`,
+      question: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <polygon points="32,12 49,26 42,50 22,50 15,26" fill="rgba(148,163,184,0.16)" stroke="#64748b" stroke-width="2.2" stroke-linejoin="round"/>
+        <polygon points="32,23 35,30 42,31 36.5,35.5 38,42 32,38 26,42 27.5,35.5 22,31 29,30" fill="#94a3b8" opacity="0.55"/>
+      </svg>`,
+      emitter: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <circle cx="24" cy="32" r="13" fill="#f472b6" stroke="#831843" stroke-width="2.5"/>
+        <circle cx="24" cy="32" r="6" fill="#fef08a"/>
+        <path d="M40 32 L54 32 M47 25 L55 32 L47 39" fill="none" stroke="#fde047" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`,
+      blocker: `<svg viewBox="0 0 64 64" width="${s}" height="${s}" aria-hidden="true">
+        <polygon points="16,50 18,22 30,13 46,20 48,50" fill="#334155" stroke="#0f172a" stroke-width="2.5" stroke-linejoin="round"/>
+        <polygon points="30,13 46,20 40,36 26,30" fill="#475569"/>
+        <line x1="22" y1="36" x2="36" y2="42" stroke="#1e293b" stroke-width="2"/>
+      </svg>`
+    };
+    return svgs[key] || svgs.diamond;
+  }
+
+  getConduitPipeSvg(mask, isLit, isSolved) {
+    const outerCol = '#1e293b';
+    const rimCol = isSolved ? '#34d399' : (isLit ? '#f472b6' : '#64748b');
+    const coreCol = isSolved ? '#a7f3d0' : (isLit ? '#fef08a' : '#334155');
+    const segs = [];
+    if (mask & 1) segs.push({ x: 32, y: 0 });
+    if (mask & 2) segs.push({ x: 64, y: 32 });
+    if (mask & 4) segs.push({ x: 32, y: 64 });
+    if (mask & 8) segs.push({ x: 0, y: 32 });
+
+    const lines = (stroke, width) => segs.map(pt =>
+      `<line x1="32" y1="32" x2="${pt.x}" y2="${pt.y}" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round"/>`
+    ).join('');
+
+    return `<svg viewBox="0 0 64 64" width="54" height="54" aria-hidden="true">
+      ${lines(outerCol, 18)}
+      ${lines(rimCol, 13)}
+      ${lines(coreCol, 5)}
+      <circle cx="32" cy="32" r="8" fill="${rimCol}" stroke="${outerCol}" stroke-width="2"/>
+      <circle cx="32" cy="32" r="3.5" fill="${coreCol}"/>
+    </svg>`;
+  }
+
+  getMirrorTileSvg(mir, isLit, isSolved) {
+    const frameCol = isSolved ? '#34d399' : (isLit ? '#fde047' : '#cbd5e1');
+    const glassCol = isSolved ? '#a7f3d0' : (isLit ? '#fef9c3' : '#7dd3fc');
+    const coords = mir === '/'
+      ? { x1: 14, y1: 50, x2: 50, y2: 14 }
+      : { x1: 14, y1: 14, x2: 50, y2: 50 };
+    return `<svg viewBox="0 0 64 64" width="46" height="46" aria-hidden="true">
+      <line x1="${coords.x1}" y1="${coords.y1}" x2="${coords.x2}" y2="${coords.y2}" stroke="#0f172a" stroke-width="11" stroke-linecap="round"/>
+      <line x1="${coords.x1}" y1="${coords.y1}" x2="${coords.x2}" y2="${coords.y2}" stroke="${frameCol}" stroke-width="7" stroke-linecap="round"/>
+      <line x1="${coords.x1}" y1="${coords.y1}" x2="${coords.x2}" y2="${coords.y2}" stroke="${glassCol}" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  syncPuzzleHintUI() {
+    const box = document.getElementById('puzzleHintBox');
+    const textEl = document.getElementById('puzzleHintText');
+    const btn = document.getElementById('btnPuzzleHint');
+    const visible = !!(this.puzzleState && this.puzzleState.hintVisible);
+    const hintText = (this.puzzleState && this.puzzleState.cfg && this.puzzleState.cfg.hint)
+      ? this.puzzleState.cfg.hint
+      : 'Study the Crystal board carefully and test your pattern step by step.';
+    if (textEl) textEl.textContent = hintText;
+    if (box) box.style.display = visible ? 'block' : 'none';
+    if (btn) {
+      btn.textContent = visible ? 'HIDE HINT' : 'SHOW HINT';
+      btn.setAttribute('aria-expanded', visible ? 'true' : 'false');
+    }
+  }
+
   startStoryPuzzle(epNum, onSolved) {
     const ep = Math.max(1, Math.min(10, parseInt(epNum, 10) || 1));
     const cfg = (typeof STORY_PUZZLE_CONFIGS !== 'undefined' && STORY_PUZZLE_CONFIGS[ep])
       ? STORY_PUZZLE_CONFIGS[ep]
-      : { kind: 'pattern', title: `EPISODE ${ep} TEMPLE SEAL`, desc: 'Align the Gem Harmony sequence!' };
+      : {
+          kind: 'pattern',
+          title: `EPISODE ${ep} TEMPLE SEAL`,
+          desc: 'Align the Gem Harmony sequence!',
+          hint: 'Watch the chime order closely and repeat the 4 tiles.'
+        };
 
     const screen = document.getElementById('storyPuzzleScreen');
     if (!screen) { if (onSolved) onSolved(); return; }
@@ -26555,12 +26758,22 @@ class StevenUniverseGame {
     this.puzzleActive = true;
     this.state = 'puzzle';
     this.releaseAllInputs();
-    this.puzzleState = { ep, cfg, onSolved: onSolved || null };
+    this._puzzleGen = (this._puzzleGen || 0) + 1;
+    this.puzzleState = {
+      ep,
+      cfg,
+      gen: this._puzzleGen,
+      hintVisible: false,
+      onSolved: onSolved || null
+    };
 
+    const epTagEl = document.getElementById('puzzleEpTag');
     const titleEl = document.getElementById('puzzleTitle');
     const descEl = document.getElementById('puzzleLoreDesc');
+    if (epTagEl) epTagEl.textContent = `EPISODE ${ep} · PUZZLE`;
     if (titleEl) titleEl.textContent = cfg.title;
     if (descEl) descEl.textContent = cfg.desc;
+    this.syncPuzzleHintUI();
     screen.style.display = 'flex';
     this.buildPuzzleState();
   }
@@ -26568,24 +26781,29 @@ class StevenUniverseGame {
   resetCurrentPuzzle() {
     if (!this.puzzleActive || !this.puzzleState) return;
     if (this.audio) this.audio.playSfx('menuTap');
+    this._puzzleGen = (this._puzzleGen || 0) + 1;
+    this.puzzleState.gen = this._puzzleGen;
     this.buildPuzzleState();
   }
 
   skipCurrentPuzzle() {
     if (!this.puzzleActive) return;
     const cb = this.puzzleState ? this.puzzleState.onSolved : null;
+    this._puzzleGen = (this._puzzleGen || 0) + 1;
     this.puzzleActive = false;
     this.puzzleState = null;
+    this.syncPuzzleHintUI();
     const screen = document.getElementById('storyPuzzleScreen');
     if (screen) screen.style.display = 'none';
     if (cb) cb();
   }
 
   completeCurrentPuzzle() {
-    if (!this.puzzleActive) return;
+    if (!this.puzzleActive || !this.puzzleState) return;
+    const gen = this.puzzleState.gen;
     const statusEl = document.getElementById('puzzleStatusBar');
     if (statusEl) {
-      statusEl.textContent = '★ GEM SEAL UNLOCKED! +300 BONUS ★';
+      statusEl.textContent = 'GEM SEAL UNLOCKED · +300 BONUS';
       statusEl.style.color = '#34d399';
     }
     this.score = (this.score || 0) + 300;
@@ -26593,8 +26811,10 @@ class StevenUniverseGame {
     if (this.audio) this.audio.playSfx('victory');
     const cb = this.puzzleState ? this.puzzleState.onSolved : null;
     setTimeout(() => {
+      if (this._puzzleGen !== gen) return;
       this.puzzleActive = false;
       this.puzzleState = null;
+      this.syncPuzzleHintUI();
       const screen = document.getElementById('storyPuzzleScreen');
       if (screen) screen.style.display = 'none';
       if (cb) cb();
@@ -26608,30 +26828,29 @@ class StevenUniverseGame {
     const status = document.getElementById('puzzleStatusBar');
     if (!board) return;
     board.innerHTML = '';
-    if (status) status.style.color = '#fde68a';
+    if (status) status.style.color = '#7dd3fc';
 
     if (cfg.kind === 'pattern') {
       const gems = [
-        { label: 'ROSE SHIELD', color: '#ff4f8b', icon: '🌸' },
-        { label: 'GARNET GAUNTLET', color: '#b91c1c', icon: '🥊' },
-        { label: 'PEARL SPEAR', color: '#38bdf8', icon: '💠' },
-        { label: 'AMETHYST WHIP', color: '#a855f7', icon: '🔮' }
+        { label: 'ROSE SHIELD', color: '#ff4f8b', key: 'rose_shield' },
+        { label: 'GARNET GAUNTLET', color: '#ef4444', key: 'garnet_gauntlet' },
+        { label: 'PEARL SPEAR', color: '#38bdf8', key: 'pearl_spear' },
+        { label: 'AMETHYST WHIP', color: '#a855f7', key: 'amethyst_whip' }
       ];
       const sequence = ep === 7 ? [2, 0, 3, 1] : [0, 2, 1, 3];
       this.puzzleState.data = { sequence, input: [], locked: false };
-      board.style.gridTemplateColumns = 'repeat(2, 110px)';
-      if (status) status.textContent = `Step 0 / ${sequence.length} · Watch the Gem Chime!`;
+      board.style.gridTemplateColumns = 'repeat(2, 124px)';
+      if (status) status.textContent = `Step 0 / ${sequence.length} · Watch the Gem Chime`;
 
       const btns = gems.map((g, idx) => {
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'puzzle-tile';
-        b.style.width = '110px';
-        b.style.height = '90px';
-        b.style.flexDirection = 'column';
-        b.style.gap = '4px';
+        b.style.width = '124px';
+        b.style.height = '94px';
+        b.style.gap = '6px';
         b.style.borderColor = g.color;
-        b.innerHTML = `<span style="font-size:26px;">${g.icon}</span><span style="font-size:10px;">${g.label}</span>`;
+        b.innerHTML = `${this.getPuzzleEmblemSvg(g.key, 40)}<span style="font-size:10px;letter-spacing:0.6px;color:#e2e8f0;">${g.label}</span>`;
         b.addEventListener('click', () => this.handlePatternTileClick(idx, btns));
         board.appendChild(b);
         return b;
@@ -26640,18 +26859,21 @@ class StevenUniverseGame {
       this.playPatternPreview();
     } else if (cfg.kind === 'memory') {
       const pairs = ep === 6
-        ? ['❄️', '🔥', '🛡️', '💎', '❄️', '🔥', '🛡️', '💎']
-        : ['⭐', '🌊', '🔮', '🫧', '⭐', '🌊', '🔮', '🫧'];
+        ? ['ice', 'forge', 'shield', 'diamond', 'ice', 'forge', 'shield', 'diamond']
+        : ['star', 'wave', 'orb', 'bubble', 'star', 'wave', 'orb', 'bubble'];
       const order = pairs.map((v, i) => ({ v, k: (i * 3 + ep) % 8 })).sort((a, b) => a.k - b.k).map(x => x.v);
       this.puzzleState.data = { deck: order, revealed: [], matched: new Set(), busy: false };
-      board.style.gridTemplateColumns = 'repeat(4, 72px)';
+      board.style.gridTemplateColumns = 'repeat(4, 74px)';
       if (status) status.textContent = 'Pairs Matched: 0 / 4';
 
+      const qMarkup = this.getPuzzleEmblemSvg('question', 36);
       order.forEach((_, idx) => {
         const t = document.createElement('button');
         t.type = 'button';
         t.className = 'puzzle-tile';
-        t.textContent = '?';
+        t.style.width = '74px';
+        t.style.height = '74px';
+        t.innerHTML = qMarkup;
         t.addEventListener('click', () => this.handleMemoryTileClick(idx));
         board.appendChild(t);
       });
@@ -26671,18 +26893,18 @@ class StevenUniverseGame {
       if (ep === 5) template[4].rot = 0;
       if (ep === 9) template[1].rot = 3;
       this.puzzleState.data = { cells: template.map(c => ({ ...c })), lit: new Set() };
-      board.style.gridTemplateColumns = 'repeat(3, 76px)';
+      board.style.gridTemplateColumns = 'repeat(3, 80px)';
       this.renderConduitBoard();
     } else if (cfg.kind === 'mirrors') {
-      // 4x4 Laser beam enters (0,0) heading East -> hits Target Lock at (3,3)
+      // 4x4 Laser beam enters (0,0) heading East -> hits Diamond Lock at (3,3)
       const layout = (ep === 8)
         ? {
-            mirrors: { '0,1': '/', '3,1': '\\', '1,3': '/' }, // wrong starts: (0,1) sol '\', (3,1) sol '\', wait: E(1)->S(2) at (0,1)='\', S(2)->E(1) at (3,1)='\' -> hits (3,3)!!
+            mirrors: { '0,1': '/', '3,1': '/', '1,3': '/' },
             solutions: { '0,1': '\\', '3,1': '\\' },
             blockers: ['1,2', '2,2']
           }
         : {
-            mirrors: { '0,2': '/', '2,2': '/', '2,3': '/', '1,1': '/' }, // sol: (0,2)='\', (2,2)='\', (2,3)='\'
+            mirrors: { '0,2': '/', '2,2': '/', '2,3': '/', '1,1': '/' },
             solutions: { '0,2': '\\', '2,2': '\\', '2,3': '\\' },
             blockers: ['1,0', '3,1']
           };
@@ -26694,30 +26916,31 @@ class StevenUniverseGame {
         beam: new Set(),
         reached: false
       };
-      board.style.gridTemplateColumns = 'repeat(4, 66px)';
+      board.style.gridTemplateColumns = 'repeat(4, 68px)';
       this.renderMirrorBoard();
     }
   }
 
   playPatternPreview() {
     if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'pattern') return;
+    const gen = this.puzzleState.gen;
     const d = this.puzzleState.data;
     d.locked = true;
     d.input = [];
     const status = document.getElementById('puzzleStatusBar');
-    if (status) status.textContent = 'Watch closely... Crystal Temple is chiming!';
+    if (status) status.textContent = 'Watch closely · Temple gems are chiming';
     d.sequence.forEach((padIdx, step) => {
       setTimeout(() => {
-        if (!this.puzzleActive || !d.btns || !d.btns[padIdx]) return;
+        if (!this.puzzleActive || !this.puzzleState || this.puzzleState.gen !== gen || !d.btns || !d.btns[padIdx]) return;
         const btn = d.btns[padIdx];
         btn.classList.add('lit');
         if (this.audio) this.audio.playSfx('menuTap');
         setTimeout(() => btn.classList.remove('lit'), 340);
         if (step === d.sequence.length - 1) {
           setTimeout(() => {
-            if (!this.puzzleActive) return;
+            if (!this.puzzleActive || !this.puzzleState || this.puzzleState.gen !== gen) return;
             d.locked = false;
-            if (status) status.textContent = `Your turn! Tap Step 1 / ${d.sequence.length}`;
+            if (status) status.textContent = `Your turn · Tap Step 1 / ${d.sequence.length}`;
           }, 420);
         }
       }, step * 520 + 200);
@@ -26726,6 +26949,7 @@ class StevenUniverseGame {
 
   handlePatternTileClick(idx, btns) {
     if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'pattern') return;
+    const gen = this.puzzleState.gen;
     const d = this.puzzleState.data;
     if (d.locked) return;
     const btn = btns[idx];
@@ -26738,27 +26962,32 @@ class StevenUniverseGame {
       d.input.push(idx);
       if (this.audio) this.audio.playSfx('menuTap');
       const status = document.getElementById('puzzleStatusBar');
-      if (status) status.textContent = `Harmony ${d.input.length} / ${d.sequence.length} Matched!`;
+      if (status) status.textContent = `Harmony ${d.input.length} / ${d.sequence.length} Matched`;
       if (d.input.length >= d.sequence.length) {
         this.completeCurrentPuzzle();
       }
     } else {
       if (this.audio) this.audio.playSfx('hit');
       const status = document.getElementById('puzzleStatusBar');
-      if (status) status.textContent = 'Discordant chime! Re-watching pattern...';
+      if (status) status.textContent = 'Wrong chime · Replaying sequence';
       d.input = [];
-      setTimeout(() => this.playPatternPreview(), 500);
+      setTimeout(() => {
+        if (this.puzzleActive && this.puzzleState && this.puzzleState.gen === gen) {
+          this.playPatternPreview();
+        }
+      }, 500);
     }
   }
 
   handleMemoryTileClick(idx) {
     if (!this.puzzleActive || !this.puzzleState || this.puzzleState.cfg.kind !== 'memory') return;
+    const gen = this.puzzleState.gen;
     const d = this.puzzleState.data;
     if (d.busy || d.matched.has(idx) || d.revealed.includes(idx)) return;
     const tiles = document.querySelectorAll('#puzzleBoard .puzzle-tile');
     d.revealed.push(idx);
     if (tiles[idx]) {
-      tiles[idx].textContent = d.deck[idx];
+      tiles[idx].innerHTML = this.getPuzzleEmblemSvg(d.deck[idx], 40);
       tiles[idx].classList.add('lit');
     }
     if (this.audio) this.audio.playSfx('menuTap');
@@ -26778,11 +27007,13 @@ class StevenUniverseGame {
       } else {
         d.busy = true;
         setTimeout(() => {
+          if (!this.puzzleActive || !this.puzzleState || this.puzzleState.gen !== gen) return;
           d.revealed = [];
           d.busy = false;
+          const qMarkup = this.getPuzzleEmblemSvg('question', 36);
           [a, b].forEach(i => {
             if (tiles[i] && !d.matched.has(i)) {
-              tiles[i].textContent = '?';
+              tiles[i].innerHTML = qMarkup;
               tiles[i].classList.remove('lit');
             }
           });
@@ -26842,24 +27073,17 @@ class StevenUniverseGame {
     const isSolved = this.evaluateConduitPower();
     board.innerHTML = '';
 
-    const glyphForMask = (m) => {
-      if (m === 10) return '━';
-      if (m === 5) return '┃';
-      if (m === 6) return '┏';
-      if (m === 12) return '┓';
-      if (m === 9) return '┛';
-      if (m === 3) return '┗';
-      return '╋';
-    };
-
     d.cells.forEach((cell, idx) => {
       const m = this.getConduitMask(cell);
+      const isLit = d.lit.has(idx);
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'puzzle-tile' + (d.lit.has(idx) ? ' lit' : '') + (isSolved && d.lit.has(idx) ? ' solved' : '');
-      const tag = idx === 0 ? '<small style="position:absolute;top:2px;left:5px;font-size:8px;color:#38bdf8;">IN</small>'
-        : idx === 8 ? '<small style="position:absolute;bottom:2px;right:5px;font-size:8px;color:#34d399;">OUT</small>' : '';
-      btn.innerHTML = `${tag}<span style="font-size:32px;line-height:1;">${glyphForMask(m)}</span>`;
+      btn.className = 'puzzle-tile' + (isLit ? ' lit' : '') + (isSolved && isLit ? ' solved' : '');
+      btn.style.width = '80px';
+      btn.style.height = '80px';
+      const tag = idx === 0 ? '<small style="position:absolute;top:3px;left:6px;font-size:9px;letter-spacing:0.6px;color:#38bdf8;">IN</small>'
+        : idx === 8 ? '<small style="position:absolute;bottom:3px;right:6px;font-size:9px;letter-spacing:0.6px;color:#34d399;">OUT</small>' : '';
+      btn.innerHTML = `${tag}${this.getConduitPipeSvg(m, isLit, isSolved)}`;
       btn.addEventListener('click', () => {
         if (!this.puzzleActive) return;
         cell.rot = (cell.rot + 1) % 4;
@@ -26869,7 +27093,7 @@ class StevenUniverseGame {
       board.appendChild(btn);
     });
     if (status) {
-      status.textContent = isSolved ? 'CONDUIT ALIGNED!' : `Click tiles to rotate energy conduits (${d.lit.size} powered)`;
+      status.textContent = isSolved ? 'CONDUIT ALIGNED' : `Click conduit tiles to rotate (${d.lit.size} powered)`;
     }
     if (isSolved && this.puzzleActive) this.completeCurrentPuzzle();
   }
@@ -26922,21 +27146,21 @@ class StevenUniverseGame {
         const tile = document.createElement('button');
         tile.type = 'button';
         tile.className = 'puzzle-tile' + (isLit ? ' lit' : '') + (reached && isLit ? ' solved' : '');
-        tile.style.width = '66px';
-        tile.style.height = '66px';
+        tile.style.width = '68px';
+        tile.style.height = '68px';
 
         if (isStart) {
-          tile.innerHTML = '<span style="font-size:18px;">✨➜</span>';
+          tile.innerHTML = this.getPuzzleEmblemSvg('emitter', 38);
           tile.disabled = true;
         } else if (isEnd) {
-          tile.innerHTML = `<span style="font-size:22px;">💎</span>`;
+          tile.innerHTML = this.getPuzzleEmblemSvg('diamond', 38);
           tile.style.borderColor = reached ? '#34d399' : '#38bdf8';
           tile.disabled = true;
         } else if (isBlk) {
-          tile.innerHTML = '<span style="font-size:20px;opacity:0.6;">🪨</span>';
+          tile.innerHTML = this.getPuzzleEmblemSvg('blocker', 36);
           tile.disabled = true;
         } else if (mir) {
-          tile.innerHTML = `<span style="font-size:30px;color:#fde68a;">${mir}</span>`;
+          tile.innerHTML = this.getMirrorTileSvg(mir, isLit, reached);
           tile.addEventListener('click', () => {
             if (!this.puzzleActive) return;
             d.mirrors[key] = d.mirrors[key] === '/' ? '\\' : '/';
@@ -26944,53 +27168,25 @@ class StevenUniverseGame {
             this.renderMirrorBoard();
           });
         } else {
-          tile.innerHTML = `<span style="font-size:14px;opacity:${isLit ? '0.95' : '0.25'};">${isLit ? '✦' : '·'}</span>`;
+          tile.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="${isLit ? 5 : 2.5}" fill="${isLit ? '#fde047' : '#64748b'}" opacity="${isLit ? '0.95' : '0.45'}"/></svg>`;
           tile.disabled = true;
         }
         board.appendChild(tile);
       }
     }
     if (status) {
-      status.textContent = reached ? 'DIAMOND LOCK ILLUMINATED!' : 'Click prism mirrors (/ or \\) to aim the light beam into 💎';
+      status.textContent = reached
+        ? 'DIAMOND LOCK ILLUMINATED'
+        : `Click prism mirrors to steer the light beam (${d.beam.size} lit)`;
     }
     if (reached && this.puzzleActive) this.completeCurrentPuzzle();
   }
 
   showPuzzleHint() {
     if (!this.puzzleActive || !this.puzzleState) return;
-    const { cfg, data } = this.puzzleState;
-    const status = document.getElementById('puzzleStatusBar');
-    if (this.audio) this.audio.playSfx('weaponSummon');
-    if (cfg.kind === 'pattern') {
-      this.playPatternPreview();
-    } else if (cfg.kind === 'memory') {
-      const tiles = document.querySelectorAll('#puzzleBoard .puzzle-tile');
-      data.deck.forEach((sym, i) => { if (tiles[i] && !data.matched.has(i)) tiles[i].textContent = sym; });
-      if (status) status.textContent = 'Gem Vision peek active briefly...';
-      setTimeout(() => {
-        if (!this.puzzleActive) return;
-        data.deck.forEach((_, i) => {
-          if (tiles[i] && !data.matched.has(i) && !data.revealed.includes(i)) tiles[i].textContent = '?';
-        });
-      }, 950);
-    } else if (cfg.kind === 'conduit') {
-      const solIndices = [0, 1, 4, 5, 8];
-      for (const idx of solIndices) {
-        if (data.cells[idx].rot !== data.cells[idx].sol) {
-          data.cells[idx].rot = data.cells[idx].sol;
-          break;
-        }
-      }
-      this.renderConduitBoard();
-    } else if (cfg.kind === 'mirrors') {
-      for (const [k, solMir] of Object.entries(data.solutions)) {
-        if (data.mirrors[k] !== solMir) {
-          data.mirrors[k] = solMir;
-          break;
-        }
-      }
-      this.renderMirrorBoard();
-    }
+    this.puzzleState.hintVisible = !this.puzzleState.hintVisible;
+    this.syncPuzzleHintUI();
+    if (this.audio) this.audio.playSfx('menuTap');
   }
 
   bindCreditsHoldControls() {
