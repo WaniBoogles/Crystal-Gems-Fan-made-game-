@@ -184,10 +184,39 @@ html, body {
   filter: drop-shadow(0 0 6px rgba(255, 96, 151, 0.65)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
+.hud-heart.draining {
+  background-image: url('spinel-heart-full.png');
+  filter: brightness(calc(0.24 + var(--heart-life, 1) * 0.76)) saturate(calc(0.12 + var(--heart-life, 1) * 0.88)) drop-shadow(0 0 calc(var(--heart-life, 1) * 6px) rgba(255, 96, 151, 0.65)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  transform: scale(calc(0.9 + var(--heart-life, 1) * 0.1));
+}
+
 .hud-heart.empty {
   background-image: url('spinel-heart-empty.png');
-  opacity: 0.42;
-  filter: grayscale(0.85) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  opacity: 0.72;
+  filter: brightness(0.25) saturate(0.05) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+}
+
+.char-pane-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 6px 0 8px;
+}
+
+.stat-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #e2e8f0;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+}
+
+.stat-pill b {
+  color: #fde047;
+  margin-right: 3px;
 }
 
 .hud-heart.pulse {

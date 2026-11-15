@@ -348,6 +348,38 @@ class GemAudioEngine {
     };
 
     const targetKey = sfxAliases[type] || type;
+    // Prevent audio stacking / ear fatigue during rapid or continuous multi-target hits
+    const sfxCooldownMs = {
+      hitfeedback: 95,
+      hit: 90,
+      punch: 80,
+      sword: 80,
+      spear: 85,
+      whip: 95,
+      hammer: 105,
+      metal: 110,
+      laser: 120,
+      explosion: 140,
+      lightning: 150,
+      water: 120,
+      bubble: 140,
+      bubblePop: 140,
+      parry: 130,
+      sparkle: 140,
+      poof: 115,
+      coin: 70,
+      shield: 150,
+      shieldRetract: 150,
+      windup: 180
+    };
+    const minGap = sfxCooldownMs[targetKey] || 45;
+    const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (!this._lastSfxTime) this._lastSfxTime = {};
+    if (nowMs - (this._lastSfxTime[targetKey] || 0) < minGap) {
+      return;
+    }
+    this._lastSfxTime[targetKey] = nowMs;
+
     if (targetKey !== 'jump' && targetKey !== 'coin' && targetKey !== 'gem' && targetKey !== 'pickup' && this.sfxBuffers && this.sfxBuffers[targetKey]) {
       try {
         const src = this.ctx.createBufferSource();
@@ -356,12 +388,12 @@ class GemAudioEngine {
           src.playbackRate.setValueAtTime(pitchVar, this.ctx.currentTime);
         }
         const gain = this.ctx.createGain();
-        let vol = 0.52;
-        if (targetKey === 'explosion') vol = 0.65;
-        else if (targetKey === 'victory') vol = 0.60;
-        else if (targetKey === 'hitfeedback') vol = 0.50;
-        else if (targetKey === 'sword') vol = 0.48;
-        else if (targetKey === 'coin') vol = 0.55;
+        let vol = 0.36;
+        if (targetKey === 'explosion') vol = 0.42;
+        else if (targetKey === 'victory') vol = 0.48;
+        else if (targetKey === 'hitfeedback') vol = 0.28;
+        else if (targetKey === 'sword') vol = 0.34;
+        else if (targetKey === 'coin') vol = 0.34;
         gain.gain.setValueAtTime(vol, this.ctx.currentTime);
         src.connect(gain);
         gain.connect(this.getSfxDestination());
@@ -371,6 +403,7 @@ class GemAudioEngine {
     }
 
     try {
+      if (typeof this.ctx.createOscillator !== 'function') return;
       const t = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
@@ -406,11 +439,11 @@ class GemAudioEngine {
           return;
 
         case 'windup':
-          // High-frequency danger warning glimmer
+          // Soft low-mid warning pulse (non-piercing)
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(1760, t);
-          osc.frequency.exponentialRampToValueAtTime(2637, t + 0.08);
-          gain.gain.setValueAtTime(0.18, t);
+          osc.frequency.setValueAtTime(520, t);
+          osc.frequency.exponentialRampToValueAtTime(740, t + 0.08);
+          gain.gain.setValueAtTime(0.08, t);
           gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
           osc.start(t);
           osc.stop(t + 0.09);
@@ -511,22 +544,22 @@ class GemAudioEngine {
 
         case 'shield':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, t);
-          osc.frequency.exponentialRampToValueAtTime(1760, t + 0.08);
-          gain.gain.setValueAtTime(0.28, t);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+          osc.frequency.setValueAtTime(480, t);
+          osc.frequency.exponentialRampToValueAtTime(780, t + 0.08);
+          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
           osc.start(t);
-          osc.stop(t + 0.45);
+          osc.stop(t + 0.28);
           break;
 
         case 'whip':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(900, t);
-          osc.frequency.exponentialRampToValueAtTime(150, t + 0.14);
-          gain.gain.setValueAtTime(0.24, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(620, t);
+          osc.frequency.exponentialRampToValueAtTime(140, t + 0.13);
+          gain.gain.setValueAtTime(0.18, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
           osc.start(t);
-          osc.stop(t + 0.14);
+          osc.stop(t + 0.13);
           break;
 
         case 'rocket':
@@ -581,12 +614,12 @@ class GemAudioEngine {
 
         case 'metal':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(1200, t);
-          osc.frequency.exponentialRampToValueAtTime(350, t + 0.15);
-          gain.gain.setValueAtTime(0.26, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+          osc.frequency.setValueAtTime(660, t);
+          osc.frequency.exponentialRampToValueAtTime(240, t + 0.14);
+          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
           osc.start(t);
-          osc.stop(t + 0.18);
+          osc.stop(t + 0.16);
           break;
 
         case 'sword':
@@ -711,29 +744,12 @@ class GemAudioEngine {
         case 'powerup':
         case 'bubble':
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(440, t);
-          osc.frequency.exponentialRampToValueAtTime(1320, t + 0.16);
-          gain.gain.setValueAtTime(0.25, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+          osc.frequency.setValueAtTime(340, t);
+          osc.frequency.exponentialRampToValueAtTime(680, t + 0.14);
+          gain.gain.setValueAtTime(0.14, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.24);
           osc.start(t);
-          osc.stop(t + 0.35);
-
-          setTimeout(() => {
-            if (!this.soundEnabled || !this.ctx) return;
-            try {
-              const osc2 = this.ctx.createOscillator();
-              const gain2 = this.ctx.createGain();
-              osc2.type = 'triangle';
-              osc2.frequency.setValueAtTime(1760, this.ctx.currentTime);
-              osc2.frequency.exponentialRampToValueAtTime(2640, this.ctx.currentTime + 0.22);
-              gain2.gain.setValueAtTime(0.18, this.ctx.currentTime);
-              gain2.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
-              osc2.connect(gain2);
-              gain2.connect(this.getSfxDestination());
-              osc2.start();
-              osc2.stop(this.ctx.currentTime + 0.4);
-            } catch (err) {}
-          }, 110);
+          osc.stop(t + 0.24);
           break;
 
         case 'fusion':
@@ -752,13 +768,13 @@ class GemAudioEngine {
           break;
 
         case 'laser':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(1300, t);
-          osc.frequency.exponentialRampToValueAtTime(250, t + 0.18);
-          gain.gain.setValueAtTime(0.22, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(680, t);
+          osc.frequency.exponentialRampToValueAtTime(190, t + 0.16);
+          gain.gain.setValueAtTime(0.12, t);
+          gain.gain.exponentialRampToValueAtTime(0.005, t + 0.16);
           osc.start(t);
-          osc.stop(t + 0.18);
+          osc.stop(t + 0.16);
           break;
 
         case 'heart':
@@ -805,62 +821,50 @@ class GemAudioEngine {
 
         case 'weaponSummon':
         case 'gemWeaponSummon':
-          // Gem Weapon Manifestation (Gleaming metallic shine with crystalline ring)
+          // Warm Gem Weapon Chime (soft crystalline bell without harsh high overtones)
           const mOsc = this.ctx.createOscillator();
           const mGain = this.ctx.createGain();
-          mOsc.type = 'triangle';
-          mOsc.frequency.setValueAtTime(880, t);
-          mOsc.frequency.exponentialRampToValueAtTime(2200, t + 0.08);
-          mOsc.frequency.exponentialRampToValueAtTime(1320, t + 0.28);
-          mGain.gain.setValueAtTime(0.24, t);
-          mGain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+          mOsc.type = 'sine';
+          mOsc.frequency.setValueAtTime(523.25, t);
+          mOsc.frequency.exponentialRampToValueAtTime(880, t + 0.10);
+          mOsc.frequency.exponentialRampToValueAtTime(659.25, t + 0.24);
+          mGain.gain.setValueAtTime(0.13, t);
+          mGain.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
           mOsc.connect(mGain);
           mGain.connect(this.getSfxDestination());
           mOsc.start(t);
-          mOsc.stop(t + 0.32);
-
-          const mOsc2 = this.ctx.createOscillator();
-          const mGain2 = this.ctx.createGain();
-          mOsc2.type = 'sawtooth';
-          mOsc2.frequency.setValueAtTime(1760, t + 0.04);
-          mOsc2.frequency.exponentialRampToValueAtTime(3520, t + 0.16);
-          mGain2.gain.setValueAtTime(0.12, t + 0.04);
-          mGain2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-          mOsc2.connect(mGain2);
-          mGain2.connect(this.getSfxDestination());
-          mOsc2.start(t + 0.04);
-          mOsc2.stop(t + 0.25);
+          mOsc.stop(t + 0.26);
           break;
 
         case 'bubblePop':
-          // Authentic Steven Universe Bubble Pop (Acoustic suction ramp + crisp burst pop)
+          // Soft Bubble Pop
           const bPopOsc = this.ctx.createOscillator();
           const bPopGain = this.ctx.createGain();
           bPopOsc.type = 'sine';
-          bPopOsc.frequency.setValueAtTime(320, t);
-          bPopOsc.frequency.exponentialRampToValueAtTime(1600, t + 0.04);
-          bPopOsc.frequency.exponentialRampToValueAtTime(540, t + 0.09);
-          bPopGain.gain.setValueAtTime(0.18, t);
-          bPopGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+          bPopOsc.frequency.setValueAtTime(260, t);
+          bPopOsc.frequency.exponentialRampToValueAtTime(620, t + 0.04);
+          bPopOsc.frequency.exponentialRampToValueAtTime(340, t + 0.09);
+          bPopGain.gain.setValueAtTime(0.10, t);
+          bPopGain.gain.exponentialRampToValueAtTime(0.001, t + 0.10);
           bPopOsc.connect(bPopGain);
           bPopGain.connect(this.getSfxDestination());
           bPopOsc.start(t);
-          bPopOsc.stop(t + 0.11);
+          bPopOsc.stop(t + 0.10);
           break;
 
         case 'shieldRetract':
-          // Shield De-manifestation / Retraction (Descending crystalline harmonic collapse)
+          // Subtle low-mid shield dismiss tone
           const sRetOsc = this.ctx.createOscillator();
           const sRetGain = this.ctx.createGain();
           sRetOsc.type = 'sine';
-          sRetOsc.frequency.setValueAtTime(1500, t);
-          sRetOsc.frequency.exponentialRampToValueAtTime(380, t + 0.18);
-          sRetGain.gain.setValueAtTime(0.22, t);
-          sRetGain.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+          sRetOsc.frequency.setValueAtTime(540, t);
+          sRetOsc.frequency.exponentialRampToValueAtTime(240, t + 0.14);
+          sRetGain.gain.setValueAtTime(0.09, t);
+          sRetGain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
           sRetOsc.connect(sRetGain);
           sRetGain.connect(this.getSfxDestination());
           sRetOsc.start(t);
-          sRetOsc.stop(t + 0.22);
+          sRetOsc.stop(t + 0.16);
           break;
       }
     } catch (e) {
@@ -2220,11 +2224,14 @@ class ParticleSystem {
   addDamageText(x, y, text, isCrit = false, color = '#ffffff') {
     const str = String(text ?? '').trim();
     if (!str) return;
-    // STRICT USER REQUIREMENT: Only damage numbers appear (e.g. 25, 120, -15 HP, +1 HEART).
-    // Drop all verbose text tags (DAZED, IMMUNE, BUBBLED, DODGE, move names, etc.) to prevent lag and declutter combat!
-    const isNum = /^[-+]?\d+(\s*(HP|DMG|HEARTS?))?$/i.test(str);
+    // STRICT USER REQUIREMENT: Only damage numbers appear (e.g. 25, 120!, -15 HP, +1 HEART).
+    // Drop all verbose text tags to prevent lag and declutter combat!
+    const isNum = /^[-+]?\d+[!]?(\s*(HP|DMG|HEARTS?))?$/i.test(str);
     if (!isNum) return;
 
+    if (this.texts.length >= 24) {
+      this.texts.shift();
+    }
     this.texts.push({
       x, y,
       vy: -2.4,
@@ -4406,6 +4413,11 @@ class PlayerHero {
     this.isFallen = false;
     this.fallenType = null; // 'lie_down' for Steven/Connie, 'poofed' for Gems
     this.fallenTimer = 0;
+    this.reviveTimer = 0;
+    this.reviveTotal = 0;
+    this.isReforming = false;
+    this.reformProgress = 0;
+    this.isPinkRevived = false;
 
     // Advanced Combat & Acrobatic Attributes
     this.parryWindow = 0;
@@ -4430,6 +4442,11 @@ class PlayerHero {
       this.isFallen = false;
       this.fallenType = null;
       this.fallenTimer = 0;
+      this.reviveTimer = 0;
+      this.reviveTotal = 0;
+      this.isReforming = false;
+      this.reformProgress = 0;
+      if (charName !== 'connie') this.isPinkRevived = false;
       this.actionType = null;
       this.actionTimer = 0;
       this.vx = 0;
@@ -4478,6 +4495,13 @@ class PlayerHero {
     return this.getTypeList().includes(moveType) ? 1.2 : 1.0;
   }
 
+  getCombatStats() {
+    if (typeof getHeroCombatStats === 'function') {
+      return getHeroCombatStats(this.activeChar, (this.isFusion && this.fusionData) ? this.fusionData : null, !!this.isPinkRevived);
+    }
+    return { hp: 140, attack: 34, magic: 36, defense: 35, critChance: 0.16, critDamage: 1.65 };
+  }
+
   activatePinkOverdrive(audioOrDuration = 12.0, particles = null) {
     this.isPinkOverdrive = true;
     this.pinkOverdriveTimer = typeof audioOrDuration === 'number' ? audioOrDuration : 12.0;
@@ -4516,6 +4540,10 @@ class PlayerHero {
     this.isFallen = false;
     this.fallenType = null;
     this.fallenTimer = 0;
+    this.reviveTimer = 0;
+    this.reviveTotal = 0;
+    this.isReforming = false;
+    this.reformProgress = 0;
     this.invulnerableTimer = 2.0;
     this.vx = 0;
     this.vy = 0;
@@ -4826,12 +4854,8 @@ class PlayerHero {
       gravity = 4200; // Double the pace of going down!
       if (this.vy < 700) this.vy = 700;
       this.isFastFalling = true;
-      if (this.activeChar === 'steven') {
-        this.isShielding = true;
-        this.bubbleTimer = Math.max(this.bubbleTimer, 0.4);
-      }
-      if (particles && Math.random() < 0.45) {
-        particles.addSparkle(this.x + (Math.random() * 24 - 12), this.y - 20, '#ffffff', 3, 2);
+      if (particles && Math.random() < 0.28) {
+        particles.addSparkle(this.x + (Math.random() * 20 - 10), this.y - 20, '#ffffff', 2, 1.5);
       }
     } else if (this.isGrounded) {
       this.isFastFalling = false;
@@ -4904,12 +4928,10 @@ class PlayerHero {
           particles.addDebris(this.x, this.groundY, '#94a3b8', hadFastFall ? 10 : 5);
         }
 
-        // Steven's bubble slam impact damage:
-        // "maybe apply it for Steven's bubble skill too so it has damage when it's used"
-        if (this.activeChar === 'steven' && (this.bubbleTimer > 0 || this.actionType === 'shield' || hadFastFall)) {
+        // Steven's bubble slam impact damage (only when Bubble Shield skill is active — silent & clean!)
+        if (this.activeChar === 'steven' && (this.bubbleTimer > 0 || this.actionType === 'shield')) {
           if (audioEngine) {
-            audioEngine.playSfx('bubblePop');
-            audioEngine.playSfx('explosion');
+            audioEngine.playSfx('bubble');
           }
           if (particles) {
             particles.addShockwaveRing(this.x, this.y, 120, '#ff94ba', 4.5);
@@ -6441,9 +6463,16 @@ class PlayerHero {
     }
     this.invulnerableTimer = 1.25; // Generous 1.25s iframes to prevent rapid tick deaths!
     const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5)) : amount;
-    audioEngine.playSfx('hurt');
-    particles.addDamageText(this.x, this.y - 65, `-${finalDamage} HP`, true, '#ef4444');
-    particles.addSparkle(this.x, this.y - 35, '#ef4444', 12, 4);
+    if (audioEngine) audioEngine.playSfx('hurt');
+    const stats = (typeof this.getCombatStats === 'function') ? this.getCombatStats() : { defense: 35 };
+    const baseUnitDmg = (finalDamage || 1) * 95;
+    const defMit = 100 / (100 + (stats.defense || 0));
+    const displayHpLoss = Math.max(14, Math.round(baseUnitDmg * defMit * (this.isPinkOverdrive ? 0.65 : 1.0)));
+    if (particles) {
+      particles.addDamageText(this.x, this.y - 65, `-${displayHpLoss} HP`, true, '#ef4444');
+      particles.addSparkle(this.x, this.y - 35, '#ef4444', 10, 4);
+    }
+    this._lastMitigatedHpLoss = displayHpLoss;
     return finalDamage;
   }
 
@@ -10702,10 +10731,31 @@ class PlayerHero {
     const isSpecial = (actionType === 'throw');
     const isSkill = (actionType === 'skill');
 
-    // 0. LUSH, NATURAL FLOWING DARK WAVY HAIR (BACK CASCADE — ZERO CIRCLES ON TOP!)
+    // Lars/Lion lore: If revived in 2P Arcade Mode, Connie becomes Pink Connie!
+    const pinkRev = !!this.isPinkRevived;
+    const hairMain = pinkRev ? '#f472b6' : '#1c1917';
+    const hairSheen = pinkRev ? '#fbcfe8' : '#3f3f46';
+    const skinMain = pinkRev ? '#f9a8d4' : '#a16207';
+    const skinShade = pinkRev ? '#ec4899' : '#78350f';
+    const faceDarkShade = pinkRev ? '#db2777' : '#854d0e';
+    const irisColor = pinkRev ? '#db2777' : '#1c1917';
+
+    if (pinkRev) {
+      ctx.save();
+      const auraGrad = ctx.createRadialGradient(0, -45 + bob, 6, 0, -45 + bob, 42);
+      auraGrad.addColorStop(0, 'rgba(244, 114, 182, 0.34)');
+      auraGrad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+      ctx.fillStyle = auraGrad;
+      ctx.beginPath();
+      ctx.arc(0, -45 + bob, 42, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 0. LUSH, NATURAL FLOWING DARK/PINK WAVY HAIR (BACK CASCADE — ZERO CIRCLES ON TOP!)
     const swX = hair.swayX * 0.85;
     const swY = hair.swayY * 0.5;
-    ctx.fillStyle = '#1c1917';
+    ctx.fillStyle = hairMain;
     ctx.beginPath();
     ctx.moveTo(2, -90 + bob);
     // Flowing S-wave back cascade streaming behind her (-X) when dashing & fencing!
@@ -10716,15 +10766,15 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Warm dark-espresso wave sheen ribbon inside hair
-    ctx.strokeStyle = '#3f3f46';
+    // Wave sheen ribbon inside hair
+    ctx.strokeStyle = hairSheen;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-10, -82 + bob);
     ctx.bezierCurveTo(-19 + swX * 0.4, -70 + bob, -14 + swX * 0.7, -56 + bob, -20 + swX, -44 + bob + swY);
     ctx.stroke();
 
-    // 1. Cuffed Slate-Grey Denim Shorts, Tapered Warm Brown Legs & Coral Sneakers
+    // 1. Cuffed Slate-Grey Denim Shorts, Tapered Legs & Coral Sneakers
     const drawConnieLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -26 + bob + ly);
@@ -10732,7 +10782,7 @@ class PlayerHero {
       this.drawCelTaperedLimb(ctx, 0, 0, 0, 10, 5.2, 4.6, darken ? '#475569' : '#64748b', '#334155', 1);
       ctx.fillStyle = '#94a3b8';
       ctx.beginPath(); ctx.ellipse(0, 10.5, 5.0, 2.0, 0, 0, Math.PI * 2); ctx.fill();
-      this.drawCelTaperedLimb(ctx, 0, 11.5, 0, 19.5, 3.8, 3.2, '#a16207', '#78350f', 1);
+      this.drawCelTaperedLimb(ctx, 0, 11.5, 0, 19.5, 3.8, 3.2, skinMain, skinShade, 1);
       this.drawCelBoot(ctx, 0.5, 24.5, 9.0, 5.4, '#fb7185', '#ffffff', '#ffffff');
       ctx.restore();
     };
@@ -10742,10 +10792,10 @@ class PlayerHero {
     // 2. Rear Left Bare Arm (Sleeveless white shirt ref + continuous fencing sway!)
     if (isPunch && combo === 0) {
       const poise = Math.max(0, strike) * 6;
-      this.drawArticulatedArm(ctx, -10, -54 + bob, -19 - poise * 0.5, -58 + bob, -26 - poise, -65 + bob, '#a16207', '#a16207', 6.5, 5.5, '#a16207', 3.8);
+      this.drawArticulatedArm(ctx, -10, -54 + bob, -19 - poise * 0.5, -58 + bob, -26 - poise, -65 + bob, skinMain, skinMain, 6.5, 5.5, skinMain, 3.8);
     } else if (!isPunch && !isSpecial && !isSkill) {
       const armSwing = motion.armSwingB * 12;
-      this.drawArticulatedArm(ctx, -10, -54 + bob, -15 - armSwing * 0.5, -44 + bob, -13 - armSwing, -34 + bob, '#a16207', '#a16207', 6.2, 5.2, '#a16207', 3.6);
+      this.drawArticulatedArm(ctx, -10, -54 + bob, -15 - armSwing * 0.5, -44 + bob, -13 - armSwing, -34 + bob, skinMain, skinMain, 6.2, 5.2, skinMain, 3.6);
     }
 
     // 3. Diagonal Brass-Capped Scabbard & Contoured Collared Button Shirt
@@ -10829,18 +10879,18 @@ class PlayerHero {
     ctx.fillRect(-2, -45 + bob, 5, 5);
 
     // 4. Tapered Neck & Sculpted Cel Face (zero polka-dot blush!)
-    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0, -66 + bob, 4.0, 3.5, '#a16207', '#78350f', 1);
-    ctx.fillStyle = '#a16207';
+    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0, -66 + bob, 4.0, 3.5, skinMain, skinShade, 1);
+    ctx.fillStyle = skinMain;
     ctx.beginPath();
     ctx.ellipse(0, -74 + bob, 13.6, 14.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#854d0e';
+    ctx.fillStyle = faceDarkShade;
     ctx.beginPath();
     ctx.arc(0, -74 + bob, 13.6, 0.25 * Math.PI, 0.88 * Math.PI);
     ctx.fill();
 
     // Sculpted Wavy Crown Hairline & Cheek-Framing S-Wave Tendrils!
-    ctx.fillStyle = '#1c1917';
+    ctx.fillStyle = hairMain;
     ctx.beginPath();
     ctx.moveTo(-14, -77 + bob);
     ctx.quadraticCurveTo(-13, -91 + bob, 0, -91 + bob);
@@ -10870,14 +10920,14 @@ class PlayerHero {
     ctx.stroke();
 
     // Soft sculpted under-nose cel hint (Connie ref)
-    ctx.fillStyle = 'rgba(120, 53, 15, 0.4)';
+    ctx.fillStyle = pinkRev ? 'rgba(219, 39, 119, 0.35)' : 'rgba(120, 53, 15, 0.4)';
     ctx.beginPath();
     ctx.ellipse(1.5, -70.5 + bob, 1.8, 1.2, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // 6. Big Expressive Cartoon Eyes & Determined Knight Eyebrows (with blink!)
     if (this.isBlinking && !this.isAttacking) {
-      ctx.strokeStyle = '#1c1917';
+      ctx.strokeStyle = irisColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(-4, -74.5 + bob, 3.6, 0.1 * Math.PI, 0.9 * Math.PI);
@@ -10891,7 +10941,7 @@ class PlayerHero {
       ctx.ellipse(-4, -75 + bob, 4, 5.2, 0, 0, Math.PI * 2);
       ctx.ellipse(5, -75 + bob, 4, 5.2, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#1c1917';
+      ctx.fillStyle = irisColor;
       ctx.beginPath();
       ctx.ellipse(-3.4, -74.5 + bob, 2.8, 4.2, 0, 0, Math.PI * 2);
       ctx.ellipse(5.6, -74.5 + bob, 2.8, 4.2, 0, 0, Math.PI * 2);
@@ -10905,7 +10955,7 @@ class PlayerHero {
       ctx.fill();
     }
 
-    ctx.strokeStyle = '#1c1917';
+    ctx.strokeStyle = irisColor;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
     if (this.isAttacking) {
@@ -10949,23 +10999,23 @@ class PlayerHero {
         swordX = 18 + reach;
         swordY = -48 + bob;
         swordAngle = Math.PI * 0.48;
-        this.drawArticulatedArm(ctx, 9, -54 + bob, 14 + reach * 0.45, -51 + bob, swordX, swordY, '#fb7185', '#a16207', 6.8, 5.8, '#a16207', 4.2);
+        this.drawArticulatedArm(ctx, 9, -54 + bob, 14 + reach * 0.45, -51 + bob, swordX, swordY, '#fb7185', skinMain, 6.8, 5.8, skinMain, 4.2);
       } else if (combo === 1) {
         // Hit 2: Rising Two-Handed Diagonal Broadsword Slash (Sweeps from low-front up to high!)
         const reach = Math.max(0, strike) * 28;
         swordX = 18 + reach;
         swordY = -50 + bob - Math.max(0, strike) * 6;
         swordAngle = 2.35 - Math.min(1, animP * 1.35) * 2.15;
-        this.drawArticulatedArm(ctx, -6, -54 + bob, 6, -51 + bob, swordX - 3, swordY + 2, '#fb7185', '#a16207', 6.2, 5.2);
-        this.drawArticulatedArm(ctx, 9, -54 + bob, 14, -52 + bob, swordX, swordY, '#fb7185', '#a16207', 6.8, 5.8, '#a16207', 4.2);
+        this.drawArticulatedArm(ctx, -6, -54 + bob, 6, -51 + bob, swordX - 3, swordY + 2, '#fb7185', skinMain, 6.2, 5.2);
+        this.drawArticulatedArm(ctx, 9, -54 + bob, 14, -52 + bob, swordX, swordY, '#fb7185', skinMain, 6.8, 5.8, skinMain, 4.2);
       } else {
         // Hit 3: Acrobatic Airborne Two-Handed Helm-Splitter Overhead Cleave!
         const reach = Math.max(0, strike) * 32;
         swordX = 18 + reach;
         swordY = animP < 0.34 ? (-66 + bob) : (-44 + bob);
         swordAngle = -0.65 + Math.min(1, animP * 1.35) * 2.85;
-        this.drawArticulatedArm(ctx, -6, -54 + bob, 6, swordY - 6, swordX - 2, swordY, '#fb7185', '#a16207', 6.2, 5.2);
-        this.drawArticulatedArm(ctx, 9, -54 + bob, 14, swordY - 4, swordX, swordY, '#fb7185', '#a16207', 6.8, 5.8, '#a16207', 4.2);
+        this.drawArticulatedArm(ctx, -6, -54 + bob, 6, swordY - 6, swordX - 2, swordY, '#fb7185', skinMain, 6.2, 5.2);
+        this.drawArticulatedArm(ctx, 9, -54 + bob, 14, swordY - 4, swordX, swordY, '#fb7185', skinMain, 6.8, 5.8, skinMain, 4.2);
       }
     } else if (isSpecial) {
       // Horizontal Sword-Beam Slash Release!
@@ -10973,19 +11023,19 @@ class PlayerHero {
       swordX = 20 + reach;
       swordY = -48 + bob;
       swordAngle = 1.65;
-      this.drawArticulatedArm(ctx, 9, -54 + bob, 15, -50 + bob, swordX, swordY, '#fb7185', '#a16207', 6.8, 5.8, '#a16207', 4.2);
+      this.drawArticulatedArm(ctx, 9, -54 + bob, 15, -50 + bob, swordX, swordY, '#fb7185', skinMain, 6.8, 5.8, skinMain, 4.2);
     } else if (isSkill) {
       // Knight's Flurry Shadow-Step Draw Pose!
       swordX = 24;
       swordY = -44 + bob;
       swordAngle = 1.85;
-      this.drawArticulatedArm(ctx, 9, -54 + bob, 16, -48 + bob, swordX, swordY, '#fb7185', '#a16207', 6.8, 5.8, '#a16207', 4.2);
+      this.drawArticulatedArm(ctx, 9, -54 + bob, 16, -48 + bob, swordX, swordY, '#fb7185', skinMain, 6.8, 5.8, skinMain, 4.2);
     } else {
       const cSw = motion.armSwingF * 11;
       swordX = 16 + cSw * 0.5;
       swordY = -46 + bob + cSw * 0.3;
       swordAngle = 0.25 + motion.armSwingF * 0.08;
-      this.drawArticulatedArm(ctx, 9, -54 + bob, 13 + cSw * 0.25, -49 + bob, swordX, swordY, '#a16207', '#a16207', 6.5, 5.5, '#a16207', 4);
+      this.drawArticulatedArm(ctx, 9, -54 + bob, 13 + cSw * 0.25, -49 + bob, swordX, swordY, skinMain, skinMain, 6.5, 5.5, skinMain, 4);
       // Signature Pink Glow-Bracelet on Connie's wrist!
       ctx.fillStyle = '#f472b6';
       ctx.beginPath();
@@ -11725,14 +11775,14 @@ class PlayerHero {
         ctx.roundRect(-13, -12, 24, 11, 4);
         ctx.fill();
 
-        // Connie's dark long hair resting on ground
-        ctx.fillStyle = '#0f172a';
+        // Connie's long hair resting on ground (pink if revived as Pink Connie!)
+        ctx.fillStyle = this.isPinkRevived ? '#f472b6' : '#0f172a';
         ctx.beginPath();
         ctx.ellipse(18, -8, 12, 9, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // Face
-        ctx.fillStyle = '#9a3412';
+        ctx.fillStyle = this.isPinkRevived ? '#f9a8d4' : '#9a3412';
         ctx.beginPath();
         ctx.arc(17, -9, 8.5, 0, Math.PI * 2);
         ctx.fill();
@@ -11790,24 +11840,73 @@ class PlayerHero {
 
       // Overhead Status Badge
       const heroName = (this.activeChar === 'steven') ? 'STEVEN' : 'CONNIE';
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-      ctx.strokeStyle = '#f43f5e';
+      const isArcRev = (this.reviveTimer > 0);
+      const isPinkHumanRev = isArcRev && this.activeChar === 'connie';
+      if (isArcRev) {
+        // Gentle rising aura & final 3-second luminous reformation silhouette (Pink Lion/Lars aura for Connie!)
+        const elapsedRev = Math.max(0, (this.reviveTotal || 18) - this.reviveTimer);
+        const auraLift = Math.min(1, elapsedRev / 3.5) * 28 + Math.sin(this.fallenTimer * 2.8) * 4;
+        const revCol = isPinkHumanRev ? '#f472b6' : '#fda4af';
+        const auraR = (this.isReforming ? 42 : 24) + Math.sin(this.fallenTimer * 5) * 4;
+        const orbGrad = ctx.createRadialGradient(this.x, lyingY - 12 - auraLift, 4, this.x, lyingY - 12 - auraLift, auraR);
+        orbGrad.addColorStop(0, '#ffffff');
+        orbGrad.addColorStop(0.45, revCol);
+        orbGrad.addColorStop(1, 'rgba(244, 114, 182, 0)');
+        ctx.save();
+        ctx.globalAlpha = this.isReforming ? 0.85 : 0.45;
+        ctx.fillStyle = orbGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, lyingY - 12 - auraLift, auraR, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (this.isReforming) {
+          const p = Math.max(0, Math.min(1, this.reformProgress || 0));
+          // Vertical rising light column + reforming humanoid silhouette
+          const beamGrad = ctx.createLinearGradient(0, this.y - 105, 0, this.y);
+          beamGrad.addColorStop(0, 'rgba(255,255,255,0)');
+          beamGrad.addColorStop(0.5, revCol);
+          beamGrad.addColorStop(1, '#ffffff');
+          ctx.globalAlpha = 0.35 + p * 0.45;
+          ctx.fillStyle = beamGrad;
+          ctx.fillRect(this.x - 24, this.y - 105, 48, 105);
+
+          ctx.globalAlpha = 0.4 + p * 0.55;
+          ctx.fillStyle = isPinkHumanRev ? '#fbcfe8' : '#ffffff';
+          const hScale = 0.55 + p * 0.45;
+          ctx.beginPath();
+          ctx.ellipse(this.x, this.y - 34 * hScale, 13 * hScale, 28 * hScale, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(this.x, this.y - 68 * hScale, 12 * hScale, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+      ctx.strokeStyle = isPinkHumanRev ? '#f472b6' : '#f43f5e';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(this.x - 55, lyingY - 48, 110, 18, 6);
+      ctx.roundRect(this.x - 68, lyingY - 50, 136, 19, 6);
       ctx.fill();
       ctx.stroke();
 
-      ctx.fillStyle = '#fecdd3';
+      ctx.fillStyle = isPinkHumanRev ? '#fbcfe8' : '#fecdd3';
       ctx.font = 'bold 9px "Rubik", "Outfit", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`💔 ${heroName} DOWN (0 HP)`, this.x, lyingY - 36);
+      const badgeMsg = this.isReforming
+        ? `🌸 ${isPinkHumanRev ? 'PINK CONNIE' : heroName} IN ${this.reviveTimer.toFixed(1)}s`
+        : (isArcRev ? `⏳ ${heroName} REVIVES ${Math.ceil(this.reviveTimer)}s` : `💔 ${heroName} DOWN (0 HP)`);
+      ctx.fillText(badgeMsg, this.x, lyingY - 37);
 
     } else {
       // -------------------------------------------------------------
-      // FULL GEM POOFED: PHYSICAL BODY GONE, AUTHENTIC GEMSTONE ON FLOOR
+      // FULL GEM POOFED: GEMSTONE FLOATS UP & REFORMS INTO FORM OVER 3S
       // -------------------------------------------------------------
-      const gemY = this.y - 6;
+      const isArcRev = (this.reviveTimer > 0);
+      const elapsedRev = isArcRev ? Math.max(0, (this.reviveTotal || 18) - this.reviveTimer) : 0;
+      const baseFloat = isArcRev ? (Math.min(1, elapsedRev / 3.2) * 38 + Math.sin(this.fallenTimer * 2.8) * 5) : 0;
+      const gemY = this.y - 6 - baseFloat;
       const pulse = 0.85 + Math.sin(this.fallenTimer * 4.0) * 0.15;
 
       const gemInfo = {
@@ -11972,6 +12071,34 @@ class PlayerHero {
 
       ctx.restore();
 
+      // 3-Second Luminous Gem Reformation Silhouette & Light Beam (taking form again!)
+      if (this.reviveTimer > 0 && this.isReforming) {
+        const p = Math.max(0, Math.min(1, this.reformProgress || 0));
+        ctx.save();
+        const beamW = 36 + p * 18;
+        const beamGrad = ctx.createLinearGradient(0, gemY - 68, 0, gemY + 34);
+        beamGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        beamGrad.addColorStop(0.5, gemInfo.color);
+        beamGrad.addColorStop(1, 'rgba(255,255,255,0.85)');
+        ctx.globalAlpha = 0.35 + p * 0.45;
+        ctx.fillStyle = beamGrad;
+        ctx.fillRect(this.x - beamW / 2, gemY - 66, beamW, 100);
+
+        // Glowing hard-light body silhouette materializing around the floating gem
+        const s = 0.45 + p * 0.55;
+        ctx.globalAlpha = 0.45 + p * 0.52;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = gemInfo.color;
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.ellipse(this.x, gemY + 4, 15 * s, 30 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(this.x, gemY - 32 * s, 12.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
       const sparkY = gemY - 14 - ((this.fallenTimer * 18) % 18);
       ctx.fillStyle = gemInfo.color;
       ctx.beginPath();
@@ -11982,17 +12109,20 @@ class PlayerHero {
       ctx.strokeStyle = gemInfo.color;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.roundRect(this.x - 70, gemY - 42, 140, 20, 6);
+      ctx.roundRect(this.x - 74, gemY - 46, 148, 22, 6);
       ctx.fill();
       ctx.stroke();
 
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 9px "Rubik", "Outfit", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(`💎 ${gemInfo.name} POOFED`, this.x, gemY - 30);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '7.5px "Rubik", "Outfit", sans-serif';
-      ctx.fillText('(Revives Next Stage)', this.x, gemY - 22);
+      ctx.fillText(`💎 ${gemInfo.name} POOFED`, this.x, gemY - 34);
+      ctx.fillStyle = this.isReforming ? '#fde047' : '#94a3b8';
+      ctx.font = 'bold 7.5px "Rubik", "Outfit", sans-serif';
+      const subTxt = this.isReforming
+        ? `REFORMING IN ${this.reviveTimer.toFixed(1)}s`
+        : (this.reviveTimer > 0 ? `Gem Floating · ${Math.ceil(this.reviveTimer)}s` : '(Revives Next Stage)');
+      ctx.fillText(subTxt, this.x, gemY - 26);
     }
 
     ctx.restore();
@@ -14814,17 +14944,28 @@ class EnemyManager {
     enemy.vulnMult = 1;
     enemy.vulnTimer = 0;
 
-    // Standoff: per-type map first (brawler vs spitter/flyer), bosses hold mid-arena range,
-    // generic ranged fallback 95 / melee fallback 48 (both within the player's attack reach).
-    enemy.preferredRange = isBoss ? 90 : (ENEMY_PREFERRED_RANGE[type] ?? (ranged ? 95 : 48));
-    enemy.attackRange = isBoss ? 520 : (ranged ? 300 : 150);
-    enemy.attackCooldown = (isBoss ? 2.0 : (ranged ? 1.7 : 1.55)) * (this.cooldownMult || 1.0);
+    // Standoff: per-type map first (brawler vs spitter/flyer), bosses command mid-arena & tower menacingly
+    enemy.preferredRange = isBoss ? 110 : (ENEMY_PREFERRED_RANGE[type] ?? (ranged ? 95 : 48));
+    enemy.attackRange = isBoss ? 640 : (ranged ? 300 : 150);
+    enemy.attackCooldown = (isBoss ? 1.25 : (ranged ? 1.7 : 1.55)) * (this.cooldownMult || 1.0);
     enemy.windup = 0;
     enemy.windupMax = 0;
     enemy.aiState = 'approach';
     enemy.evasionCooldown = 0;
     enemy.isElite = false;
     enemy.phase2 = false;
+    enemy.bossPatternLast = -1;
+    enemy.bossDashCooldown = 0;
+
+    // Towering Terrifying Boss Presence & Threat Multiplier
+    if (isBoss && type !== 'boss_jasper_dummy') {
+      enemy.visualScale = Math.max(1.72, (enemy.visualScale || 1.35) * 1.32);
+      enemy.width = Math.round((enemy.width || 140) * 1.24);
+      enemy.height = Math.round((enemy.height || 140) * 1.24);
+      enemy.hp = Math.round(enemy.hp * 1.50);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round((enemy.speed || 100) * 1.18);
+    }
 
     // Elite corrupted gems: rarer, gold-tinged, tougher versions at higher difficulty
     if (!isBoss && this.eliteChance > 0 && Math.random() < this.eliteChance * (1 + (this.wave - 1) * 0.12)) {
@@ -14992,26 +15133,25 @@ class EnemyManager {
         if (particles) particles.addSparkle(e.x, e.y - e.height * 0.6, '#ef4444', 10, 4);
       }
 
-      // Boss phase 2 at half health: shorter telegraphs, faster cadence, shockwave burst
-      if (e.isBoss && !e.isImmortalDummy && !e.phase2 && e.hp <= e.maxHp * 0.5) {
+      // Boss phase 2 at 55% health: shorter telegraphs, faster cadence, aggressive surge
+      if (e.isBoss && !e.isImmortalDummy && !e.phase2 && e.hp <= e.maxHp * 0.55) {
         e.phase2 = true;
-        e.attackCooldown = Math.max(0.9, e.attackCooldown * 0.78);
-        e.speed *= 1.12;
+        e.attackCooldown = Math.max(0.75, e.attackCooldown * 0.72);
+        e.speed *= 1.22;
         e.windup = 0;
         audioEngine.playSfx('overdrive');
-        particles.addDamageText(e.x, e.y - e.height - 30, '⚡ ENRAGED — PHASE 2! ⚡', true, '#ef4444');
         for (const dir of [-1, 1]) {
           projectiles.push({
             x: e.x + dir * 60,
             y: this.groundY - 30,
-            vx: dir * 420,
-            width: 160,
-            height: 40,
-            radius: 40,
-            damage: 1,
+            vx: dir * 460,
+            width: 185,
+            height: 46,
+            radius: 44,
+            damage: 1.25,
             type: 'enemyShockwave',
             color: '#ef4444',
-            life: 0.5
+            life: 0.55
           });
         }
       }
@@ -15034,25 +15174,37 @@ class EnemyManager {
       if (e.feintCooldown > 0) e.feintCooldown -= dt;
       if (e.burstTimer > 0) e.burstTimer -= dt;
       if (e.diveTimer > 0) e.diveTimer -= dt;
+      if (e.bossDashCooldown > 0) e.bossDashCooldown -= dt;
 
-      // Difficulty-driven erratic feint / ambush roll
-      if (unpred > 0.1 && !e.isImmortalDummy && e.hurtTimer <= 0 && e.windup <= 0 && (e.feintCooldown || 0) <= 0) {
-        e.feintCooldown = Math.max(0.85, (2.7 - unpred * 1.4) + Math.random() * 1.4);
+      // Difficulty-driven erratic feint / ambush roll (bosses are ALWAYS highly unpredictable)
+      const effUnpred = e.isBoss ? Math.max(unpred, e.phase2 ? 0.94 : 0.80) : unpred;
+      if (effUnpred > 0.1 && !e.isImmortalDummy && e.hurtTimer <= 0 && e.windup <= 0 && (e.feintCooldown || 0) <= 0) {
+        e.feintCooldown = e.isBoss
+          ? Math.max(0.55, (1.65 - effUnpred * 0.9) + Math.random() * 0.85)
+          : Math.max(0.85, (2.7 - effUnpred * 1.4) + Math.random() * 1.4);
         const gapToP = Math.abs(dx);
-        if (Math.random() < unpred * 0.72 && gapToP < 420) {
+        if (Math.random() < effUnpred * (e.isBoss ? 0.86 : 0.72) && gapToP < (e.isBoss ? 560 : 420)) {
           if (e.movementType === 'fly') {
             e.diveTimer = 0.65;
-            e.vx = e.facing * e.speed * 1.45;
-          } else if (gapToP < 115 && (e.y >= this.groundY - 2 || e.currentPlatform)) {
+            e.vx = e.facing * e.speed * 1.5;
+          } else if (e.isBoss && (e.bossDashCooldown || 0) <= 0 && gapToP > 140 && gapToP < 480 && Math.random() < 0.45) {
+            // Terrifying Boss Shadow-Lunge Ambush
+            e.bossDashCooldown = 2.6;
+            e.burstTimer = 0.55;
+            e.vy = -340;
+            e.vx = e.facing * Math.max(360, e.speed * 2.15);
+            e.currentPlatform = null;
+            if (particles) particles.addPoof(e.x, e.y - 35, e.gemColor || '#ef4444');
+          } else if (gapToP < 130 && (e.y >= this.groundY - 2 || e.currentPlatform)) {
             // Sudden feint hop-back or aggressive vault
-            const backstep = Math.random() < 0.55;
-            e.vy = backstep ? -380 : -520;
-            e.vx = (backstep ? -e.facing : e.facing) * Math.max(230, e.speed * 1.55);
+            const backstep = Math.random() < 0.52;
+            e.vy = backstep ? -420 : -560;
+            e.vx = (backstep ? -e.facing : e.facing) * Math.max(250, e.speed * 1.65);
             e.currentPlatform = null;
           } else {
             // Sudden adrenaline rush lunge
-            e.burstTimer = 0.45 + unpred * 0.25;
-            if (particles) particles.addSparkle(e.x, e.y - 25, e.gemColor || '#f43f5e', 5, 2);
+            e.burstTimer = 0.48 + effUnpred * 0.30;
+            if (particles) particles.addSparkle(e.x, e.y - 25, e.gemColor || '#f43f5e', 6, 3);
           }
         }
       }
@@ -15340,9 +15492,9 @@ class EnemyManager {
   }
 
   getEnemyTelegraph(e) {
-    const base = e.isBoss ? 0.70 : (ENEMY_TELEGRAPH_BASE[e.type] ?? 0.50);
-    const phaseScale = e.phase2 ? 0.8 : 1.0;
-    return Math.max(0.22, base * (this.telegraphMult || 1) * phaseScale);
+    const base = e.isBoss ? 0.46 : (ENEMY_TELEGRAPH_BASE[e.type] ?? 0.50);
+    const phaseScale = e.phase2 ? 0.78 : 1.0;
+    return Math.max(0.20, base * (this.telegraphMult || 1) * phaseScale);
   }
 
   executeEnemyAttack(e, player, projectiles, audioEngine, particles) {
@@ -15655,6 +15807,79 @@ class EnemyManager {
       });
     }
 
+    // Terrifying Unpredictable Boss Maneuver Selector (4 distinct rotating threats!)
+    if (e.isBoss && !e.isImmortalDummy) {
+      let pat = Math.floor(Math.random() * 4);
+      if (pat === e.bossPatternLast) pat = (pat + 1) % 4;
+      e.bossPatternLast = pat;
+      const bossColor = e.gemColor || '#ef4444';
+      const volleyCount = e.phase2 ? 5 : 3;
+
+      if (pat === 0) {
+        // Multi-angle Barrage Volley
+        for (let vi = 0; vi < volleyCount; vi++) {
+          const offset = vi - Math.floor(volleyCount / 2);
+          const ang = offset * 0.22;
+          projectiles.push({
+            x: e.x + e.facing * 45,
+            y: e.y - e.height * 0.55,
+            vx: e.facing * Math.cos(ang) * 410,
+            vy: Math.sin(ang) * 320 - 30,
+            radius: 14,
+            damage: 1.15,
+            type: 'enemyShard',
+            color: bossColor,
+            life: 1.7
+          });
+        }
+      } else if (pat === 1) {
+        // Meteor Pounce Leap & Dual Shockwave Slam
+        e.vy = -560;
+        e.vx = e.facing * 430;
+        e.currentPlatform = null;
+        for (const dir of [-1, 1]) {
+          projectiles.push({
+            x: e.x + dir * 42,
+            y: this.groundY - 26,
+            vx: dir * 390,
+            width: 140,
+            height: 36,
+            radius: 32,
+            damage: 1.15,
+            type: 'enemyShockwave',
+            color: bossColor,
+            life: 0.55
+          });
+        }
+      } else if (pat === 2) {
+        // Corruption Blink Ambush toward / across player
+        if (particles) particles.addPoof(e.x, e.y - e.height * 0.5, bossColor);
+        const targetX = player ? player.x : e.x;
+        const stepX = (targetX > e.x ? 1 : -1) * Math.min(180, Math.abs(targetX - e.x) * 0.65 + 75);
+        e.x = Math.max(90, Math.min(this.stageWidth - 90, e.x + stepX));
+        e.vx = e.facing * 360;
+        if (particles) particles.addSparkle(e.x, e.y - e.height * 0.5, '#ef4444', 14, 5);
+      } else {
+        // Tracking Corruption Orbs
+        const orbCount = e.phase2 ? 2 : 1;
+        for (let oi = 0; oi < orbCount; oi++) {
+          projectiles.push({
+            x: e.x + e.facing * 40,
+            y: e.y - e.height * 0.65 - oi * 24,
+            vx: e.facing * 260,
+            vy: -90 - oi * 40,
+            radius: 15,
+            damage: 1.1,
+            homing: 85,
+            type: 'enemyLaser',
+            color: '#f43f5e',
+            life: 2.1
+          });
+        }
+      }
+      return;
+    }
+
     // Unpredictable Difficulty Attack Twist (Medium+ / Frenzied): bonus diagonal volley or lunge!
     const unpred = this.aiUnpredictability || 0;
     if (!e.isImmortalDummy && unpred > 0.1 && Math.random() < (unpred * 0.52 + (e.isFrenzied ? 0.25 : 0))) {
@@ -15708,20 +15933,25 @@ class EnemyManager {
   checkPlayerAttackCollisions(e, player, projectiles, particles, audioEngine, onPoofed, enemyIndex) {
     if (e.isPoofed) return;
 
-    // Amethyst / Jasper Spin Dash Contact Collision (Strict elevation + facing check)
+    const pStats = (typeof player.getCombatStats === 'function')
+      ? player.getCombatStats()
+      : { attack: 34, magic: 36, critChance: 0.16, critDamage: 1.65 };
+    const physMult = (pStats.attack || 34) / 34;
+    const magicMult = (pStats.magic || 36) / 36;
+    const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+
+    // Amethyst / Jasper Spin Dash Contact Collision (throttled to prevent continuous-hit lag)
     if (player.isSpinDashing) {
-      if (this.isPlayerMeleeAligned(e, player, 68, 18, 14) && e.hurtTimer <= 0) {
-        let dmg = (player.isPinkOverdrive ? 60 : 35) * (player.hasSynergyBuff ? 1.25 : 1.0);
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType('k'), player.getStabMultiplier('k'));
-        particles.addImpactSparks(e.x, e.y - 20, player.facing, '#c084fc', 10);
-        if (this.gameRef && this.gameRef.triggerHitstop) {
-          this.gameRef.triggerHitstop(0.035, 2.5);
-        }
+      if (this.isPlayerMeleeAligned(e, player, 68, 18, 14) && e.hurtTimer <= 0 && nowMs - (e._spinDashAt || 0) >= 260) {
+        e._spinDashAt = nowMs;
+        let dmg = (player.isPinkOverdrive ? 56 : 34) * (0.55 * physMult + 0.45 * magicMult) * (player.hasSynergyBuff ? 1.25 : 1.0);
+        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType('k'), player.getStabMultiplier('k'), pStats);
+        particles.addImpactSparks(e.x, e.y - 20, player.facing, '#c084fc', 8);
         e.vx = player.facing * 440;
         e.vy = -240;
         e.hurtTimer = 0.35;
         audioEngine.playSfx('hit');
-        particles.addSparkle(e.x, e.y - 20, '#c084fc', 12, 4);
+        particles.addSparkle(e.x, e.y - 20, '#c084fc', 8, 4);
         if (e.isPoofed) return;
       }
     }
@@ -15739,29 +15969,19 @@ class EnemyManager {
       hitRange += (player.attackRangeBonus || 0);
 
       if (this.isPlayerMeleeAligned(e, player, hitRange) && e.hurtTimer <= 0) {
-        let dmg = 25;
-        if (player.isFusion) dmg = 75;
-        else if (player.activeChar === 'bismuth') dmg = 44;
-        else if (player.activeChar === 'jasper') dmg = 42;
-        else if (player.activeChar === 'garnet') dmg = 38;
-        else if (player.activeChar === 'rose') dmg = 36;
-        else if (player.activeChar === 'connie') dmg = 32;
-        else if (player.activeChar === 'pearl') dmg = 30;
-        else if (player.activeChar === 'lapis') dmg = 30;
-        else if (player.activeChar === 'amethyst') dmg = 28;
-        else if (player.activeChar === 'peridot') dmg = 28;
-
-        // Combo step scaling: finishers hit hardest, perfect links add 12%
-        dmg = Math.round(dmg * (player.attackDamageMult || 1));
+        let baseDmg = player.isFusion ? 62 : 30;
+        const isMagicMelee = (player.activeChar === 'lapis' || player.activeChar === 'peridot' || player.activeChar === 'pearl' || player.activeChar === 'rose');
+        const meleeStatScale = isMagicMelee ? (0.45 * physMult + 0.55 * magicMult) : (0.85 * physMult + 0.15 * magicMult);
+        let dmg = Math.round(baseDmg * meleeStatScale * (player.attackDamageMult || 1));
 
         if (player.isPinkOverdrive) {
-          dmg = Math.round(dmg * 2.0);
+          dmg = Math.round(dmg * 1.9);
         }
         if (player.hasSynergyBuff) {
           dmg = Math.round(dmg * 1.25);
         }
 
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType));
+        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType), pStats);
         const sparkColor = player.isPinkOverdrive ? '#f43f5e' : ((typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[player.activeChar]?.color) || '#fde047');
         particles.addImpactSparks(e.x, e.y - e.height / 2, player.facing, sparkColor, 12);
         if (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion) {
@@ -15922,27 +16142,51 @@ class EnemyManager {
           p.hitSet.add(e);
         }
 
-      // 2. Throttle persistent AoE projectiles so they do not deal damage on every single frame to the same enemy
-      const isPersistentAoE = (p.type === 'purpleGeyser' || p.type === 'tidalWave' || p.type === 'moltenShockwave' || p.type === 'seismicShockwave' || p.type === 'giantGauntletSlam' || p.type === 'bubbleShockwave' || p.type === 'roseShockwave' || p.type === 'magneticVortex' || p.type === 'connieShadowSlash' || p.type === 'fusionRoseSwordWave' || p.type === 'fusionCyclone' || p.type === 'fusionPrismCannon' || p.type === 'fusionSupernova' || p.type === 'fusionFlailCataclysm' || p.type === 'fusionShowstopper' || p.type === 'fusionTsunamiCage' || p.type === 'fusionPrismRose');
+      // 2. Throttle persistent / multi-frame AoE projectiles so they NEVER hit every frame at 60Hz
+      const isPersistentAoE = (
+        p.type === 'purpleGeyser' || p.type === 'tidalWave' || p.type === 'moltenShockwave' ||
+        p.type === 'seismicShockwave' || p.type === 'giantGauntletSlam' || p.type === 'bubbleShockwave' ||
+        p.type === 'roseShockwave' || p.type === 'magneticVortex' || p.type === 'connieShadowSlash' ||
+        p.type === 'amethystSpinDashHit' || p.type === 'jasperSpinDashHit' || p.type === 'flaskRobonoid' ||
+        p.type === 'fusionRoseSwordWave' || p.type === 'fusionCyclone' || p.type === 'fusionPrismCannon' ||
+        p.type === 'fusionSupernova' || p.type === 'fusionFlailCataclysm' || p.type === 'fusionShowstopper' ||
+        p.type === 'fusionTsunamiCage' || p.type === 'fusionPrismRose'
+      );
       if (isPersistentAoE) {
         p.hitMap = p.hitMap || new Map();
         const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
         if (p.hitMap.has(e)) {
           const lastHit = p.hitMap.get(e);
-          if (now - lastHit < 320) {
+          if (now - lastHit < 300) {
             continue; // Enemy was recently hit by this wave/shockwave; wait for next tick
           }
         }
         p.hitMap.set(e, now);
       }
 
-      // 3. Confirmed Hit! Apply damage, particle sparkle, and weapon knockback
-      this.damageEnemy(e, p.damage || 25, particles, audioEngine, onPoofed, enemyIndex, p.elementType || null, p.stabMult || 1);
-      particles.addSparkle(p.x, p.y, p.color || '#fff', 12, 4);
-      const projDir = (p.vx && p.vx > 0) ? 1 : ((p.vx && p.vx < 0) ? -1 : player.facing);
-      particles.addImpactSparks(e.x, e.y - e.height / 2, projDir, p.color || '#fde047', 10);
-      if (this.gameRef && this.gameRef.triggerHitstop) {
-        this.gameRef.triggerHitstop(0.032, 2.0);
+      // 3. Confirmed Hit! Apply Attack/Magic lore stat scaling & Critical Chance/Damage
+      const magicProjTypes = new Set([
+        'hydroFist', 'tidalWave', 'spearBeam', 'holoPearl', 'scrapSalvo', 'flaskRobonoid',
+        'magneticVortex', 'purpleGeyser', 'bubbleShockwave', 'roseShockwave', 'roseSwordWave',
+        'fusionCyclone', 'fusionPrismCannon', 'fusionSupernova', 'fusionTsunamiCage',
+        'fusionShowstopper', 'fusionPrismRose', 'fusionLightRain', 'fusionArrow', 'fusionRoseSwordWave'
+      ]);
+      const projStatScale = magicProjTypes.has(p.type)
+        ? (0.20 * physMult + 0.80 * magicMult)
+        : (0.75 * physMult + 0.25 * magicMult);
+      const scaledProjDmg = Math.max(1, Math.round((p.damage || 25) * projStatScale));
+      this.damageEnemy(e, scaledProjDmg, particles, audioEngine, onPoofed, enemyIndex, p.elementType || null, p.stabMult || 1, pStats);
+      if (nowMs - (e._lastSparkAt || 0) >= 85) {
+        e._lastSparkAt = nowMs;
+        particles.addSparkle(p.x, p.y, p.color || '#fff', 8, 3);
+        const projDir = (p.vx && p.vx > 0) ? 1 : ((p.vx && p.vx < 0) ? -1 : player.facing);
+        particles.addImpactSparks(e.x, e.y - e.height / 2, projDir, p.color || '#fde047', 6);
+      } else {
+        const projDir = (p.vx && p.vx > 0) ? 1 : ((p.vx && p.vx < 0) ? -1 : player.facing);
+        void projDir;
+      }
+      if (this.gameRef && this.gameRef.triggerHitstop && !isPersistentAoE) {
+        this.gameRef.triggerHitstop(0.03, 1.8);
       }
 
       // Specific Knockbacks based on lore weapons
@@ -16097,38 +16341,62 @@ class EnemyManager {
     // Status effect applied silently without cluttering popup text
   }
 
-  damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, attackType = null, stabMult = 1) {
+  damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, attackType = null, stabMult = 1, combatOpts = null) {
     if (e.isPoofed) return;
 
     const moveType = attackType ? String(attackType).toLowerCase() : null;
     const typeMeta = getTypeMeta(moveType || 'normal');
     const typeMult = typeMultiplier(moveType, e.types);
     const vulnMult = (e.vulnTimer > 0 ? (e.vulnMult || 1) : 1);
-    const finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult));
+
+    // Critical Chance & Critical Damage roll from active guardian's lore stats
+    const fallbackStats = (this.gameRef && this.gameRef.player && typeof this.gameRef.player.getCombatStats === 'function')
+      ? this.gameRef.player.getCombatStats()
+      : null;
+    const critChance = (combatOpts && typeof combatOpts.critChance === 'number')
+      ? combatOpts.critChance
+      : (fallbackStats ? fallbackStats.critChance : 0.12);
+    const critDamage = (combatOpts && typeof combatOpts.critDamage === 'number')
+      ? combatOpts.critDamage
+      : (fallbackStats ? fallbackStats.critDamage : 1.6);
+    const isCrit = (!combatOpts || combatOpts.allowCrit !== false) && (Math.random() < critChance);
+    const critMult = isCrit ? critDamage : 1.0;
+
+    const finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult * critMult));
 
     if (this.onComboHit) {
       this.onComboHit(finalDmg);
     }
 
-    // Matchup verdict evaluated silently without screen clutter
+    const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    const canShowFeedback = nowMs - (e._lastFeedbackAt || 0) >= 85;
+    if (canShowFeedback) {
+      e._lastFeedbackAt = nowMs;
+    }
 
     // Tekken Practice Dojo: Training dummy takes zero permanent damage!
     if (e.isImmortalDummy) {
       e.hp = e.maxHp;
       e.hurtTimer = 0.28;
-      particles.addDamageText(e.x, e.y - e.height - 14, `${finalDmg}`, finalDmg >= 30, typeMeta.color);
+      if (canShowFeedback) {
+        if (particles) particles.addDamageText(e.x, e.y - e.height - 14, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35, isCrit ? '#fde047' : typeMeta.color);
+        if (audioEngine) audioEngine.playSfx('hitfeedback');
+        if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+      }
       this.applyTypeStatus(e, moveType, particles);
-      audioEngine.playSfx('hitfeedback');
-      if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, typeMeta.color || '#ffd700');
       return;
     }
 
     e.hp -= finalDmg;
     e.hurtTimer = 0.35;
-    particles.addDamageText(e.x, e.y - e.height - 12, `${finalDmg}`, finalDmg >= 30 || typeMult >= 2, typeMeta.color);
     this.applyTypeStatus(e, moveType, particles);
-    audioEngine.playSfx('hitfeedback');
-    if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, typeMeta.color || '#ffd700');
+    if (canShowFeedback) {
+      if (particles) {
+        particles.addDamageText(e.x, e.y - e.height - 12, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35 || typeMult >= 2, isCrit ? '#fde047' : typeMeta.color);
+        particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+      }
+      if (audioEngine) audioEngine.playSfx('hitfeedback');
+    }
 
     e.comboHitCount = (e.comboHitCount || 0) + 1;
     e.comboDamageTaken = (e.comboDamageTaken || 0) + finalDmg;
@@ -16176,7 +16444,6 @@ class EnemyManager {
   }
 
   poofEnemy(e, enemyIndex, particles, audioEngine, onPoofed) {
-    audioEngine.playSfx('pop');
     audioEngine.playSfx('poof');
     particles.addPoof(e.x, e.y - e.height / 2, e.gemColor || '#22c55e');
     this.enemiesDefeatedInStage = (this.enemiesDefeatedInStage || 0) + 1;
@@ -16365,6 +16632,22 @@ class EnemyManager {
           ctx.arc(Math.sin(i * 2.3 + e.animTime * 1.4) * r * 0.55, -rise * e.height - 4, 1.8 + (1 - rise) * 2.2, 0, Math.PI * 2);
           ctx.fill();
         }
+        ctx.restore();
+      }
+
+      // Menacing Boss Threat Aura (pulsing dark-crimson/gem corona under towering bosses)
+      if (e.isBoss && !e.isImmortalDummy) {
+        const threatPulse = 0.5 + 0.5 * Math.sin((e.animTime || 0) * (e.phase2 ? 9 : 5));
+        const auraR = Math.max(e.width || 150, e.height || 150) * (0.72 + threatPulse * 0.14);
+        ctx.save();
+        const bGlow = ctx.createRadialGradient(0, -e.height * 0.45, 8, 0, -e.height * 0.45, auraR);
+        bGlow.addColorStop(0, e.phase2 ? 'rgba(239, 68, 68, 0.34)' : 'rgba(168, 85, 247, 0.24)');
+        bGlow.addColorStop(0.65, e.gemColor ? `${e.gemColor}33` : 'rgba(127, 29, 29, 0.2)');
+        bGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = bGlow;
+        ctx.beginPath();
+        ctx.arc(0, -e.height * 0.45, auraR, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       }
 
@@ -18808,6 +19091,59 @@ function getGuardianSvg(charId, size = 44) {
   return getGuardianAvatarHtml(charId, size);
 }
 
+const CHARACTER_STATS = {
+  steven:   { hp: 145, attack: 28, magic: 42, defense: 44, critChance: 0.14, critDamage: 1.55 },
+  garnet:   { hp: 150, attack: 48, magic: 36, defense: 42, critChance: 0.20, critDamage: 1.75 },
+  amethyst: { hp: 135, attack: 38, magic: 32, defense: 34, critChance: 0.22, critDamage: 1.70 },
+  pearl:    { hp: 118, attack: 34, magic: 45, defense: 30, critChance: 0.28, critDamage: 1.85 },
+  bismuth:  { hp: 165, attack: 52, magic: 34, defense: 50, critChance: 0.16, critDamage: 1.75 },
+  peridot:  { hp: 160, attack: 24, magic: 44, defense: 52, critChance: 0.15, critDamage: 1.55 },
+  lapis:    { hp: 122, attack: 26, magic: 58, defense: 28, critChance: 0.18, critDamage: 1.75 },
+  rose:     { hp: 175, attack: 42, magic: 54, defense: 48, critChance: 0.18, critDamage: 1.75 },
+  connie:   { hp: 105, attack: 38, magic: 18, defense: 24, critChance: 0.36, critDamage: 2.05 },
+  jasper:   { hp: 170, attack: 54, magic: 26, defense: 48, critChance: 0.19, critDamage: 1.80 }
+};
+
+const FUSION_STATS = {
+  stevonnie:      { hp: 230, attack: 58, magic: 52, defense: 54, critChance: 0.34, critDamage: 2.05 },
+  smoky:          { hp: 245, attack: 54, magic: 56, defense: 56, critChance: 0.26, critDamage: 1.85 },
+  rainbow2:       { hp: 220, attack: 48, magic: 68, defense: 50, critChance: 0.30, critDamage: 1.95 },
+  sunstone:       { hp: 270, attack: 64, magic: 60, defense: 64, critChance: 0.24, critDamage: 1.85 },
+  sugilite:       { hp: 295, attack: 78, magic: 48, defense: 62, critChance: 0.25, critDamage: 2.00 },
+  sardonyx:       { hp: 260, attack: 64, magic: 66, defense: 58, critChance: 0.28, critDamage: 1.95 },
+  opal:           { hp: 235, attack: 52, magic: 70, defense: 48, critChance: 0.36, critDamage: 2.05 },
+  malachite:      { hp: 310, attack: 72, magic: 76, defense: 66, critChance: 0.24, critDamage: 1.95 },
+  rainbowClassic: { hp: 255, attack: 56, magic: 72, defense: 54, critChance: 0.32, critDamage: 1.95 }
+};
+
+function getHeroCombatStats(charId, fusionData = null, isPinkRevived = false) {
+  let base;
+  if (fusionData && fusionData.id && FUSION_STATS[fusionData.id]) {
+    base = FUSION_STATS[fusionData.id];
+  } else if (fusionData && Array.isArray(fusionData.gems)) {
+    const a = CHARACTER_STATS[fusionData.gems[0]] || CHARACTER_STATS.steven;
+    const b = CHARACTER_STATS[fusionData.gems[1]] || CHARACTER_STATS.garnet;
+    base = {
+      hp: Math.round((a.hp + b.hp) * 0.85),
+      attack: Math.round((a.attack + b.attack) * 0.78),
+      magic: Math.round((a.magic + b.magic) * 0.78),
+      defense: Math.round((a.defense + b.defense) * 0.72),
+      critChance: Math.min(0.45, Math.max(a.critChance, b.critChance) + 0.06),
+      critDamage: Math.max(a.critDamage, b.critDamage) + 0.10
+    };
+  } else {
+    base = CHARACTER_STATS[charId] || CHARACTER_STATS.steven;
+  }
+  const out = { ...base };
+  if (isPinkRevived && charId === 'connie' && !fusionData) {
+    out.hp += 25;
+    out.magic += 18;
+    out.defense += 6;
+    out.critChance = Math.min(0.50, out.critChance + 0.05);
+  }
+  return out;
+}
+
 const GUARDIAN_DATA = {
   steven: {
     id: 'steven',
@@ -19080,6 +19416,13 @@ const CANON_FUSIONS = {
     l: { name: 'Prismatic Tears Dance', desc: 'Rose petal storm and team heal' }
   }
 };
+
+Object.values(GUARDIAN_DATA).forEach(g => {
+  if (g && CHARACTER_STATS[g.id]) g.stats = { ...CHARACTER_STATS[g.id] };
+});
+Object.values(CANON_FUSIONS).forEach(f => {
+  if (f && FUSION_STATS[f.id]) f.stats = { ...FUSION_STATS[f.id] };
+});
 
 const COOP_FUSION_MOVES = {
   stevonnie: {
@@ -20171,8 +20514,7 @@ class StevenUniverseGame {
     const diffCfg = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
     this.enemyManager.diffMult = diffCfg.enemyHpMult || 1.0;
     this.maxHearts = diffCfg.hearts;
-    this.currentHearts = this.maxHearts;
-    this.currentHeartsP2 = this.maxHearts;
+    this.initPlayerHeartPools();
     this.score = 0;
     this.bubbledGemsCount = 0;
 
@@ -20585,6 +20927,154 @@ class StevenUniverseGame {
     this._splashTimers.push(tIn);
   }
 
+  getHeartPoolSpec(hero) {
+    const stats = (hero && typeof hero.getCombatStats === 'function')
+      ? hero.getCombatStats()
+      : getHeroCombatStats('steven');
+    // Combine lore HP & Defense so tankier gems (e.g. Peridot, Bismuth, Rose, Jasper, Fusions)
+    // hold substantially more life per Spinel Heart and drain slowly before blacking out.
+    const perHeartHp = Math.max(100, Math.round((stats.hp || 130) * (1 + (stats.defense || 30) / 90)));
+    return {
+      perHeartHp,
+      maxHp: Math.max(1, (this.maxHearts || 5) * perHeartHp),
+      defense: stats.defense || 30
+    };
+  }
+
+  initPlayerHeartPools() {
+    const p1Spec = this.getHeartPoolSpec(this.player);
+    this.perHeartHpP1 = p1Spec.perHeartHp;
+    this.maxHeartHpP1 = p1Spec.maxHp;
+    this.heartHpP1 = p1Spec.maxHp;
+    this.currentHearts = this.maxHearts;
+
+    const p2Spec = this.getHeartPoolSpec(this.player2 || this.player);
+    this.perHeartHpP2 = p2Spec.perHeartHp;
+    this.maxHeartHpP2 = p2Spec.maxHp;
+    this.heartHpP2 = p2Spec.maxHp;
+    this.currentHeartsP2 = this.maxHearts;
+  }
+
+  syncHeartPoolCounts() {
+    const p1Spec = this.getHeartPoolSpec(this.player);
+    this.perHeartHpP1 = p1Spec.perHeartHp;
+    this.maxHeartHpP1 = p1Spec.maxHp;
+    if (typeof this.heartHpP1 !== 'number' || Number.isNaN(this.heartHpP1)) {
+      this.heartHpP1 = (this.currentHearts ?? this.maxHearts) * p1Spec.perHeartHp;
+    }
+    this.heartHpP1 = Math.max(0, Math.min(this.maxHeartHpP1, this.heartHpP1));
+    this.currentHearts = this.heartHpP1 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP1 / p1Spec.perHeartHp));
+
+    if (this.player2) {
+      const p2Spec = this.getHeartPoolSpec(this.player2);
+      this.perHeartHpP2 = p2Spec.perHeartHp;
+      this.maxHeartHpP2 = p2Spec.maxHp;
+      if (typeof this.heartHpP2 !== 'number' || Number.isNaN(this.heartHpP2)) {
+        this.heartHpP2 = (this.currentHeartsP2 ?? this.maxHearts) * p2Spec.perHeartHp;
+      }
+      this.heartHpP2 = Math.max(0, Math.min(this.maxHeartHpP2, this.heartHpP2));
+      this.currentHeartsP2 = this.heartHpP2 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP2 / p2Spec.perHeartHp));
+    }
+  }
+
+  healPlayerHearts(isP2, heartAmount = 1) {
+    const hero = isP2 ? this.player2 : this.player;
+    const spec = this.getHeartPoolSpec(hero);
+    if (isP2) {
+      this.perHeartHpP2 = spec.perHeartHp;
+      this.maxHeartHpP2 = spec.maxHp;
+      let cur = (typeof this.heartHpP2 === 'number') ? this.heartHpP2 : (this.currentHeartsP2 * spec.perHeartHp);
+      const extCount = this.currentHeartsP2 ?? this.maxHearts;
+      if (Math.ceil(cur / spec.perHeartHp) !== extCount) cur = extCount * spec.perHeartHp;
+      this.heartHpP2 = Math.min(spec.maxHp, cur + Math.round(heartAmount * spec.perHeartHp));
+      this.currentHeartsP2 = this.heartHpP2 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP2 / spec.perHeartHp));
+    } else {
+      this.perHeartHpP1 = spec.perHeartHp;
+      this.maxHeartHpP1 = spec.maxHp;
+      let cur = (typeof this.heartHpP1 === 'number') ? this.heartHpP1 : (this.currentHearts * spec.perHeartHp);
+      const extCount = this.currentHearts ?? this.maxHearts;
+      if (Math.ceil(cur / spec.perHeartHp) !== extCount) cur = extCount * spec.perHeartHp;
+      this.heartHpP1 = Math.min(spec.maxHp, cur + Math.round(heartAmount * spec.perHeartHp));
+      this.currentHearts = this.heartHpP1 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP1 / spec.perHeartHp));
+    }
+  }
+
+  damagePlayerHearts(hero, rawHeartUnits = 1, explicitHpLoss = null) {
+    const isP2 = !!(hero && hero.playerId === 'p2');
+    const spec = this.getHeartPoolSpec(hero);
+    const hpLoss = (typeof explicitHpLoss === 'number' && explicitHpLoss > 0)
+      ? explicitHpLoss
+      : Math.max(14, Math.round((rawHeartUnits * 95) * (100 / (100 + spec.defense))));
+    if (isP2) {
+      this.perHeartHpP2 = spec.perHeartHp;
+      this.maxHeartHpP2 = spec.maxHp;
+      let cur = (typeof this.heartHpP2 === 'number') ? this.heartHpP2 : (this.currentHeartsP2 * spec.perHeartHp);
+      const extCount = this.currentHeartsP2 ?? this.maxHearts;
+      if (Math.ceil(cur / spec.perHeartHp) !== extCount) cur = extCount * spec.perHeartHp;
+      this.heartHpP2 = Math.max(0, cur - hpLoss);
+      this.currentHeartsP2 = this.heartHpP2 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP2 / spec.perHeartHp));
+      return this.currentHeartsP2;
+    } else {
+      this.perHeartHpP1 = spec.perHeartHp;
+      this.maxHeartHpP1 = spec.maxHp;
+      let cur = (typeof this.heartHpP1 === 'number') ? this.heartHpP1 : (this.currentHearts * spec.perHeartHp);
+      const extCount = this.currentHearts ?? this.maxHearts;
+      if (Math.ceil(cur / spec.perHeartHp) !== extCount) cur = extCount * spec.perHeartHp;
+      this.heartHpP1 = Math.max(0, cur - hpLoss);
+      this.currentHearts = this.heartHpP1 <= 0 ? 0 : Math.min(this.maxHearts, Math.ceil(this.heartHpP1 / spec.perHeartHp));
+      return this.currentHearts;
+    }
+  }
+
+  renderSpinelHearts(container, isP2) {
+    if (!container) return;
+    const count = isP2 ? this.currentHeartsP2 : this.currentHearts;
+    const hpPool = isP2 ? this.heartHpP2 : this.heartHpP1;
+    const perHeart = (isP2 ? this.perHeartHpP2 : this.perHeartHpP1) || 150;
+    const activeIdx = count - 1;
+    const partialLife = (count > 0 && typeof hpPool === 'number')
+      ? Math.max(0.08, Math.min(1, (hpPool - activeIdx * perHeart) / perHeart))
+      : 1;
+
+    if (container.children.length !== this.maxHearts) {
+      container.innerHTML = '';
+      for (let i = 0; i < this.maxHearts; i++) {
+        const heart = document.createElement('span');
+        heart.className = 'hud-heart empty';
+        container.appendChild(heart);
+      }
+    }
+
+    for (let i = 0; i < this.maxHearts; i++) {
+      const child = container.children[i];
+      let targetClass = 'hud-heart empty';
+      let lifeVar = '';
+      if (i < count) {
+        if (i === activeIdx && partialLife < 0.96) {
+          targetClass = 'hud-heart filled draining';
+          lifeVar = partialLife.toFixed(2);
+        } else {
+          targetClass = 'hud-heart filled';
+        }
+      }
+      if (child.className !== targetClass) {
+        child.className = targetClass;
+      }
+      if (child._heartLife !== lifeVar) {
+        child._heartLife = lifeVar;
+        if (child.style) {
+          if (typeof child.style.setProperty === 'function') {
+            if (lifeVar) child.style.setProperty('--heart-life', lifeVar);
+            else if (typeof child.style.removeProperty === 'function') child.style.removeProperty('--heart-life');
+          } else {
+            child.style['--heart-life'] = lifeVar;
+          }
+        }
+      }
+      if (child.textContent !== '') child.textContent = '';
+    }
+  }
+
   updateLobbyGuardian() {
     const dataP1 = GUARDIAN_DATA[this.selectedCharP1] || GUARDIAN_DATA.steven;
     const avatarEl = document.getElementById('lobbyGuardianAvatar');
@@ -20692,8 +21182,7 @@ class StevenUniverseGame {
     const diffCfg = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
     this.enemyManager.diffMult = diffCfg.enemyHpMult || 1.0;
     this.maxHearts = diffCfg.hearts;
-    this.currentHearts = this.maxHearts;
-    this.currentHeartsP2 = this.maxHearts;
+    this.initPlayerHeartPools();
     this.updateLobbyDifficulty();
     this.audio.playSfx('cookie');
   }
@@ -20747,6 +21236,20 @@ class StevenUniverseGame {
 
     if (paneTypes) {
       paneTypes.innerHTML = (data.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
+    }
+
+    const statsEl = document.getElementById('paneStats');
+    if (statsEl && typeof getHeroCombatStats === 'function') {
+      const s = getHeroCombatStats(charId, null, false);
+      const critPct = `${Math.round(s.critChance * 100)}%`;
+      const critDmgPct = `${Math.round(s.critDamage * 100)}%`;
+      statsEl.innerHTML =
+        `<span class="stat-pill"><b>HP</b> ${s.hp}</span>` +
+        `<span class="stat-pill"><b>DEF</b> ${s.defense}</span>` +
+        `<span class="stat-pill"><b>ATK</b> ${s.attack}</span>` +
+        `<span class="stat-pill"><b>MAG</b> ${s.magic}</span>` +
+        `<span class="stat-pill"><b>CRIT</b> ${critPct}</span>` +
+        `<span class="stat-pill"><b>CRIT DMG</b> ${critDmgPct}</span>`;
     }
 
     const fList = document.getElementById('fusionPreviewList');
@@ -20965,8 +21468,7 @@ class StevenUniverseGame {
 
     const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
     this.maxHearts = diff.hearts;
-    this.currentHearts = this.maxHearts;
-    this.currentHeartsP2 = this.maxHearts;
+    this.initPlayerHeartPools();
 
     this.player.x = 220;
     this.player.y = this.groundY;
@@ -20986,6 +21488,7 @@ class StevenUniverseGame {
       this.player2.x = 340;
       this.player2.y = this.groundY;
       this.player2.switchCharacter(this.selectedCharP2, this.audio, this.particles);
+      this.player2.isPinkRevived = false;
       this.player2.onTeamHeal = (src, amt) => this.handleTeamHealing(src, amt);
       this.player2.onComboFinisher = (charId, perfect, source) => this.registerComboFinisher(charId, perfect, source);
       if (hudP2) hudP2.style.display = 'flex';
@@ -20995,6 +21498,8 @@ class StevenUniverseGame {
       const hudEl = document.getElementById('hud');
       if (hudEl) hudEl.classList.remove('two-player');
     }
+    this.player.isPinkRevived = false;
+    this.initPlayerHeartPools();
     this.updateFusionHUD();
 
     this.projectiles = [];
@@ -21630,11 +22135,10 @@ class StevenUniverseGame {
     this.stageIndex++;
     const stageHeal = (this.enemyManager.stageHeal ?? -1);
     if (stageHeal < 0) {
-      this.currentHearts = this.maxHearts;
-      this.currentHeartsP2 = this.maxHearts;
+      this.initPlayerHeartPools();
     } else {
-      this.currentHearts = Math.min(this.maxHearts, this.currentHearts + stageHeal);
-      this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + stageHeal);
+      this.healPlayerHearts(false, stageHeal);
+      if (this.player2) this.healPlayerHearts(true, stageHeal);
     }
     this.player.revive(this.audio, this.particles);
     if (this.player2) this.player2.revive(this.audio, this.particles);
@@ -21862,28 +22366,35 @@ class StevenUniverseGame {
   }
 
   handleTeamHealing(sourceHero, amount = 1) {
-    if (this.playerMode !== '2p' || !this.player2) return;
+    // Also restore fractional Spinel Heart life for Steven/Rose themselves!
+    if (sourceHero && !sourceHero.isFallen) {
+      const isSelfP2 = (sourceHero.playerId === 'p2');
+      this.healPlayerHearts(isSelfP2, amount * 0.65);
+    }
+    if (this.playerMode !== '2p' || !this.player2) {
+      this.updateHUD();
+      return;
+    }
     const targetHero = (sourceHero === this.player) ? this.player2 : this.player;
-    if (!targetHero || targetHero.isFallen) return;
+    if (!targetHero || targetHero.isFallen) {
+      this.updateHUD();
+      return;
+    }
 
     const isTargetP2 = (targetHero === this.player2);
-    const curHearts = isTargetP2 ? this.currentHeartsP2 : this.currentHearts;
+    const spec = this.getHeartPoolSpec(targetHero);
+    const curHp = isTargetP2 ? (this.heartHpP2 ?? 0) : (this.heartHpP1 ?? 0);
 
-    if (curHearts < this.maxHearts) {
-      if (isTargetP2) {
-        this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + amount);
-      } else {
-        this.currentHearts = Math.min(this.maxHearts, this.currentHearts + amount);
-      }
+    if (curHp < spec.maxHp) {
+      this.healPlayerHearts(isTargetP2, amount);
       this.audio.playSfx('cookie');
-      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ff4d79', 24, 7);
-      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ffffff', 16, 5);
-      this.particles.addRosePetals(targetHero.x, targetHero.y - 35, 16);
-      this.particles.addDamageText(targetHero.x, targetHero.y - 65, `💖 +${amount} HEART (TEAM HEAL!)`, true, '#ff2a6d');
+      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ff4d79', 18, 6);
+      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ffffff', 12, 4);
+      this.particles.addRosePetals(targetHero.x, targetHero.y - 35, 12);
       this.updateHUD();
     } else {
-      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ffd700', 16, 5);
-      this.particles.addDamageText(targetHero.x, targetHero.y - 65, '✨ MAX HP (GEM HARMONY!)', false, '#fde047');
+      this.particles.addSparkle(targetHero.x, targetHero.y - 35, '#ffd700', 12, 4);
+      this.updateHUD();
     }
   }
 
@@ -21897,6 +22408,8 @@ class StevenUniverseGame {
 
     hero.isFallen = true;
     hero.fallenTimer = 0;
+    hero.isReforming = false;
+    hero.reformProgress = 0;
     hero.vx = 0;
     hero.isAttacking = false;
     hero.isShielding = false;
@@ -21904,13 +22417,23 @@ class StevenUniverseGame {
     hero.isDodging = false;
     hero.invulnerableTimer = 999;
 
+    // 2-Player Arcade Mode: start an 18-second gem float + 3s reformation countdown
+    if (this.gameMode === 'arcade' && this.playerMode === '2p' && this.player2) {
+      hero.reviveTotal = 18.0;
+      hero.reviveTimer = 18.0;
+      hero.reformDuration = 3.0;
+    } else {
+      hero.reviveTotal = 0;
+      hero.reviveTimer = 0;
+      hero.reformDuration = 0;
+    }
+
     const isHumanoid = (hero.activeChar === 'steven' || hero.activeChar === 'connie');
     hero.fallenType = isHumanoid ? 'lie_down' : 'poofed';
 
     if (isHumanoid) {
       this.audio.playSfx('hit');
-      this.particles.addDamageText(hero.x, hero.y - 70, `${hero.activeChar === 'steven' ? 'STEVEN' : 'CONNIE'} IS DOWN! 💫`, true, '#f43f5e');
-      this.particles.addSparkle(hero.x, hero.y - 25, '#fbbf24', 16, 4);
+      this.particles.addSparkle(hero.x, hero.y - 25, '#fbbf24', 14, 4);
     } else {
       this.audio.playSfx('poof');
       const gemColors = {
@@ -21926,11 +22449,53 @@ class StevenUniverseGame {
       const col = gemColors[hero.activeChar] || '#c084fc';
       this.particles.addPoof(hero.x, hero.y - 30, '#ffffff');
       this.particles.addPoof(hero.x, hero.y - 30, col);
-      this.particles.addSparkle(hero.x, hero.y - 25, col, 24, 7);
-      this.particles.addDamageText(hero.x, hero.y - 70, `${hero.activeChar.toUpperCase()} POOFED! 💎 (REVIVES NEXT STAGE)`, true, col);
+      this.particles.addSparkle(hero.x, hero.y - 25, col, 20, 6);
     }
 
     this.checkTeamWipe();
+  }
+
+  updateArcadeCoopRevival(dt) {
+    if (this.gameMode !== 'arcade' || this.playerMode !== '2p' || !this.player2) return;
+    if (this.player.isFallen && this.player2.isFallen) return;
+
+    const pair = [this.player, this.player2];
+    for (const hero of pair) {
+      if (!hero || !hero.isFallen || !(hero.reviveTimer > 0)) continue;
+      hero.reviveTimer = Math.max(0, hero.reviveTimer - dt);
+      const reformWin = hero.reformDuration || 3.0;
+      if (hero.reviveTimer > 0 && hero.reviveTimer <= reformWin) {
+        if (!hero.isReforming) {
+          hero.isReforming = true;
+          if (this.audio) this.audio.playSfx('weaponSummon');
+        }
+        hero.reformProgress = Math.max(0, Math.min(1, (reformWin - hero.reviveTimer) / reformWin));
+        if (this.particles && Math.random() < 0.35) {
+          const glowCol = (hero.activeChar === 'connie') ? '#f472b6' : '#ffffff';
+          this.particles.addSparkle(hero.x + (Math.random() - 0.5) * 34, hero.y - 22 - Math.random() * 44, glowCol, 2, 2.2);
+        }
+      } else if (hero.reviveTimer <= 0) {
+        this.completeArcadeCoopRevival(hero);
+      }
+    }
+  }
+
+  completeArcadeCoopRevival(hero) {
+    if (!hero || !hero.isFallen) return;
+    const isP2 = (hero.playerId === 'p2');
+    const wasConnie = (hero.activeChar === 'connie');
+    hero.revive(this.audio, this.particles);
+    if (wasConnie) {
+      // Steven Lion/Lars lore: reviving human Connie infuses her with cotton-candy pink energy!
+      hero.isPinkRevived = true;
+      if (this.particles) {
+        this.particles.addHolyHeal(hero.x, hero.y, '#f472b6');
+        this.particles.addSparkle(hero.x, hero.y - 35, '#fbcfe8', 28, 7);
+        this.particles.addRosePetals(hero.x, hero.y - 30, 18);
+      }
+    }
+    this.healPlayerHearts(isP2, this.maxHearts);
+    this.updateHUD();
   }
 
   checkTeamWipe() {
@@ -22071,11 +22636,10 @@ class StevenUniverseGame {
           this.stageIndex++;
           const stageHeal = (this.enemyManager.stageHeal ?? -1);
           if (stageHeal < 0) {
-            this.currentHearts = this.maxHearts;
-            this.currentHeartsP2 = this.maxHearts;
+            this.initPlayerHeartPools();
           } else {
-            this.currentHearts = Math.min(this.maxHearts, this.currentHearts + stageHeal);
-            this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + stageHeal);
+            this.healPlayerHearts(false, stageHeal);
+            if (this.player2) this.healPlayerHearts(true, stageHeal);
           }
           this.player.revive(this.audio, this.particles);
           if (this.player2) this.player2.revive(this.audio, this.particles);
@@ -22357,6 +22921,9 @@ class StevenUniverseGame {
       }
     }
 
+    // 1b. 2P Arcade Co-Op Automatic 18s Revival + 3s Reformation
+    this.updateArcadeCoopRevival(dt);
+
     // 2. Update Pickups
     const players = [this.player];
     if (this.playerMode === '2p' && this.player2) players.push(this.player2);
@@ -22402,11 +22969,7 @@ class StevenUniverseGame {
       if (nearPlayer) {
         if (p.type === 'cookie' || p.type === 'heart') {
           if (!nearPlayer.isFallen) {
-            if (nearPlayer.playerId === 'p2') {
-              this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
-            } else {
-              this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
-            }
+            this.healPlayerHearts(nearPlayer.playerId === 'p2', 1);
             this.particles.addCollectBurst(nearPlayer.x, nearPlayer.y - 26, '#ff86e6');
             this.particles.addDamageText(nearPlayer.x, nearPlayer.y - 50, '+1 HEART', false, '#ff2a6d');
             this.audio.playSfx('cookie');
@@ -22430,6 +22993,18 @@ class StevenUniverseGame {
     // 3. Update Projectiles
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
+      if (p.homing && p.type.startsWith('enemy')) {
+        const livingTarget = players.find(pl => !pl.isFallen);
+        if (livingTarget) {
+          const tx = livingTarget.x - p.x;
+          const ty = (livingTarget.y - 36) - p.y;
+          const d = Math.hypot(tx, ty) || 1;
+          const spd = Math.hypot(p.vx || 0, p.vy || 0) || 280;
+          const steer = Math.min(1, dt * (p.homing / 110));
+          p.vx = (p.vx || 0) + ((tx / d) * spd - (p.vx || 0)) * steer;
+          p.vy = (p.vy || 0) + ((ty / d) * spd - (p.vy || 0)) * steer;
+        }
+      }
       if (p.homing && this.enemyManager && this.enemyManager.enemies && this.enemyManager.enemies.length > 0 && !p.type.startsWith('enemy')) {
         let bestE = null;
         let bestDist = 860;
@@ -22478,16 +23053,9 @@ class StevenUniverseGame {
           if (dist < hitRad + 20) {
             const damaged = pl.takeDamage(p.damage || 1, this.particles, this.audio);
             if (damaged) {
-              if (pl.playerId === 'p2') {
-                this.currentHeartsP2 = Math.max(0, this.currentHeartsP2 - (p.damage || 1));
-                if (this.currentHeartsP2 <= 0) {
-                  this.knockoutOrPoofPlayer(pl);
-                }
-              } else {
-                this.currentHearts = Math.max(0, this.currentHearts - (p.damage || 1));
-                if (this.currentHearts <= 0) {
-                  this.knockoutOrPoofPlayer(pl);
-                }
+              const heartsLeft = this.damagePlayerHearts(pl, p.damage || 1, pl._lastMitigatedHpLoss);
+              if (heartsLeft <= 0) {
+                this.knockoutOrPoofPlayer(pl);
               }
               this.updateHUD();
               this.checkTeamWipe();
@@ -22641,33 +23209,34 @@ class StevenUniverseGame {
           }
         }
       } else if (h.type === 'pillar' && h.hp > 0) {
-        for (const pl of players) {
-          if (pl.isAttacking && Math.abs(pl.x - (h.x + h.width / 2)) < 65 && Math.abs(pl.y - (h.y + h.height / 2)) < 75) {
-            h.hp -= 20;
-            if (this.particles) this.particles.addDebris(h.x + h.width / 2, h.y + 35, '#94a3b8', 6);
-            if (h.hp <= 0 && !h.crumbled) {
-              h.crumbled = true;
-              if (this.audio) {
-                this.audio.playSfx('explosion');
-                this.audio.playSfx('subBass');
-              }
-              if (this.particles) {
-                this.particles.addExplosion(h.x + h.width / 2, h.y + h.height / 2, '#cbd5e1', 28);
-                this.particles.addShockwaveRing(h.x + h.width / 2, this.groundY, 160, '#cbd5e1', 4.0);
-              }
-              if (this.enemyManager && this.enemyManager.enemies) {
-                for (const e of this.enemyManager.enemies) {
-                  if (Math.hypot(e.x - (h.x + h.width / 2), e.y - this.groundY) < 180) {
-                    e.hurtTimer = 0.9;
-                    e.stunTimer = 1.0;
-                    e.hp = Math.max(0, e.hp - 45);
-                    if (this.particles) {
-                      this.particles.addImpactFrame(e.x, e.y - e.height / 2, '#f97316', 150);
-                      this.particles.addDamageText(e.x, e.y - 30, '45', true, '#f97316');
+        if (h._hitCooldown > 0) h._hitCooldown -= dt;
+        if ((h._hitCooldown || 0) <= 0) {
+          for (const pl of players) {
+            if (pl.isAttacking && Math.abs(pl.x - (h.x + h.width / 2)) < 65 && Math.abs(pl.y - (h.y + h.height / 2)) < 75) {
+              h.hp -= 20;
+              h._hitCooldown = 0.28;
+              if (this.particles) this.particles.addDebris(h.x + h.width / 2, h.y + 35, '#94a3b8', 5);
+              if (h.hp <= 0 && !h.crumbled) {
+                h.crumbled = true;
+                if (this.audio) {
+                  this.audio.playSfx('explosion');
+                  this.audio.playSfx('subBass');
+                }
+                if (this.particles) {
+                  this.particles.addExplosion(h.x + h.width / 2, h.y + h.height / 2, '#cbd5e1', 22);
+                  this.particles.addShockwaveRing(h.x + h.width / 2, this.groundY, 160, '#cbd5e1', 4.0);
+                }
+                if (this.enemyManager && this.enemyManager.enemies) {
+                  for (let ei = 0; ei < this.enemyManager.enemies.length; ei++) {
+                    const e = this.enemyManager.enemies[ei];
+                    if (Math.hypot(e.x - (h.x + h.width / 2), e.y - this.groundY) < 180) {
+                      e.stunTimer = 1.0;
+                      this.enemyManager.damageEnemy(e, 45, this.particles, this.audio, null, ei, 'rock', 1, { allowCrit: false });
                     }
                   }
                 }
               }
+              break;
             }
           }
         }
@@ -22676,41 +23245,43 @@ class StevenUniverseGame {
           if (pl.isFallen) continue;
           if (pl.x >= h.x && pl.x <= h.x + h.width && pl.y >= h.y && pl.y <= h.y + h.height) {
             if (pl.vy > 0) pl.vy *= 0.94;
-            if (Math.random() < 0.25 && this.particles) {
+            if (Math.random() < 0.16 && this.particles) {
               this.particles.addSparkle(pl.x, pl.y - 20, '#38bdf8', 2, 1);
             }
           }
         }
       } else if (h.type === 'destabilizer' && h.active) {
         if (this.enemyManager && this.enemyManager.enemies) {
-          for (const e of this.enemyManager.enemies) {
+          const nowHaz = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          h._enemyCooldowns = h._enemyCooldowns || new WeakMap();
+          for (let ei = 0; ei < this.enemyManager.enemies.length; ei++) {
+            const e = this.enemyManager.enemies[ei];
             if (e.isPoofed || e.isPoofing) continue;
             if (e.x >= h.x - 15 && e.x <= h.x + h.width + 15 && e.y >= h.y && e.y <= h.y + h.height) {
-              e.hurtTimer = 0.85;
-              e.stunTimer = 1.0;
+              const lastHit = h._enemyCooldowns.get(e) || 0;
+              if (nowHaz - lastHit < 450) continue;
+              h._enemyCooldowns.set(e, nowHaz);
+              e.stunTimer = 0.85;
               e.vx = e.facing * -280;
-              e.hp = Math.max(0, e.hp - 20);
+              this.enemyManager.damageEnemy(e, 20, this.particles, this.audio, null, ei, 'electr', 1, { allowCrit: false });
               if (this.audio) this.audio.playSfx('lightning');
-              if (this.particles) {
-                this.particles.addHitSpark(e.x, e.y - e.height / 2, '#facc15', 26, 0);
-                this.particles.addDamageText(e.x, e.y - e.height - 15, '20', true, '#facc15');
-              }
             }
           }
         }
       } else if (h.type === 'geyser' && h.active) {
         if (this.enemyManager && this.enemyManager.enemies) {
-          for (const e of this.enemyManager.enemies) {
+          const nowHaz = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+          h._enemyCooldowns = h._enemyCooldowns || new WeakMap();
+          for (let ei = 0; ei < this.enemyManager.enemies.length; ei++) {
+            const e = this.enemyManager.enemies[ei];
             if (e.isPoofed || e.isPoofing) continue;
             if (Math.abs(e.x - (h.x + h.width / 2)) < h.width / 2 + 10 && e.y >= h.y - h.height && e.y <= h.y + 20) {
-              e.vy = -680;
-              e.hurtTimer = 0.6;
-              e.hp = Math.max(0, e.hp - 15);
+              const lastHit = h._enemyCooldowns.get(e) || 0;
+              if (nowHaz - lastHit < 450) continue;
+              h._enemyCooldowns.set(e, nowHaz);
+              e.vy = -580;
+              this.enemyManager.damageEnemy(e, 15, this.particles, this.audio, null, ei, 'fire', 1, { allowCrit: false });
               if (this.audio) this.audio.playSfx('explosion');
-              if (this.particles) {
-                this.particles.addExplosion(e.x, e.y - e.height / 2, '#f97316', 20);
-                this.particles.addDamageText(e.x, e.y - e.height - 15, '15', true, '#f97316');
-              }
             }
           }
         }
@@ -22813,8 +23384,8 @@ class StevenUniverseGame {
         this.fusionTimer = Math.min(20, (this.fusionTimer || this.hyperAttackTimer || 8) + 1.5);
         if (this.isHyperAttack) this.hyperAttackTimer = this.fusionTimer;
         if (dualNow) {
-          this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
-          if (this.player2) this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
+          this.healPlayerHearts(false, 1);
+          if (this.player2) this.healPlayerHearts(true, 1);
         }
       }
       const fCol = (isFusedBody && this.player.fusionData?.color) || theme.color;
@@ -22843,8 +23414,8 @@ class StevenUniverseGame {
         this.fusionTimer = Math.min(20, (this.fusionTimer || this.hyperAttackTimer || 8) + 1.5);
         if (this.isHyperAttack) this.hyperAttackTimer = this.fusionTimer;
         if (dualNow) {
-          this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
-          this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
+          this.healPlayerHearts(false, 1);
+          this.healPlayerHearts(true, 1);
         }
       }
       const targetPl = isFusedBody ? this.player : this.player2;
@@ -23066,8 +23637,7 @@ class StevenUniverseGame {
     } else {
       this.hideAllScreens();
       this.state = 'playing';
-      this.currentHearts = this.maxHearts;
-      this.currentHeartsP2 = this.maxHearts;
+      this.initPlayerHeartPools();
       const diff = DIFFICULTY_CONFIG[this.difficulty] || DIFFICULTY_CONFIG.medium;
       this.enemyManager.reset(this.stageIndex, diff, this.pickups);
       this.audio.playStageMusic(this.stageIndex, false);
@@ -24315,27 +24885,8 @@ class StevenUniverseGame {
     }
     const d = this._domHud || {};
 
-    // 1. Player 1 Hearts (Re-use existing DOM nodes to prevent GC thrashing & mobile lag)
-    const heartsContainer = d.heartsContainer;
-    if (heartsContainer) {
-      if (heartsContainer.children.length !== this.maxHearts) {
-        heartsContainer.innerHTML = '';
-        for (let i = 0; i < this.maxHearts; i++) {
-          const heart = document.createElement('span');
-          heart.className = 'hud-heart ' + (i < this.currentHearts ? 'filled' : 'empty');
-          heartsContainer.appendChild(heart);
-        }
-      } else {
-        for (let i = 0; i < this.maxHearts; i++) {
-          const targetClass = 'hud-heart ' + (i < this.currentHearts ? 'filled' : 'empty');
-          const child = heartsContainer.children[i];
-          if (child.className !== targetClass) {
-            child.className = targetClass;
-          }
-          if (child.textContent !== '') child.textContent = '';
-        }
-      }
-    }
+    // 1. Player 1 Hearts (HP & Defense scaled Spinel Gems)
+    this.renderSpinelHearts(d.heartsContainer, false);
 
     // Player 1 Character Info & Character-Specific Overdrive
     const charData = GUARDIAN_DATA[this.player.activeChar] || GUARDIAN_DATA.steven;
@@ -24415,26 +24966,7 @@ class StevenUniverseGame {
           : charDataP2.icon;
       }
 
-      const heartsContainerP2 = d.heartsContainerP2;
-      if (heartsContainerP2) {
-        if (heartsContainerP2.children.length !== this.maxHearts) {
-          heartsContainerP2.innerHTML = '';
-          for (let i = 0; i < this.maxHearts; i++) {
-            const heart = document.createElement('span');
-            heart.className = 'hud-heart ' + (i < this.currentHeartsP2 ? 'filled' : 'empty');
-            heartsContainerP2.appendChild(heart);
-          }
-        } else {
-          for (let i = 0; i < this.maxHearts; i++) {
-            const targetClass = 'hud-heart ' + (i < this.currentHeartsP2 ? 'filled' : 'empty');
-            const child = heartsContainerP2.children[i];
-            if (child.className !== targetClass) {
-              child.className = targetClass;
-            }
-            if (child.textContent !== '') child.textContent = '';
-          }
-        }
-      }
+      this.renderSpinelHearts(d.heartsContainerP2, true);
 
       const odThemeP2 = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
       const odLabelP2 = d.odLabelP2;
@@ -24665,9 +25197,9 @@ class StevenUniverseGame {
       // Pair-based heal: Malachite is a forced fusion and grants none
       const fusionHeal = this.activeFusionHeal || 0;
       if (fusionHeal > 0) {
-        this.currentHearts = Math.min(this.maxHearts, this.currentHearts + fusionHeal);
+        this.healPlayerHearts(false, fusionHeal);
         if (this.player2) {
-          this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + fusionHeal);
+          this.healPlayerHearts(true, fusionHeal);
         }
         this.updateHUD();
         this.particles.addDamageText(this.player.x, this.player.y - 120, `💖 +${fusionHeal} HEART HEALED TO BOTH GEMS! 💖`, false, '#ff4081');
@@ -25770,7 +26302,6 @@ class StevenUniverseGame {
         if (e.code === 'KeyD') this.keysP1.right = false;
         if (e.code === 'KeyW') this.keysP1.jump = false;
         if (e.code === 'KeyS') {
-          if (this.keysP1.shield) this.audio.playSfx('shieldRetract');
           this.keysP1.down = false;
           this.keysP1.shield = false;
         }
@@ -25783,7 +26314,6 @@ class StevenUniverseGame {
         if (e.code === 'ArrowRight') this.keysP2.right = false;
         if (e.code === 'ArrowUp') this.keysP2.jump = false;
         if (e.code === 'ArrowDown') {
-          if (this.keysP2.shield) this.audio.playSfx('shieldRetract');
           this.keysP2.down = false;
           this.keysP2.shield = false;
         }
@@ -26884,9 +27414,9 @@ class StevenUniverseGame {
     this.arcadeWavePending = false;
     const modal = document.getElementById('arcadeWaveModal');
     if (modal) modal.style.display = 'none';
-    this.currentHearts = Math.min(this.maxHearts, this.currentHearts + 1);
+    this.healPlayerHearts(false, 1);
     if (this.playerMode === '2p' && this.player2) {
-      this.currentHeartsP2 = Math.min(this.maxHearts, this.currentHeartsP2 + 1);
+      this.healPlayerHearts(true, 1);
     }
     this.state = 'playing';
     this.lastTime = performance.now();
