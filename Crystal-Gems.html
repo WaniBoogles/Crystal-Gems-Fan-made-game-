@@ -1357,12 +1357,12 @@ body.mobile-device .touch-controls.active {
   inset: 0;
   background: #090414;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   z-index: 50;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px 10px;
+  padding: 28px 6vw;
 }
 
 .lobby-slideshow-container {
@@ -1454,11 +1454,13 @@ body.mobile-device .touch-controls.active {
   100% { transform: scale(1.13) translate(0px, -14px); }
 }
 
-/* Atmospheric Vignette: Deep cinematic focus */
+/* Atmospheric Vignette: Soft left-side reading zone fades to transparent toward the center */
 .lobby-cinematic-vignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(10, 4, 20, 0.28) 0%, rgba(12, 4, 24, 0.62) 65%, rgba(6, 2, 12, 0.90) 100%);
+  background:
+    linear-gradient(90deg, rgba(10, 14, 34, 0.78) 0%, rgba(12, 16, 40, 0.58) 28%, rgba(12, 16, 40, 0.22) 48%, rgba(12, 16, 40, 0) 68%),
+    radial-gradient(circle at 68% 50%, rgba(10, 4, 20, 0.12) 0%, rgba(6, 2, 12, 0.68) 100%);
   pointer-events: none;
   z-index: 1;
 }
@@ -1501,17 +1503,11 @@ body.mobile-device .touch-controls.active {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-.title-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  max-width: 620px;
-  width: 94%;
-  padding: 18px 24px;
+  align-items: flex-start;
+  text-align: left;
+  max-width: 440px;
+  width: 92%;
+  padding: 18px 8px;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -1525,26 +1521,30 @@ body.mobile-device .touch-controls.active {
 .main-menu-nav {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-top: 22px;
   width: 100%;
-  max-width: 340px;
+  max-width: 380px;
 }
 
-/* Frameless, non-rectangular Main Menu buttons matching Concept UI */
+/* Frameless, non-rectangular Main Menu buttons left-aligned under title */
 .menu-link-btn {
   position: relative;
   background: transparent;
   border: none;
   outline: none;
-  padding: 10px 28px;
+  padding: 10px 24px 10px 0;
+  text-align: left;
   font-family: var(--su-font-display);
-  font-size: 23px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: 2.2px;
-  color: rgba(248, 250, 252, 0.92);
-  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.85), 0 0 18px rgba(15, 23, 42, 0.75);
+  color: rgba(248, 250, 252, 0.95);
+  text-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.96),
+    0 6px 20px rgba(10, 14, 34, 0.92),
+    0 0 18px rgba(15, 23, 42, 0.8);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -1554,20 +1554,20 @@ body.mobile-device .touch-controls.active {
     text-shadow 0.25s ease,
     letter-spacing 0.25s ease,
     opacity 0.2s ease;
-  transform: translate3d(calc(var(--mx, 0) * 8px), calc(var(--my, 0) * 6px), 0);
+  transform: translate3d(calc(var(--mx, 0) * 6px), calc(var(--my, 0) * 5px), 0);
 }
 
 .menu-link-btn::before {
   content: "";
   position: absolute;
-  inset: -8px -26px;
+  inset: -6px -18px -6px -14px;
   border-radius: 999px;
-  background: radial-gradient(ellipse at center,
-    rgba(255, 214, 130, 0.38) 0%,
-    rgba(255, 118, 178, 0.18) 45%,
-    rgba(255, 214, 130, 0) 74%);
+  background: radial-gradient(ellipse at 32% 50%,
+    rgba(255, 214, 130, 0.36) 0%,
+    rgba(255, 118, 178, 0.16) 48%,
+    rgba(255, 214, 130, 0) 76%);
   opacity: 0;
-  transform: scale(0.84);
+  transform: scale(0.86);
   transition: opacity 0.26s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   pointer-events: none;
   z-index: -1;
@@ -1578,10 +1578,10 @@ body.mobile-device .touch-controls.active {
   color: #fff7d6;
   letter-spacing: 3.1px;
   text-shadow:
-    0 0 14px rgba(255, 215, 110, 0.95),
-    0 0 32px rgba(255, 130, 180, 0.72),
-    0 4px 16px rgba(0, 0, 0, 0.85);
-  transform: translate3d(calc(var(--mx, 0) * 14px), calc(-6px + var(--my, 0) * 8px), 0) scale(1.07);
+    0 0 14px rgba(255, 215, 110, 0.96),
+    0 0 30px rgba(255, 130, 180, 0.72),
+    0 4px 16px rgba(0, 0, 0, 0.95);
+  transform: translate3d(calc(10px + var(--mx, 0) * 10px), calc(-4px + var(--my, 0) * 6px), 0) scale(1.06);
 }
 
 .menu-link-btn:hover::before,
@@ -1642,13 +1642,14 @@ body.mobile-device .touch-controls.active {
 .title-logo-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  text-align: left;
+  margin-bottom: 10px;
 }
 
 .star-badge {
   font-size: 32px;
-  filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.7));
+  filter: drop-shadow(0 0 14px rgba(251, 191, 36, 0.85)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85));
   animation: floatStar 3s ease-in-out infinite;
   line-height: 1;
 }
@@ -1660,16 +1661,16 @@ body.mobile-device .touch-controls.active {
 
 .main-title {
   font-family: var(--su-font-display);
-  font-size: 38px;
+  font-size: 42px;
   font-weight: 800;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.8px;
   color: #ffffff;
-  background: linear-gradient(180deg, #ffffff 40%, #fecdd3 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+  text-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.95),
+    0 2px 6px rgba(10, 14, 34, 0.95),
+    0 0 28px rgba(255, 118, 178, 0.55);
   line-height: 1.05;
-  margin-top: 2px;
+  margin-top: 6px;
   margin-bottom: 2px;
 }
 
@@ -1817,10 +1818,23 @@ body.mobile-device .touch-controls.active {
   box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
 }
 
+.btn-primary {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  color: #ffffff;
+  border-color: rgba(255, 215, 130, 0.38);
+  box-shadow: 0 4px 16px rgba(225, 29, 72, 0.42);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+  border-color: rgba(253, 224, 71, 0.65);
+  box-shadow: 0 8px 22px rgba(244, 63, 94, 0.52);
+}
+
 .btn-secondary {
-  background: rgba(30, 41, 59, 0.85);
+  background: rgba(30, 41, 59, 0.88);
   color: #f1f5f9;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .btn-secondary:hover {
@@ -2945,26 +2959,47 @@ body.mobile-device .touch-controls.active {
   color: #cbd5e1;
 }
 
+.settings-card {
+  width: min(580px, 92vw);
+  max-width: 580px;
+}
+
+.settings-subtitle {
+  font-family: var(--su-font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fde68a;
+  margin: 0 0 10px 0;
+  text-transform: uppercase;
+}
+
 .settings-toggles {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
 }
 
 .toggle-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(30, 41, 59, 0.85);
+  border: 1.5px solid rgba(148, 163, 184, 0.35);
+  color: #f8fafc;
   font-family: var(--su-font-display);
-  font-size: 13px;
-  padding: 8px 16px;
-  border-radius: 20px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 10px 14px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
+  text-align: center;
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(56, 189, 248, 0.22);
+  border-color: rgba(253, 224, 71, 0.65);
+  transform: translateY(-2px);
 }
 
 /* ==========================================================
@@ -3378,9 +3413,6 @@ body.mobile-device .touch-controls.active {
   margin-top: 3px;
   justify-content: center;
   align-items: center;
-}
-
-  50% { transform: translateY(-3px) rotate(8deg); }
 }
 
 /* Custom Styled Jukebox Select Dropdowns */
@@ -4289,7 +4321,8 @@ option {
   border-color: rgba(255, 214, 120, 0.85);
   box-shadow: 0 12px 26px rgba(255, 195, 95, 0.3), 0 0 18px rgba(244, 114, 182, 0.25);
 }
-.map-card-item.active {
+.map-card-item.active,
+.map-card-item.selected {
   border-color: #fde047;
   background: rgba(46, 16, 101, 0.65);
   box-shadow: 0 0 22px rgba(253, 224, 71, 0.4);
@@ -4302,14 +4335,21 @@ option {
   background: #0f172a;
   margin-bottom: 6px;
 }
-.map-card-ep {
+.map-card-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.map-card-ep,
+.map-card-tag {
   font-size: 9.5px;
   font-weight: 800;
   color: #fde68a;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
-.map-card-name {
+.map-card-name,
+.map-card-title {
   font-family: var(--su-font-display);
   font-size: 12.5px;
   font-weight: 700;
@@ -4564,33 +4604,45 @@ option {
 }
 
 /* Rolling Credits Overlay Screen */
+@keyframes creditsScroll {
+  0% { transform: translateY(14%); }
+  100% { transform: translateY(-92%); }
+}
+
 .credits-screen {
-  background: radial-gradient(ellipse at center, #0d1326 0%, #050711 100%) !important;
+  background: radial-gradient(ellipse at center, #0f172a 0%, #050711 100%) !important;
   flex-direction: column;
+  align-items: center;
   justify-content: space-between;
-  padding: 24px;
+  padding: 24px 20px;
 }
 .credits-viewport {
   position: relative;
-  width: min(740px, 92vw);
-  height: 76vh;
+  width: min(760px, 92vw);
+  height: 78vh;
   overflow: hidden;
   border-radius: 20px;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  background: rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(255, 214, 130, 0.16);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 .credits-track {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 28px;
-  padding: 60vh 18px 24vh 18px;
+  gap: 26px;
+  padding: 8vh 28px 18vh 28px;
   text-align: center;
   will-change: transform;
+  animation: creditsScroll 42s linear infinite;
+}
+.credits-block {
+  max-width: 620px;
 }
 .credits-block h3 {
   font-family: var(--su-font-display);
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 2.5px;
   color: #fde68a;
   text-transform: uppercase;
@@ -4598,15 +4650,16 @@ option {
 }
 .credits-block p {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: #e2e8f0;
   margin: 0;
 }
 .credits-footer-bar {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   justify-content: center;
+  padding-top: 12px;
   z-index: 5;
 }
 
@@ -5699,6 +5752,7 @@ option {
 
         <div class="victory-actions">
           <button id="btnNextStage" class="btn-primary">NEXT STAGE ➔</button>
+          <button id="btnVictoryCredits" class="btn-secondary">CREDITS</button>
           <button id="btnVictoryMenu" class="btn-secondary">MAIN MENU</button>
         </div>
       </div>
@@ -31153,6 +31207,10 @@ class StevenUniverseGame {
       this.audio.playSfx('warpPad');
       this.nextStage();
     });
+    safeClick('btnVictoryCredits', () => {
+      this.audio.playSfx('warpPad');
+      this.openCreditsScreen();
+    });
     safeClick('btnVictoryMenu', () => {
       this.audio.playSfx('menuTap');
       this.showTitleScreen();
@@ -31846,6 +31904,7 @@ class StevenUniverseGame {
       card.dataset.stage = String(m.stage);
 
       const cvs = document.createElement('canvas');
+      cvs.className = 'map-thumb-canvas';
       cvs.width = 320;
       cvs.height = 180;
       const pctx = cvs.getContext('2d');

@@ -25406,6 +25406,10 @@ class StevenUniverseGame {
       this.audio.playSfx('warpPad');
       this.nextStage();
     });
+    safeClick('btnVictoryCredits', () => {
+      this.audio.playSfx('warpPad');
+      this.openCreditsScreen();
+    });
     safeClick('btnVictoryMenu', () => {
       this.audio.playSfx('menuTap');
       this.showTitleScreen();
@@ -26099,6 +26103,7 @@ class StevenUniverseGame {
       card.dataset.stage = String(m.stage);
 
       const cvs = document.createElement('canvas');
+      cvs.className = 'map-thumb-canvas';
       cvs.width = 320;
       cvs.height = 180;
       const pctx = cvs.getContext('2d');
