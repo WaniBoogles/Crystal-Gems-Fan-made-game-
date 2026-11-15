@@ -22,16 +22,28 @@ OUT_DIR = ROOT / "assets" / "portraits"
 JS_OUT = ROOT / "src" / "portraits-data.js"
 SIZE = 640
 
-# Custom upper-body framing ratios for full-body renders
+# Custom zoomed bust framing ratios (x0, y0, x1, y1) inside alpha bbox
+# Focuses closely on face, hair/gem, and upper chest for crisp roster & dialogue portraits
 FRAMING = {
-    'connie': (0.0, 0.72),
-    'amethyst': (0.0, 0.74),
-    'pearl': (0.0, 0.65),
-    'garnet': (0.0, 0.55),
-    'jasper': (0.0, 0.56),
-    'opal': (0.0, 0.55),
-    'stevonnie': (0.0, 0.70),
-    'rose': (0.0, 0.75),
+    'steven': (0.14, 0.00, 0.64, 0.62),
+    'garnet': (0.19, 0.00, 0.79, 0.45),
+    'amethyst': (0.26, 0.00, 0.85, 0.50),
+    'pearl': (0.42, 0.00, 0.96, 0.46),
+    'bismuth': (0.20, 0.00, 0.80, 0.52),
+    'peridot': (0.21, 0.00, 0.75, 0.55),
+    'lapis': (0.31, 0.04, 0.65, 0.43),
+    'rose': (0.22, 0.00, 0.72, 0.58),
+    'connie': (0.34, 0.00, 0.85, 0.46),
+    'jasper': (0.20, 0.00, 0.80, 0.44),
+    'stevonnie': (0.31, 0.08, 0.80, 0.55),
+    'smoky': (0.14, 0.14, 0.56, 0.56),
+    'rainbow2': (0.24, 0.00, 0.74, 0.48),
+    'sunstone': (0.24, 0.04, 0.76, 0.56),
+    'sugilite': (0.18, 0.06, 0.72, 0.49),
+    'sardonyx': (0.24, 0.22, 0.54, 0.53),
+    'opal': (0.28, 0.16, 0.64, 0.52),
+    'malachite': (0.18, 0.03, 0.68, 0.50),
+    'rainbowClassic': (0.20, 0.02, 0.70, 0.48),
 }
 
 THEME_COLORS = {
@@ -136,14 +148,29 @@ def build_portrait(cid: str, src_path: Path) -> Image.Image:
     bw = bx1 - bx0
     bh = by1 - by0
 
-    # Custom upper-body framing
+    # Custom tight head-to-upper-body bust framing
     if cid in FRAMING:
-        t0, t1 = FRAMING[cid]
-        top = by0 + int(bh * t0)
-        bottom = by0 + int(bh * t1)
-        im_crop = im.crop((bx0, top, bx1, bottom))
+        box = FRAMING[cid]
+        if len(box) == 4:
+            fx0, fy0, fx1, fy1 = box
+            left = bx0 + int(bw * fx0)
+            top = by0 + int(bh * fy0)
+            right = bx0 + int(bw * fx1)
+            bottom = by0 + int(bh * fy1)
+            im_crop = im.crop((left, top, right, bottom))
+        else:
+            t0, t1 = box
+            top = by0 + int(bh * t0)
+            bottom = by0 + int(bh * t1)
+            im_crop = im.crop((bx0, top, bx1, bottom))
     else:
         im_crop = im.crop((bx0, by0, bx1, by1))
+
+    # Re-trim transparent outer padding inside the chosen crop so faces fill the frame
+    sub_alpha = im_crop.getchannel('A').point(lambda a: 255 if a > 24 else 0)
+    sub_bbox = sub_alpha.getbbox()
+    if sub_bbox:
+        im_crop = im_crop.crop(sub_bbox)
 
     cw, ch = im_crop.size
 
@@ -152,15 +179,15 @@ def build_portrait(cid: str, src_path: Path) -> Image.Image:
     im_crop = ImageEnhance.Contrast(im_crop).enhance(1.06)
     im_crop = im_crop.filter(ImageFilter.UnsharpMask(radius=1.2, percent=115, threshold=2))
 
-    max_target = int(SIZE * 0.88)
-    scale = min(max_target / cw, max_target / ch)
-    nw = int(cw * scale)
-    nh = int(ch * scale)
+    max_target = int(SIZE * 0.94)
+    scale = min(max_target / max(1, cw), max_target / max(1, ch))
+    nw = max(1, int(cw * scale))
+    nh = max(1, int(ch * scale))
     im_scaled = im_crop.resize((nw, nh), Image.LANCZOS)
 
     canvas = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
     pos_x = (SIZE - nw) // 2
-    pos_y = SIZE - nh - int(SIZE * 0.04)
+    pos_y = max(int(SIZE * 0.02), (SIZE - nh) // 2 + int(SIZE * 0.02))
 
     # Radiant energy aura in signature gem color
     theme = THEME_COLORS.get(cid, (255, 114, 182))

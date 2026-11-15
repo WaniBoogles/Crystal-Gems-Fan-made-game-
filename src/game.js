@@ -1644,6 +1644,26 @@ class GemAudioEngine {
       } catch (e) {}
     }
   }
+
+  isActivelyPlaying() {
+    return !!(this.musicInterval && !this.isManuallyPaused && this.musicEnabled && this.ctx && this.ctx.state === 'running');
+  }
+
+  pauseMusic() {
+    this.isManuallyPaused = true;
+    this.stopMusic(false);
+  }
+
+  resumeMusic(trackId = null) {
+    this.isManuallyPaused = false;
+    if (!this.musicEnabled) {
+      this.musicEnabled = true;
+      SafeStorage.setItem('su_musicEnabled', 'true');
+    }
+    this.unlockFromGesture();
+    const target = trackId || this.currentTrack || 'intro_launch';
+    this.playTrackById(target, false);
+  }
 }
 
 // ============================================================================
@@ -18772,7 +18792,7 @@ function getGuardianAvatarHtml(charId, size = 44) {
 
   if (imgUrl) {
     return `<div class="guardian-avatar-frame" data-char="${cId}" style="width:${size}px;height:${size}px;border-radius:${radius}px;background:radial-gradient(circle at 50% 25%, ${theme}33, rgba(15,23,42,0.92));border:1.5px solid ${theme}88;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.45);">
-      <img src="${imgUrl}" alt="${cId}" style="width:116%;height:116%;object-fit:cover;object-position:50% 16%;display:block;pointer-events:none;" />
+      <img src="${imgUrl}" alt="${cId}" style="width:108%;height:108%;object-fit:cover;object-position:50% 22%;display:block;pointer-events:none;" />
     </div>`;
   }
   const villainSvg = VILLAIN_PORTRAITS[cId] ||
@@ -20287,6 +20307,7 @@ class StevenUniverseGame {
     let hasAudioUnlocked = false;
     const unlockEvents = ['pointerdown', 'mousedown', 'touchstart', 'keydown', 'click'];
     let lastHoverResumeMs = 0;
+    this._lobbyPlayDownArmed = null;
 
     const cleanupUnlockListeners = () => {
       if (!hasAudioUnlocked) {
@@ -20318,7 +20339,22 @@ class StevenUniverseGame {
       syncRunningLobbyAudio();
     };
 
-    const unlockMenuAudio = () => {
+    // Snapshot intent before capture-phase unlock wakes up AudioContext on Play/Pause clicks
+    const armPlayButtonIntent = (evt) => {
+      const tgt = evt && evt.target;
+      const playBtn = tgt && (tgt.id === 'btnLobbyPlayMusic' ? tgt : (typeof tgt.closest === 'function' ? tgt.closest('#btnLobbyPlayMusic') : null));
+      if (playBtn) {
+        this._lobbyPlayDownArmed = this.audio.isActivelyPlaying() ? 'pause' : 'play';
+      }
+    };
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('pointerdown', armPlayButtonIntent, { capture: true, passive: true });
+      window.addEventListener('mousedown', armPlayButtonIntent, { capture: true, passive: true });
+      window.addEventListener('touchstart', armPlayButtonIntent, { capture: true, passive: true });
+    }
+
+    const unlockMenuAudio = (evt) => {
+      armPlayButtonIntent(evt);
       // Must unlock & trigger silent buffer synchronously inside user-gesture stack
       const runningNow = this.audio.unlockFromGesture();
       if (runningNow) {
@@ -20417,6 +20453,114 @@ class StevenUniverseGame {
         document.body.classList.remove('mobile-device');
       }
     }
+
+    this.initStartupSplash();
+  }
+
+  initStartupSplash() {
+    const splash = document.getElementById('startupSplash');
+    const titleScreen = document.getElementById('titleScreen');
+    if (!splash) {
+      this.splashActive = false;
+      return;
+    }
+
+    this.splashActive = true;
+    this._splashFadingOut = false;
+    this._splashTimers = [];
+    if (titleScreen) {
+      titleScreen.classList.remove('splash-reveal');
+      titleScreen.classList.add('splash-pending');
+    }
+
+    const cleanupSkipListeners = () => {
+      if (this._onSplashSkipKey && typeof window !== 'undefined') {
+        window.removeEventListener('keydown', this._onSplashSkipKey, true);
+      }
+      if (this._onSplashSkipPointer && typeof window !== 'undefined') {
+        window.removeEventListener('pointerdown', this._onSplashSkipPointer, true);
+      }
+      this._onSplashSkipKey = null;
+      this._onSplashSkipPointer = null;
+    };
+
+    const finishSplash = () => {
+      this.splashActive = false;
+      cleanupSkipListeners();
+      splash.classList.add('splash-done');
+      splash.style.display = 'none';
+      if (titleScreen) {
+        titleScreen.classList.remove('splash-pending');
+      }
+    };
+
+    const beginFadeOut = () => {
+      if (this._splashFadingOut) return;
+      this._splashFadingOut = true;
+      cleanupSkipListeners();
+      this._splashTimers.forEach(t => clearTimeout(t));
+      this._splashTimers = [];
+
+      splash.classList.remove('phase-in');
+      splash.classList.add('phase-text-out');
+
+      const tScreenFade = setTimeout(() => {
+        splash.classList.add('phase-fade-out');
+        if (titleScreen) {
+          titleScreen.classList.remove('splash-pending');
+          titleScreen.classList.add('splash-reveal');
+        }
+        const tDone = setTimeout(() => {
+          finishSplash();
+          if (titleScreen) {
+            setTimeout(() => titleScreen.classList.remove('splash-reveal'), 250);
+          }
+        }, 680);
+        this._splashTimers.push(tDone);
+      }, 460);
+      this._splashTimers.push(tScreenFade);
+    };
+
+    this.skipStartupSplash = () => {
+      if (!this.splashActive) return;
+      beginFadeOut();
+    };
+    this.finishStartupSplashImmediate = () => {
+      this._splashFadingOut = true;
+      this._splashTimers.forEach(t => clearTimeout(t));
+      this._splashTimers = [];
+      finishSplash();
+      if (titleScreen) titleScreen.classList.remove('splash-reveal');
+    };
+
+    this._onSplashSkipKey = (e) => {
+      if (!this.splashActive) return;
+      try { this.audio.unlockFromGesture(); } catch (err) {}
+      if (e && e.stopPropagation) e.stopPropagation();
+      if (e && e.stopImmediatePropagation) e.stopImmediatePropagation();
+      beginFadeOut();
+    };
+    this._onSplashSkipPointer = () => {
+      if (!this.splashActive) return;
+      try { this.audio.unlockFromGesture(); } catch (err) {}
+      beginFadeOut();
+    };
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('keydown', this._onSplashSkipKey, true);
+      window.addEventListener('pointerdown', this._onSplashSkipPointer, true);
+    }
+
+    // Black screen -> "Crystal Gems!" fades in -> holds 3 seconds -> fades out -> Main Menu fades in
+    const tIn = setTimeout(() => {
+      if (!this.splashActive || this._splashFadingOut) return;
+      splash.classList.add('phase-in');
+      const tHold = setTimeout(() => {
+        beginFadeOut();
+      }, 3000);
+      this._splashTimers.push(tHold);
+    }, 100);
+    this._splashTimers.push(tIn);
   }
 
   updateLobbyGuardian() {
@@ -25197,12 +25341,18 @@ class StevenUniverseGame {
       const cId = item.dataset.char;
       const b = item.querySelector('.char-item-bubble');
       if (b && typeof getGuardianSvg === 'function') {
-        b.innerHTML = getGuardianSvg(cId, 42);
+        b.innerHTML = getGuardianSvg(cId, 52);
       }
     });
   }
 
   showTitleScreen() {
+    if (typeof this.finishStartupSplashImmediate === 'function' && this.splashActive) {
+      this.finishStartupSplashImmediate();
+    } else {
+      const ts = document.getElementById('titleScreen');
+      if (ts) ts.classList.remove('splash-pending');
+    }
     this.screenTransition = null;
     this.setVeil(false);
     this.arcadeWavePending = false;
@@ -25831,7 +25981,7 @@ class StevenUniverseGame {
         const cId = item.dataset.char;
         const b = item.querySelector('.char-item-bubble');
         if (b) {
-          b.innerHTML = getGuardianAvatarHtml(cId, 42);
+          b.innerHTML = getGuardianAvatarHtml(cId, 52);
         }
       });
     };
@@ -26061,15 +26211,17 @@ class StevenUniverseGame {
         if (e.stopPropagation) e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
       }
-      this.audio.unlockFromGesture();
-      if (this.audio.musicInterval && this.audio.ctx && this.audio.ctx.state === 'running') {
-        this.audio.isManuallyPaused = true;
-        this.audio.stopMusic();
+      const armed = this._lobbyPlayDownArmed;
+      this._lobbyPlayDownArmed = null;
+      const shouldPause = armed ? (armed === 'pause') : this.audio.isActivelyPlaying();
+      if (shouldPause) {
+        this.audio.pauseMusic();
         if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(false);
       } else {
-        this.audio.isManuallyPaused = false;
         const cur = (this.audio.bgmOverrideManual && this.audio.selectedBgm && this.audio.selectedBgm !== 'auto') ? this.audio.selectedBgm : 'intro_launch';
-        this.audio.playTrackById(cur, false);
+        this.audio.resumeMusic(cur);
+        const btnSettingMusic = document.getElementById('btnSettingMusic');
+        if (btnSettingMusic) btnSettingMusic.textContent = 'Synth Music (BGM): ON';
         if (this.updateLobbyMusicButton) this.updateLobbyMusicButton(true);
       }
     });
