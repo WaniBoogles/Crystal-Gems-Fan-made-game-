@@ -1,0 +1,76 @@
+================================================================================
+     CRYSTAL GEMS! — SIMPLE & QUICK PRESENTATION REVIEWER (EASY VERSION)
+================================================================================
+
+1. QUICK INTRODUCTION (WHAT TO SAY FIRST)
+--------------------------------------------------------------------------------
+"Good day everyone! Today I'm presenting Crystal Gems!, a 2D action fighting
+game based on the cartoon show Steven Universe. What makes our project special
+is that we did not use any ready-made game engine like Unity or Godot. Instead,
+we built the whole game from scratch using HTML, CSS, and JavaScript with over
+34,600 lines of code. Everything you see and hear—the characters, bosses,
+special effects, and music—is drawn and created directly by the code, and the
+entire game fits inside one 4.7 MB .exe file that runs offline on any PC."
+
+2. FAST FACTS TO REMEMBER
+--------------------------------------------------------------------------------
+* Game Type:       2D Side-Scrolling Action / Fighting Game (1 or 2 Players)
+* Build Time:      Around 32+ hours of active coding and testing
+* Languages Used:  HTML5 Canvas (graphics), CSS3 (menus), JavaScript (gameplay
+                   & sound), Python (file bundler), C# (Windows .exe launcher)
+* Total Code:      34,697 lines of game code
+* Roster:          10 playable heroes + 9 playable Fusions (19 total kits)
+* Levels:          10 Story Episodes, 8 randomized puzzles, 14 Boss fights
+
+3. HOW THE GAME IS MADE (IN SIMPLE WORDS)
+--------------------------------------------------------------------------------
+1. Drawn by Code, Not Picture Sprites (HTML5 Canvas):
+   Instead of loading hundreds of PNG images, our code draws every character,
+   boss, weapon, and effect using shapes, lines, and colors at 60 FPS. That
+   keeps the graphics sharp at any screen size and keeps the game under 5 MB.
+
+2. Music & Sounds Made by Code (Web Audio API):
+   We didn't use MP3 files. The game creates its own background music for every
+   episode and its own sound effects using JavaScript sound waves.
+
+3. Packed into One File & a Windows .exe:
+   A Python script combines everything into build/Crystal-Gems.html (4.58 MB),
+   and a C# launcher turns it into build/Crystal Gems.exe (4.7 MB) so you can
+   double-click and play offline on any Windows PC.
+
+4. WHAT INSPIRED THE GAME?
+--------------------------------------------------------------------------------
+* Steven Universe (Cartoon Network):
+  - Follows Seasons 1 to 5 across 10 Episodes up to White Diamond.
+  - Every character has RPG Stats (HP, Attack, Magic, Defense, Crit Chance,
+    Crit Damage) based on the show ("Magic" = Gem light powers & abilities).
+  - In 2-Player Arcade mode, a defeated player's gem floats up for 18 seconds
+    and reforms in a 3-second beam of light. When human Connie is revived, she
+    becomes Pink Connie (just like Steven reviving Lars and Lion in the show!).
+
+* Classic 2D Brawlers (Castle Crashers / Streets of Rage):
+  - Co-op wave fighting and huge, terrifying Bosses that are much bigger and
+    more unpredictable than normal monsters.
+
+* Fighting Games (Tekken / Marvel vs. Capcom):
+  - 3-hit combos, shield blocking (S / Down Arrow), dodging, Practice Mode, and
+    2-Player Fusion (V key) with anime-style pop-up cutscenes.
+
+* Pokemon (Element Types):
+  - Moves have elements (Fire, Water, Electric, Steel, Fighting, Fairy, etc.).
+    Weaknesses deal 2x Super Effective damage and add effects like stun or burn.
+
+* Spinel Heart Health Bar (Zelda / Kingdom Hearts style):
+  - Top-left Spinel Hearts slowly dim and lose color when high-HP/Defense Gems
+    take damage, and regain their color when healed.
+
+5. EASY ANSWERS TO COMMON QUESTIONS
+--------------------------------------------------------------------------------
+Q: Why didn't you use Unity or Godot?
+A: Building our own engine in HTML5 Canvas and JavaScript gave us full control
+   with zero engine bloat, so the whole game is under 5 MB and runs anywhere.
+
+Q: Why don't the puzzles have the same answer every time?
+A: All 8 puzzles use RNG (random generation) so the pattern changes every run,
+   plus a Hint button that shows a clue without auto-solving the puzzle.
+================================================================================
