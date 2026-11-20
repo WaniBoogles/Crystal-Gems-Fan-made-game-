@@ -1,0 +1,15 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Crystal Gems!
+GenericName=Crystal Gems Action Battler
+Comment=Play Steven Universe: Crystal Gems! — fan-made arcade action battler
+Exec="/home/wanibur/Documents/Wani Works/Antigravity Tests/Steven Universe/build/crystal-gems.sh"
+TryExec=/home/wanibur/Documents/Wani Works/Antigravity Tests/Steven Universe/build/crystal-gems.sh
+Path=/home/wanibur/Documents/Wani Works/Antigravity Tests/Steven Universe/build
+Icon=/home/wanibur/Documents/Wani Works/Antigravity Tests/Steven Universe/assets/images/crystal-gems.png
+Terminal=false
+Categories=Game;ActionGame;ArcadeGame;
+StartupNotify=true
+StartupWMClass=CrystalGems
+Keywords=game;steven;universe;crystal;gems;cartoon;action;brawler;

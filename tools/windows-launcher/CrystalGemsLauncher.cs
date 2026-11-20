@@ -16,8 +16,8 @@ using Microsoft.Win32;
 [assembly: AssemblyCopyright("Steven Universe Fans")]
 [assembly: AssemblyTrademark("Crystal Gems")]
 [assembly: AssemblyCulture("")]
-[assembly: AssemblyVersion("1.5.0.0")]
-[assembly: AssemblyFileVersion("1.5.0.0")]
+[assembly: AssemblyVersion("2.0.0.0")]
+[assembly: AssemblyFileVersion("2.0.0.0")]
 
 public class CrystalGemsLauncher {
     [DllImport("user32.dll")]
@@ -49,27 +49,30 @@ public class CrystalGemsLauncher {
                     localHtmlPath = Path.Combine(baseDir, "index.html");
                 }
 
-                // If local file exists, read it
-                if (File.Exists(localHtmlPath)) {
-                    try {
-                        cachedHtmlBytes = File.ReadAllBytes(localHtmlPath);
-                    } catch {}
-                }
-
-                // If not found next to exe, extract from embedded assembly resource
-                if (cachedHtmlBytes == null || cachedHtmlBytes.Length == 0) {
-                    var asm = Assembly.GetExecutingAssembly();
-                    using (var resStream = asm.GetManifestResourceStream("CrystalGems.html")) {
-                        if (resStream != null) {
-                            cachedHtmlBytes = new byte[resStream.Length];
-                            int totalRead = 0;
-                            while (totalRead < cachedHtmlBytes.Length) {
-                                int read = resStream.Read(cachedHtmlBytes, totalRead, cachedHtmlBytes.Length - totalRead);
-                                if (read <= 0) break;
-                                totalRead += read;
-                            }
+                // Always extract embedded assembly resource first so the exe is 100% self-contained
+                var asm = Assembly.GetExecutingAssembly();
+                DateTime exeWriteTime = DateTime.MinValue;
+                try { exeWriteTime = File.GetLastWriteTimeUtc(asm.Location); } catch {}
+                using (var resStream = asm.GetManifestResourceStream("CrystalGems.html")) {
+                    if (resStream != null) {
+                        cachedHtmlBytes = new byte[resStream.Length];
+                        int totalRead = 0;
+                        while (totalRead < cachedHtmlBytes.Length) {
+                            int read = resStream.Read(cachedHtmlBytes, totalRead, cachedHtmlBytes.Length - totalRead);
+                            if (read <= 0) break;
+                            totalRead += read;
                         }
                     }
+                }
+
+                // Only override with a side-by-side HTML file if no resource was embedded or the local HTML is newer than the exe
+                if (File.Exists(localHtmlPath)) {
+                    try {
+                        DateTime htmlWriteTime = File.GetLastWriteTimeUtc(localHtmlPath);
+                        if (cachedHtmlBytes == null || cachedHtmlBytes.Length == 0 || htmlWriteTime > exeWriteTime) {
+                            cachedHtmlBytes = File.ReadAllBytes(localHtmlPath);
+                        }
+                    } catch {}
                 }
 
                 // Ensure a cached copy exists on disk in LocalAppData or Temp

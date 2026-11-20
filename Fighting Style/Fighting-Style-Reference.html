@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crystal Gems! — Official Fighting Style & Combat Reference</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #0d0a1a;
+    color: #f8fafc;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+  .header {
+    text-align: center;
+    padding: 20px 24px 12px;
+    background: linear-gradient(180deg, rgba(244,114,182,0.16) 0%, rgba(13,10,26,0) 100%);
+    border-bottom: 1px solid rgba(244,114,182,0.28);
+  }
+  .header h1 {
+    margin: 0;
+    font-size: 26px;
+    letter-spacing: 1.5px;
+    color: #f472b6;
+    text-shadow: 0 2px 12px rgba(244,114,182,0.45);
+  }
+  .header p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #cbd5e1;
+  }
+  #fightingCanvas {
+    display: block;
+    margin: 14px auto 24px;
+    border-radius: 14px;
+    border: 1px solid rgba(148,163,184,0.22);
+    box-shadow: 0 12px 38px rgba(0,0,0,0.65);
+    background: #110d22;
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>💎 CRYSTAL GEMS! — FIGHTING STYLE &amp; COMBAT KIT REFERENCE</h1>
+    <p>100% Procedural HTML5 Canvas 2D Vector Cel-Shaded Combat Poses • 11-Type Elemental Moves • Lore RPG Stats • 2P Revival &amp; Boss Scale</p>
+  </div>
+  <canvas id="fightingCanvas" width="1560" height="1060"></canvas>
+
+  <script>window.__suGameInitialized = true;</script>
+  <script src="../src/game.js"></script>
+  <script>
+  window.addEventListener('load', () => {
+    const canvas = document.getElementById('fightingCanvas');
+    const ctx = canvas.getContext('2d');
+    const hero = new PlayerHero(600, 'p1', 2600);
+    const mgr = new EnemyManager(1280, 600);
+
+    const ROSTER = [
+      { id: 'steven',   title: 'STEVEN UNIVERSE', weapon: 'Rose Shield & Bubble',    pose: 'attack', fn: 'drawSteven',   color: '#f472b6' },
+      { id: 'garnet',   title: 'GARNET',          weapon: 'Electro Gauntlets',       pose: 'attack', fn: 'drawGarnet',   color: '#e11d48' },
+      { id: 'amethyst', title: 'AMETHYST',        weapon: 'Dual Quartz Whips',       pose: 'attack', fn: 'drawAmethyst', color: '#a855f7' },
+      { id: 'pearl',    title: 'PEARL',           weapon: 'Precision Spear & Holo',  pose: 'attack', fn: 'drawPearl',    color: '#38bdf8' },
+      { id: 'bismuth',  title: 'BISMUTH',         weapon: 'Forge Hammer Slam',       pose: 'attack', fn: 'drawBismuth',  color: '#fb923c' },
+      { id: 'peridot',  title: 'PERIDOT',         weapon: 'Ferrokinesis & EMP',      pose: 'attack', fn: 'drawPeridot',  color: '#4ade80' },
+      { id: 'lapis',    title: 'LAPIS LAZULI',    weapon: 'Hydrokinesis Wings',      pose: 'attack', fn: 'drawLapis',    color: '#2563eb' },
+      { id: 'rose',     title: 'ROSE QUARTZ',     weapon: 'Rose Broadsword & Heal',  pose: 'attack', fn: 'drawRose',     color: '#fb7185' },
+      { id: 'connie',   title: 'CONNIE (PINK REVIVED)', weapon: 'Rose Sword & Pink Form', pose: 'pink', fn: 'drawConnie', color: '#f9a8d4' },
+      { id: 'jasper',   title: 'JASPER',          weapon: 'Crash Helmet Charge',     pose: 'attack', fn: 'drawJasper',   color: '#f59e0b' }
+    ];
+
+    function renderFrame(t) {
+      ctx.fillStyle = '#0f0b1e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Section 1 Banner
+      ctx.fillStyle = '#fbcfe8';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('1. GUARDIAN COMBAT POSES, WEAPON KITS, ELEMENTAL MOVE TYPES & LORE RPG STATS', 28, 30);
+
+      const COLS = 5;
+      const CARD_W = 296;
+      const CARD_H = 315;
+      const START_X = 24;
+      const START_Y = 44;
+
+      ROSTER.forEach((item, idx) => {
+        const col = idx % COLS;
+        const row = Math.floor(idx / COLS);
+        const x = START_X + col * (CARD_W + 8);
+        const y = START_Y + row * (CARD_H + 10);
+
+        // Card background
+        ctx.save();
+        const grad = ctx.createLinearGradient(x, y, x, y + CARD_H);
+        grad.addColorStop(0, 'rgba(30, 23, 56, 0.95)');
+        grad.addColorStop(1, 'rgba(17, 13, 34, 0.98)');
+        ctx.fillStyle = grad;
+        ctx.strokeStyle = item.color;
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.roundRect(x, y, CARD_W, CARD_H, 12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Subtle weapon aura glow behind hero
+        const rad = ctx.createRadialGradient(x + CARD_W / 2, y + 125, 8, x + CARD_W / 2, y + 125, 85);
+        rad.addColorStop(0, item.color + '44');
+        rad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = rad;
+        ctx.fillRect(x + 10, y + 30, CARD_W - 20, 175);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(x, y, CARD_W, CARD_H, 12);
+        ctx.clip();
+
+        // Draw character using actual game engine
+        hero.switchCharacter(item.id);
+        hero.isPinkRevived = (item.pose === 'pink');
+        hero.isAttacking = true;
+        hero.attackType = 'j';
+        hero.attackCombo = 2;
+        hero.walkAnim = t * 3;
+
+        ctx.save();
+        ctx.translate(x + CARD_W / 2, y + 186);
+        ctx.scale(1.48, 1.48);
+        try {
+          hero[item.fn](ctx, Math.sin(t * 2 + idx) * 1.5, 0.5, 'j');
+        } catch (e) {}
+        ctx.restore();
+        hero.isPinkRevived = false;
+        ctx.restore();
+
+        // Header title & weapon
+        ctx.fillStyle = item.color;
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.title, x + CARD_W / 2, y + 22);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(item.weapon, x + CARD_W / 2, y + 38);
+
+        // Move Type Badges (J / K / L)
+        const moves = (typeof HERO_MOVE_TYPES !== 'undefined' && HERO_MOVE_TYPES[item.id]) || { j: 'fight', k: 'fight', l: 'fairy' };
+        ['j', 'k', 'l'].forEach((slot, sIdx) => {
+          const mType = moves[slot] || 'fight';
+          const meta = (typeof TYPE_META !== 'undefined' && TYPE_META[mType]) || { label: mType.toUpperCase(), color: '#38bdf8', icon: '★' };
+          const bx = x + 16 + sIdx * 90;
+          const by = y + 200;
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+          ctx.strokeStyle = meta.color;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.roundRect(bx, by, 84, 22, 6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = meta.color;
+          ctx.font = 'bold 10px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`[${slot.toUpperCase()}] ${meta.label}`, bx + 42, by + 15);
+        });
+
+        // Lore RPG Stats Grid
+        const st = (typeof CHARACTER_STATS !== 'undefined' && CHARACTER_STATS[item.id]) || { hp: 100, attack: 35, magic: 35, defense: 30, critChance: 0.12, critDamage: 1.5 };
+        const statList = [
+          [`HP: ${st.hp}`, '#f43f5e'],
+          [`ATK: ${st.attack}`, '#fb923c'],
+          [`MAG: ${st.magic}`, '#38bdf8'],
+          [`DEF: ${st.defense}`, '#4ade80'],
+          [`CRIT: ${Math.round(st.critChance * 100)}%`, '#facc15'],
+          [`CDMG: ${Math.round(st.critDamage * 100)}%`, '#c084fc']
+        ];
+        statList.forEach(([label, colHex], stIdx) => {
+          const sx = x + 16 + (stIdx % 3) * 90;
+          const sy = y + 232 + Math.floor(stIdx / 3) * 34;
+          ctx.fillStyle = 'rgba(255,255,255,0.06)';
+          ctx.beginPath();
+          ctx.roundRect(sx, sy, 84, 26, 5);
+          ctx.fill();
+          ctx.fillStyle = colHex;
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(label, sx + 42, sy + 17);
+        });
+
+        ctx.restore();
+      });
+
+      // Section 2: Core Combat Mechanics, 2P Revival & Boss Escalation
+      const SEC2_Y = 712;
+      ctx.fillStyle = '#fbcfe8';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('2. CORE COMBAT MECHANICS: PARRY SHIELD, CANON FUSIONS, 2P 18s FLOATING GEM REVIVAL & TERRIFYING PHASE-2 BOSSES', 28, SEC2_Y);
+
+      const PANELS = [
+        { title: 'PERFECT PARRY & ROSE SHIELD [S / ↓]', desc: 'Blocks incoming projectiles & triggers Parry Clash stun', color: '#f472b6' },
+        { title: '2P CANON FUSION [V AT 100% HARMONY]', desc: '9 Playable Fusions (Stevonnie, Opal, Sugilite, Sunstone…)', color: '#c084fc' },
+        { title: '2P ARCADE 18s FLOATING GEM REVIVAL', desc: 'Gem floats for 18s -> 3s Hard-Light Reformation Pillar', color: '#38bdf8' },
+        { title: 'TERRIFYING BOSSES (1.72x+ SCALE & AURA)', desc: 'Phase 2 at <=55% HP • 4 Unpredictable Attack Patterns', color: '#ef4444' }
+      ];
+
+      PANELS.forEach((p, idx) => {
+        const px = 24 + idx * 380;
+        const py = SEC2_Y + 14;
+        const pw = 368;
+        const ph = 310;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(24, 18, 44, 0.96)';
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.roundRect(px, py, pw, ph, 12);
+        ctx.fill();
+        ctx.stroke();
+        ctx.clip();
+
+        ctx.fillStyle = p.color;
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(p.title, px + pw / 2, py + 24);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '11px sans-serif';
+        ctx.fillText(p.desc, px + pw / 2, py + 42);
+
+        if (idx === 0) {
+          // Steven inside Rose Quartz Hexagonal Shield Dome
+          hero.switchCharacter('steven');
+          ctx.save();
+          ctx.translate(px + pw / 2, py + 245);
+          ctx.scale(1.65, 1.65);
+          hero.drawSteven(ctx, 0, 0.5, 'j');
+          ctx.restore();
+
+          ctx.save();
+          ctx.strokeStyle = '#f472b6';
+          ctx.fillStyle = 'rgba(244, 114, 182, 0.22)';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(px + pw / 2, py + 185, 74, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        } else if (idx === 1) {
+          // Opal & Stevonnie Canon Fusion Preview
+          hero.isFused = true;
+          hero.fusionData = (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS['amethyst+pearl']) || { id: 'opal', name: 'Opal', color: '#a78bfa' };
+          ctx.save();
+          ctx.translate(px + pw / 2 - 70, py + 252);
+          ctx.scale(1.55, 1.55);
+          if (typeof hero.drawOpal === 'function') hero.drawOpal(ctx, 0, 0.5, 'k');
+          ctx.restore();
+
+          hero.fusionData = (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS['connie+steven']) || { id: 'stevonnie', name: 'Stevonnie', color: '#f472b6' };
+          ctx.save();
+          ctx.translate(px + pw / 2 + 70, py + 252);
+          ctx.scale(1.55, 1.55);
+          if (typeof hero.drawStevonnie === 'function') hero.drawStevonnie(ctx, 0, 0.5, 'j');
+          ctx.restore();
+          hero.isFused = false;
+          hero.fusionData = null;
+        } else if (idx === 2) {
+          // 2P Floating Gem Revival + 3s Reformation Beam
+          hero.switchCharacter('garnet');
+          hero.x = px + pw / 2 - 65;
+          hero.y = py + 255;
+          hero.isFallen = true;
+          hero.reviveDuration = 18.0;
+          hero.reformDuration = 3.0;
+          hero.reviveTimer = 11.0; // Floating gemstone phase
+          hero.poofAnimTime = 2.2;
+          try { hero.drawFallenHero(ctx); } catch (e) {}
+
+          hero.switchCharacter('pearl');
+          hero.x = px + pw / 2 + 70;
+          hero.y = py + 255;
+          hero.reviveTimer = 1.6; // Final 3s hard-light reformation beam phase!
+          hero.poofAnimTime = 3.5;
+          try { hero.drawFallenHero(ctx); } catch (e) {}
+          hero.isFallen = false;
+        } else if (idx === 3) {
+          // Scaled Phase-2 Boss vs Normal Minion comparison
+          const minion = {
+            type: 'centipeetle', x: 0, y: 0, facing: 1, width: 46, height: 52, hp: 50, maxHp: 50,
+            animTime: 1.1, hurtTimer: 0, gemColor: '#22c55e', movementType: 'walk',
+            isBoss: false, isElite: false, windup: 0, attackCooldown: 1.6, attackTimer: 0.4,
+            name: 'centipeetle', vx: 0, vy: 0, phase2: false
+          };
+          ctx.save();
+          ctx.translate(px + 85, py + 245);
+          ctx.scale(1.25, 1.25);
+          mgr.drawCentipeetleHatchling(ctx, minion);
+          ctx.restore();
+
+          // Crimson Phase-2 Boss Threat Aura
+          ctx.save();
+          const bg = ctx.createRadialGradient(px + 252, py + 178, 12, px + 252, py + 178, 92);
+          bg.addColorStop(0, 'rgba(220, 38, 38, 0.55)');
+          bg.addColorStop(0.6, 'rgba(147, 51, 234, 0.28)');
+          bg.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = bg;
+          ctx.beginPath();
+          ctx.arc(px + 252, py + 178, 92, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          const boss = {
+            type: 'boss_centipeetle', x: 0, y: 0, facing: -1, width: 120, height: 140, hp: 800, maxHp: 1500,
+            animTime: 1.4, hurtTimer: 0, gemColor: '#22c55e', movementType: 'walk',
+            isBoss: true, isElite: true, windup: 0, attackCooldown: 1.25, attackTimer: 0.4,
+            name: 'Mother Centipeetle', vx: 0, vy: 0, phase2: true
+          };
+          ctx.save();
+          ctx.translate(px + 252, py + 255);
+          ctx.scale(-1.25, 1.25);
+          mgr.drawMotherCentipeetle(ctx, boss);
+          ctx.restore();
+
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = 'bold 11px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText('MINION (1.0x)', px + 88, py + 292);
+          ctx.fillStyle = '#f87171';
+          ctx.fillText('PHASE-2 BOSS (1.72x+ AURA)', px + 248, py + 292);
+        }
+
+        ctx.restore();
+      });
+    }
+
+    renderFrame(0.6);
+  });
+  </script>
+</body>
+</html>

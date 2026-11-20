@@ -1,0 +1,10 @@
+services:
+  crystal-gems:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: crystal-gems:latest
+    container_name: crystal-gems
+    ports:
+      - "8080:80"
+    restart: unless-stopped

@@ -1,0 +1,132 @@
+================================================================================
+         CRYSTAL GEMS! — GAME REVIEWER & PRESENTATION GUIDE
+================================================================================
+
+PURPOSE:
+A simple, complete reviewer covering what the game is, how it was made, its
+inspirations, mechanics, and Q&A answers for your friend's presentation.
+
+--------------------------------------------------------------------------------
+1. THE 30-SECOND ELEVATOR PITCH (START WITH THIS)
+--------------------------------------------------------------------------------
+"Crystal Gems! is a fan-made 2D side-scrolling action beat-'em-up and RPG set
+in the Steven Universe universe. What makes it unique technically is that it
+was built completely from scratch without a commercial game engine like Unity
+or Godot. Using over 34,600 lines of pure HTML5 Canvas, CSS3, and JavaScript,
+every single character animation, boss, visual effect, and even the music and
+sound effects are procedurally drawn and synthesized in real time through code.
+The entire game compiles into a single self-contained 4.58 MB file and a
+standalone Windows .exe executable that runs 100% offline at 60 FPS."
+
+--------------------------------------------------------------------------------
+2. QUICK FACTS AT A GLANCE
+--------------------------------------------------------------------------------
+* Title:            Crystal Gems! — Crystal Guardians Unleashed
+* Genre:            2D Side-Scrolling Beat 'Em Up / Action RPG / Co-Op Brawler
+* Build Time:       ~32+ active hands-on development hours across 20+ sessions
+* Tech Stack:       Vanilla HTML5 Canvas 2D, CSS3, ES6 JavaScript, Web Audio API,
+                    Python (Bundler), C#/.NET (Windows .exe), GTK3/WebKit2 (Linux)
+* Game Engine:      None (100% custom-written engine; no Unity/Godot/Phaser)
+* Lines of Code:    34,697 lines in src/ (28,596 JS + 4,875 CSS + 1,226 HTML)
+                    35,403 lines total including build & launcher tools
+* Playable Roster:  10 Playable Heroes + 9 Playable Canon Fusions (19 kits)
+* Content:          10 Story Episodes, 8 RNG Lore Puzzles, 13 Minion Types,
+                    14 Boss Variants, 5 Difficulty Tiers (Easy to Diamond)
+* Shipped Files:    Crystal Gems.exe (4.7 MB) & Crystal-Gems.html (4.58 MB)
+
+--------------------------------------------------------------------------------
+3. HOW THE GAME IS MADE (4 TECHNICAL PILLARS)
+--------------------------------------------------------------------------------
+A. Custom 2D Engine in Pure JavaScript (src/game.js - 28,596 lines)
+   - Uses a delta-time (dt) requestAnimationFrame loop so timers and physics
+     stay consistent at 30, 60, or 120 FPS.
+   - Custom physics, gravity, platform collision, hitboxes, dynamic 2-player
+     midpoint camera across a 2,600px scrolling arena, and Low/Medium/High
+     graphics quality presets.
+
+B. 100% Procedural Vector & Cel-Shaded Graphics (Zero External Sprite Sheets)
+   - Every character, fusion, monster, boss, and particle effect is drawn live
+     on the HTML5 Canvas using mathematical 2D vector paths (beginPath, arc,
+     bezierCurveTo, gradients).
+   - Stays razor-sharp at any resolution (720p to 4K) and keeps the entire game
+     under 5 MB.
+
+C. Algorithmic Web Audio Synthesizer (GemAudioEngine)
+   - Synthesizes 13 background music tracks (episode themes, boss themes, and
+     relaxed menu music) and 40+ sound effects live using Web Audio API
+     oscillators and gain nodes — no external MP3 files required.
+   - Includes smart per-sound cooldown throttling so rapid continuous damage
+     never lags the game or clips the audio.
+
+D. Single-File Bundler & Native Windows Executable (Crystal Gems.exe)
+   - tools/build.py compiles all HTML, CSS, JS, and base64 lobby artwork into
+     one portable file: Crystal-Gems.html (4.58 MB).
+   - tools/windows-launcher/CrystalGemsLauncher.cs compiles into Crystal Gems.exe
+     (4.7 MB). When opened on Windows, it embeds the game, starts a local
+     loopback server (127.0.0.1), and opens a borderless Edge/Chrome app window
+     100% offline.
+
+--------------------------------------------------------------------------------
+4. INSPIRATIONS & GAME DESIGN DNA
+--------------------------------------------------------------------------------
+1. Steven Universe (Rebecca Sugar / Cartoon Network):
+   - Follows Seasons 1-5 across 10 Episodes (Beach City Boardwalk -> Galaxy Warp
+     -> Kindergarten -> The Cluster -> Bismuth's Forge -> Frozen North -> Human
+     Zoo -> Homeworld Trial -> Change Your Mind / White Diamond).
+   - Lore-Accurate RPG Stats (HP, Attack, Magic, Defense, Crit Chance, Crit Dmg):
+     In Steven Universe lore, "Magic" is alien Gem hard-light science,
+     ferrokinesis, hydrokinesis, and hybrid healing. Peridot and Bismuth have
+     high HP/Defense; Lapis has high Water Magic; Pearl has high Crit Chance.
+   - 2-Player Revival & Pink Connie Lore:
+     In 2P Arcade Mode, a defeated partner's gem floats up during an 18-second
+     revival timer and reforms in a 3-second beam of light. When human Connie
+     is revived, she transforms into Pink Connie (inspired by Steven reviving
+     Lars and Lion in the show!).
+
+2. Classic Arcade Beat 'Em Ups (Castle Crashers / Streets of Rage / Scott Pilgrim):
+   - Side-scrolling co-op brawling, wave progression, destructible pillars,
+     bounce pads, and towering Boss Fights (1.72x+ scale, threat aura, Phase 2
+     rage mode, and 4 unpredictable attack patterns including homing orbs and
+     meteor shockwaves).
+
+3. Tekken & Arcade Fighters:
+   - 3-hit combo strings, Perfect Parry shield (S / Down Arrow), Dodge Dash
+     invulnerability frames (I / E), and a Practice Dojo with a combo analyzer.
+
+4. Marvel vs. Capcom (Tag-Team Hyper Fusions & Cut-Ins):
+   - 2-Player Co-Op Canon Fusion (V key at 100% Harmony) into 9 canon fusions,
+     plus 1.9-second anime portrait cut-ins on Pink Overdrive / Gem Surge.
+
+5. Pokemon (11-Type Elemental Matchup Chart):
+   - Every move has one of 11 elements (FAIRY, FIGHT, PSYCHIC, STEEL, ELECTR,
+     WATER, FIRE, DARK, DRAGON, FLYING, NORMAL) with 2x Super Effective, 0.5x
+     Resisted, +20% STAB bonus, and status effects (stun, burn, slow, armor crack).
+
+6. Kingdom Hearts / Zelda + Spinel Gem Hearts HUD:
+   - Top-left Spinel Hearts are backed by each character's HP + Defense buffer.
+     High-defense Gems lose heart life slowly (the Spinel heart dims gradually
+     before turning black) and refill when healed.
+
+7. Stardew Valley, Plants vs. Zombies & Left 4 Dead 2:
+   - Stardew-style character/villain dialogue boxes, PvZ-inspired clean top
+     wave tracker, and L4D2-inspired living menu background slideshow.
+
+--------------------------------------------------------------------------------
+5. TOP Q&A ANSWERS FOR THE PRESENTATION PANEL
+--------------------------------------------------------------------------------
+Q: Why not use Unity or Godot?
+A: Building a custom engine in HTML5 Canvas & JS gave us full control over
+   procedural vector rendering and Web Audio synthesis with zero engine bloat,
+   allowing the entire game to ship as a single 4.7 MB .exe and 4.58 MB HTML file.
+
+Q: How do the Spinel Hearts and RPG stats work together?
+A: Each hero has lore-accurate HP, Attack, Magic, Defense, Crit Chance, and
+   Crit Damage. Physical moves scale with Attack, Gem powers scale with Magic,
+   and HP + Defense determine how much damage each Spinel Heart can absorb
+   before blacking out.
+
+Q: Are the Story Mode puzzles always the same?
+A: No — all 8 episode puzzles use RNG generation on every run so the solution
+   changes each time, while visual cues and an optional Hint toggle guide the
+   player without auto-solving it.
+================================================================================

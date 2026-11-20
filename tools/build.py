@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
-OUT = ROOT / "Crystal-Gems.html"
+OUT = ROOT / "build" / "Crystal-Gems.html"
 
 MIME = {
     ".png": "image/png",
@@ -121,6 +121,7 @@ def main() -> int:
         print(f"Bundle OK — {len(html) / 1024 / 1024:.2f} MB, no external assets.")
         return 0
 
+    OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(html, encoding="utf-8")
     print(f"Built {OUT.relative_to(ROOT)} — {len(html) / 1024 / 1024:.2f} MB")
     return 0
