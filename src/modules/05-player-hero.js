@@ -2448,6 +2448,9 @@ class PlayerHero {
       this.drawJasper(ctx, bob, animP, this.actionType);
     }
 
+    // Per-Hero Animated Signature Polish (gemstone gleams, elemental weapon arcs, visor sheen, petals)
+    this.drawHeroSignatureFlourish(ctx, this.activeChar, bob, animP);
+
     if (this.isShielding && (this.activeChar === 'steven' || this.bubbleTimer > 0)) {
       this.drawBubbleShield(ctx);
     }
@@ -2462,6 +2465,201 @@ class PlayerHero {
       this.drawAttackVisuals(ctx, bob);
     }
 
+    ctx.restore();
+  }
+
+  // --- PER-HERO SIGNATURE VISUAL FLOURISHES (ALL 10 GUARDIANS + PINK CONNIE) ---
+  drawHeroSignatureFlourish(ctx, charId, bob = 0, animP = 0) {
+    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() / 1000 : Date.now() / 1000;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 5.2);
+    ctx.save();
+    if (charId === 'steven') {
+      // Glowing Rose-Quartz belly gem shimmer + drifting diamond starlight
+      ctx.fillStyle = `rgba(255, 182, 217, ${0.42 + pulse * 0.35})`;
+      this.drawMiniStar(ctx, 2, -26 + bob, 4.5 + pulse * 1.6);
+      ctx.strokeStyle = `rgba(244, 114, 182, ${0.45 + pulse * 0.3})`;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(14, -32 + bob, 14 + pulse * 2, -0.7, 0.9);
+      ctx.stroke();
+    } else if (charId === 'garnet') {
+      // Dual Ruby/Sapphire visor specular streaks + crackling gauntlet lightning
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(1, -67 + bob); ctx.lineTo(8, -62 + bob);
+      ctx.stroke();
+      ctx.strokeStyle = pulse > 0.5 ? '#38bdf8' : '#fb7185';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(14, -38 + bob);
+      ctx.lineTo(19, -43 + bob + Math.sin(t * 24) * 3);
+      ctx.lineTo(25, -36 + bob);
+      ctx.stroke();
+    } else if (charId === 'amethyst') {
+      // Faceted chest amethyst sparkle + crackling violet whip energy motes
+      ctx.fillStyle = '#e9d5ff';
+      this.drawMiniStar(ctx, 3, -39 + bob, 4.2 + pulse * 1.4);
+      ctx.strokeStyle = `rgba(192, 132, 252, ${0.55 + pulse * 0.3})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(18, -32 + bob, 11 + pulse * 3, 0.2, 2.2);
+      ctx.stroke();
+    } else if (charId === 'pearl') {
+      // Forehead pearl lustre + flowing translucent cyan ribbon gleam + spear tip glint
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 4, -67 + bob, 3.8 + pulse * 1.2);
+      ctx.strokeStyle = 'rgba(125, 211, 252, 0.65)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-10, -34 + bob);
+      ctx.quadraticCurveTo(-22, -26 + bob + Math.sin(t * 7) * 4, -28, -14 + bob);
+      ctx.stroke();
+    } else if (charId === 'bismuth') {
+      // Recessed rainbow chest gem glow + rising molten forge embers
+      const rCol = ['#f43f5e', '#f59e0b', '#38bdf8', '#a855f7'][Math.floor(t * 4) % 4];
+      ctx.strokeStyle = rCol;
+      ctx.lineWidth = 1.8;
+      ctx.strokeRect(-4, -44 + bob, 9, 9);
+      for (let i = 0; i < 3; i++) {
+        const ey = -28 - ((t * 26 + i * 14) % 34) + bob;
+        ctx.fillStyle = i % 2 ? '#fde047' : '#fb923c';
+        ctx.beginPath();
+        ctx.arc(16 + Math.sin(t * 6 + i * 2) * 6, ey, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (charId === 'peridot') {
+      // Glossy visor gleam + orbiting ferrokinetic metal shards
+      ctx.strokeStyle = 'rgba(217, 249, 157, 0.8)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-2, -62 + bob); ctx.lineTo(9, -59 + bob);
+      ctx.stroke();
+      for (let i = 0; i < 3; i++) {
+        const a = t * 3.8 + (i * Math.PI * 2) / 3;
+        const sx = 14 + Math.cos(a) * 14;
+        const sy = -40 + bob + Math.sin(a) * 8;
+        ctx.fillStyle = '#a3e635';
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - 4); ctx.lineTo(sx + 3.5, sy); ctx.lineTo(sx, sy + 4); ctx.lineTo(sx - 3.5, sy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else if (charId === 'lapis') {
+      // Shimmering hydro-wing foam highlights + orbiting water droplets
+      for (let i = 0; i < 4; i++) {
+        const a = t * 3.2 + (i * Math.PI) / 2;
+        const wx = Math.cos(a) * 26;
+        const wy = -46 + bob + Math.sin(a) * 12;
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.85)';
+        ctx.beginPath();
+        ctx.arc(wx, wy, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else if (charId === 'rose') {
+      // Floating rose petals + radiant rose-quartz starlight
+      for (let i = 0; i < 3; i++) {
+        const py = -18 - ((t * 18 + i * 22) % 58) + bob;
+        const px = Math.sin(t * 3 + i * 2.1) * 22;
+        ctx.fillStyle = 'rgba(251, 113, 133, 0.78)';
+        ctx.beginPath();
+        ctx.ellipse(px, py, 3.6, 1.9, t + i, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#fff1f2';
+      this.drawMiniStar(ctx, 2, -29 + bob, 4.5 + pulse * 1.5);
+    } else if (charId === 'connie') {
+      // Sword specular blade gleam + Pink Connie Lion/Lars starlight halo!
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 18, -48 + bob, 4.0 + pulse * 1.4);
+      if (this.isPinkRevived) {
+        ctx.strokeStyle = `rgba(244, 114, 182, ${0.55 + pulse * 0.35})`;
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.ellipse(0, -40 + bob, 24 + pulse * 3, 36 + pulse * 3, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#fbcfe8';
+        this.drawMiniStar(ctx, -18, -58 + bob, 4.5);
+        this.drawMiniStar(ctx, 20, -24 + bob, 3.8);
+      }
+    } else if (charId === 'jasper') {
+      // Glowing orange nose gem + fiery comet sparks off armored shoulders
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 7, -58 + bob, 3.4 + pulse * 1.2);
+      for (let i = 0; i < 3; i++) {
+        const jy = -26 - ((t * 28 + i * 16) % 44) + bob;
+        ctx.fillStyle = i % 2 ? '#fb923c' : '#fde047';
+        ctx.beginPath();
+        ctx.arc(-14 + i * 14, jy, 2.0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+
+  // --- PER-FUSION SIGNATURE VISUAL FLOURISHES (ALL 9 CANON FUSIONS) ---
+  drawFusionSignatureFlourish(ctx, fid, bob = 0, animP = 0) {
+    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() / 1000 : Date.now() / 1000;
+    const pulse = 0.5 + 0.5 * Math.sin(t * 5.6);
+    ctx.save();
+    if (fid === 'stevonnie') {
+      ctx.fillStyle = '#fbcfe8';
+      this.drawMiniStar(ctx, 20, -48 + bob, 5.2 + pulse * 1.6);
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.72)';
+      ctx.beginPath();
+      ctx.ellipse(-18, -32 + bob + Math.sin(t * 4) * 5, 4, 2, t, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (fid === 'smoky') {
+      ctx.strokeStyle = 'rgba(251, 146, 60, 0.65)';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.ellipse(0, -34 + bob, 28 + pulse * 4, 9, -0.15, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (fid === 'rainbow2' || fid === 'rainbowClassic') {
+      const pCols = ['#f472b6', '#facc15', '#38bdf8', '#c084fc'];
+      for (let i = 0; i < 4; i++) {
+        const a = t * 3.4 + (i * Math.PI) / 2;
+        ctx.fillStyle = pCols[i];
+        this.drawMiniStar(ctx, Math.cos(a) * 26, -48 + bob + Math.sin(a) * 16, 4.2);
+      }
+    } else if (fid === 'sunstone') {
+      ctx.strokeStyle = `rgba(251, 191, 36, ${0.65 + pulse * 0.3})`;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.arc(0, -48 + bob, 30 + pulse * 5, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (fid === 'sugilite') {
+      ctx.strokeStyle = '#c084fc';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(-26, -42 + bob); ctx.lineTo(-16, -54 + bob); ctx.lineTo(-8, -40 + bob);
+      ctx.moveTo(14, -44 + bob); ctx.lineTo(24, -56 + bob); ctx.lineTo(30, -42 + bob);
+      ctx.stroke();
+    } else if (fid === 'sardonyx') {
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, -20, -64 + bob, 5.5 + pulse * 1.8);
+      this.drawMiniStar(ctx, 24, -44 + bob, 4.8 + pulse * 1.4);
+    } else if (fid === 'opal') {
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(18, -68 + bob); ctx.lineTo(18, -28 + bob);
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      this.drawMiniStar(ctx, 26, -48 + bob, 5.5 + pulse * 1.5);
+    } else if (fid === 'malachite') {
+      ctx.strokeStyle = 'rgba(45, 212, 191, 0.72)';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(0, -44 + bob, 34 + pulse * 4, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.fillStyle = '#99f6e4';
+      this.drawMiniStar(ctx, -22, -52 + bob, 4.2);
+      this.drawMiniStar(ctx, 22, -52 + bob, 4.2);
+    }
     ctx.restore();
   }
 
@@ -3200,30 +3398,54 @@ class PlayerHero {
       ctx.closePath();
       ctx.fill();
     }
+
+    // Lit front-edge specular rim highlight + crisp cel-ink contour
+    const lit = shadowSide >= 0 ? 1 : -1;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(x1 + nx * lit * r1 * 0.65, y1 + ny * lit * r1 * 0.65);
+    ctx.lineTo(x2 + nx * lit * r2 * 0.65, y2 + ny * lit * r2 * 0.65);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(22, 12, 40, 0.72)';
+    ctx.lineWidth = 1.25;
+    ctx.beginPath();
+    ctx.moveTo(x1 + nx * r1, y1 + ny * r1);
+    ctx.quadraticCurveTo((x1 + x2) * 0.5 + nx * (r1 + r2) * 0.54, (y1 + y2) * 0.5 + ny * (r1 + r2) * 0.54, x2 + nx * r2, y2 + ny * r2);
+    ctx.arc(x2, y2, r2, Math.atan2(ny, nx), Math.atan2(-ny, -nx), false);
+    ctx.quadraticCurveTo((x1 + x2) * 0.5 - nx * (r1 + r2) * 0.54, (y1 + y2) * 0.5 - ny * (r1 + r2) * 0.54, x1 - nx * r1, y1 - ny * r1);
+    ctx.arc(x1, y1, r1, Math.atan2(-ny, -nx), Math.atan2(ny, nx), false);
+    ctx.closePath();
+    ctx.stroke();
     ctx.restore();
   }
 
-  // Stylized lineless comic mitten/fist hand
+  // Stylized cel-inked comic mitten/fist hand
   drawCelHandMitten(ctx, x, y, r, fillCol, angle = 0) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
     ctx.fillStyle = fillCol;
+    ctx.strokeStyle = 'rgba(22, 12, 40, 0.75)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.ellipse(r * 0.12, 0, r * 1.15, r * 0.92, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
     // Stylized tucked thumb silhouette
     ctx.beginPath();
     ctx.ellipse(-r * 0.1, -r * 0.65, r * 0.58, r * 0.42, -0.35, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
     ctx.beginPath();
     ctx.ellipse(r * 0.25, -r * 0.35, r * 0.45, r * 0.25, 0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
 
-  // Stylish lineless vector cel boot / sneaker / flat with arched toe and cuff
+  // Stylish cel-inked vector boot / sneaker / flat with arched toe, cuff & specular gleam
   drawCelBoot(ctx, footX, footY, toeLen = 11, ankleH = 9, bootCol = '#27272a', soleCol = '#f8fafc', cuffCol = null) {
     ctx.save();
     ctx.translate(footX, footY);
@@ -3233,6 +3455,9 @@ class PlayerHero {
       ctx.beginPath();
       ctx.roundRect(-toeLen * 0.46, -ankleH - 3.5, toeLen * 0.86, 5.2, 2.6);
       ctx.fill();
+      ctx.strokeStyle = 'rgba(22, 12, 40, 0.72)';
+      ctx.lineWidth = 1.1;
+      ctx.stroke();
     }
     // Arched upper boot silhouette
     ctx.fillStyle = bootCol;
@@ -3247,7 +3472,7 @@ class PlayerHero {
     ctx.fill();
 
     // Hard-edged heel shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
     ctx.beginPath();
     ctx.moveTo(-toeLen * 0.42, -ankleH);
     ctx.lineTo(-toeLen * 0.08, -ankleH * 0.85);
@@ -3255,6 +3480,24 @@ class PlayerHero {
     ctx.lineTo(-toeLen * 0.46, 2.2);
     ctx.closePath();
     ctx.fill();
+
+    // Toe specular highlight + crisp ink outline
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
+    ctx.beginPath();
+    ctx.ellipse(toeLen * 0.42, -ankleH * 0.32, toeLen * 0.26, 1.6, 0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(22, 12, 40, 0.78)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-toeLen * 0.42, -ankleH);
+    ctx.lineTo(toeLen * 0.32, -ankleH * 0.92);
+    ctx.quadraticCurveTo(toeLen * 0.65, -ankleH * 0.45, toeLen * 0.98, -2.5);
+    ctx.quadraticCurveTo(toeLen * 1.04, 1.5, toeLen * 0.72, 2.2);
+    ctx.lineTo(-toeLen * 0.46, 2.2);
+    ctx.quadraticCurveTo(-toeLen * 0.55, -ankleH * 0.4, -toeLen * 0.42, -ankleH);
+    ctx.closePath();
+    ctx.stroke();
 
     // Sole / toe rubber wedge
     if (soleCol) {
@@ -8000,6 +8243,9 @@ class PlayerHero {
     } else if (fid === 'rainbowClassic') {
       this.drawRainbowQuartzClassic(ctx, bob, animP, this.actionType);
     }
+
+    // Per-Fusion Animated Signature Polish (prismatic weapon gleams, aura sparks, canon flair)
+    this.drawFusionSignatureFlourish(ctx, fid, bob, animP);
 
     // 3. Dynamic Attack Slashes & Impact Visuals for Fusion
     if (this.isAttacking) {

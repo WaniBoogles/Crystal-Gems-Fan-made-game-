@@ -2373,6 +2373,69 @@ class EnemyManager {
       this.drawEnemyModel(ctx, e);
       ctx.restore();
 
+      // Terrifying Hard-Light Corruption Fractures, Ground Fissures & Orbiting Boss Shards
+      if (!e.isImmortalDummy) {
+        const hpRatio = e.maxHp > 0 ? (e.hp / e.maxHp) : 1;
+        const animT = e.animTime || 0;
+        if (e.isBoss) {
+          ctx.save();
+          // Ground fissure cracks radiating under towering bosses
+          ctx.strokeStyle = e.phase2 ? 'rgba(239, 68, 68, 0.72)' : 'rgba(168, 85, 247, 0.55)';
+          ctx.lineWidth = e.phase2 ? 2.4 : 1.7;
+          ctx.beginPath();
+          for (let f = -2; f <= 2; f++) {
+            const fx = f * 24;
+            ctx.moveTo(fx, 0);
+            ctx.lineTo(fx + (f % 2 === 0 ? 10 : -10), 6);
+            ctx.lineTo(fx + f * 7, 12);
+          }
+          ctx.stroke();
+
+          // Orbiting jagged corrupted gem shards around boss
+          const shardCount = e.phase2 ? 5 : 3;
+          for (let si = 0; si < shardCount; si++) {
+            const ang = animT * (e.phase2 ? 3.2 : 1.8) + (si * Math.PI * 2) / shardCount;
+            const rx = Math.cos(ang) * ((e.width || 110) * 0.68);
+            const ry = -e.height * 0.5 + Math.sin(ang) * ((e.height || 110) * 0.28);
+            ctx.fillStyle = e.phase2 ? '#f43f5e' : (e.gemColor || '#a855f7');
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.1;
+            ctx.beginPath();
+            ctx.moveTo(rx, ry - 7); ctx.lineTo(rx + 5, ry); ctx.lineTo(rx, ry + 7); ctx.lineTo(rx - 5, ry);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+          }
+
+          // Glitching hard-light corruption fractures across Phase-2 / damaged bosses
+          if (e.phase2 || hpRatio < 0.65) {
+            ctx.strokeStyle = e.phase2 ? 'rgba(254, 202, 202, 0.82)' : 'rgba(233, 213, 255, 0.62)';
+            ctx.lineWidth = 1.8;
+            const jitter = Math.sin(animT * 28) * 3;
+            ctx.beginPath();
+            ctx.moveTo(-18 + jitter, -e.height * 0.72);
+            ctx.lineTo(-4, -e.height * 0.55);
+            ctx.lineTo(-14 + jitter, -e.height * 0.36);
+            ctx.moveTo(16 - jitter, -e.height * 0.64);
+            ctx.lineTo(6, -e.height * 0.44);
+            ctx.lineTo(20 - jitter, -e.height * 0.26);
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (hpRatio < 0.65) {
+          // Flickering neon corruption cracks on wounded corrupted minions
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(-8, -e.height * 0.65);
+          ctx.lineTo(2, -e.height * 0.48);
+          ctx.lineTo(-4, -e.height * 0.30);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
       // 1: IMPACT FLASH & BALLOON POP (Fighting Style Guide)
       // Flash ONLY the exact silhouette of the enemy using an isolated offscreen canvas mask (no square box!)
       if (e.isPoofing || e.hurtTimer > 0.16) {
