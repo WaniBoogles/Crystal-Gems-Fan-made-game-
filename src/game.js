@@ -317,6 +317,36 @@ class GemAudioEngine {
     } catch (e) {}
   }
 
+  _getNoiseBuffer() {
+    if (this._noiseBuf || !this.ctx || typeof this.ctx.createBuffer !== 'function') return this._noiseBuf;
+    const len = Math.floor((this.ctx.sampleRate || 44100) * 0.25);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate || 44100);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    this._noiseBuf = buf;
+    return buf;
+  }
+
+  _playNoiseBurst(t, duration = 0.08, freq = 900, q = 1.2, vol = 0.14, filterType = 'bandpass') {
+    if (!this.ctx || typeof this.ctx.createBufferSource !== 'function' || typeof this.ctx.createBiquadFilter !== 'function') return;
+    const buf = this._getNoiseBuffer();
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const flt = this.ctx.createBiquadFilter();
+    flt.type = filterType;
+    flt.frequency.setValueAtTime(freq, t);
+    flt.Q.setValueAtTime(q, t);
+    const ng = this.ctx.createGain();
+    ng.gain.setValueAtTime(vol, t);
+    ng.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    src.connect(flt);
+    flt.connect(ng);
+    ng.connect(this.getSfxDestination());
+    src.start(t);
+    src.stop(t + duration);
+  }
+
   playSfx(type) {
     if (!this.soundEnabled) return;
     this.init();
@@ -501,65 +531,73 @@ class GemAudioEngine {
           return;
 
         case 'punch':
-          // Heavy concussive gauntlet punch swing (Garnet / Jasper)
+          // Layered concussive gauntlet impact: deep body thud + low-pass foley snap
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(240, t);
-          osc.frequency.exponentialRampToValueAtTime(55, t + 0.14);
-          gain.gain.setValueAtTime(0.42, t);
+          osc.frequency.setValueAtTime(210, t);
+          osc.frequency.exponentialRampToValueAtTime(48, t + 0.14);
+          gain.gain.setValueAtTime(0.36, t);
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
           osc.start(t);
           osc.stop(t + 0.14);
+          this._playNoiseBurst(t, 0.075, 420, 0.9, 0.16, 'lowpass');
           break;
 
         case 'spear':
-          // High-velocity whistling spear thrust (Pearl)
+          // Crisp air whoosh + warm metallic ring (Pearl / Connie sword)
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(880, t);
-          osc.frequency.exponentialRampToValueAtTime(340, t + 0.13);
-          gain.gain.setValueAtTime(0.26, t);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+          osc.frequency.setValueAtTime(760, t);
+          osc.frequency.exponentialRampToValueAtTime(320, t + 0.12);
+          gain.gain.setValueAtTime(0.20, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
           osc.start(t);
-          osc.stop(t + 0.13);
+          osc.stop(t + 0.12);
+          this._playNoiseBurst(t, 0.09, 1450, 1.8, 0.11, 'bandpass');
           break;
 
         case 'hit':
+          // Tactile impact thud + soft grit burst (non-clipping)
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(180, t);
-          osc.frequency.exponentialRampToValueAtTime(45, t + 0.12);
-          gain.gain.setValueAtTime(0.32, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+          osc.frequency.setValueAtTime(165, t);
+          osc.frequency.exponentialRampToValueAtTime(44, t + 0.11);
+          gain.gain.setValueAtTime(0.28, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.11);
           osc.start(t);
-          osc.stop(t + 0.12);
+          osc.stop(t + 0.11);
+          this._playNoiseBurst(t, 0.06, 620, 1.0, 0.12, 'lowpass');
           break;
 
         case 'pop':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(680, t);
+          osc.frequency.setValueAtTime(520, t);
           osc.frequency.exponentialRampToValueAtTime(110, t + 0.08);
-          gain.gain.setValueAtTime(0.38, t);
+          gain.gain.setValueAtTime(0.26, t);
           gain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
           osc.start(t);
           osc.stop(t + 0.09);
           break;
 
         case 'shield':
+          // Resonant Rose Quartz crystal harmonic shimmer
           osc.type = 'sine';
-          osc.frequency.setValueAtTime(480, t);
-          osc.frequency.exponentialRampToValueAtTime(780, t + 0.08);
-          gain.gain.setValueAtTime(0.16, t);
-          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+          osc.frequency.setValueAtTime(523.25, t);
+          osc.frequency.exponentialRampToValueAtTime(783.99, t + 0.09);
+          gain.gain.setValueAtTime(0.15, t);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
           osc.start(t);
-          osc.stop(t + 0.28);
+          osc.stop(t + 0.26);
+          this._playNoiseBurst(t, 0.05, 1800, 3.0, 0.05, 'bandpass');
           break;
 
         case 'whip':
+          // Airy whip crack with warm low-mid body
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(620, t);
-          osc.frequency.exponentialRampToValueAtTime(140, t + 0.13);
-          gain.gain.setValueAtTime(0.18, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
+          osc.frequency.setValueAtTime(520, t);
+          osc.frequency.exponentialRampToValueAtTime(135, t + 0.12);
+          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
           osc.start(t);
-          osc.stop(t + 0.13);
+          osc.stop(t + 0.12);
+          this._playNoiseBurst(t, 0.07, 1300, 1.5, 0.13, 'bandpass');
           break;
 
         case 'rocket':
@@ -4379,6 +4417,9 @@ class PlayerHero {
     this.actionType = null; // 'punch', 'throw', 'shield', 'heal', 'skill'
     this.actionTimer = 0;
     this.actionDuration = 0.28;
+    // Per-swing melee hit registry (prevents duplicate frame-by-frame hits per swing)
+    this._swingId = 0;
+    this._swingHitSet = new Set();
 
     this.invulnerableTimer = 0;
     this.walkAnim = 0;
@@ -5112,6 +5153,9 @@ class PlayerHero {
     this.isAttacking = true;
     this.attackType = 'J';
     this.actionType = 'punch';
+    this._swingId = (this._swingId || 0) + 1;
+    if (this._swingHitSet) this._swingHitSet.clear();
+    else this._swingHitSet = new Set();
 
     const profile = (this.isFusion && this.fusionData)
       ? (FUSION_COMBO_PROFILES[this.fusionData.id] || FUSION_COMBO_PROFILE)
@@ -5366,8 +5410,15 @@ class PlayerHero {
     this.actionType = 'throw';
     this.actionDuration = 0.38;
     this.actionTimer = 0.38;
+    this._swingId = (this._swingId || 0) + 1;
+    if (this._swingHitSet) this._swingHitSet.clear();
     const odMult = this.isPinkOverdrive ? (this.dualOverdrive ? 2.5 : 2.0) : 1.0;
     const dmgMult = odMult * (this.isFusion ? 1.35 : 1.0) * (this.hasSynergyBuff ? 1.25 : 1.0);
+    if (particles) {
+      const kMeta = getTypeMeta(this.getMoveType('k'));
+      particles.addShockwaveRing(this.x + this.facing * 26, this.y - 40, this.isFusion ? 78 : 54, kMeta.color || '#f472b6', 3.6);
+      particles.addSparkle(this.x + this.facing * 28, this.y - 42, kMeta.color || '#ffffff', this.isFusion ? 14 : 9, 5);
+    }
 
     if (this.isFusion && this.fusionData) {
       this.executeFusionSpecialK(audioEngine, particles, projectiles, dmgMult);
@@ -5594,9 +5645,16 @@ class PlayerHero {
     this.skillCooldown = 3.2;
     this.isAttacking = true;
     this.attackType = 'L';
+    this._swingId = (this._swingId || 0) + 1;
+    if (this._swingHitSet) this._swingHitSet.clear();
     const odMult = this.isPinkOverdrive ? (this.dualOverdrive ? 2.5 : 2.0) : 1.0;
     const dmgMult = odMult * (this.isFusion ? 1.4 : 1.0) * (this.hasSynergyBuff ? 1.25 : 1.0);
     const slamY = this.y;
+    if (particles) {
+      const lMeta = getTypeMeta(this.getMoveType('l'));
+      particles.addShockwaveRing(this.x, slamY - 12, this.isFusion ? 135 : 92, lMeta.color || '#fde047', 4.8);
+      particles.addSparkle(this.x, slamY - 46, lMeta.color || '#ffffff', this.isFusion ? 20 : 12, 7);
+    }
 
     if (this.isFusion && this.fusionData) {
       this.executeFusionSkillL(audioEngine, particles, pickups, projectiles, dmgMult);
@@ -6709,9 +6767,28 @@ class PlayerHero {
     const isMoving = motion.isMoving;
     const bob = motion.bob;
 
-    // 2. Character Overdrive Aura & Power-Up Visuals (Visually stunning for all 8 Gems!)
+    // 2. Character Overdrive Aura & Power-Up Visuals + Crisp Cel Rim Light Glow
     if (this.isPinkOverdrive) {
       this.drawCharacterOverdriveAura(ctx, this.activeChar, bob);
+    } else {
+      // Subtle character-themed rim aura so every hero pops crisply off dark & bright arenas
+      const rimMap = {
+        steven: 'rgba(244,114,182,0.18)', garnet: 'rgba(225,29,72,0.18)',
+        amethyst: 'rgba(168,85,247,0.20)', pearl: 'rgba(56,189,248,0.18)',
+        bismuth: 'rgba(251,146,60,0.20)', peridot: 'rgba(74,222,128,0.20)',
+        lapis: 'rgba(59,130,246,0.22)', rose: 'rgba(251,113,133,0.20)',
+        connie: this.isPinkRevived ? 'rgba(244,114,182,0.34)' : 'rgba(249,168,212,0.18)',
+        jasper: 'rgba(245,158,11,0.20)'
+      };
+      ctx.save();
+      const rimG = ctx.createRadialGradient(0, -40 + bob, 6, 0, -40 + bob, 44);
+      rimG.addColorStop(0, rimMap[this.activeChar] || 'rgba(244,114,182,0.18)');
+      rimG.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rimG;
+      ctx.beginPath();
+      ctx.arc(0, -40 + bob, 44, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
 
@@ -7597,6 +7674,30 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
+    // 2b. Crisp cel-shaded specular rim highlight along front temple/cheek + soft anime blush + ink outline
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(rx * 0.58, cy - ry * 0.72);
+    ctx.quadraticCurveTo(rx * 0.94, cy - ry * 0.18, rx * 0.76, cy + ry * 0.42);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.20)';
+    ctx.beginPath();
+    ctx.ellipse(eyeXFront + 0.6, eyeY + eyeH * 1.45, Math.max(1.8, eyeW * 0.9), Math.max(1.1, eyeH * 0.42), 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(24, 14, 42, 0.78)';
+    ctx.lineWidth = 1.35;
+    ctx.beginPath();
+    ctx.moveTo(-rx * 0.88, cy - ry * 0.35);
+    ctx.bezierCurveTo(-rx * 1.02, cy - ry * 1.15, rx * 0.95, cy - ry * 1.15, rx * 0.96, cy - ry * 0.25);
+    ctx.bezierCurveTo(rx * 1.05, cy + ry * 0.48, rx * 0.62, cy + ry * 0.98, rx * 0.14, cy + ry);
+    ctx.bezierCurveTo(-rx * 0.48, cy + ry * 0.98, -rx * 0.96, cy + ry * 0.48, -rx * 0.88, cy - ry * 0.35);
+    ctx.closePath();
+    ctx.stroke();
+
     // 3. Forehead Gem if any (Pearl / Peridot / Opal / Rainbow 2.0 / Sardonyx / White)
     if (gemForehead) {
       ctx.fillStyle = gemForehead.col || '#f8fafc';
@@ -7631,20 +7732,33 @@ class PlayerHero {
         ctx.stroke();
         return;
       }
-      // White sclera
+      // White sclera + crisp upper lash line
       ctx.fillStyle = scleraCol;
       ctx.beginPath();
-      ctx.ellipse(ex, ey, ew * 1.18, eh * 1.05, 0, 0, Math.PI * 2);
+      ctx.ellipse(ex, ey, ew * 1.20, eh * 1.08, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Expressive iris/pupil shifted slightly toward facing (+x)
-      ctx.fillStyle = iris;
+      ctx.strokeStyle = 'rgba(24, 14, 42, 0.72)';
+      ctx.lineWidth = 1.0;
       ctx.beginPath();
-      ctx.ellipse(ex + ew * 0.24, ey + 0.1, ew * 0.64, eh * 0.72, 0, 0, Math.PI * 2);
+      ctx.arc(ex, ey, ew * 1.12, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.stroke();
+
+      // Expressive iris/pupil shifted slightly toward facing (+x)
+      const isStarPupil = !!(this.isPinkOverdrive || this.isFusion);
+      ctx.fillStyle = isStarPupil ? '#f472b6' : iris;
+      ctx.beginPath();
+      ctx.ellipse(ex + ew * 0.24, ey + 0.1, ew * 0.68, eh * 0.76, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Crisp specular catchlight
+      // Deep inner pupil core
+      ctx.fillStyle = '#0f071c';
+      ctx.beginPath();
+      ctx.ellipse(ex + ew * 0.28, ey + 0.15, ew * 0.36, eh * 0.44, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Dual specular catchlights (primary starlight + secondary micro glint)
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(ex + ew * 0.42, ey - eh * 0.30, Math.max(0.85, ew * 0.32), 0, Math.PI * 2);
+      ctx.arc(ex + ew * 0.44, ey - eh * 0.32, Math.max(0.9, ew * 0.34), 0, Math.PI * 2);
+      ctx.arc(ex - ew * 0.05, ey + eh * 0.28, Math.max(0.45, ew * 0.16), 0, Math.PI * 2);
       ctx.fill();
       // Expressive cel eyebrow
       ctx.strokeStyle = browCol;
@@ -12220,8 +12334,17 @@ class PlayerHero {
     ctx.scale(this.facing * scale * actionScaleX * motion.breathScaleX * uSq.sx, scale * actionScaleY * motion.breathScaleY * uSq.sy);
     ctx.rotate(actionTorsoTilt + motion.torsoTilt);
 
-    // 1. Luminous Grand Rainbow / Prism Fusion Aura + Fusion Overdrive Halo
+    // 1. Luminous Grand Rainbow / Prism Fusion Aura + Fusion Overdrive Halo + Crisp Fusion Rim Glow
     this.drawFusionAura(ctx, fusion, bob);
+    ctx.save();
+    const fRim = ctx.createRadialGradient(0, -50 + bob, 8, 0, -50 + bob, 56);
+    fRim.addColorStop(0, (fusion.glowColor || fusion.color || '#f472b6') + '40');
+    fRim.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fRim;
+    ctx.beginPath();
+    ctx.arc(0, -50 + bob, 56, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
 
     // 2. High-Fidelity Animated Procedural Vector Fusion Characters (Full Kinematics, Articulated Limbs & Visual Skills)
     const fid = fusion.id;
@@ -15807,10 +15930,11 @@ class EnemyManager {
       });
     }
 
-    // Terrifying Unpredictable Boss Maneuver Selector (4 distinct rotating threats!)
+    // Terrifying Unpredictable Boss Maneuver Selector (6 distinct rotating threats!)
     if (e.isBoss && !e.isImmortalDummy) {
-      let pat = Math.floor(Math.random() * 4);
-      if (pat === e.bossPatternLast) pat = (pat + 1) % 4;
+      const numPats = e.phase2 ? 6 : 5;
+      let pat = Math.floor(Math.random() * numPats);
+      if (pat === e.bossPatternLast) pat = (pat + 1) % numPats;
       e.bossPatternLast = pat;
       const bossColor = e.gemColor || '#ef4444';
       const volleyCount = e.phase2 ? 5 : 3;
@@ -15855,27 +15979,66 @@ class EnemyManager {
         // Corruption Blink Ambush toward / across player
         if (particles) particles.addPoof(e.x, e.y - e.height * 0.5, bossColor);
         const targetX = player ? player.x : e.x;
-        const stepX = (targetX > e.x ? 1 : -1) * Math.min(180, Math.abs(targetX - e.x) * 0.65 + 75);
+        const stepX = (targetX > e.x ? 1 : -1) * Math.min(200, Math.abs(targetX - e.x) * 0.7 + 85);
         e.x = Math.max(90, Math.min(this.stageWidth - 90, e.x + stepX));
-        e.vx = e.facing * 360;
+        e.vx = e.facing * 370;
         if (particles) particles.addSparkle(e.x, e.y - e.height * 0.5, '#ef4444', 14, 5);
-      } else {
+      } else if (pat === 3) {
         // Tracking Corruption Orbs
-        const orbCount = e.phase2 ? 2 : 1;
+        const orbCount = e.phase2 ? 3 : 2;
         for (let oi = 0; oi < orbCount; oi++) {
           projectiles.push({
             x: e.x + e.facing * 40,
-            y: e.y - e.height * 0.65 - oi * 24,
+            y: e.y - e.height * 0.65 - oi * 22,
             vx: e.facing * 260,
-            vy: -90 - oi * 40,
+            vy: -90 - oi * 35,
             radius: 15,
             damage: 1.1,
-            homing: 85,
+            homing: 95,
             type: 'enemyLaser',
-            color: '#f43f5e',
-            life: 2.1
+            color: '#a855f7',
+            life: 2.2
           });
         }
+      } else if (pat === 4) {
+        // Corrupted Radial Shard Nova (360-degree burst)
+        const spikes = e.phase2 ? 8 : 6;
+        for (let si = 0; si < spikes; si++) {
+          const ang = (Math.PI * 2 * si) / spikes;
+          projectiles.push({
+            x: e.x,
+            y: e.y - e.height * 0.5,
+            vx: Math.cos(ang) * 310,
+            vy: Math.sin(ang) * 260,
+            radius: 12,
+            damage: 1.05,
+            type: 'enemyShard',
+            color: '#f43f5e',
+            life: 1.35
+          });
+        }
+        if (particles) particles.addShockwaveRing(e.x, e.y - e.height * 0.5, 130, '#ef4444', 4.5);
+      } else {
+        // Phase-2 Shadow-Feint Cross-Up + Sky Corruption Rain
+        const targetX = player ? player.x : e.x;
+        const flankX = Math.max(100, Math.min(this.stageWidth - 100, targetX + (e.x < targetX ? 140 : -140)));
+        if (particles) particles.addPoof(e.x, e.y - e.height * 0.5, '#7e22ce');
+        e.x = flankX;
+        e.facing = targetX >= e.x ? 1 : -1;
+        for (let mi = -1; mi <= 1; mi++) {
+          projectiles.push({
+            x: Math.max(80, Math.min(this.stageWidth - 80, targetX + mi * 115)),
+            y: Math.max(60, this.groundY - 380 - Math.abs(mi) * 45),
+            vx: mi * 25,
+            vy: 340,
+            radius: 16,
+            damage: 1.2,
+            type: 'enemyShard',
+            color: '#ef4444',
+            life: 1.8
+          });
+        }
+        if (particles) particles.addSparkle(e.x, e.y - e.height * 0.5, '#ef4444', 18, 6);
       }
       return;
     }
@@ -15968,7 +16131,9 @@ class EnemyManager {
       else if (player.activeChar === 'bismuth') hitRange = 95;
       hitRange += (player.attackRangeBonus || 0);
 
-      if (this.isPlayerMeleeAligned(e, player, hitRange) && e.hurtTimer <= 0) {
+      const alreadyHitThisSwing = !!(player._swingHitSet && player._swingHitSet.has(e));
+      if (!alreadyHitThisSwing && this.isPlayerMeleeAligned(e, player, hitRange) && e.hurtTimer <= 0) {
+        if (player._swingHitSet) player._swingHitSet.add(e);
         let baseDmg = player.isFusion ? 62 : 30;
         const isMagicMelee = (player.activeChar === 'lapis' || player.activeChar === 'peridot' || player.activeChar === 'pearl' || player.activeChar === 'rose');
         const meleeStatScale = isMagicMelee ? (0.45 * physMult + 0.55 * magicMult) : (0.85 * physMult + 0.15 * magicMult);
@@ -15991,7 +16156,8 @@ class EnemyManager {
           }
         }
         if (this.gameRef && this.gameRef.triggerHitstop) {
-          this.gameRef.triggerHitstop(player.isFusion ? 0.055 : 0.038, player.isFusion ? 4.5 : 2.5);
+          const isFinisherHit = (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion);
+          this.gameRef.triggerHitstop(isFinisherHit ? 0.062 : 0.036, isFinisherHit ? 5.0 : 2.6);
         }
 
         // ENEMY STAGGER & KNOCKBACK FOR CLOSE-RANGE / MELEE ATTACKS
@@ -16635,19 +16801,61 @@ class EnemyManager {
         ctx.restore();
       }
 
-      // Menacing Boss Threat Aura (pulsing dark-crimson/gem corona under towering bosses)
+      // Menacing Boss Threat Aura (pulsing dark-crimson/gem corona + jagged corruption spikes + windup danger ring)
       if (e.isBoss && !e.isImmortalDummy) {
-        const threatPulse = 0.5 + 0.5 * Math.sin((e.animTime || 0) * (e.phase2 ? 9 : 5));
-        const auraR = Math.max(e.width || 150, e.height || 150) * (0.72 + threatPulse * 0.14);
+        const threatPulse = 0.5 + 0.5 * Math.sin((e.animTime || 0) * (e.phase2 ? 10 : 5.5));
+        const auraR = Math.max(e.width || 150, e.height || 150) * (0.76 + threatPulse * 0.16);
         ctx.save();
         const bGlow = ctx.createRadialGradient(0, -e.height * 0.45, 8, 0, -e.height * 0.45, auraR);
-        bGlow.addColorStop(0, e.phase2 ? 'rgba(239, 68, 68, 0.34)' : 'rgba(168, 85, 247, 0.24)');
-        bGlow.addColorStop(0.65, e.gemColor ? `${e.gemColor}33` : 'rgba(127, 29, 29, 0.2)');
+        bGlow.addColorStop(0, e.phase2 ? 'rgba(239, 68, 68, 0.42)' : 'rgba(168, 85, 247, 0.28)');
+        bGlow.addColorStop(0.6, e.gemColor ? `${e.gemColor}38` : 'rgba(127, 29, 29, 0.24)');
         bGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = bGlow;
         ctx.beginPath();
         ctx.arc(0, -e.height * 0.45, auraR, 0, Math.PI * 2);
         ctx.fill();
+
+        // Jagged oscillating corruption spikes radiating behind terrifying bosses
+        const spikeCount = e.phase2 ? 12 : 8;
+        ctx.strokeStyle = e.phase2 ? 'rgba(248, 113, 113, 0.65)' : 'rgba(192, 132, 252, 0.45)';
+        ctx.lineWidth = e.phase2 ? 2.4 : 1.7;
+        ctx.beginPath();
+        for (let sp = 0; sp < spikeCount; sp++) {
+          const ang = (Math.PI * 2 * sp) / spikeCount + (e.animTime || 0) * (e.phase2 ? 1.4 : 0.7);
+          const innerR = auraR * 0.52;
+          const outerR = auraR * (0.78 + 0.18 * Math.sin((e.animTime || 0) * 8 + sp * 1.9));
+          ctx.moveTo(Math.cos(ang) * innerR, -e.height * 0.45 + Math.sin(ang) * innerR);
+          ctx.lineTo(Math.cos(ang) * outerR, -e.height * 0.45 + Math.sin(ang) * outerR);
+        }
+        ctx.stroke();
+
+        // Readable crimson danger ring during boss attack windup telegraph!
+        if (e.windup && e.windup > 0) {
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          ctx.ellipse(0, -4, (e.width || 120) * 0.85, 16, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (!e.isImmortalDummy) {
+        // Corrupted Gem Minion eerie miasma rim + subtle windup warning glint
+        ctx.save();
+        const mR = Math.max(e.width || 48, e.height || 48) * 0.68;
+        const mG = ctx.createRadialGradient(0, -e.height * 0.45, 4, 0, -e.height * 0.45, mR);
+        mG.addColorStop(0, e.gemColor ? `${e.gemColor}30` : 'rgba(168,85,247,0.22)');
+        mG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = mG;
+        ctx.beginPath();
+        ctx.arc(0, -e.height * 0.45, mR, 0, Math.PI * 2);
+        ctx.fill();
+        if (e.windup && e.windup > 0) {
+          ctx.strokeStyle = 'rgba(248, 113, 113, 0.85)';
+          ctx.lineWidth = 2.0;
+          ctx.beginPath();
+          ctx.arc(0, -e.height * 0.5, mR * 0.72, 0, Math.PI * 2);
+          ctx.stroke();
+        }
         ctx.restore();
       }
 

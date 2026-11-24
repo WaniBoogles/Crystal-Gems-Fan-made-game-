@@ -64,10 +64,24 @@ def inline_icons(html: str) -> str:
     return re.sub(r'(href|src)="([^"]+\.(?:png|jpe?g|webp|svg))"', repl, html)
 
 
+def assemble_modules() -> str:
+    """Assemble src/modules/*.js in sorted order and sync src/game.js."""
+    mod_dir = SRC / "modules"
+    if mod_dir.is_dir():
+        mod_files = sorted(mod_dir.glob("*.js"))
+        if mod_files:
+            combined = "".join(p.read_text(encoding="utf-8") for p in mod_files)
+            game_js = SRC / "game.js"
+            if not game_js.exists() or game_js.read_text(encoding="utf-8") != combined:
+                game_js.write_text(combined, encoding="utf-8")
+            return combined
+    return (SRC / "game.js").read_text(encoding="utf-8")
+
+
 def build() -> str:
     html = (SRC / "game.html").read_text(encoding="utf-8")
     css = (SRC / "game.css").read_text(encoding="utf-8")
-    js = (SRC / "game.js").read_text(encoding="utf-8")
+    js = assemble_modules()
 
     if 'href="game.css"' not in html or 'src="game.js"' not in html:
         raise RuntimeError("game.html no longer links game.css / game.js — update tools/build.py")
