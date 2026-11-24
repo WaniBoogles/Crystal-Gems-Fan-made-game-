@@ -47,26 +47,9 @@
   </div>
   <canvas id="fightingCanvas" width="1560" height="1980"></canvas>
 
-  <div id="spritePreload" style="position:absolute;width:1px;height:1px;overflow:hidden;opacity:0.01;pointer-events:none;"></div>
   <script>window.__suGameInitialized = true;</script>
-  <script src="../src/portraits-data.js"></script>
   <script src="../src/game.js"></script>
   <script>
-  window.__su2DSpriteCache = window.__su2DSpriteCache || {};
-  const preloadBox = document.getElementById('spritePreload');
-  if (typeof SPRITE_IMAGES !== 'undefined') {
-    for (const [key, src] of Object.entries(SPRITE_IMAGES)) {
-      const img = document.createElement('img');
-      img.decoding = 'sync';
-      img.onload = () => {
-        window.__su2DSpriteCache[key] = img;
-        if (typeof window.__renderSheet === 'function') window.__renderSheet();
-      };
-      img.src = src;
-      if (preloadBox) preloadBox.appendChild(img);
-      window.__su2DSpriteCache[key] = img;
-    }
-  }
   window.__renderSheet = () => {
     const canvas = document.getElementById('fightingCanvas');
     const ctx = canvas.getContext('2d');
@@ -208,8 +191,8 @@
         hero.attackType = null;
         hero.attackCombo = 0;
         ctx.save();
-        ctx.translate(cx, cy + 4);
-        ctx.scale(1.48, 1.48);
+        ctx.translate(cx, cy + 10);
+        ctx.scale(1.24, 1.24);
         try {
           hero[item.fn](ctx, 0, 0, 'idle');
           if (typeof hero.drawHeroSignatureFlourish === 'function') hero.drawHeroSignatureFlourish(ctx, item.id, 0, 0.5);
@@ -236,8 +219,8 @@
         : ((typeof FUSION_STATS !== 'undefined' && FUSION_STATS[f.id]) || { hp: 245, attack: 60, magic: 60, defense: 55, critChance: 0.25, critDamage: 1.9 });
       drawStatsCard(x, y, CARD_W, CARD_H, f, st, moves, (cx, cy) => {
         ctx.save();
-        ctx.translate(cx, cy + 6);
-        ctx.scale(1.42, 1.42);
+        ctx.translate(cx, cy + 10);
+        ctx.scale(1.18, 1.18);
         try {
           if (f.isHeroConnie) {
             hero.switchCharacter('connie');

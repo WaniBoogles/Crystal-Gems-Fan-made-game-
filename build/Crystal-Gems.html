@@ -14287,65 +14287,8 @@ class PlayerHero {
     ctx.restore();
   }
 
-  getLoaded2DSprite(key) {
-    if (typeof SPRITE_IMAGES === 'undefined' || !SPRITE_IMAGES[key] || typeof Image === 'undefined') return null;
-    const cache = (typeof window !== 'undefined' ? (window.__su2DSpriteCache = window.__su2DSpriteCache || {}) : (this._localSpriteCache = this._localSpriteCache || {}));
-    if (!cache[key]) {
-      try {
-        const im = new Image();
-        im.src = SPRITE_IMAGES[key];
-        cache[key] = im;
-      } catch (e) {
-        return null;
-      }
-    }
-    const img = cache[key];
-    return (img && img.complete && img.naturalWidth > 0) ? img : null;
-  }
-
-  draw2DCharacterSprite(ctx, charId, bob = 0, animP = 0, actionType = '', targetHeight = 90) {
-    const spriteKey = (charId === 'connie' && this.isPinkRevived) ? 'connie_pink' : charId;
-    const img = this.getLoaded2DSprite(spriteKey);
-    if (!img) return false;
-
-    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() / 1000 : Date.now() / 1000;
-    const motion = this.getCharacterMotionState();
-    const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
-
-    const scale = targetHeight / Math.max(1, img.naturalHeight);
-    const dw = img.naturalWidth * scale;
-    const dh = targetHeight;
-
-    ctx.save();
-    // Dynamic 2D walk stride bounce, breathing squash-and-stretch & attack lunge tilt
-    const walkTilt = motion.isMoving ? Math.sin(this.walkAnim * 1.8) * 0.055 : 0;
-    const atkTilt = strike * 0.12;
-    const sx = 1 + Math.max(0, strike) * 0.06 + Math.sin(t * 3.6) * 0.012;
-    const sy = 1 - Math.max(0, strike) * 0.04 - Math.sin(t * 3.6) * 0.012;
-
-    ctx.translate(strike * 6, 2 + bob);
-    ctx.rotate(walkTilt + atkTilt);
-    ctx.scale(sx, sy);
-    ctx.drawImage(img, -dw * 0.5, -dh, dw, dh);
-    ctx.restore();
-
-    // Dynamic weapon slash arc when actively striking in-game
-    if ((this.isAttacking || strike > 0.15) && (actionType === 'punch' || actionType === 'throw' || actionType === 'skill')) {
-      const colMap = {
-        steven: '#f472b6', garnet: '#e11d48', amethyst: '#a855f7', pearl: '#38bdf8',
-        bismuth: '#fb923c', peridot: '#4ade80', lapis: '#0ea5e9', rose: '#fb7185',
-        connie: '#f472b6', jasper: '#f59e0b', stevonnie: '#f472b6', smoky: '#fb923c',
-        rainbow2: '#38bdf8', sunstone: '#facc15', sugilite: '#a855f7', sardonyx: '#fb7185',
-        opal: '#818cf8', malachite: '#2dd4bf', rainbowClassic: '#e879f9'
-      };
-      const sCol = colMap[charId] || '#f472b6';
-      this.drawCrescentSlash(ctx, 18 + Math.max(0, strike) * 10, -dh * 0.48 + bob, dh * 0.42, -Math.PI * 0.46, Math.PI * 0.46, sCol + '55', sCol, '#ffffff', 11);
-    }
-    return true;
-  }
 
   drawSteven(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'steven', bob, animP, actionType, 84)) return;
     const motion = this.getCharacterMotionState();
     const isPink = this.isPinkOverdrive;
     const skinColor = isPink ? '#ff6097' : '#fde0d7';
@@ -14422,8 +14365,11 @@ class PlayerHero {
       ctx.restore();
     }
 
-    // 3. Future Pink Varsity Jacket (Contoured Lapels + Ribbed Collar/Hem + Specular Edge!) over Black Star Tee + Navel Gem
+    // 3. Future Pink Varsity Jacket (Contoured Lapels + Ribbed Collar/Hem + Crisp Ink Outlines!) over Black Star Tee
+    const ink = isPink ? '#831843' : '#1a1218';
     ctx.fillStyle = shirtColor;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-17, -51 + bob);
     ctx.lineTo(17, -51 + bob);
@@ -14432,8 +14378,9 @@ class PlayerHero {
     ctx.quadraticCurveTo(-19, -35 + bob, -17, -51 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
-    // Open pink varsity jacket sculpted panels (wider curved shoulders & tapered waist)
+    // Open pink varsity jacket sculpted panels with crisp cartoon outline (Steven.png!)
     ctx.fillStyle = jacketColor;
     ctx.beginPath();
     ctx.moveTo(-19, -51 + bob);
@@ -14441,19 +14388,17 @@ class PlayerHero {
     ctx.lineTo(-9, -21 + bob);
     ctx.quadraticCurveTo(-10, -37 + bob, -10, -53 + bob);
     ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
     ctx.moveTo(19, -51 + bob);
     ctx.quadraticCurveTo(22, -37 + bob, 18, -21 + bob);
     ctx.lineTo(9, -21 + bob);
     ctx.quadraticCurveTo(10, -37 + bob, 10, -53 + bob);
     ctx.closePath();
     ctx.fill();
-    // Crisp soft pastel shoulder highlight + curved white varsity collar & ribbed hem trim
-    ctx.strokeStyle = '#fbcfe8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-17, -50 + bob); ctx.lineTo(-11, -52 + bob);
-    ctx.moveTo(17, -50 + bob); ctx.lineTo(11, -52 + bob);
     ctx.stroke();
+    // Crisp white varsity collar & ribbed hem trim
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2.6;
     ctx.beginPath();
@@ -14465,55 +14410,33 @@ class PlayerHero {
 
     // Bold 5-Pointed Gold Star on center black chest
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1, -37 + bob, 8.5);
+    this.drawMiniStar(ctx, 1, -37 + bob, 8.8);
 
-    // Navel Rose Quartz gem — canon placement, faceted pentagon cut
-    ctx.save();
-    ctx.translate(1, -24 + bob);
-    ctx.fillStyle = '#f472b6';
-    ctx.strokeStyle = '#fbcfe8';
-    ctx.lineWidth = 1.1;
-    ctx.beginPath();
-    ctx.moveTo(0, -5); ctx.lineTo(4.6, -1.6); ctx.lineTo(2.8, 4); ctx.lineTo(-2.8, 4); ctx.lineTo(-4.6, -1.6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = 'rgba(255,255,255,0.75)';
-    ctx.beginPath();
-    ctx.moveTo(0, -4); ctx.lineTo(2.2, -1.4); ctx.lineTo(0, 0.6); ctx.lineTo(-2.2, -1.4);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // 4. Unified Sculpted 5-Lobe Cloud-Curl Silhouette (Back Volume — ZERO disconnected circles!)
+    // 4. Unified Sculpted 5-Lobe Cloud-Curl Silhouette with Crisp Ink Outline (Steven.png!)
     const hx = hair.swayX * 0.45;
     const hy = hair.swayY * 0.35;
     ctx.fillStyle = hairColor;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(-17, -56 + bob);
-    // Lower-back curl lobe
     ctx.bezierCurveTo(-26 + hx, -58 + bob + hy, -27 + hx, -71 + bob + hy, -19 + hx * 0.8, -74 + bob + hy);
-    // Upper-left crown curl lobe
     ctx.bezierCurveTo(-23 + hx, -84 + bob + hy, -12 + hx * 0.6, -91 + bob + hy, -3 + hx * 0.4, -86 + bob + hy);
-    // Center-top hero poof lobe
     ctx.bezierCurveTo(1 + hx * 0.3, -95 + bob + hy, 15 + hx * 0.3, -93 + bob + hy, 15 + hx * 0.2, -83 + bob + hy);
-    // Front-right temple curl lobe
     ctx.bezierCurveTo(24 + hx * 0.2, -82 + bob + hy, 25, -69 + bob + hy, 18, -65 + bob);
-    // Tucks cleanly behind right ear/cheek (no awkward beads hanging down jaw!)
     ctx.quadraticCurveTo(21, -59 + bob, 15, -55 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
-    // 5. Sculpted Cel Face & Jaw (Character style.mp4!)
+    // 5. Sculpted Cel Face & Jaw with Crisp Ink Outline (Steven.png!)
     ctx.fillStyle = skinColor;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.ellipse(0, -61 + bob, 17.2, 16.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -61 + bob, 17.2, 16.0, 0, 0, Math.PI * 2);
     ctx.fill();
-    // Subtle hard-edged under-chin cel shadow
-    ctx.fillStyle = isPink ? 'rgba(244, 63, 94, 0.25)' : 'rgba(180, 115, 95, 0.28)';
-    ctx.beginPath();
-    ctx.arc(0, -61 + bob, 16.5, 0.25 * Math.PI, 0.88 * Math.PI);
-    ctx.fill();
+    ctx.stroke();
 
     // Sculpted Front Hairline & Soft Top Curl Overhang + Inner Spiral Accents!
     ctx.fillStyle = hairColor;
@@ -14729,7 +14652,6 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE GARNET ---
   drawGarnet(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'garnet', bob, animP, actionType, 102)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -14740,253 +14662,215 @@ class PlayerHero {
     const isRocketWindup = (actionType === 'throw' && animP <= 0.25);
     const isSeismicSlam = (actionType === 'skill');
 
-    // Helper for Garnet's full-sized heavy armored spiked gauntlet
+    // Helper for Garnet's Era 3 crimson banded boxing gauntlet with gold star wrist plate (Garnet.webp!)
+    const ink = '#170a1c';
     const drawArmoredGauntlet = (gx, gy, angle, isRuby) => {
       ctx.save();
       ctx.translate(gx, gy);
       ctx.rotate(angle);
-      ctx.scale(0.84, 0.84); // canon proportion: big gauntlets, not torso-sized
-      // Armored forearm sleeve
-      ctx.fillStyle = isRuby ? '#9f1239' : '#881337';
-      ctx.strokeStyle = '#fbbf24';
+      ctx.scale(0.88, 0.88);
+      // Crimson-red gauntlet shell with dark plum bands
+      ctx.fillStyle = isRuby ? '#dc2626' : '#be123c';
+      ctx.strokeStyle = ink;
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.roundRect(-12, -11, 26, 22, 4);
+      ctx.roundRect(-13, -12, 27, 24, 7);
       ctx.fill();
       ctx.stroke();
-      // Heavy golden knuckle plate
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(10, -10, 6, 20);
-      // 3 sharp 3D pyramid spikes
-      ctx.fillStyle = '#f59e0b';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      for (let sp = 0; sp < 3; sp++) {
-        const spy = -8 + sp * 6;
+      // Signature dark-crimson gauntlet cuff band
+      ctx.fillStyle = '#4c0519';
+      ctx.fillRect(-10, -11, 5, 22);
+      // Knuckle plates & magenta gem knuckles
+      ctx.fillStyle = '#ec4899';
+      for (const ky of [-7, -2.5, 2.5, 7]) {
         ctx.beginPath();
-        ctx.moveTo(16, spy);
-        ctx.lineTo(25, spy + 2.5);
-        ctx.lineTo(16, spy + 5);
-        ctx.closePath();
+        ctx.ellipse(12, ky, 3.2, 2.4, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
       }
-      // Star & Ruby/Sapphire Palm Gem
-      ctx.fillStyle = '#fbbf24';
-      this.drawMiniStar(ctx, 1, 0, 7);
-      ctx.fillStyle = isRuby ? '#ef4444' : '#38bdf8';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(-5, 0, 4.2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      // Iconic bright gold 5-point star plate on wrist
+      ctx.fillStyle = '#facc15';
+      this.drawMiniStar(ctx, -1, 0, 7.2);
       ctx.restore();
     };
 
-    // 1. Era 3 Split Navy / Burgundy Sculpted Tapered Legs with Pink Cuff Rings
-    ctx.save();
-    ctx.translate(-8.5 + legs.backX, -36 + bob + legs.backY);
-    ctx.rotate(legs.backRot);
-    this.drawCelTaperedLimb(ctx, 0, 0, 0, 29, 6.8, 4.8, '#1e1b4b', '#0f0d2b', 1);
-    ctx.fillStyle = '#f472b6';
-    ctx.beginPath(); ctx.ellipse(0, 22, 5.4, 1.8, 0, 0, Math.PI * 2); ctx.fill();
-    this.drawCelBoot(ctx, 0.5, 34, 9.5, 6.2, '#1e1b4b', '#312e81');
-    ctx.restore();
+    // 1. Era 3 Powerful Dark-Navy Bodysuit Legs w/ Hot-Pink Toe/Heel Accents (Garnet.webp!)
+    const drawGarnetLeg = (lx, ly, rot, darken) => {
+      ctx.save();
+      ctx.translate(lx, -36 + bob + ly);
+      ctx.rotate(rot);
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 29, 8.2, 4.6, darken ? '#090624' : '#0f0a3c', '#050314', 1);
+      // Pointed dark-navy boot with hot-pink toe cap & heel flash
+      ctx.fillStyle = darken ? '#090624' : '#0f0a3c';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-4.5, 28);
+      ctx.lineTo(5, 28);
+      ctx.lineTo(11.5, 35.5);
+      ctx.lineTo(-5.5, 35.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ec4899';
+      ctx.beginPath();
+      ctx.moveTo(5.5, 31); ctx.lineTo(11.5, 35.5); ctx.lineTo(5.5, 35.5); ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    };
+    drawGarnetLeg(-8.5 + legs.backX, legs.backY, legs.backRot, true);
+    drawGarnetLeg(8.5 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    ctx.save();
-    ctx.translate(8 + legs.frontX, -36 + bob + legs.frontY);
-    ctx.rotate(legs.frontRot);
-    this.drawCelTaperedLimb(ctx, 0, 0, 0, 29, 6.8, 4.8, '#7f1d3a', '#4c0519', 1);
-    ctx.fillStyle = '#f472b6';
-    ctx.beginPath(); ctx.ellipse(0, 22, 5.4, 1.8, 0, 0, Math.PI * 2); ctx.fill();
-    this.drawCelBoot(ctx, 0.5, 34, 9.5, 6.2, '#7f1d3a', '#be123c');
-    ctx.restore();
-
-    // 2. Rear Left Ruby Arm (Chambered or Launching Hit 1 Straight Jab, always holding Armored Gauntlet!)
+    // 2. Rear Left Ruby Arm (slender magenta-plum upper arm into massive crimson gauntlet!)
     if (isPunch && combo === 0) {
-      // Left Ruby Gauntlet fires across torso in a snappy boxer straight jab!
       const jab = strike * 34;
-      this.drawArticulatedArm(ctx, -12, -62 + bob, 2 + jab * 0.45, -58 + bob, 16 + jab, -56 + bob, '#881337', '#9f1239', 10, 9);
+      this.drawArticulatedArm(ctx, -12, -62 + bob, 2 + jab * 0.45, -58 + bob, 16 + jab, -56 + bob, '#9d3b7d', '#9d3b7d', 5.8, 5.2);
       drawArmoredGauntlet(16 + jab, -56 + bob, 0, true);
     } else if (!isSeismicSlam && !(isPunch && combo === 2)) {
       const weaveB = motion.armSwingB * 12;
-      const guardX = ((isPunch && combo === 1) ? -22 : -15) + weaveB * 0.5;
-      const guardY = ((isPunch && combo === 1) ? -52 : -47) + bob + weaveB * 0.35;
-      this.drawArticulatedArm(ctx, -15, -64 + bob, -21 + weaveB * 0.3, -55 + bob, guardX, guardY, '#881337', '#9f1239', 9.5, 8.5);
+      const guardX = ((isPunch && combo === 1) ? -22 : -18) + weaveB * 0.5;
+      const guardY = ((isPunch && combo === 1) ? -52 : -49) + bob + weaveB * 0.35;
+      this.drawArticulatedArm(ctx, -15, -64 + bob, -21 + weaveB * 0.3, -55 + bob, guardX, guardY, '#9d3b7d', '#9d3b7d', 5.6, 5.0);
       drawArmoredGauntlet(guardX, guardY, -0.35, true);
     }
 
-    // 3. Era 3 Split Hourglass Torso, Gleaming Magenta Chest Star-Plate & Curved Puff Pauldrons
-    ctx.fillStyle = '#1b0b33';
+    // 3. Era 3 Split Indigo/Magenta Hourglass Waist + Hot-Pink Chevron Chest & Puff Shoulders (Garnet.webp!)
+    // Curvy dark-navy hips
+    ctx.fillStyle = '#0f0a3c';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(-20, -71 + bob);
-    ctx.lineTo(20, -71 + bob);
-    ctx.quadraticCurveTo(16, -58 + bob, 12.5, -48 + bob);
-    ctx.quadraticCurveTo(16.5, -40 + bob, 17, -33 + bob);
-    ctx.lineTo(-17, -33 + bob);
-    ctx.quadraticCurveTo(-16.5, -40 + bob, -12.5, -48 + bob);
-    ctx.quadraticCurveTo(-16, -58 + bob, -20, -71 + bob);
+    ctx.moveTo(-11, -44 + bob);
+    ctx.lineTo(11, -44 + bob);
+    ctx.quadraticCurveTo(19, -37 + bob, 17, -29 + bob);
+    ctx.lineTo(-17, -29 + bob);
+    ctx.quadraticCurveTo(-19, -37 + bob, -11, -44 + bob);
     ctx.closePath();
     ctx.fill();
-    // Right burgundy half panel + hip split
-    ctx.fillStyle = '#881337';
-    ctx.beginPath();
-    ctx.moveTo(0, -71 + bob);
-    ctx.lineTo(20, -71 + bob);
-    ctx.quadraticCurveTo(16, -58 + bob, 12.5, -48 + bob);
-    ctx.quadraticCurveTo(16.5, -40 + bob, 17, -33 + bob);
-    ctx.lineTo(0, -33 + bob);
-    ctx.closePath();
-    ctx.fill();
+    ctx.stroke();
 
-    // Bright magenta-pink chest diamond plate + crisp white specular rim!
-    ctx.fillStyle = '#ec4899';
-    ctx.strokeStyle = '#fbcfe8';
-    ctx.lineWidth = 1.2;
+    // Split indigo/plum waist corset
+    ctx.fillStyle = '#1e1b5e';
     ctx.beginPath();
-    ctx.moveTo(0, -69 + bob);
-    ctx.lineTo(14, -56 + bob);
-    ctx.lineTo(0, -44 + bob);
-    ctx.lineTo(-14, -56 + bob);
-    ctx.closePath();
+    ctx.moveTo(-10, -56 + bob); ctx.lineTo(0, -56 + bob); ctx.lineTo(0, -41 + bob); ctx.lineTo(-12, -41 + bob); ctx.closePath();
     ctx.fill(); ctx.stroke();
-    ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1, -56 + bob, 6.8);
-
-    // Sculpted Curved Dual-Tone Puff Shoulder Pads
-    ctx.fillStyle = '#be123c';
+    ctx.fillStyle = '#701a5c';
     ctx.beginPath();
-    ctx.moveTo(-14, -73 + bob);
-    ctx.quadraticCurveTo(-28, -76 + bob, -27, -64 + bob);
-    ctx.quadraticCurveTo(-20, -59 + bob, -15, -62 + bob);
+    ctx.moveTo(0, -56 + bob); ctx.lineTo(10, -56 + bob); ctx.lineTo(12, -41 + bob); ctx.lineTo(0, -41 + bob); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    // Hot-pink & light-pink chevron chest top (matches Garnet.webp!)
+    ctx.fillStyle = '#f43f8e';
+    ctx.beginPath();
+    ctx.ellipse(0, -61 + bob, 14.5, 9.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#f9a8d4';
+    ctx.beginPath();
+    ctx.moveTo(-12, -64 + bob);
+    ctx.quadraticCurveTo(0, -70 + bob, 12, -64 + bob);
+    ctx.lineTo(7, -58 + bob);
+    ctx.lineTo(0, -63 + bob);
+    ctx.lineTo(-7, -58 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#312e81';
-    ctx.beginPath();
-    ctx.moveTo(14, -73 + bob);
-    ctx.quadraticCurveTo(28, -76 + bob, 27, -64 + bob);
-    ctx.quadraticCurveTo(20, -59 + bob, 15, -62 + bob);
-    ctx.closePath();
-    ctx.fill();
 
-    // 4. Signature rounded-cube afro (canon silhouette: wraps the whole skull)
+    // Iconic Hot-Pink Puffed Shoulder Pads
+    ctx.fillStyle = '#ec4899';
+    ctx.beginPath();
+    ctx.ellipse(-15.5, -66 + bob, 8.2, 7.0, -0.3, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(15.5, -66 + bob, 8.2, 7.0, 0.3, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // 4. Signature Rounded-Cube Dark-Plum Afro (Garnet.webp!)
     const afroShift = hair.swayX * 0.35;
     ctx.save();
     ctx.translate(afroShift, hair.swayY * 0.25);
-    ctx.fillStyle = '#1b0d26';
+    ctx.fillStyle = '#231126';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.9;
     ctx.beginPath();
-    ctx.roundRect(-23, -120 + bob, 46, 50, 15);
+    ctx.roundRect(-23, -118 + bob, 46, 47, 15);
     ctx.fill();
-    // soft plum bevel on the upper-right volume of the cube
-    ctx.fillStyle = '#2a1238';
+    ctx.stroke();
+    ctx.fillStyle = '#361a3b';
     ctx.beginPath();
-    ctx.roundRect(-23, -115 + bob, 46, 15, 9);
-    ctx.fill();
-    // crisp violet specular band (studio-light reading of the cube)
-    ctx.fillStyle = '#7e22ce';
-    ctx.beginPath();
-    ctx.roundRect(-21, -112 + bob, 38, 3.5, 2);
-    ctx.fill();
-    // sideburn locks framing the visor
-    ctx.fillStyle = '#1b0d26';
-    ctx.beginPath();
-    ctx.roundRect(-21, -88 + bob, 7, 20, 4);
-    ctx.roundRect(14, -88 + bob, 7, 20, 4);
+    ctx.roundRect(-19, -114 + bob, 38, 12, 8);
     ctx.fill();
     ctx.restore();
 
-    // 5. Sculpted Deep Maroon-Plum Cel Jaw (Show-accurate Garnet skin tone!) & Stoic Mouth
-    ctx.fillStyle = '#9f1239';
-    ctx.beginPath();
-    ctx.moveTo(-12.5, -86 + bob);
-    ctx.lineTo(12.5, -86 + bob);
-    ctx.quadraticCurveTo(13, -72 + bob, 8.5, -67 + bob);
-    ctx.quadraticCurveTo(0, -64 + bob, -8.5, -67 + bob);
-    ctx.quadraticCurveTo(-13, -72 + bob, -12.5, -86 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#7f1d3a';
-    ctx.beginPath();
-    ctx.moveTo(-12.5, -86 + bob);
-    ctx.lineTo(-4.5, -86 + bob);
-    ctx.quadraticCurveTo(-5, -69 + bob, 2, -65.5 + bob);
-    ctx.quadraticCurveTo(-5, -65 + bob, -8.5, -67 + bob);
-    ctx.quadraticCurveTo(-13, -72 + bob, -12.5, -86 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#3b071c';
-    ctx.lineWidth = 1.3;
-    ctx.stroke();
-    ctx.fillStyle = '#4c0519';
-    ctx.beginPath(); ctx.roundRect(-5.0, -71.5 + bob, 10, 2.2, 1.1); ctx.fill();
-
-    // 6. Show-Accurate Sleek Angular Butterfly / Wing Visor Shades (Ruby-Pink / Peach-Gold / Sapphire-Cyan Sheen!)
-    const visorGrad = ctx.createLinearGradient(-19, -89 + bob, 19, -76 + bob);
-    visorGrad.addColorStop(0, 'rgba(244, 114, 182, 0.92)');
-    visorGrad.addColorStop(0.48, 'rgba(253, 224, 71, 0.94)');
-    visorGrad.addColorStop(1, 'rgba(56, 189, 248, 0.90)');
-    ctx.fillStyle = visorGrad;
-    ctx.strokeStyle = '#ffffff';
+    // 5. Sculpted Magenta-Plum Jaw & Confident Garnet Grin (Garnet.webp!)
+    ctx.fillStyle = '#9d3b7d';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-18, -88 + bob);
-    ctx.lineTo(0, -85 + bob);
-    ctx.lineTo(19, -88 + bob);
-    ctx.lineTo(15, -77 + bob);
-    ctx.lineTo(3, -76 + bob);
-    ctx.lineTo(0, -79.5 + bob);
-    ctx.lineTo(-3, -76 + bob);
-    ctx.lineTo(-15, -77 + bob);
+    ctx.moveTo(-10.5, -88 + bob);
+    ctx.lineTo(10.5, -88 + bob);
+    ctx.lineTo(9.5, -73 + bob);
+    ctx.quadraticCurveTo(0, -69 + bob, -9.5, -73 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Confident toothy Garnet smile
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.ellipse(1, -76.5 + bob, 5.2, 2.5, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // 6. ICONIC ERA 3 GOLDEN-ORANGE 5-POINT STAR VISOR (Garnet.webp!)
+    const visorGrad = ctx.createLinearGradient(-16, -96 + bob, 16, -80 + bob);
+    visorGrad.addColorStop(0, '#fef08a');
+    visorGrad.addColorStop(0.55, '#fbbf24');
+    visorGrad.addColorStop(1, '#fb923c');
+    ctx.fillStyle = visorGrad;
+    ctx.strokeStyle = '#9a3412';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(0, -101 + bob);
+    ctx.lineTo(5.5, -91.5 + bob);
+    ctx.lineTo(16.5, -92.5 + bob);
+    ctx.lineTo(9.5, -84.5 + bob);
+    ctx.lineTo(12, -76 + bob);
+    ctx.lineTo(0, -82 + bob);
+    ctx.lineTo(-12, -76 + bob);
+    ctx.lineTo(-9.5, -84.5 + bob);
+    ctx.lineTo(-16.5, -92.5 + bob);
+    ctx.lineTo(-5.5, -91.5 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // Diagonal crystal visor reflection slash
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+    // Crisp specular shine across star visor
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
     ctx.beginPath();
-    ctx.moveTo(-11, -86.5 + bob);
-    ctx.lineTo(-4, -86.2 + bob);
-    ctx.lineTo(-9, -77.5 + bob);
-    ctx.lineTo(-14, -77.8 + bob);
+    ctx.moveTo(-3, -97 + bob);
+    ctx.lineTo(2, -97 + bob);
+    ctx.lineTo(-4, -84 + bob);
+    ctx.lineTo(-8, -86 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(6, -86.2 + bob);
-    ctx.lineTo(12, -86.8 + bob);
-    ctx.lineTo(8, -77.5 + bob);
-    ctx.lineTo(3, -77.2 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.globalAlpha = this.isAttacking ? 0.95 : 0.72;
-    ctx.fillStyle = '#ffffff';
-    this.drawMiniStar(ctx, 2, -84 + bob, this.isAttacking ? 5.5 : 3.8);
-    ctx.globalAlpha = 1;
 
     // 7. Kinetic Boxer Gauntlet Action Poses
     if (isSeismicSlam) {
-      // Giant Twin Gauntlets: Enlarged to titanic size slamming down into the earth!
       const slamProgress = Math.max(0, this.getStrikeCurve(animP));
       const slamY = -44 + slamProgress * 34;
-
-      this.drawArticulatedArm(ctx, -16, -64 + bob, -28, -50 + bob, -22, slamY, '#881337', '#9f1239', 11, 10);
-      this.drawArticulatedArm(ctx, 16, -64 + bob, 28, -50 + bob, 22, slamY, '#1e1b4b', '#881337', 11, 10);
-
+      this.drawArticulatedArm(ctx, -16, -64 + bob, -28, -50 + bob, -22, slamY, '#9d3b7d', '#9d3b7d', 6.2, 5.5);
+      this.drawArticulatedArm(ctx, 16, -64 + bob, 28, -50 + bob, 22, slamY, '#9d3b7d', '#9d3b7d', 6.2, 5.5);
       drawArmoredGauntlet(-22, slamY + 6, Math.PI * 0.45, true);
       drawArmoredGauntlet(22, slamY + 6, Math.PI * 0.55, false);
-
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth = 2.6;
       ctx.beginPath();
       ctx.moveTo(-48, 0); ctx.lineTo(-20, -10); ctx.lineTo(20, -10); ctx.lineTo(48, 0);
       ctx.stroke();
     } else if (isRocketWindup) {
-      this.drawArticulatedArm(ctx, 14, -62 + bob, 4, -56 + bob, -2, -52 + bob, '#1e1b4b', '#881337', 10, 9);
+      this.drawArticulatedArm(ctx, 14, -62 + bob, 4, -56 + bob, -2, -52 + bob, '#9d3b7d', '#9d3b7d', 6, 5.2);
       drawArmoredGauntlet(2, -52 + bob, -0.2, false);
     } else if (isRocketLaunched) {
-      // Braced Forearm Rocket Exhaust Thruster!
-      this.drawArticulatedArm(ctx, 14, -62 + bob, 20, -56 + bob, 26, -54 + bob, '#1e1b4b', '#78350f', 9.5, 8);
+      this.drawArticulatedArm(ctx, 14, -62 + bob, 20, -56 + bob, 26, -54 + bob, '#9d3b7d', '#78350f', 6, 5.2);
       ctx.fillStyle = '#f59e0b';
       ctx.fillRect(18, -60 + bob, 14, 12);
       ctx.fillStyle = '#ef4444';
@@ -15001,34 +14885,29 @@ class PlayerHero {
       ctx.stroke();
     } else if (isPunch) {
       if (combo === 0) {
-        // Hit 1: Ruby Straight Jab extends far ahead while Sapphire guards chin!
         const jab = strike * 34;
         drawArmoredGauntlet(20 + jab, -56 + bob, -0.04, true);
-        // Lead Sapphire arm tucked in high cheek guard
-        this.drawArticulatedArm(ctx, 14, -62 + bob, 10, -50 + bob, 8, -58 + bob, '#1e1b4b', '#881337', 9.5, 8.5);
+        this.drawArticulatedArm(ctx, 14, -62 + bob, 10, -50 + bob, 8, -58 + bob, '#9d3b7d', '#9d3b7d', 5.8, 5.2);
         drawArmoredGauntlet(10, -58 + bob, -0.45, false);
       } else if (combo === 1) {
-        // Hit 2: Explosive Sapphire Rising Hook / Cross!
         const hook = strike * 32;
         const gy = -50 + bob - Math.max(0, strike) * 12;
-        this.drawArticulatedArm(ctx, 14, -62 + bob, 18 + hook * 0.45, -48 + bob, 22 + hook, gy, '#1e1b4b', '#881337', 10.5, 9.5);
+        this.drawArticulatedArm(ctx, 14, -62 + bob, 18 + hook * 0.45, -48 + bob, 22 + hook, gy, '#9d3b7d', '#9d3b7d', 6.2, 5.5);
         drawArmoredGauntlet(26 + hook, gy, -0.28 * Math.max(0, strike), false);
       } else {
-        // Hit 3: Twin-Gauntlet Overhead Meteor Hammer Smash!
         const arcP = animP < 0.35 ? -1 + (animP / 0.35) : 1;
         const reach = Math.max(0, strike) * 34;
         const smashY = animP < 0.32 ? (-88 + bob) : (-88 + bob + Math.min(1, (animP - 0.32) / 0.28) * 52);
         const smashAngle = animP < 0.32 ? -1.1 : 0.48;
-        this.drawArticulatedArm(ctx, -12, -64 + bob, 6 + reach * 0.4, smashY - 8, 18 + reach, smashY - 4, '#881337', '#9f1239', 10, 9);
-        this.drawArticulatedArm(ctx, 14, -64 + bob, 12 + reach * 0.45, smashY - 4, 24 + reach, smashY + 2, '#1e1b4b', '#881337', 10.5, 9.5);
+        this.drawArticulatedArm(ctx, -12, -64 + bob, 6 + reach * 0.4, smashY - 8, 18 + reach, smashY - 4, '#9d3b7d', '#9d3b7d', 6.0, 5.5);
+        this.drawArticulatedArm(ctx, 14, -64 + bob, 12 + reach * 0.45, smashY - 4, 24 + reach, smashY + 2, '#9d3b7d', '#9d3b7d', 6.2, 5.5);
         drawArmoredGauntlet(20 + reach + arcP * 2, smashY - 4, smashAngle, true);
         drawArmoredGauntlet(26 + reach + arcP * 2, smashY + 3, smashAngle, false);
       }
     } else {
-      // Ready Boxer Stance with rhythmic continuous boxer bob & weave
-      const weaveF = motion.armSwingF * 13;
-      this.drawArticulatedArm(ctx, 14, -62 + bob, 15 + weaveF * 0.4, -52 + bob, 20 + weaveF, -48 + bob + Math.abs(weaveF) * 0.3, '#1e1b4b', '#881337', 9.5, 8.5);
-      drawArmoredGauntlet(22 + weaveF, -48 + bob + Math.abs(weaveF) * 0.3, -0.1 + motion.armSwingF * 0.15, false);
+      const weaveF = motion.armSwingF * 12;
+      this.drawArticulatedArm(ctx, 14, -62 + bob, 17 + weaveF * 0.4, -52 + bob, 22 + weaveF, -50 + bob + Math.abs(weaveF) * 0.3, '#9d3b7d', '#9d3b7d', 5.8, 5.2);
+      drawArmoredGauntlet(24 + weaveF, -50 + bob + Math.abs(weaveF) * 0.3, -0.1 + motion.armSwingF * 0.15, false);
     }
   }
 
@@ -15038,7 +14917,6 @@ class PlayerHero {
       this.drawAmethystSpinDash(ctx);
       return;
     }
-    if (this.draw2DCharacterSprite(ctx, 'amethyst', bob, animP, actionType, 84)) return;
 
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
@@ -15112,22 +14990,23 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Main lush pale-lilac S-wave cascading mane (#f3e8ff)
-    ctx.fillStyle = '#f3e8ff';
+    // Main lush pale-lilac S-wave cascading mane with crisp cartoon ink outline (Amethyst.jpeg!)
+    const ink = '#1e1326';
+    ctx.fillStyle = '#dcd4ef';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(2, -88 + bob);
-    // Crown wave sweeping back (-X) into deep sinuous S-waves down past her hips!
-    ctx.bezierCurveTo(-18, -90 + bob, -28 + swX * 0.4, -72 + bob + swY * 0.3, -22 + swX * 0.6, -56 + bob + swY * 0.4);
-    ctx.bezierCurveTo(-31 + swX * 0.9, -42 + bob + swY * 0.7, -29 + swX * 1.15, -26 + bob + swY, -19 + swX * 1.2, -15 + bob + swY);
-    // Wavy layered tips (3 soft flowing locks, zero circles!)
-    ctx.quadraticCurveTo(-12 + swX * 0.9, -23 + bob + swY, -10 + swX * 0.8, -31 + bob + swY * 0.7);
-    ctx.quadraticCurveTo(-6 + swX * 0.7, -20 + bob + swY, 0 + swX * 0.5, -18 + bob + swY);
+    ctx.bezierCurveTo(-18, -90 + bob, -29 + swX * 0.4, -72 + bob + swY * 0.3, -24 + swX * 0.6, -56 + bob + swY * 0.4);
+    ctx.bezierCurveTo(-33 + swX * 0.9, -42 + bob + swY * 0.7, -30 + swX * 1.15, -24 + bob + swY, -19 + swX * 1.2, -14 + bob + swY);
+    ctx.quadraticCurveTo(-12 + swX * 0.9, -22 + bob + swY, -10 + swX * 0.8, -30 + bob + swY * 0.7);
+    ctx.quadraticCurveTo(-6 + swX * 0.7, -19 + bob + swY, 0 + swX * 0.5, -18 + bob + swY);
     ctx.quadraticCurveTo(6 + swX * 0.3, -28 + bob + swY * 0.5, 6, -38 + bob);
-    // Right/front shoulder-draping wavy lock
     ctx.bezierCurveTo(18, -42 + bob, 22, -62 + bob, 14, -80 + bob);
     ctx.quadraticCurveTo(10, -88 + bob, 2, -88 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     // Sinuous lavender S-wave strand ribbons + bright specular hair shine inside back mane
     ctx.strokeStyle = '#d8b4fe';
@@ -15240,81 +15119,52 @@ class PlayerHero {
       this.drawMiniStar(ctx, 0, -44 + bob, 5);
     }
 
-    // 5. Lavender Face with Round Chin
-    ctx.fillStyle = '#d8b4fe';
+    // 5. Lavender Face with Crisp Outline (Amethyst.jpeg!)
+    ctx.fillStyle = '#b895d1';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(0, -66 + bob, 15.5, 0, Math.PI * 2);
+    ctx.arc(0, -66 + bob, 15.2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
 
-    // Subtle lavender cel nose-shadow (no dot blush!)
-    ctx.fillStyle = 'rgba(126, 34, 206, 0.32)';
-    ctx.beginPath();
-    ctx.ellipse(2.5, -62.5 + bob, 1.8, 1.2, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 6. Signature Cocky Toothy Smirk with Quartz Fang!
-    ctx.fillStyle = '#3b0764';
-    ctx.beginPath();
-    ctx.moveTo(0, -60 + bob);
-    ctx.quadraticCurveTo(6, -58 + bob, 12, -61 + bob);
-    ctx.quadraticCurveTo(6, -52 + bob, 0, -60 + bob);
-    ctx.fill();
+    // 6. Signature Cocky Toothy Grin (Amethyst.jpeg!)
     ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(1, -60 + bob);
-    ctx.lineTo(11, -61 + bob);
-    ctx.lineTo(9, -57 + bob);
-    ctx.lineTo(6, -59 + bob);
-    ctx.lineTo(2, -58 + bob);
+    ctx.moveTo(-2, -60 + bob);
+    ctx.quadraticCurveTo(5, -58.5 + bob, 11.5, -61 + bob);
+    ctx.quadraticCurveTo(9, -54 + bob, -1, -55.5 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     // 7. Expressive Dark Violet Right Eye (with natural blink)
     if (this.isBlinking && !this.isAttacking) {
-      ctx.strokeStyle = '#3b0764';
-      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
       ctx.arc(6.5, -66 + bob, 3.8, 0.1 * Math.PI, 0.9 * Math.PI);
       ctx.stroke();
     } else {
       ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.ellipse(6.5, -67 + bob, 4.4, 5.6, 0, 0, Math.PI * 2);
+      ctx.ellipse(6.5, -67 + bob, 4.4, 5.4, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#3b0764';
+      ctx.stroke();
+      ctx.fillStyle = '#1e1b4b';
       ctx.beginPath();
-      ctx.ellipse(7, -66.5 + bob, 3.1, 4.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(7.8, -68 + bob, 1.4, 0, Math.PI * 2);
-      ctx.arc(5.8, -65 + bob, 0.7, 0, Math.PI * 2);
+      ctx.ellipse(7.2, -66.5 + bob, 2.3, 3.2, 0, 0, Math.PI * 2);
       ctx.fill();
     }
-    ctx.strokeStyle = '#3b0764';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    if (this.isAttacking) {
-      ctx.moveTo(2.5, -71.5 + bob); ctx.lineTo(11.5, -74.5 + bob);
-    } else {
-      ctx.moveTo(2.5, -73 + bob); ctx.quadraticCurveTo(7, -76 + bob, 11.5, -72 + bob);
-    }
-    ctx.stroke();
 
-    // 8. Sculpted Wavy Front Bangs Sweeping Dramatically OVER Her Left Eye + Right Cheek Tendril!
-    // Right-temple wavy tendril framing face
-    ctx.fillStyle = '#f3e8ff';
-    ctx.beginPath();
-    ctx.moveTo(5, -83 + bob);
-    ctx.bezierCurveTo(15, -80 + bob, 20, -68 + bob, 15, -55 + bob);
-    ctx.quadraticCurveTo(18, -46 + bob, 13, -42 + bob);
-    ctx.quadraticCurveTo(12, -54 + bob, 13, -66 + bob);
-    ctx.quadraticCurveTo(11, -76 + bob, 3, -79 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // Signature thick S-wave lilac curtain bang draping diagonally across left eye!
-    ctx.fillStyle = '#f3e8ff';
+    // 8. Sculpted Wavy Front Bangs Sweeping Dramatically OVER Her Left Eye!
+    ctx.fillStyle = '#dcd4ef';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(5, -84 + bob);
     ctx.bezierCurveTo(-8, -85 + bob, -19, -73 + bob, -15, -58 + bob);
@@ -15323,13 +15173,6 @@ class PlayerHero {
     ctx.quadraticCurveTo(4, -71 + bob, 5, -84 + bob);
     ctx.closePath();
     ctx.fill();
-
-    // Subtle wavy lavender strand highlight on front bang
-    ctx.strokeStyle = '#c084fc';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(1, -81 + bob);
-    ctx.bezierCurveTo(-9, -74 + bob, -7, -60 + bob, -10, -45 + bob);
     ctx.stroke();
 
     // 9. Kinetic Lead Arm & Dual Spiked Quartz Whip Action Poses
@@ -15446,7 +15289,6 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE PEARL ---
   drawPearl(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'pearl', bob, animP, actionType, 100)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -15455,30 +15297,43 @@ class PlayerHero {
     const isPunch = (actionType === 'punch');
     const isLaser = (actionType === 'throw');
     const isHolo = (actionType === 'skill');
+    const ink = '#1e1626';
 
-    // Helper to draw slender ballerina cel leg + mustard shorts + pink sock + teal flat
+    // Helper: slender ballet leg matching Pearl.jpeg (ochre shorts, ivory leg, pastel-pink sock, mint flat)
     const drawPearlLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -38 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 12, 4.4, 3.5, darken ? '#d97706' : '#f5b855', '#b45309', 1);
-      this.drawCelTaperedLimb(ctx, 0, 12, 0, 27, 3.3, 2.6, darken ? '#f1f5f9' : '#fffbeb', '#e2e8f0', 1);
-      this.drawCelTaperedLimb(ctx, 0, 26, 0, 33, 3.1, 2.9, '#fbcfe8', '#f9a8d4', 1);
-      this.drawCelBoot(ctx, 0.5, 37, 8.8, 4.0, '#0d9488', '#14b8a6');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 12, 4.3, 3.5, darken ? '#e0a44d' : '#f2bf6d', '#c28534', 1);
+      this.drawCelTaperedLimb(ctx, 0, 12, 0, 26, 3.1, 2.3, darken ? '#e9e7d6' : '#f5f4e6', '#d6d3be', 1);
+      this.drawCelTaperedLimb(ctx, 0, 25, 0, 34, 2.8, 2.5, darken ? '#f5b8c8' : '#fbcfe8', '#ec9eb3', 1);
+      // Pointed mint ballet flat with crisp ink outline
+      ctx.fillStyle = darken ? '#5eead4' : '#99f6e4';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-3.2, 34);
+      ctx.quadraticCurveTo(3.5, 33.5, 9.8, 36.8);
+      ctx.quadraticCurveTo(9.2, 38.8, -3.5, 38.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
       ctx.restore();
     };
 
-    // 1. Ballet / Fencing Legs (Deep classical en-garde lunge on Hit 1!)
+    // 1. Ballet / Fencing Legs
     if (isPunch && combo === 2) {
-      // Ballet Pirouette Passe Leg Pose on 3rd hit spin!
       drawPearlLeg(-2, 0, 0.06, true);
       ctx.save();
       ctx.translate(3, -38 + bob);
-      ctx.fillStyle = '#fffbeb';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 6.2;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(0, 0); ctx.lineTo(11, 13); ctx.lineTo(1, 22);
-      ctx.lineWidth = 5.2;
-      ctx.strokeStyle = '#fffbeb';
+      ctx.moveTo(0, 0); ctx.lineTo(11, 13); ctx.lineTo(2, 23);
+      ctx.stroke();
+      ctx.strokeStyle = '#f5f4e6';
+      ctx.lineWidth = 4.2;
       ctx.stroke();
       ctx.restore();
     } else {
@@ -15486,397 +15341,281 @@ class PlayerHero {
       drawPearlLeg(4 + legs.frontX, legs.frontY, legs.frontRot, false);
     }
 
-    // 2. Rear Left Arm (Classical Fencing Counter-Poise on Thrust, Two-Handed on Slash/Laser!)
+    // 2. Flowing Cyan Waist Sash Tails (behind torso, matching Pearl.jpeg!)
+    const sashSway = hair.swayX * 0.9;
+    ctx.fillStyle = '#5eead4';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-8, -44 + bob);
+    ctx.bezierCurveTo(-18 + sashSway * 0.4, -38 + bob, -21 + sashSway * 0.8, -24 + bob, -16 + sashSway, -13 + bob + hair.swayY * 0.4);
+    ctx.lineTo(-9 + sashSway * 0.7, -15 + bob + hair.swayY * 0.3);
+    ctx.quadraticCurveTo(-12 + sashSway * 0.3, -28 + bob, -5, -40 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 3. Rear Left Arm (slender porcelain arm with ballet grace)
     if (isPunch && combo === 0) {
-      // Elegant classical fencing rear arm raised behind (-X) with curled wrist!
       const poise = Math.max(0, strike) * 5;
-      this.drawArticulatedArm(ctx, -6, -65 + bob, -18 - poise, -71 + bob, -25 - poise, -80 + bob, '#38bdf8', '#fff7ed', 5.5, 4.8, '#fff7ed', 3.5);
+      this.drawArticulatedArm(ctx, -5.5, -65 + bob, -18 - poise, -71 + bob, -25 - poise, -80 + bob, '#f5f4e6', '#f5f4e6', 4.6, 3.8, '#f5f4e6', 3.3);
     } else if (!isPunch && !isLaser && !isHolo) {
       const armSwing = motion.armSwingB * 11;
-      this.drawArticulatedArm(ctx, -6, -65 + bob, -10 - armSwing * 0.55, -52 + bob, -8 - armSwing, -40 + bob, '#5eead4', '#fff7ed', 5.2, 4.5, '#fff7ed', 3.2);
+      this.drawArticulatedArm(ctx, -5.5, -65 + bob, -11 - armSwing * 0.55, -52 + bob, -13 - armSwing, -40 + bob, '#f5f4e6', '#f5f4e6', 4.4, 3.6, '#f5f4e6', 3.1);
     }
 
-    // 3. Sculpted Mint-Aqua Sleeveless Tunic + Cel Fold + Mustard Waistband Shorts
-    ctx.fillStyle = '#5eead4';
+    // 4. Sculpted Mint-Teal Halter Tunic + Peplum Skirt + Cyan Sash + Yellow Star (Pearl.jpeg)
+    ctx.fillStyle = '#f2bf6d';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-8, -70 + bob);
-    ctx.lineTo(8, -70 + bob);
-    ctx.quadraticCurveTo(9, -56 + bob, 10.5, -42 + bob);
-    ctx.lineTo(-10.5, -42 + bob);
-    ctx.quadraticCurveTo(-9, -56 + bob, -8, -70 + bob);
+    ctx.moveTo(-7.5, -42 + bob);
+    ctx.lineTo(7.5, -42 + bob);
+    ctx.lineTo(7, -33 + bob);
+    ctx.lineTo(-7, -33 + bob);
     ctx.closePath();
     ctx.fill();
-    // Tunic cel-shadow fold & chest star seam
-    ctx.fillStyle = '#2dd4bf';
+    ctx.stroke();
+
+    ctx.fillStyle = '#7bd2c4';
     ctx.beginPath();
-    ctx.moveTo(-8, -70 + bob);
-    ctx.lineTo(-3.5, -70 + bob);
-    ctx.quadraticCurveTo(-4.5, -56 + bob, -5.5, -42 + bob);
-    ctx.lineTo(-10.5, -42 + bob);
-    ctx.quadraticCurveTo(-9, -56 + bob, -8, -70 + bob);
+    ctx.moveTo(-4, -71 + bob);
+    ctx.lineTo(4, -71 + bob);
+    ctx.quadraticCurveTo(9, -60 + bob, 7.5, -48 + bob);
+    ctx.lineTo(12, -40 + bob);
+    ctx.quadraticCurveTo(0, -39 + bob, -11, -40 + bob);
+    ctx.lineTo(-7.5, -48 + bob);
+    ctx.quadraticCurveTo(-8.5, -60 + bob, -4, -71 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#0f766e';
+    ctx.stroke();
+
+    // Draped cyan sash wrap around waist
+    ctx.fillStyle = '#67e8f9';
+    ctx.beginPath();
+    ctx.moveTo(-8.5, -49 + bob);
+    ctx.quadraticCurveTo(0, -47 + bob, 8.5, -50 + bob);
+    ctx.lineTo(9.5, -44 + bob);
+    ctx.quadraticCurveTo(0, -42 + bob, -9.5, -44 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Soft lemon-yellow 5-point chest star
+    ctx.fillStyle = '#fef08a';
+    this.drawMiniStar(ctx, 1.5, -59 + bob, 5.4);
+
+    // 5. Iconic Swept-Back Peach Triangular Bob (Pearl.jpeg!)
+    const tipX = -21 + hair.swayX * 0.45;
+    const tipY = -88 + bob + hair.swayY * 0.35;
+    ctx.fillStyle = '#f8c6b3';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-8, -70 + bob);
-    ctx.lineTo(8, -70 + bob);
-    ctx.quadraticCurveTo(9, -56 + bob, 10.5, -42 + bob);
-    ctx.lineTo(-10.5, -42 + bob);
-    ctx.quadraticCurveTo(-9, -56 + bob, -8, -70 + bob);
+    ctx.moveTo(4, -99 + bob);
+    ctx.quadraticCurveTo(-5, -101 + bob, tipX, tipY);
+    ctx.lineTo(tipX + 4, tipY + 4);
+    ctx.lineTo(tipX + 2, tipY + 7);
+    ctx.quadraticCurveTo(-12, -74 + bob, -4, -75 + bob);
+    ctx.quadraticCurveTo(6, -78 + bob, 10, -89 + bob);
+    ctx.quadraticCurveTo(9, -97 + bob, 4, -99 + bob);
     ctx.closePath();
+    ctx.fill();
     ctx.stroke();
-    // Crisp neckline star emblem
-    ctx.fillStyle = '#fef08a';
+    // Hair specular cel highlight
+    ctx.fillStyle = '#fde2d7';
     ctx.beginPath();
-    ctx.moveTo(0, -64 + bob);
-    ctx.lineTo(1.8, -60.5 + bob);
-    ctx.lineTo(5.5, -60 + bob);
-    ctx.lineTo(2.7, -57.5 + bob);
-    ctx.lineTo(3.4, -54 + bob);
-    ctx.lineTo(0, -55.8 + bob);
-    ctx.lineTo(-3.4, -54 + bob);
-    ctx.lineTo(-2.7, -57.5 + bob);
-    ctx.lineTo(-5.5, -60 + bob);
-    ctx.lineTo(-1.8, -60.5 + bob);
+    ctx.moveTo(2, -97 + bob);
+    ctx.quadraticCurveTo(-7, -97 + bob, tipX + 5, tipY + 2);
+    ctx.quadraticCurveTo(-5, -92 + bob, 3, -92 + bob);
     ctx.closePath();
     ctx.fill();
 
-    // Mustard-ochre high-waisted shorts pelvis with cel shading
-    ctx.fillStyle = '#f5b855';
+    // 6. Slender Porcelain Neck & Show-Accurate Oval Face + Pointed Nose + Forehead Pearl!
+    this.drawCelTaperedLimb(ctx, 0.5, -70 + bob, 0.5, -76 + bob, 2.7, 2.4, '#f5f4e6', '#e2dfc9', 1);
+    ctx.fillStyle = '#f5f4e6';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-10, -44 + bob);
-    ctx.lineTo(10, -44 + bob);
-    ctx.quadraticCurveTo(10.5, -38 + bob, 8.5, -34 + bob);
-    ctx.lineTo(-8.5, -34 + bob);
-    ctx.quadraticCurveTo(-10.5, -38 + bob, -10, -44 + bob);
-    ctx.closePath();
+    ctx.ellipse(2, -85 + bob, 10.5, 12.2, 0.05, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#d97706';
-    ctx.beginPath();
-    ctx.moveTo(-10, -44 + bob);
-    ctx.lineTo(-4, -44 + bob);
-    ctx.lineTo(-4, -34 + bob);
-    ctx.lineTo(-8.5, -34 + bob);
-    ctx.quadraticCurveTo(-10.5, -38 + bob, -10, -44 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#92400e';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(-9.5, -44 + bob, 19, 0.5);
-    // Subtle holographic spear-prism glint beside shoulder when idle
-    if (actionType !== 'attack') {
-      const spGlow = 0.45 + 0.35 * Math.sin(Date.now() * 0.005);
-      ctx.save();
-      ctx.globalAlpha = spGlow;
-      ctx.fillStyle = '#a5f3fc';
-      ctx.beginPath();
-      ctx.moveTo(-16, -64 + bob);
-      ctx.lineTo(-13, -58 + bob);
-      ctx.lineTo(-16, -52 + bob);
-      ctx.lineTo(-19, -58 + bob);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1.5, -57 + bob, 6.5);
-
-    // 4. Translucent Pale-Cyan Chiffon Waist Sash (Flows gracefully BEHIND [-X])
-    const sashSway = hair.swayX * 0.9;
-    ctx.fillStyle = 'rgba(153, 246, 228, 0.85)';
-    ctx.beginPath();
-    ctx.moveTo(-10, -45 + bob);
-    ctx.lineTo(10, -45 + bob);
-    ctx.lineTo(9, -39 + bob);
-    ctx.lineTo(-12, -39 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#2dd4bf';
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.moveTo(-11, -41 + bob);
-    ctx.quadraticCurveTo(-20 + sashSway * 0.6, -33 + bob, -25 + sashSway, -21 + bob + hair.swayY);
-    ctx.moveTo(-9, -41 + bob);
-    ctx.quadraticCurveTo(-15 + sashSway * 0.5, -29 + bob, -18 + sashSway * 0.8, -16 + bob + hair.swayY);
     ctx.stroke();
 
-    // 5. Canon Pearl haircut: short back-swept bob with a tapered point and soft volume
-    const tipX = -18 + hair.swayX * 0.5;
-    const tipY = -101 + bob + hair.swayY * 0.4;
-
-    // Rounded skull-cap mass that comes to a point behind the head
-    ctx.fillStyle = '#f7ddc4';
+    // Peach hairline curving over left temple (matches Pearl.jpeg!)
+    ctx.fillStyle = '#f8c6b3';
     ctx.beginPath();
-    ctx.moveTo(10, -90 + bob);
-    ctx.quadraticCurveTo(15, -103 + bob, 3, -106 + bob);
-    ctx.quadraticCurveTo(-9, -108 + bob, tipX, tipY);
-    ctx.quadraticCurveTo(-14, -92 + bob, -9, -80 + bob);
-    ctx.quadraticCurveTo(0, -76 + bob, 9, -83 + bob);
+    ctx.moveTo(-8.5, -86 + bob);
+    ctx.quadraticCurveTo(-10, -96 + bob, 1, -98 + bob);
+    ctx.quadraticCurveTo(-4, -93 + bob, -3.5, -84 + bob);
+    ctx.quadraticCurveTo(-4, -77 + bob, -7.5, -76 + bob);
+    ctx.quadraticCurveTo(-10, -80 + bob, -8.5, -86 + bob);
     ctx.closePath();
     ctx.fill();
-
-    // Tapered nape lock sweeping down-back
-    ctx.fillStyle = '#eac4a2';
-    ctx.beginPath();
-    ctx.moveTo(-8, -85 + bob);
-    ctx.quadraticCurveTo(tipX - 1, tipY + 7, -15, -74 + bob);
-    ctx.quadraticCurveTo(-11, -86 + bob, -4, -89 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // Glossy crown highlight
-    ctx.fillStyle = '#fdf0e0';
-    ctx.beginPath();
-    ctx.moveTo(8, -95 + bob);
-    ctx.quadraticCurveTo(3, -106 + bob, -8, -101 + bob);
-    ctx.quadraticCurveTo(-1, -98 + bob, 2, -92 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // 6. Graceful Porcelain Tapered Neck & Sculpted Cel Head
-    this.drawCelTaperedLimb(ctx, 1, -69 + bob, 0.5, -76 + bob, 3.0, 2.7, '#fff7ed', '#fed7aa', 1);
-    ctx.fillStyle = '#fff7ed';
-    ctx.beginPath();
-    ctx.ellipse(0, -84 + bob, 11.5, 13, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Signature forehead curl (the little question-mark wisp over the gem)
-    ctx.strokeStyle = '#eac4a2';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(6, -94 + bob, 4.4, Math.PI * 0.05, Math.PI * 1.35);
     ctx.stroke();
 
-    // 7. Forehead Luminous Oval Pearl Gemstone
+    // Luminous Oval Forehead Pearl Gem
     ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = (isLaser || isHolo) ? '#67e8f9' : '#38bdf8';
-    ctx.lineWidth = (isLaser || isHolo) ? 2.4 : 1.2;
+    ctx.strokeStyle = (isLaser || isHolo) ? '#22d3ee' : ink;
+    ctx.lineWidth = (isLaser || isHolo) ? 2.0 : 1.4;
     ctx.beginPath();
-    ctx.ellipse(2.5, -92 + bob, 4, 6.2, 0.15, 0, Math.PI * 2);
+    ctx.ellipse(4.5, -94.5 + bob, 4.4, 3.2, 0.25, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = 'rgba(224, 242, 254, 0.9)';
+    ctx.fillStyle = '#fbcfe8';
     ctx.beginPath();
-    ctx.ellipse(1.5, -93.5 + bob, 1.5, 2.8, 0.15, 0, Math.PI * 2);
+    ctx.ellipse(5.5, -93.8 + bob, 2.2, 1.3, 0.25, 0, Math.PI * 2);
     ctx.fill();
 
-    if (this.isPinkOverdrive) {
-      ctx.fillStyle = '#ffffff';
-      this.drawMiniStar(ctx, 2.5, -92 + bob, 6);
-    }
-
-    // 8. Sharp Pointed Nose (Points cleanly FORWARD [+X])
-    ctx.fillStyle = '#fed7aa';
-    ctx.beginPath();
-    ctx.moveTo(7, -84 + bob);
-    ctx.lineTo(16, -81 + bob);
-    ctx.lineTo(7, -78 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // 9. Expressive Cyan Anime Eye & Fencing Focus Brow (with blink!)
+    // Two Large Expressive Sky-Blue Eyes (with natural blink)
     if (this.isBlinking && !this.isAttacking) {
-      ctx.strokeStyle = '#0284c7';
-      ctx.lineWidth = 1.9;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.7;
       ctx.beginPath();
-      ctx.arc(4, -82.5 + bob, 3.3, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(0.5, -85 + bob, 2.6, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(8.2, -85 + bob, 2.5, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     } else {
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(4, -83 + bob, 3.8, 5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#0284c7';
-      ctx.beginPath();
-      ctx.ellipse(4.5, -82.5 + bob, 2.6, 4.1, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#082f49';
-      ctx.beginPath();
-      ctx.ellipse(4.8, -82.5 + bob, 1.4, 2.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(5.2, -84 + bob, 1.2, 0, Math.PI * 2);
-      ctx.fill();
+      for (const [ex, erx] of [[0.5, 3.0], [8.2, 2.8]]) {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.ellipse(ex, -85.5 + bob, erx, 4.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#7dd3fc';
+        ctx.beginPath();
+        ctx.ellipse(ex + 1.0, -85.2 + bob, erx * 0.55, 2.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(ex + 1.2, -85.2 + bob, 1.0, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    ctx.strokeStyle = '#0284c7';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    if (this.isAttacking) {
-      ctx.moveTo(1, -88.5 + bob); ctx.lineTo(8.5, -86.5 + bob);
-    } else {
-      ctx.moveTo(1, -87 + bob); ctx.quadraticCurveTo(5, -89 + bob, 8.5, -86 + bob);
-    }
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(251, 146, 60, 0.35)';
-    ctx.beginPath();
-    ctx.ellipse(4, -78 + bob, 3, 1.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#0284c7';
+    // Iconic Sharp Pointed Pearl Nose (cleanly outlined, pointing forward +X!)
+    ctx.fillStyle = '#f5f4e6';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(3, -74 + bob);
-    ctx.quadraticCurveTo(6, -72 + bob, 8, -73.5 + bob);
+    ctx.moveTo(6.5, -85 + bob);
+    ctx.lineTo(18.5, -84 + bob);
+    ctx.lineTo(8.5, -80 + bob);
+    ctx.stroke();
+    ctx.fill();
+
+    // Confident Pearl Smile
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(0.5, -77.5 + bob);
+    ctx.quadraticCurveTo(4.5, -77 + bob, 7.5, -78.2 + bob);
+    ctx.quadraticCurveTo(4.5, -73.8 + bob, 0.5, -77.5 + bob);
+    ctx.closePath();
+    ctx.fill();
     ctx.stroke();
 
-    // 10. SUBSTANTIAL SHOW-ACCURATE PEARL SPEAR & FENCING / BALLET CHOREOGRAPHY!
-    let spearBaseX = 10;
+    // 7. SHOW-ACCURATE SPIRALING RIBBON SPEAR & FENCING CHOREOGRAPHY!
+    let spearBaseX = 11;
     let spearBaseY = -48 + bob;
-    let spearAngle = -0.22;
+    let spearAngle = -0.32;
 
     if (isPunch) {
       if (combo === 0) {
-        // Hit 1: Lightning Fencing Lunge Thrust + Multi-Jab Afterimage Tips!
         const reach = strike * 46;
         spearBaseX = 12 + reach;
-        spearBaseY = -51 + bob;
+        spearBaseY = -52 + bob;
         spearAngle = 0.02;
-        this.drawArticulatedArm(ctx, 5, -64 + bob, 9 + reach * 0.45, -56 + bob, spearBaseX, spearBaseY, '#38bdf8', '#fff7ed', 5.8, 5, '#fff7ed', 3.6);
+        this.drawArticulatedArm(ctx, 5, -64 + bob, 9 + reach * 0.45, -56 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.8, 4.0, '#f5f4e6', 3.4);
       } else if (combo === 1) {
-        // Hit 2: Wide Two-Handed Sweeping Halberd Crescent Slash!
         const sweepP = Math.min(1, animP * 1.35);
         spearBaseX = 14 + Math.max(0, strike) * 20;
         spearBaseY = -52 + bob;
         spearAngle = -0.95 + sweepP * 1.55;
-        this.drawArticulatedArm(ctx, -4, -64 + bob, 4, -56 + bob, spearBaseX - 6, spearBaseY, '#38bdf8', '#fff7ed', 5.5, 4.8);
-        this.drawArticulatedArm(ctx, 6, -64 + bob, 11, -55 + bob, spearBaseX, spearBaseY, '#38bdf8', '#fff7ed', 5.8, 5, '#fff7ed', 3.6);
+        this.drawArticulatedArm(ctx, -4, -64 + bob, 4, -56 + bob, spearBaseX - 6, spearBaseY, '#f5f4e6', '#f5f4e6', 4.5, 3.8);
+        this.drawArticulatedArm(ctx, 6, -64 + bob, 11, -55 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.8, 4.0, '#f5f4e6', 3.4);
       } else {
-        // Hit 3: Graceful 360° Ballet Pirouette Spear Twirl!
         spearBaseX = 14 + Math.max(0, strike) * 22;
         spearBaseY = -54 + bob;
         spearAngle = -Math.PI + animP * Math.PI * 2.2;
-        this.drawArticulatedArm(ctx, 4, -64 + bob, 10, -60 + bob, spearBaseX, spearBaseY, '#38bdf8', '#fff7ed', 5.8, 5, '#fff7ed', 3.6);
+        this.drawArticulatedArm(ctx, 4, -64 + bob, 10, -60 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.8, 4.0, '#f5f4e6', 3.4);
       }
     } else if (isLaser) {
-      // Two-Handed Spear-Laser Aiming Stance!
       spearBaseX = 14 + Math.max(0, strike) * 10;
       spearBaseY = -52 + bob;
       spearAngle = 0.0;
-      this.drawArticulatedArm(ctx, -5, -64 + bob, 3, -55 + bob, spearBaseX - 8, spearBaseY, '#38bdf8', '#fff7ed', 5.5, 4.8);
-      this.drawArticulatedArm(ctx, 6, -64 + bob, 11, -55 + bob, spearBaseX, spearBaseY, '#38bdf8', '#fff7ed', 5.8, 5, '#fff7ed', 3.6);
+      this.drawArticulatedArm(ctx, -5, -64 + bob, 3, -55 + bob, spearBaseX - 8, spearBaseY, '#f5f4e6', '#f5f4e6', 4.5, 3.8);
+      this.drawArticulatedArm(ctx, 6, -64 + bob, 11, -55 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.8, 4.0, '#f5f4e6', 3.4);
     } else if (isHolo) {
-      // Elegant Upright Fencing Salute Summoning Holo-Pearl!
       spearBaseX = 16;
       spearBaseY = -44 + bob;
       spearAngle = -Math.PI * 0.48;
-      this.drawArticulatedArm(ctx, 5, -64 + bob, 12, -54 + bob, spearBaseX, spearBaseY, '#38bdf8', '#fff7ed', 5.8, 5, '#fff7ed', 3.6);
-      // Holographic projection cone from Forehead Pearl!
+      this.drawArticulatedArm(ctx, 5, -64 + bob, 12, -54 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.8, 4.0, '#f5f4e6', 3.4);
       ctx.fillStyle = 'rgba(103, 232, 249, 0.28)';
       ctx.beginPath();
-      ctx.moveTo(4, -92 + bob);
-      ctx.lineTo(48, -78 + bob);
-      ctx.lineTo(48, -28 + bob);
+      ctx.moveTo(5, -94 + bob);
+      ctx.lineTo(50, -78 + bob);
+      ctx.lineTo(50, -28 + bob);
       ctx.closePath();
       ctx.fill();
     } else {
-      // Ready En-Garde Poise with continuous spear breath sway + balanced left hand
-      const pSw = motion.armSwingF * 10;
-      const bSw = motion.armSwingB * 8;
-      this.drawArticulatedArm(ctx, -6, -64 + bob, -13 - bSw * 0.3, -55 + bob, -11 - bSw * 0.5, -46 + bob, '#5eead4', '#fff7ed', 5.2, 4.4, '#fff7ed', 3.4);
-      spearBaseX = 10 + pSw * 0.45;
+      const pSw = motion.armSwingF * 9;
+      spearBaseX = 11 + pSw * 0.45;
       spearBaseY = -48 + bob + pSw * 0.25;
-      spearAngle = -0.22 + motion.armSwingF * 0.08;
-      this.drawArticulatedArm(ctx, 5, -64 + bob, 8 + pSw * 0.25, -54 + bob, spearBaseX, spearBaseY, '#5eead4', '#fff7ed', 5.6, 4.8, '#fff7ed', 3.5);
+      spearAngle = -0.34 + motion.armSwingF * 0.08;
+      this.drawArticulatedArm(ctx, 5, -64 + bob, 8 + pSw * 0.25, -54 + bob, spearBaseX, spearBaseY, '#f5f4e6', '#f5f4e6', 4.6, 3.8, '#f5f4e6', 3.3);
     }
 
-    // Multi-jab holographic spear afterimage tips on Hit 1!
-    if (isPunch && combo === 0 && strike > 0.2) {
-      for (const angOff of [-0.14, 0.14]) {
-        ctx.save();
-        ctx.globalAlpha = 0.42;
-        ctx.translate(spearBaseX - 8, spearBaseY);
-        ctx.rotate(angOff);
-        ctx.strokeStyle = '#67e8f9';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(34, 0); ctx.lineTo(78, 0);
-        ctx.stroke();
-        ctx.restore();
-      }
-    }
-
+    // Draw Pearl's Iconic White-Pole + Glowing Cyan Spiraling Ribbon Spear (matches Pearl.jpeg!)
     ctx.save();
     ctx.translate(spearBaseX, spearBaseY);
     ctx.rotate(spearAngle);
 
-    // Slender pearlescent shaft with a single gold collar (canon: elegant, not a lance)
+    // Sleek white pole + cyan collar + yellow-white star pommel
     ctx.fillStyle = '#f8fafc';
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1;
-    ctx.fillRect(-16, -2, 54, 4);
-    ctx.strokeRect(-16, -2, 54, 4);
-
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(30, -2.6, 5, 5.2);
-
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.arc(-16, 0, 3.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Spiraling Golden Wing Crossguard Collar
-    ctx.fillStyle = '#fbbf24';
-    ctx.strokeStyle = '#d97706';
+    ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(40, -8);
-    ctx.quadraticCurveTo(44, 0, 40, 8);
-    ctx.lineTo(46, 5);
-    ctx.lineTo(48, 0);
-    ctx.lineTo(46, -5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    ctx.fillRect(-26, -1.8, 48, 3.6);
+    ctx.strokeRect(-26, -1.8, 48, 3.6);
+    ctx.fillStyle = '#67e8f9';
+    ctx.fillRect(19, -2.5, 4, 5);
+    ctx.fillStyle = '#fde047';
+    this.drawMiniStar(ctx, -28, 0, 5.2);
 
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(44, 0, 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Glorious Large Crystalline Cyan Spearhead Blade (46px long, 16px wide!)
-    ctx.fillStyle = '#38bdf8';
-    ctx.strokeStyle = '#e0f2fe';
+    // Iconic Glowing White-Cyan Spiraling Ribbon Spearhead!
+    ctx.fillStyle = 'rgba(224, 252, 255, 0.94)';
+    ctx.strokeStyle = '#22d3ee';
     ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(38, -5);
-    ctx.lineTo(58, -6.5);
-    ctx.lineTo(74, 0);
-    ctx.lineTo(58, 6.5);
-    ctx.lineTo(38, 5);
+    ctx.moveTo(22, -3.5);
+    ctx.bezierCurveTo(32, -9, 42, -3, 52, -7);
+    ctx.quadraticCurveTo(64, -5, 76, 0);
+    ctx.quadraticCurveTo(64, 5, 52, 6.5);
+    ctx.bezierCurveTo(42, 3, 32, 9, 22, 3.5);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(40, 0);
-    ctx.lineTo(68, 0);
-    ctx.lineTo(58, -2.6);
-    ctx.closePath();
-    ctx.fill();
-
+    // Spiral double-helix ribbon line twisting up the blade
     ctx.strokeStyle = '#67e8f9';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(58, -6);
-    ctx.lineTo(74, 0);
-    ctx.lineTo(58, 6);
+    ctx.moveTo(23, 3);
+    ctx.bezierCurveTo(31, -7, 39, 7, 48, -5);
+    ctx.bezierCurveTo(56, 4, 63, -3, 72, 0);
     ctx.stroke();
 
     if (isLaser) {
       ctx.strokeStyle = '#67e8f9';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(74, 0, 10 + Math.sin(Date.now() / 35) * 3, 0, Math.PI * 2);
+      ctx.arc(76, 0, 10 + Math.sin(Date.now() / 35) * 3, 0, Math.PI * 2);
       ctx.stroke();
     }
-
     ctx.restore();
   }
 
@@ -15905,7 +15644,6 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE BISMUTH ---
   drawBismuth(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'bismuth', bob, animP, actionType, 98)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -15914,338 +15652,264 @@ class PlayerHero {
     const isPunch = (actionType === 'punch');
     const isSkillSlam = (actionType === 'skill');
     const isAnvilThrow = (actionType === 'throw' && animP > 0.28);
+    const ink = '#1e1624';
+    const skin = '#8ba0cb';
+    const skinShade = '#6b82b2';
 
-    // 0. THICK, CHUNKY TUBULAR RAINBOW DREADLOCKS CASCADING BEHIND SHOULDERS (-X, NO FLOATING DOTS!)
-    const swX = hair.swayX * 0.75;
-    const swY = hair.swayY * 0.6;
-    const dreadSpecs = [
-      { color: '#a855f7', endX: -22, endY: -44, midX: -28, midY: -68, w: 6.5 },
-      { color: '#3b82f6', endX: -27, endY: -48, midX: -32, midY: -74, w: 6.8 },
-      { color: '#22c55e', endX: -31, endY: -54, midX: -35, midY: -80, w: 7.0 },
-      { color: '#eab308', endX: -33, endY: -62, midX: -34, midY: -86, w: 7.0 },
-      { color: '#f97316', endX: -30, endY: -70, midX: -30, midY: -92, w: 6.8 },
-      { color: '#ef4444', endX: -25, endY: -78, midX: -24, midY: -97, w: 6.5 }
-    ];
-    for (let d = 0; d < dreadSpecs.length; d++) {
-      const dr = dreadSpecs[d];
-      const tx = dr.endX + swX * (0.6 + d * 0.08);
-      const ty = dr.endY + bob + swY;
-      // Dark charcoal separation outline
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = dr.w + 2.2;
-      ctx.beginPath();
-      ctx.moveTo(-10, -91 + bob);
-      ctx.quadraticCurveTo(dr.midX + swX * 0.4, dr.midY + bob, tx, ty);
-      ctx.stroke();
-      // Chunky vibrant rainbow dreadlock tube
-      ctx.strokeStyle = dr.color;
-      ctx.lineWidth = dr.w;
-      ctx.stroke();
-      // Squared stepped dreadlock end-cap!
-      ctx.fillStyle = dr.color;
-      ctx.fillRect(tx - 3.5, ty - 3.5, 7, 7);
-    }
-
-    // Dark slate hair-tie band bundling the rainbow dreads behind crown
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.roundRect(-16, -98 + bob, 8, 13, 3);
-    ctx.fill();
-    ctx.stroke();
-
-    // 1. Articulated Tapered Plum-Maroon Overalls Legs & Charcoal Forge Boots
+    // 1. Articulated Plum-Magenta Overalls Legs & Dark Forge Boots (Bismuth.png!)
     const drawBismuthLeg = (lx, ly, rot, darken) => {
       ctx.save();
-      ctx.translate(lx, -30 + bob + ly);
+      ctx.translate(lx, -29 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 22, 7.2, 5.5, darken ? '#500724' : '#831843', '#3b0719', 1);
-      this.drawCelBoot(ctx, 1, 29, 11.5, 7.5, '#334155', '#0f172a', '#475569');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 21, 7.6, 6.0, darken ? '#601744' : '#7b2059', '#4a1033', 1);
+      // Dark espresso blacksmith boots with crisp outline
+      this.drawCelBoot(ctx, 1, 28, 12, 8, '#23141c', '#12090e', '#3b2430');
       ctx.restore();
     };
-    drawBismuthLeg(-8 + legs.backX, legs.backY, legs.backRot, true);
-    drawBismuthLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
+    drawBismuthLeg(-9 + legs.backX, legs.backY, legs.backRot, true);
+    drawBismuthLeg(9 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. Rear Left Muscular Arm w/ Black 5-Point Star Tattoo + Show-Accurate Periwinkle-Blue Skin!
+    // 2. Rear Muscular Periwinkle-Blue Arm with Dark Star Tattoo (Bismuth.png!)
     if (!(isPunch && combo === 2)) {
-      const armSwing = motion.armSwingB * 14;
-      this.drawArticulatedArm(ctx, -15, -62 + bob, -23 - armSwing * 0.4, -50 + bob, -20 - armSwing, -38 + bob, '#38bdf8', '#7dd3fc', 11, 9.5, '#7dd3fc', 6);
-      ctx.fillStyle = '#0f172a';
-      this.drawMiniStar(ctx, -19 - armSwing * 0.2, -55 + bob, 4.5);
+      const armSwing = motion.armSwingB * 13;
+      this.drawArticulatedArm(ctx, -17, -62 + bob, -24 - armSwing * 0.4, -49 + bob, -21 - armSwing, -37 + bob, skinShade, skin, 11.5, 9.8, skin, 6.2);
+      ctx.fillStyle = '#2d1c2e';
+      this.drawMiniStar(ctx, -20 - armSwing * 0.2, -55 + bob, 4.8);
     }
 
-    // 3. Sculpted Muscular Periwinkle-Blue Torso & Tailored Charcoal/Maroon Forge Apron
-    ctx.fillStyle = '#7dd3fc';
+    // 3. Broad Blacksmith Torso + Plum-Magenta Overalls + Gold Chevron Clasps (Bismuth.png!)
+    ctx.fillStyle = skin;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(-20, -68 + bob);
-    ctx.lineTo(20, -68 + bob);
-    ctx.quadraticCurveTo(21, -50 + bob, 16, -28 + bob);
-    ctx.lineTo(-16, -28 + bob);
-    ctx.quadraticCurveTo(-21, -50 + bob, -20, -68 + bob);
+    ctx.moveTo(-21, -69 + bob);
+    ctx.quadraticCurveTo(0, -72 + bob, 21, -69 + bob);
+    ctx.quadraticCurveTo(22, -49 + bob, 17, -27 + bob);
+    ctx.lineTo(-17, -27 + bob);
+    ctx.quadraticCurveTo(-22, -49 + bob, -21, -69 + bob);
     ctx.closePath();
     ctx.fill();
-    // Shoulder & oblique cel shading
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.moveTo(-20, -68 + bob);
-    ctx.lineTo(-11, -68 + bob);
-    ctx.lineTo(-10, -28 + bob);
-    ctx.lineTo(-16, -28 + bob);
-    ctx.quadraticCurveTo(-21, -50 + bob, -20, -68 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#0c4a6e';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-20, -68 + bob);
-    ctx.lineTo(20, -68 + bob);
-    ctx.quadraticCurveTo(21, -50 + bob, 16, -28 + bob);
-    ctx.lineTo(-16, -28 + bob);
-    ctx.quadraticCurveTo(-21, -50 + bob, -20, -68 + bob);
-    ctx.closePath();
     ctx.stroke();
 
-    // Contoured plum-maroon leather apron bib & cel side shadow
-    ctx.fillStyle = '#831843';
+    // Plum-magenta blacksmith overalls bib, waist seam & shoulder straps
+    ctx.fillStyle = '#7b2059';
     ctx.beginPath();
-    ctx.moveTo(-14, -56 + bob);
-    ctx.lineTo(14, -56 + bob);
-    ctx.quadraticCurveTo(16, -42 + bob, 15.5, -27 + bob);
-    ctx.lineTo(-15.5, -27 + bob);
-    ctx.quadraticCurveTo(-16, -42 + bob, -14, -56 + bob);
+    ctx.moveTo(-16, -54 + bob);
+    ctx.lineTo(16, -54 + bob);
+    ctx.quadraticCurveTo(18, -40 + bob, 16.5, -26 + bob);
+    ctx.lineTo(-16.5, -26 + bob);
+    ctx.quadraticCurveTo(-18, -40 + bob, -16, -54 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#500724';
+    ctx.stroke();
+    // Stitched vertical apron seams & waist band
+    ctx.strokeStyle = '#4a1033';
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(-14, -56 + bob);
-    ctx.lineTo(-8, -56 + bob);
-    ctx.lineTo(-9, -27 + bob);
-    ctx.lineTo(-15.5, -27 + bob);
-    ctx.quadraticCurveTo(-16, -42 + bob, -14, -56 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#3b071c';
+    ctx.moveTo(-16, -37 + bob); ctx.lineTo(16, -37 + bob);
+    ctx.moveTo(-6, -54 + bob); ctx.lineTo(-6, -40 + bob);
+    ctx.moveTo(6, -54 + bob); ctx.lineTo(6, -40 + bob);
+    ctx.moveTo(0, -54 + bob); ctx.lineTo(0, -42 + bob);
+    ctx.stroke();
+
+    // Thick plum straps + iconic golden chevron clasps (Bismuth.png!)
+    ctx.fillStyle = '#7b2059';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
-    ctx.stroke();
-
-    // Contoured shoulder straps + beveled gold buckles
-    ctx.fillStyle = '#831843';
-    ctx.beginPath();
-    ctx.moveTo(-13.5, -68 + bob);
-    ctx.lineTo(-8.5, -68 + bob);
-    ctx.lineTo(-8, -54 + bob);
-    ctx.lineTo(-13, -54 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(8.5, -68 + bob);
-    ctx.lineTo(13.5, -68 + bob);
-    ctx.lineTo(13, -54 + bob);
-    ctx.lineTo(8, -54 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    for (const bx of [-14.5, 6.5]) {
+    for (const sx of [-15, 9]) {
+      ctx.beginPath();
+      ctx.roundRect(sx, -69 + bob, 6.5, 17, 2);
+      ctx.fill();
+      ctx.stroke();
       ctx.fillStyle = '#facc15';
       ctx.beginPath();
-      ctx.roundRect(bx, -58 + bob, 8, 5, 1.5);
+      ctx.moveTo(sx - 1.5, -57 + bob);
+      ctx.lineTo(sx + 8, -57 + bob);
+      ctx.lineTo(sx + 8, -52 + bob);
+      ctx.lineTo(sx + 3.2, -48.5 + bob);
+      ctx.lineTo(sx - 1.5, -52 + bob);
+      ctx.closePath();
       ctx.fill();
-      ctx.fillStyle = '#fef08a';
-      ctx.beginPath();
-      ctx.roundRect(bx + 1, -57.2 + bob, 6, 1.8, 0.8);
-      ctx.fill();
-      ctx.strokeStyle = '#854d0e';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.roundRect(bx, -58 + bob, 8, 5, 1.5);
       ctx.stroke();
-    }
-    // Forge spark aura shimmer
-    if (actionType !== 'attack') {
-      const fg = 0.4 + 0.35 * Math.sin(Date.now() * 0.0055);
-      ctx.save();
-      ctx.globalAlpha = fg;
-      ctx.fillStyle = '#f472b6';
-      ctx.beginPath();
-      ctx.arc(-18, -36 + bob, 2.5, 0, Math.PI * 2);
-      ctx.arc(19, -46 + bob, 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
+      ctx.fillStyle = '#7b2059';
     }
 
-    // 4. Concentric Square Bismuth Gemstone on Chest
-    const gemX = 1, gemY = -52 + bob;
-    if (this.isPinkOverdrive) {
-      const hue = (Date.now() / 8) % 360;
-      ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
-      ctx.fillRect(gemX - 8, gemY - 8, 16, 16);
-      ctx.fillStyle = `hsl(${(hue + 60) % 360}, 100%, 70%)`;
-      ctx.fillRect(gemX - 5.5, gemY - 5.5, 11, 11);
-      ctx.fillStyle = `hsl(${(hue + 120) % 360}, 100%, 75%)`;
-      ctx.fillRect(gemX - 3, gemY - 3, 6, 6);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(gemX - 1.5, gemY - 1.5, 3, 3);
-    } else {
-      ctx.fillStyle = '#ec4899';
-      ctx.fillRect(gemX - 7, gemY - 7, 14, 14);
-      ctx.fillStyle = '#06b6d4';
-      ctx.fillRect(gemX - 5, gemY - 5, 10, 10);
-      ctx.fillStyle = '#eab308';
-      ctx.fillRect(gemX - 3, gemY - 3, 6, 6);
-      ctx.fillStyle = '#8b5cf6';
-      ctx.fillRect(gemX - 1.5, gemY - 1.5, 3, 3);
-    }
+    // 4. Iconic Recessed Square-Spiral Rainbow Bismuth Chest Gem (Bismuth.png!)
+    const gemX = 0, gemY = -60 + bob;
+    ctx.fillStyle = '#9b7ca8';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(gemX - 7.5, gemY - 7.5, 15, 15);
+    ctx.strokeRect(gemX - 7.5, gemY - 7.5, 15, 15);
+    const bandCols = this.isPinkOverdrive
+      ? ['#f472b6', '#38bdf8', '#fde047', '#ffffff']
+      : ['#a855f7', '#22d3ee', '#4ade80', '#fef08a'];
+    ctx.fillStyle = bandCols[0]; ctx.fillRect(gemX - 5.2, gemY - 5.2, 10.4, 10.4);
+    ctx.fillStyle = bandCols[1]; ctx.fillRect(gemX - 5.2, gemY - 3.6, 8.6, 8.8);
+    ctx.fillStyle = bandCols[2]; ctx.fillRect(gemX - 5.2, gemY - 1.6, 6.4, 6.8);
+    ctx.fillStyle = bandCols[3]; ctx.fillRect(gemX - 5.2, gemY + 0.4, 4.2, 4.8);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.1;
+    ctx.strokeRect(gemX - 5.2, gemY - 5.2, 10.4, 10.4);
 
-    // 5. Muscular Sky-Blue/Periwinkle Cel Face & Swept Rainbow Crown Dreadlocks!
-    ctx.fillStyle = '#7dd3fc';
-    ctx.beginPath();
-    ctx.moveTo(-15.5, -88 + bob);
-    ctx.quadraticCurveTo(0, -96 + bob, 15.5, -88 + bob);
-    ctx.bezierCurveTo(16.5, -76 + bob, 12, -65 + bob, 2, -63 + bob);
-    ctx.bezierCurveTo(-11, -64 + bob, -16.5, -74 + bob, -15.5, -88 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.moveTo(-15.5, -84 + bob);
-    ctx.quadraticCurveTo(-8, -68 + bob, 5, -64 + bob);
-    ctx.quadraticCurveTo(-10, -63 + bob, -15.5, -75 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#0c4a6e';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-
-    // Swept-back rainbow dreadlock crown roots framing both sides of her upper forehead
-    const crownBands = [
-      { c: '#ef4444', y: -96, x1: 14, x2: -13 },
-      { c: '#f97316', y: -93, x1: 15, x2: -14 },
-      { c: '#eab308', y: -90, x1: 14, x2: -15 },
-      { c: '#22c55e', y: -87, x1: -4, x2: -16 },
-      { c: '#3b82f6', y: -84, x1: 16, x2: 11 }
+    // 5. Rounded Friendly Periwinkle Face + Thick Rainbow Dreadlocks Framing Head (Bismuth.png!)
+    const swX = hair.swayX * 0.5;
+    // Back rainbow dreads draping softly behind shoulders
+    const backDreads = [
+      { col: '#22d3ee', x1: -12, y1: -88, cx: -21 + swX * 0.5, cy: -76, x2: -18 + swX, y2: -64, w: 6.5 },
+      { col: '#4ade80', x1: 11, y1: -88, cx: 20 + swX * 0.4, cy: -76, x2: 18 + swX * 0.7, y2: -66, w: 6.2 },
+      { col: '#f472b6', x1: 9, y1: -86, cx: 16 + swX * 0.3, cy: -74, x2: 14 + swX * 0.5, y2: -65, w: 5.5 }
     ];
-    for (const cb of crownBands) {
-      ctx.strokeStyle = cb.c;
-      ctx.lineWidth = 4.2;
-      ctx.beginPath();
-      ctx.moveTo(cb.x1, cb.y + bob);
-      ctx.quadraticCurveTo(-4, cb.y - 2 + bob, cb.x2, cb.y + 1 + bob);
+    for (const d of backDreads) {
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = d.w + 3;
+      ctx.beginPath(); ctx.moveTo(d.x1, d.y1 + bob); ctx.quadraticCurveTo(d.cx, d.cy + bob, d.x2, d.y2 + bob); ctx.stroke();
+      ctx.strokeStyle = d.col;
+      ctx.lineWidth = d.w;
       ctx.stroke();
     }
 
-    // Friendly Eyes & Bushy Warrior Eyebrows
-    ctx.fillStyle = '#1e293b';
-    ctx.beginPath();
-    ctx.ellipse(-4.5, -82 + bob, 3.6, 4.8, 0, 0, Math.PI * 2);
-    ctx.ellipse(5.5, -82 + bob, 3.6, 4.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(-3.5, -83.5 + bob, 1.4, 0, Math.PI * 2);
-    ctx.arc(6.5, -83.5 + bob, 1.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 2.8;
-    ctx.beginPath();
-    if (this.isAttacking) {
-      ctx.moveTo(-10, -89.5 + bob); ctx.lineTo(-1, -87 + bob);
-      ctx.moveTo(2, -87 + bob); ctx.lineTo(11, -89.5 + bob);
-    } else {
-      ctx.moveTo(-10, -88.5 + bob); ctx.lineTo(-1, -87.5 + bob);
-      ctx.moveTo(2, -87.5 + bob); ctx.lineTo(11, -88.5 + bob);
+    // Top rainbow crown braids arching over forehead
+    const topBraids = [
+      { col: '#fef08a', cx: -8, cy: -96, rx: 5.5, ry: 4.5 },
+      { col: '#fb923c', cx: -3, cy: -97.5, rx: 5.5, ry: 4.5 },
+      { col: '#ec4899', cx: 3, cy: -97.5, rx: 5.5, ry: 4.5 },
+      { col: '#a855f7', cx: 8, cy: -96, rx: 5.5, ry: 4.5 },
+      { col: '#22d3ee', cx: 12, cy: -92, rx: 5.0, ry: 4.2 }
+    ];
+    for (const tb of topBraids) {
+      ctx.fillStyle = tb.col;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(tb.cx, tb.cy + bob, tb.rx, tb.ry, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
+
+    // Lavender-slate hairline band + broad warm rounded periwinkle face
+    ctx.fillStyle = '#9281a8';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.ellipse(0, -83 + bob, 16.5, 14.2, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
 
-    // 6. Broad Boisterous Toothy Grin
-    ctx.fillStyle = '#334155';
+    ctx.fillStyle = skin;
     ctx.beginPath();
-    ctx.moveTo(-8, -73 + bob);
-    ctx.quadraticCurveTo(0, -71 + bob, 8, -73 + bob);
-    ctx.quadraticCurveTo(0, -62 + bob, -8, -73 + bob);
+    ctx.ellipse(0.5, -81.5 + bob, 14.8, 12.6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(-7.5, -73 + bob);
-    ctx.lineTo(7.5, -73 + bob);
-    ctx.quadraticCurveTo(0, -68 + bob, -7.5, -73 + bob);
-    ctx.fill();
+    ctx.stroke();
 
-    // 7. TRUE SHAPESHIFTING BLACKSMITH WEAPON ARMS! (Show-accurate Sky-Blue Skin!)
+    // Front signature cream-yellow & cyan framing dreadlocks (Bismuth.png!)
+    const frontDreads = [
+      { col: '#22d3ee', x1: -13, y1: -88, cx: -18 + swX * 0.4, cy: -75, x2: -14 + swX * 0.6, y2: -63, w: 6.2 },
+      { col: '#fef08a', x1: 12, y1: -87, cx: 17 + swX * 0.3, cy: -74, x2: 14 + swX * 0.5, y2: -61, w: 6.2 }
+    ];
+    for (const d of frontDreads) {
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = d.w + 3;
+      ctx.beginPath(); ctx.moveTo(d.x1, d.y1 + bob); ctx.quadraticCurveTo(d.cx, d.cy + bob, d.x2, d.y2 + bob); ctx.stroke();
+      ctx.strokeStyle = d.col;
+      ctx.lineWidth = d.w;
+      ctx.stroke();
+    }
+
+    // Big Expressive Cartoon Eyes + Warm Wide Grin (Bismuth.png!)
+    if (this.isBlinking && !this.isAttacking) {
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.arc(-4, -84 + bob, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(5.5, -84 + bob, 3.2, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+    } else {
+      for (const ex of [-4, 5.5]) {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.ellipse(ex, -84.5 + bob, 3.6, 4.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#18181b';
+        ctx.beginPath();
+        ctx.ellipse(ex + 0.8, -84 + bob, 1.8, 2.7, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    // Wide friendly toothy smile
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-6.5, -75 + bob);
+    ctx.quadraticCurveTo(1.5, -75.5 + bob, 9.5, -77.5 + bob);
+    ctx.quadraticCurveTo(8, -71 + bob, -4.5, -71.8 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 6. SHAPESHIFTING BLACKSMITH WEAPON ARMS!
     if (isAnvilThrow) {
       const ext = Math.sin(((animP - 0.28) / 0.72) * Math.PI) * 14;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 20 + ext * 0.5, -54 + bob, 28 + ext, -50 + bob, '#7dd3fc', '#f97316', 11, 9.5, '#fbbf24', 5.5);
+      this.drawArticulatedArm(ctx, 15, -60 + bob, 22 + ext * 0.5, -54 + bob, 29 + ext, -50 + bob, skin, '#f97316', 11.5, 9.8, '#fbbf24', 5.8);
     } else if (isSkillSlam) {
-      // Breaking Point Pneumatic Magma Pile-Driver!
       const slamP = Math.max(0, strike);
       const hy = -42 + bob + slamP * 26;
-      const hx = 18 + slamP * 14;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 22, -48 + bob, hx, hy, '#7dd3fc', '#38bdf8', 12, 11);
+      const hx = 19 + slamP * 14;
+      this.drawArticulatedArm(ctx, 15, -60 + bob, 23, -48 + bob, hx, hy, skin, skinShade, 12, 11);
       ctx.save();
       ctx.translate(hx, hy);
       ctx.rotate(0.45);
-      // Heavy piston housing
       ctx.fillStyle = '#334155';
       ctx.strokeStyle = '#f97316';
       ctx.lineWidth = 2;
       ctx.fillRect(-6, -12, 24, 24);
       ctx.strokeRect(-6, -12, 24, 24);
-      // Glowing incandescent Breaking Point drill spike!
       ctx.fillStyle = '#fbbf24';
       ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(18, -9);
-      ctx.lineTo(42, 0);
-      ctx.lineTo(18, 9);
-      ctx.closePath();
+      ctx.moveTo(18, -9); ctx.lineTo(42, 0); ctx.lineTo(18, 9); ctx.closePath();
       ctx.fill();
       ctx.stroke();
       ctx.restore();
     } else if (isPunch) {
       if (combo === 0) {
-        // Hit 1: Shapeshifted Spiked Forge War-Hammer Swing!
         const reach = strike * 32;
-        const hx = 20 + reach;
+        const hx = 21 + reach;
         const hy = -50 + bob + Math.max(0, strike) * 4;
-        this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + reach * 0.45, -56 + bob, hx, hy, '#7dd3fc', '#38bdf8', 11, 9.5);
+        this.drawArticulatedArm(ctx, 15, -60 + bob, 18 + reach * 0.45, -55 + bob, hx, hy, skin, skinShade, 11.5, 9.8);
         ctx.save();
         ctx.translate(hx, hy);
-        ctx.rotate(-0.4 + Math.max(0, strike) * 0.65);
-        ctx.fillStyle = '#475569';
-        ctx.strokeStyle = '#cbd5e1';
-        ctx.lineWidth = 1.6;
+        ctx.rotate(-0.35 + Math.max(0, strike) * 0.65);
+        ctx.fillStyle = skin;
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.roundRect(0, -16, 22, 32, 4);
+        ctx.roundRect(0, -15, 22, 30, 4);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = '#f59e0b';
         this.drawMiniStar(ctx, 11, 0, 5.5);
-        // Striking face spikes
-        ctx.fillStyle = '#fbbf24';
-        for (const sy of [-10, 0, 10]) {
-          ctx.beginPath();
-          ctx.moveTo(22, sy - 3); ctx.lineTo(30, sy); ctx.lineTo(22, sy + 3);
-          ctx.closePath();
-          ctx.fill();
-        }
         ctx.restore();
       } else if (combo === 1) {
-        // Hit 2: Shapeshifted Broad Crescent Battle-Axe Cleave!
         const reach = strike * 34;
         const hx = 22 + reach;
         const hy = -52 + bob;
-        this.drawArticulatedArm(ctx, 13, -60 + bob, 17 + reach * 0.45, -55 + bob, hx, hy, '#7dd3fc', '#38bdf8', 11, 9.5);
+        this.drawArticulatedArm(ctx, 15, -60 + bob, 18 + reach * 0.45, -55 + bob, hx, hy, skin, skinShade, 11.5, 9.8);
         ctx.save();
         ctx.translate(hx, hy);
         ctx.rotate(-0.55 + animP * 1.15);
-        // Double crescent steel battle-axe blade!
         ctx.fillStyle = '#94a3b8';
-        ctx.strokeStyle = '#f8fafc';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(0, -6);
         ctx.quadraticCurveTo(18, -26, 28, -18);
@@ -16258,24 +15922,18 @@ class PlayerHero {
         this.drawMiniStar(ctx, 14, 0, 5.5);
         ctx.restore();
       } else {
-        // Hit 3: Two-Handed Colossal Molten Anvil-Maul Overhead Smash!
         const reach = Math.max(0, strike) * 34;
         const smashY = animP < 0.34 ? (-88 + bob) : (-88 + bob + Math.min(1, (animP - 0.34) / 0.30) * 64);
-        this.drawArticulatedArm(ctx, -12, -62 + bob, 4 + reach * 0.4, smashY - 6, 18 + reach, smashY, '#38bdf8', '#38bdf8', 10.5, 9.5);
-        this.drawArticulatedArm(ctx, 14, -62 + bob, 12 + reach * 0.45, smashY - 4, 22 + reach, smashY, '#7dd3fc', '#38bdf8', 11, 10);
+        this.drawArticulatedArm(ctx, -14, -62 + bob, 4 + reach * 0.4, smashY - 6, 18 + reach, smashY, skinShade, skinShade, 11, 9.5);
+        this.drawArticulatedArm(ctx, 15, -62 + bob, 12 + reach * 0.45, smashY - 4, 22 + reach, smashY, skin, skinShade, 11.5, 10);
         ctx.save();
         ctx.translate(22 + reach, smashY);
         ctx.rotate(animP < 0.34 ? -0.9 : 0.35);
-        // Giant glowing blacksmith anvil head!
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = '#475569';
         ctx.strokeStyle = '#fbbf24';
         ctx.lineWidth = 2.2;
         ctx.beginPath();
-        ctx.moveTo(-10, -16);
-        ctx.lineTo(24, -16);
-        ctx.lineTo(36, -6); // Anvil horn!
-        ctx.lineTo(24, 16);
-        ctx.lineTo(-10, 16);
+        ctx.moveTo(-10, -16); ctx.lineTo(24, -16); ctx.lineTo(36, -6); ctx.lineTo(24, 16); ctx.lineTo(-10, 16);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -16284,24 +15942,14 @@ class PlayerHero {
         ctx.restore();
       }
     } else {
-      // Idle Ready Hammer-Fist with continuous forge-ready sway
-      const swF = motion.armSwingF * 12;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + swF * 0.4, -50 + bob, 20 + swF, -46 + bob + swF * 0.25, '#7dd3fc', '#38bdf8', 10.5, 9);
-      ctx.fillStyle = '#475569';
-      ctx.strokeStyle = '#94a3b8';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.roundRect(18 + swF, -56 + bob + swF * 0.25, 18, 22, 3);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#f59e0b';
-      this.drawMiniStar(ctx, 27 + swF, -45 + bob + swF * 0.25, 4.5);
+      // Idle Ready Powerful Blacksmith Arm + Forged Hammer-Fist
+      const swF = motion.armSwingF * 11;
+      this.drawArticulatedArm(ctx, 15, -60 + bob, 20 + swF * 0.4, -49 + bob, 22 + swF, -43 + bob + swF * 0.25, skin, skin, 11.5, 9.5, skin, 6.8);
     }
   }
 
   // --- SHOW-ACCURATE PERIDOT ---
   drawPeridot(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'peridot', bob, animP, actionType, 86)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -16337,129 +15985,113 @@ class PlayerHero {
       this.drawArticulatedArm(ctx, -10, -54 + bob, -15 - armSwing * 0.5, -45 + bob, -13 - armSwing, -36 + bob, '#14532d', '#a3e635', 6, 5, '#a3e635', 3.8);
     }
 
-    // 3. Dark Forest-Green Top + Black Briefs + Gold Chest Star
+    // 3. Dark Forest-Green Top + Black Briefs + Bright Yellow Chest Star (Peridot.jpeg!)
+    const ink = '#132a18';
     ctx.fillStyle = '#14532d';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.roundRect(-12, -58 + bob, 24, 24, 4);
+    ctx.roundRect(-11.5, -58 + bob, 23, 24, 6);
     ctx.fill();
-    // Black pelvis briefs band
+    ctx.stroke();
     ctx.fillStyle = '#18181b';
     ctx.beginPath();
-    ctx.roundRect(-12, -35 + bob, 24, 9, 2);
+    ctx.roundRect(-11.5, -36 + bob, 23, 10, 4);
     ctx.fill();
+    ctx.stroke();
 
-    ctx.fillStyle = '#facc15';
-    this.drawMiniStar(ctx, 0.5, -45 + bob, 6.5);
+    ctx.fillStyle = '#fef08a';
+    this.drawMiniStar(ctx, 0.5, -46 + bob, 6.8);
 
-    // 4. Sculpted 3D Curved-Facet Tetrahedral Chartreuse Hair (Softened 3D Dorito Volume!)
+    // 4. Crisp Pale-Yellow Dorito Hair (Peridot.jpeg!)
     const hTilt = hair.swayX * 0.012;
     ctx.save();
     ctx.translate(0, -76 + bob);
     ctx.rotate(hTilt);
-    // Main luminous chartreuse front/left curved tetrahedron
-    ctx.fillStyle = '#d9f99d';
-    ctx.beginPath();
-    ctx.moveTo(0, -34); // Softened apex
-    ctx.quadraticCurveTo(16, -16, 28, 10); // Gently curved right slope
-    ctx.quadraticCurveTo(0, 14, -28, 10); // Gently curved lower volume
-    ctx.quadraticCurveTo(-16, -16, 0, -34); // Gently curved left slope
-    ctx.closePath();
-    ctx.fill();
-
-    // Right 3D tetrahedral shading facet
-    ctx.fillStyle = '#bef264';
+    ctx.fillStyle = '#eef79c';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(0, -34);
-    ctx.quadraticCurveTo(16, -16, 28, 10);
-    ctx.quadraticCurveTo(12, 8, 2, 2);
+    ctx.lineTo(27, 8);
+    ctx.quadraticCurveTo(0, 13, -27, 8);
     ctx.closePath();
     ctx.fill();
-
-    // Specular crown highlight
-    ctx.fillStyle = '#ecfccb';
-    ctx.beginPath();
-    ctx.moveTo(0, -32);
-    ctx.lineTo(-14, -6);
-    ctx.lineTo(-2, -8);
-    ctx.closePath();
-    ctx.fill();
+    ctx.stroke();
     ctx.restore();
 
-    // 5. Pale Lime Sculpted Neck & Cel Face
-    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0.5, -66 + bob, 3.6, 3.2, '#a3e635', '#65a30d', 1);
-    ctx.fillStyle = '#a3e635';
+    // 5. Bright Lime-Chartreuse Sculpted Neck & Cel Face (Peridot.jpeg!)
+    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0.5, -66 + bob, 3.4, 3.0, '#76e065', '#4ade80', 1);
+    ctx.fillStyle = '#76e065';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.ellipse(0, -73 + bob, 13, 13.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -73 + bob, 12.2, 13.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#84cc16';
-    ctx.beginPath();
-    ctx.arc(0, -73 + bob, 13, 0.3 * Math.PI, 0.9 * Math.PI);
-    ctx.fill();
+    ctx.stroke();
 
-    // 6. Forehead Triangular Peridot Gemstone
+    // 6. Forehead Rounded-Triangle Peridot Gemstone
     ctx.fillStyle = '#4ade80';
-    ctx.strokeStyle = '#15803d';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.moveTo(0, -78 + bob);
-    ctx.lineTo(6, -88 + bob);
-    ctx.lineTo(-6, -88 + bob);
+    ctx.moveTo(0, -79 + bob);
+    ctx.lineTo(6, -86 + bob);
+    ctx.lineTo(-6, -86 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    // 7. Translucent Winged Lime-Yellow Visor + Expressive Eyes (w/ blink!)
+    // 7. Expressive Big Eyes + ICONIC POINTED KAMINA YELLOW STAR VISOR (Peridot.jpeg!)
     if (this.isBlinking && !this.isAttacking) {
-      ctx.strokeStyle = '#14532d';
+      ctx.strokeStyle = ink;
       ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(-7, -74 + bob); ctx.lineTo(-2, -74 + bob);
       ctx.moveTo(3, -74 + bob); ctx.lineTo(8, -74 + bob);
       ctx.stroke();
     } else {
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(-4.5, -74 + bob, 3.2, 3.8, 0, 0, Math.PI * 2);
-      ctx.ellipse(5.5, -74 + bob, 3.2, 3.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#15803d';
-      ctx.beginPath();
-      ctx.arc(-4, -74 + bob, 1.9, 0, Math.PI * 2);
-      ctx.arc(6, -74 + bob, 1.9, 0, Math.PI * 2);
-      ctx.fill();
+      for (const ex of [-4.2, 5.2]) {
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.ellipse(ex, -74 + bob, 3.5, 4.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#14532d';
+        ctx.beginPath();
+        ctx.arc(ex + 0.6, -74 + bob, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-    ctx.fillStyle = 'rgba(217, 249, 157, 0.48)';
-    ctx.strokeStyle = '#bef264';
-    ctx.lineWidth = 1.4;
+    // Iconic sharp winged translucent yellow Kamina visor!
+    ctx.fillStyle = 'rgba(254, 249, 130, 0.72)';
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(0, -75 + bob);
-    ctx.lineTo(9, -80 + bob);
-    ctx.lineTo(20, -83 + bob);
-    ctx.lineTo(11, -71 + bob);
-    ctx.lineTo(0, -69 + bob);
-    ctx.lineTo(-11, -71 + bob);
-    ctx.lineTo(-20, -83 + bob);
-    ctx.lineTo(-9, -80 + bob);
+    ctx.moveTo(0, -76 + bob);
+    ctx.lineTo(24, -90 + bob);
+    ctx.lineTo(11, -69 + bob);
+    ctx.lineTo(0, -72 + bob);
+    ctx.lineTo(-11, -69 + bob);
+    ctx.lineTo(-24, -90 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(-15, -79 + bob);
-    ctx.lineTo(15, -79 + bob);
-    ctx.stroke();
-
-    // Quirky open grin
-    ctx.fillStyle = '#14532d';
-    ctx.beginPath();
-    ctx.moveTo(-5, -65 + bob);
-    ctx.quadraticCurveTo(0, -63 + bob, 5, -65 + bob);
-    ctx.quadraticCurveTo(0, -58 + bob, -5, -65 + bob);
-    ctx.fill();
+    // Big cheeky Peridot toothy grin!
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-4, -65 + bob, 8, 2.5);
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-7.5, -66.5 + bob);
+    ctx.quadraticCurveTo(0, -64.5 + bob, 7.5, -66.5 + bob);
+    ctx.quadraticCurveTo(6.5, -59.5 + bob, 0, -59.5 + bob);
+    ctx.quadraticCurveTo(-6.5, -59.5 + bob, -7.5, -66.5 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
     if (this.isPinkOverdrive) {
       ctx.fillStyle = '#86efac';
@@ -16552,7 +16184,6 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE LAPIS LAZULI ---
   drawLapis(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'lapis', bob, animP, actionType, 96)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -16562,286 +16193,227 @@ class PlayerHero {
     const isPunch = (actionType === 'punch');
     const isThrow = (actionType === 'throw');
     const isGlowing = this.isPinkOverdrive || isTidal;
+    const ink = '#0f2046';
+    const skin = '#38c6f4';
+    const skinShade = '#1aa3d6';
 
-    // 0. Layered hydro wings: three tapered water blades per side, translucent with a
-    //    bright leading edge. Reads as water wings instead of two flat balloons.
+    // 0. Iconic Liquid-Aqua Flowing Water Wings (matches Lapis.png!)
     ctx.save();
-    const wingFlap = Math.sin(Date.now() / 110) * (isTidal ? 10 : 5);
-    const wingScale = isTidal ? 1.6 : (this.isPinkOverdrive ? 1.3 : 1.0);
-    const bladeSpecs = [
-      { len: 44, lift: -52, tint: 'rgba(14, 165, 233, 0.55)', edge: '#7dd3fc' },
-      { len: 58, lift: -38, tint: 'rgba(56, 189, 248, 0.65)', edge: '#bae6fd' },
-      { len: 48, lift: -22, tint: 'rgba(125, 211, 252, 0.55)', edge: '#e0f2fe' }
-    ];
-
-    const drawWaterWing = (dir, phase) => {
+    const wingFlap = Math.sin(Date.now() / 130) * (isTidal ? 9 : 4.5);
+    const wS = isTidal ? 1.45 : (this.isPinkOverdrive ? 1.25 : 1.0);
+    const drawLiquidWing = (dir) => {
       ctx.save();
       ctx.scale(dir, 1);
-      bladeSpecs.forEach((b, i) => {
-        const len = b.len * wingScale;
-        const sway = wingFlap * (0.4 + i * 0.30) + phase;
-        const rootY = -52 + bob + i * 5;
-        ctx.beginPath();
-        ctx.moveTo(3, rootY);
-        ctx.bezierCurveTo(
-          -len * 0.40, rootY + b.lift * 0.45 + sway,
-          -len * 0.82, rootY + b.lift * 0.25 + sway * 1.5,
-          -len, rootY + b.lift * 0.10 + sway
-        );
-        ctx.bezierCurveTo(
-          -len * 0.62, rootY + b.lift * 0.02 + sway * 0.7,
-          -len * 0.28, rootY + 4,
-          3, rootY + 4
-        );
-        ctx.closePath();
-        ctx.fillStyle = b.tint;
-        ctx.fill();
-        ctx.strokeStyle = b.edge;
-        ctx.lineWidth = 1.3;
-        ctx.stroke();
-      });
-      // Bright spine of the nearest blade
-      ctx.strokeStyle = 'rgba(240, 249, 255, 0.85)';
+      ctx.fillStyle = 'rgba(186, 250, 255, 0.84)';
+      ctx.strokeStyle = '#67e8f9';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.moveTo(2, -44 + bob);
-      ctx.quadraticCurveTo(-30 * wingScale, -60 + bob + wingFlap, -52 * wingScale, -48 + bob + wingFlap);
+      ctx.moveTo(4, -56 + bob);
+      ctx.bezierCurveTo(16 * wS, -92 + bob + wingFlap, 42 * wS, -94 + bob + wingFlap, 49 * wS, -66 + bob + wingFlap);
+      ctx.bezierCurveTo(54 * wS, -48 + bob + wingFlap, 46 * wS, -34 + bob + wingFlap, 39 * wS, -40 + bob + wingFlap);
+      ctx.bezierCurveTo(35 * wS, -44 + bob + wingFlap, 34 * wS, -54 + bob, 29 * wS, -50 + bob + wingFlap * 0.5);
+      ctx.bezierCurveTo(25 * wS, -44 + bob, 23 * wS, -60 + bob, 16 * wS, -52 + bob);
+      ctx.quadraticCurveTo(10 * wS, -48 + bob, 4, -48 + bob);
+      ctx.closePath();
+      ctx.fill();
       ctx.stroke();
+      // Glossy white water highlights & trailing droplets
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+      ctx.lineWidth = 2.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(16 * wS, -78 + bob + wingFlap * 0.8);
+      ctx.quadraticCurveTo(31 * wS, -84 + bob + wingFlap, 40 * wS, -70 + bob + wingFlap);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(186, 250, 255, 0.9)';
+      ctx.beginPath();
+      ctx.ellipse(32 * wS, -38 + bob + wingFlap * 0.8, 2.5, 3.6, 0.2, 0, Math.PI * 2);
+      ctx.ellipse(24 * wS, -44 + bob + wingFlap * 0.5, 2.0, 2.8, -0.1, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     };
-
-    drawWaterWing(-1, 0);
-    drawWaterWing(1, Math.PI);
+    drawLiquidWing(-1);
+    drawLiquidWing(1);
     ctx.restore();
 
-    // 1. Articulated Tapered Cerulean Bare Legs
+    // 1. Graceful Hovering Barefoot Cerulean Legs (Lapis.png!)
     const drawLapisLeg = (lx, ly, rot, darken) => {
       ctx.save();
-      ctx.translate(lx, -26 + bob + ly);
+      ctx.translate(lx, -27 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 23, 3.6, 2.5, darken ? '#4f97bd' : '#7cc7e8', '#3b82a6', 1);
-      ctx.fillStyle = darken ? '#4f97bd' : '#7cc7e8';
-      ctx.beginPath(); ctx.ellipse(2, 24.5, 4.6, 2.1, 0, 0, Math.PI * 2); ctx.fill();
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 24, 3.4, 2.2, darken ? skinShade : skin, '#0d7ba8', 1);
+      ctx.fillStyle = darken ? skinShade : skin;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(1.5, 25.5, 4.2, 2.2, 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
       ctx.restore();
     };
-    drawLapisLeg(-4 + legs.backX, legs.backY, legs.backRot, true);
-    drawLapisLeg(4 + legs.frontX, legs.frontY, legs.frontRot, false);
+    drawLapisLeg(-5 + legs.backX, legs.backY, legs.backRot, true);
+    drawLapisLeg(5 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. High-Low Cobalt Skirt + Dark-Navy High-Waist Diamond (Lapis ref!)
+    // 2. Flowing Asymmetrical High-Low Cobalt Skirt w/ Deep Navy Inner Lining (Lapis.png!)
     const skSway = hair.swayX * 0.7;
-    ctx.fillStyle = '#0284c7';
+    // Deep navy underside arch
+    ctx.fillStyle = '#0b256b';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-11, -37 + bob);
-    ctx.lineTo(11, -37 + bob);
-    ctx.quadraticCurveTo(16 + skSway * 0.4, -24 + bob, 19 + skSway, -12 + bob);
-    ctx.quadraticCurveTo(0 + skSway * 0.6, -9 + bob, -19 + skSway, -12 + bob);
+    ctx.moveTo(-18 + skSway, -13 + bob);
+    ctx.quadraticCurveTo(0 + skSway * 0.5, -5 + bob, 16 + skSway, -14 + bob);
+    ctx.lineTo(12, -26 + bob);
+    ctx.lineTo(-14, -26 + bob);
     ctx.closePath();
     ctx.fill();
-
-    ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath();
-    ctx.moveTo(0, -40 + bob);
-    ctx.lineTo(10, -35 + bob);
-    ctx.lineTo(7 + skSway * 0.7, -11 + bob);
-    ctx.lineTo(-6 + skSway * 0.7, -11 + bob);
-    ctx.lineTo(-10, -35 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // 3. Sculpted Exposed Light-Blue Midriff (#7cc7e8) with Cel Side Shadow
-    ctx.fillStyle = '#7cc7e8';
-    ctx.beginPath();
-    ctx.moveTo(-7.5, -45 + bob);
-    ctx.lineTo(7.5, -45 + bob);
-    ctx.quadraticCurveTo(9, -41.5 + bob, 8.5, -38 + bob);
-    ctx.lineTo(-8.5, -38 + bob);
-    ctx.quadraticCurveTo(-9, -41.5 + bob, -7.5, -45 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.moveTo(-7.5, -45 + bob);
-    ctx.lineTo(-3.5, -45 + bob);
-    ctx.lineTo(-4, -38 + bob);
-    ctx.lineTo(-8.5, -38 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#0c4a6e';
-    ctx.lineWidth = 1.4;
     ctx.stroke();
 
-    // 4. Tailored Cobalt Halter Crop Top with V-Neckline & Cel Fold
-    ctx.fillStyle = '#1d4ed8';
+    // Outer royal-cobalt skirt flowing cleanly over knees
+    ctx.fillStyle = '#1e64c8';
     ctx.beginPath();
-    ctx.moveTo(-10, -59 + bob);
-    ctx.lineTo(-3, -59 + bob);
-    ctx.lineTo(0, -55 + bob);
-    ctx.lineTo(3, -59 + bob);
-    ctx.lineTo(10, -59 + bob);
-    ctx.quadraticCurveTo(9.5, -51 + bob, 8.5, -44 + bob);
-    ctx.lineTo(-8.5, -44 + bob);
-    ctx.quadraticCurveTo(-9.5, -51 + bob, -10, -59 + bob);
+    ctx.moveTo(-8.5, -39 + bob);
+    ctx.lineTo(8.5, -39 + bob);
+    ctx.quadraticCurveTo(14 + skSway * 0.4, -26 + bob, 17 + skSway, -14 + bob);
+    ctx.quadraticCurveTo(4 + skSway * 0.4, -22 + bob, -18 + skSway, -13 + bob);
+    ctx.quadraticCurveTo(-15 + skSway * 0.4, -26 + bob, -8.5, -39 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#1e3a8a';
+    ctx.stroke();
+    // Dark navy diamond inverted triangle on skirt waist
+    ctx.fillStyle = '#0b1c48';
     ctx.beginPath();
-    ctx.moveTo(-10, -59 + bob);
-    ctx.lineTo(-4.5, -59 + bob);
-    ctx.lineTo(-4, -44 + bob);
-    ctx.lineTo(-8.5, -44 + bob);
-    ctx.quadraticCurveTo(-9.5, -51 + bob, -10, -59 + bob);
+    ctx.moveTo(-7.5, -39 + bob);
+    ctx.lineTo(7.5, -39 + bob);
+    ctx.lineTo(0, -30 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#0f172a';
+    ctx.stroke();
+
+    // 3. Exposed Cyan Midriff + Cobalt Halter Top w/ Dark Navy Diamond & Fluttering Ribbons (Lapis.png!)
+    ctx.fillStyle = skin;
+    ctx.beginPath();
+    ctx.moveTo(-7, -45 + bob);
+    ctx.lineTo(7, -45 + bob);
+    ctx.lineTo(7.5, -39 + bob);
+    ctx.lineTo(-7.5, -39 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Fluttering cobalt neck ribbons behind shoulder
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 3.8;
+    ctx.beginPath();
+    ctx.moveTo(-5, -59 + bob);
+    ctx.quadraticCurveTo(-15 + skSway * 0.5, -58 + bob, -22 + skSway, -51 + bob + hair.swayY * 0.3);
+    ctx.stroke();
+    ctx.strokeStyle = '#1e64c8';
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    // Cobalt halter bodice + dark navy upper diamond
+    ctx.fillStyle = '#1e64c8';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-8.5, -60 + bob);
+    ctx.lineTo(-2.5, -60 + bob);
+    ctx.lineTo(0, -54 + bob);
+    ctx.lineTo(2.5, -60 + bob);
+    ctx.lineTo(8.5, -60 + bob);
+    ctx.lineTo(7.5, -44 + bob);
+    ctx.lineTo(-7.5, -44 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#0b1c48';
+    ctx.beginPath();
+    ctx.moveTo(0, -55 + bob);
+    ctx.lineTo(6.5, -45 + bob);
+    ctx.lineTo(-6.5, -45 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // 4. Swept Asymmetrical Royal-Blue Bob Hair (matches Lapis.png!)
+    const hSway = hair.swayX * 0.6;
+    ctx.fillStyle = '#1d63c6';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(-10, -59 + bob);
-    ctx.lineTo(-3, -59 + bob);
-    ctx.lineTo(0, -55 + bob);
-    ctx.lineTo(3, -59 + bob);
-    ctx.lineTo(10, -59 + bob);
-    ctx.quadraticCurveTo(9.5, -51 + bob, 8.5, -44 + bob);
-    ctx.lineTo(-8.5, -44 + bob);
-    ctx.quadraticCurveTo(-9.5, -51 + bob, -10, -59 + bob);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fillStyle = '#1e3a8a';
-    ctx.beginPath();
-    ctx.moveTo(0, -58 + bob);
-    ctx.lineTo(6.5, -51 + bob);
-    ctx.lineTo(0, -44.5 + bob);
-    ctx.lineTo(-6.5, -51 + bob);
-    ctx.closePath();
-    ctx.fill();
-    // Halter neck ribbon fluttering back (-X)
-    ctx.strokeStyle = '#1e3a8a';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-4, -60 + bob);
-    ctx.quadraticCurveTo(-13 + skSway * 0.4, -61 + bob, -18 + skSway, -54 + bob + hair.swayY * 0.3);
-    ctx.stroke();
-
-    ctx.fillStyle = '#0284c7';
-    ctx.beginPath();
-    ctx.ellipse(-8, -53 + bob, 2.8, 4.8, 0.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 5. SLEEK, FLUID FEATHERED DARK-NAVY BOB HAIR (Back Volume — Zero Stiff Rectangles!)
-    const hSway = hair.swayX * 0.65;
-    ctx.fillStyle = '#172554';
     ctx.beginPath();
     ctx.moveTo(0, -92 + bob);
-    ctx.bezierCurveTo(-18, -91 + bob, -22 + hSway * 0.5, -74 + bob, -21 + hSway, -58 + bob + hair.swayY * 0.5);
-    // Feathered flared bob tips behind neck (-X)
-    ctx.quadraticCurveTo(-14 + hSway * 0.7, -61 + bob, -12 + hSway * 0.6, -56 + bob);
-    ctx.quadraticCurveTo(-4, -59 + bob, 14 + hSway * 0.3, -58 + bob);
-    ctx.bezierCurveTo(19, -68 + bob, 18, -88 + bob, 0, -92 + bob);
+    ctx.quadraticCurveTo(-14, -93 + bob, -20 + hSway * 0.4, -79 + bob);
+    ctx.lineTo(-16 + hSway * 0.5, -75 + bob);
+    ctx.quadraticCurveTo(-22 + hSway * 0.7, -69 + bob, -15 + hSway * 0.6, -63 + bob);
+    ctx.quadraticCurveTo(-6, -62 + bob, 14 + hSway * 0.3, -64 + bob);
+    ctx.quadraticCurveTo(21, -72 + bob, 18, -84 + bob);
+    ctx.lineTo(13, -86 + bob);
+    ctx.quadraticCurveTo(10, -93 + bob, 0, -92 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
-    // 6. Pale Cerulean Tapered Neck & Sculpted Cel Face (canon Lapis)
-    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0.5, -66 + bob, 3.4, 3.0, '#7cc7e8', '#4f97bd', 1);
-    ctx.fillStyle = '#7cc7e8';
+    // 5. Slender Neck & Show-Accurate Cerulean Face + Two Expressive Eyes!
+    this.drawCelTaperedLimb(ctx, 0, -59 + bob, 0.5, -67 + bob, 3.0, 2.6, skin, skinShade, 1);
+    ctx.fillStyle = skin;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(0, -74 + bob, 12.6, 13.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(1, -76 + bob, 10.5, 11.6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#5bb0d4';
-    ctx.beginPath();
-    ctx.arc(0, -74 + bob, 12.6, 0.25 * Math.PI, 0.88 * Math.PI);
-    ctx.fill();
+    ctx.stroke();
 
-    // Feathered Front/Side Navy Bob Locks & Windswept Bangs!
-    ctx.fillStyle = '#1e3a8a';
+    // Sweeping front cobalt bangs across forehead
+    ctx.fillStyle = '#1d63c6';
     ctx.beginPath();
-    // Crown & windswept side-parted bangs
-    ctx.moveTo(-14, -82 + bob);
-    ctx.quadraticCurveTo(-12, -93 + bob, 1, -93 + bob);
-    ctx.quadraticCurveTo(13, -92 + bob, 15, -80 + bob);
-    // Right cheek-framing tapered lock
-    ctx.quadraticCurveTo(17, -69 + bob, 12 + hSway * 0.25, -60 + bob);
-    ctx.quadraticCurveTo(10, -68 + bob, 10, -77 + bob);
-    // Feathered forehead bangs
-    ctx.lineTo(6, -74 + bob);
-    ctx.lineTo(1, -81 + bob);
-    ctx.lineTo(-4, -73.5 + bob);
-    ctx.lineTo(-9, -80 + bob);
-    // Left side feathered bob lock flaring softly
-    ctx.quadraticCurveTo(-11, -67 + bob, -16 + hSway * 0.5, -58 + bob);
-    ctx.quadraticCurveTo(-19 + hSway * 0.4, -70 + bob, -14, -82 + bob);
+    ctx.moveTo(-11, -80 + bob);
+    ctx.quadraticCurveTo(-6, -92 + bob, 7, -90 + bob);
+    ctx.quadraticCurveTo(14, -87 + bob, 12, -79 + bob);
+    ctx.quadraticCurveTo(7, -84 + bob, 2, -81 + bob);
+    ctx.quadraticCurveTo(-3, -86 + bob, -11, -80 + bob);
     ctx.closePath();
     ctx.fill();
-
-    // Peridot-grade 3-tone Ocean-Blue hair crown sheen + floating hydro-orb aura
-    ctx.strokeStyle = '#60a5fa';
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.arc(0, -79 + bob, 11.2, Math.PI * 1.15, Math.PI * 1.85);
     ctx.stroke();
-    ctx.strokeStyle = '#bae6fd';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.arc(1, -80 + bob, 9.5, Math.PI * 1.28, Math.PI * 1.68);
-    ctx.stroke();
-    if (actionType !== 'attack') {
-      const orbY = -48 + bob + Math.sin(Date.now() * 0.005) * 4;
-      ctx.save();
-      ctx.globalAlpha = 0.72;
-      ctx.fillStyle = '#38bdf8';
-      ctx.beginPath();
-      ctx.arc(-16, orbY, 3.8, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#e0f2fe';
-      ctx.beginPath();
-      ctx.arc(-17, orbY - 1.2, 1.3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
 
-    // 7. Expressive Deep Lapis Anime Eye (with natural blink!)
+    // Expressive Twin Eyes (Lapis.png!)
     if (this.isBlinking && !this.isAttacking && !isGlowing) {
-      ctx.strokeStyle = '#1e3a8a';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.arc(3.5, -74 + bob, 3.6, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.arc(-2, -76 + bob, 2.7, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(6, -76 + bob, 2.7, 0.15 * Math.PI, 0.85 * Math.PI);
       ctx.stroke();
     } else {
-      ctx.fillStyle = isGlowing ? '#bae6fd' : '#ffffff';
-      ctx.beginPath();
-      ctx.ellipse(3.5, -74.5 + bob, 4.3, 5.5, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = isGlowing ? '#38bdf8' : '#0284c7';
-      ctx.beginPath();
-      ctx.ellipse(4, -74 + bob, 3.1, 4.4, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = isGlowing ? '#ffffff' : '#082f49';
-      ctx.beginPath();
-      ctx.ellipse(4.3, -74 + bob, 1.7, 2.8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(4.7, -76 + bob, 1.3, 0, Math.PI * 2);
-      ctx.arc(3.2, -72.5 + bob, 0.7, 0, Math.PI * 2);
-      ctx.fill();
+      for (const [ex, erx] of [[-2, 2.9], [6, 2.8]]) {
+        ctx.fillStyle = isGlowing ? '#e0f2fe' : '#ffffff';
+        ctx.strokeStyle = ink;
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.ellipse(ex, -76 + bob, erx, 4.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = isGlowing ? '#38bdf8' : '#0f2046';
+        ctx.beginPath();
+        ctx.ellipse(ex + 0.7, -75.8 + bob, 1.3, 2.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
-
-    ctx.strokeStyle = '#1e3a8a';
-    ctx.lineWidth = 1.6;
+    // Subtle nose & serene mouth
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
-    ctx.moveTo(-0.5, -79.5 + bob);
-    ctx.quadraticCurveTo(4, -81.5 + bob, 8.5, -78.5 + bob);
+    ctx.moveTo(2.5, -75 + bob); ctx.lineTo(4.2, -72.5 + bob); ctx.lineTo(2.2, -72 + bob);
+    ctx.moveTo(0, -68 + bob); ctx.quadraticCurveTo(2.5, -67 + bob, 4.8, -68 + bob);
     ctx.stroke();
 
-    ctx.strokeStyle = '#075985';
-    ctx.lineWidth = 1.4;
-    ctx.beginPath();
-    ctx.moveTo(1.5, -65.5 + bob);
-    ctx.quadraticCurveTo(4.5, -63.5 + bob, 7, -65 + bob);
-    ctx.stroke();
-
-    // 8. Graceful Hydrokinetic Arm Choreography & Water Constructs!
+    // 6. Graceful Hydrokinetic Arm Choreography & Water Constructs!
     if (isTidal) {
-      this.drawArticulatedArm(ctx, -8, -56 + bob, -15, -68 + bob, -11, -82 + bob, '#38bdf8', '#38bdf8', 5.5, 5, '#bae6fd', 4);
-      this.drawArticulatedArm(ctx, 8, -56 + bob, 15, -68 + bob, 11, -82 + bob, '#38bdf8', '#38bdf8', 5.5, 5, '#bae6fd', 4);
+      this.drawArticulatedArm(ctx, -8, -56 + bob, -15, -68 + bob, -11, -82 + bob, skin, skin, 4.8, 4.2, '#bae6fd', 4);
+      this.drawArticulatedArm(ctx, 8, -56 + bob, 15, -68 + bob, 11, -82 + bob, skin, skin, 4.8, 4.2, '#bae6fd', 4);
       ctx.fillStyle = 'rgba(56, 189, 248, 0.9)';
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.6;
@@ -16855,8 +16427,7 @@ class PlayerHero {
       const throwReach = Math.max(0, strike) * 26;
       const hx = 20 + throwReach;
       const hy = -54 + bob;
-      this.drawArticulatedArm(ctx, 7, -56 + bob, 13 + throwReach * 0.45, -55 + bob, hx, hy, '#38bdf8', '#38bdf8', 5.8, 5, '#bae6fd', 4);
-      // Giant Sculpted Hydro Gauntlet Fist!
+      this.drawArticulatedArm(ctx, 7, -56 + bob, 13 + throwReach * 0.45, -55 + bob, hx, hy, skin, skin, 4.8, 4.2, '#bae6fd', 4);
       ctx.fillStyle = 'rgba(14, 165, 233, 0.85)';
       ctx.strokeStyle = '#e0f2fe';
       ctx.lineWidth = 2;
@@ -16867,15 +16438,13 @@ class PlayerHero {
     } else if (isPunch) {
       const reach = Math.max(0, strike) * 30;
       if (combo === 0) {
-        // Hit 1: Sweeping Arm Arc + Luminous Crescent Water Scythe!
         const hx = 18 + reach * 0.55;
         const hy = -52 + bob;
-        this.drawArticulatedArm(ctx, 7, -56 + bob, 13 + reach * 0.25, -55 + bob, hx, hy, '#38bdf8', '#38bdf8', 5.8, 5, '#bae6fd', 3.8);
+        this.drawArticulatedArm(ctx, 7, -56 + bob, 13 + reach * 0.25, -55 + bob, hx, hy, skin, skin, 4.8, 4.2, '#bae6fd', 3.8);
         this.drawCrescentSlash(ctx, hx + 6, hy, 24 + reach * 0.4, -Math.PI * 0.48, Math.PI * 0.48, 'rgba(14, 165, 233, 0.45)', 'rgba(56, 189, 248, 0.92)', '#ffffff', 12);
       } else if (combo === 1) {
-        // Hit 2: Rising Palm Uppercut + Colossal Surging Water Fist!
         const lift = Math.max(0, strike) * 24;
-        this.drawArticulatedArm(ctx, 7, -56 + bob, 14, -58 + bob - lift * 0.4, 18 + reach * 0.35, -62 + bob - lift, '#38bdf8', '#38bdf8', 5.8, 5, '#bae6fd', 4);
+        this.drawArticulatedArm(ctx, 7, -56 + bob, 14, -58 + bob - lift * 0.4, 18 + reach * 0.35, -62 + bob - lift, skin, skin, 4.8, 4.2, '#bae6fd', 4);
         ctx.fillStyle = 'rgba(2, 132, 199, 0.88)';
         ctx.strokeStyle = '#e0f2fe';
         ctx.lineWidth = 2.2;
@@ -16884,9 +16453,8 @@ class PlayerHero {
         ctx.fill();
         ctx.stroke();
       } else {
-        // Hit 3: Twin-Arm Cross Sweep + Dual Coiling Ocean Dragon Tendrils!
-        this.drawArticulatedArm(ctx, -6, -56 + bob, 6, -62 + bob, 18 + reach * 0.4, -58 + bob, '#38bdf8', '#38bdf8', 5.5, 4.8);
-        this.drawArticulatedArm(ctx, 7, -56 + bob, 14, -48 + bob, 22 + reach * 0.45, -44 + bob, '#38bdf8', '#38bdf8', 5.8, 5);
+        this.drawArticulatedArm(ctx, -6, -56 + bob, 6, -62 + bob, 18 + reach * 0.4, -58 + bob, skin, skin, 4.6, 4.0);
+        this.drawArticulatedArm(ctx, 7, -56 + bob, 14, -48 + bob, 22 + reach * 0.45, -44 + bob, skin, skin, 4.8, 4.2);
         ctx.strokeStyle = 'rgba(14, 165, 233, 0.92)';
         ctx.lineWidth = 6.5;
         ctx.beginPath();
@@ -16900,14 +16468,14 @@ class PlayerHero {
         ctx.stroke();
       }
     } else {
-      const armSwing = motion.armSwingF * 11;
-      this.drawArticulatedArm(ctx, 6, -55 + bob, 8 + armSwing * 0.45, -46 + bob, 7 + armSwing, -37 + bob, '#7cc7e8', '#7cc7e8', 5.4, 4.6, '#7cc7e8', 3.2);
+      const armSwing = motion.armSwingF * 10;
+      this.drawArticulatedArm(ctx, -7, -56 + bob, -12 - armSwing * 0.35, -46 + bob, -15 - armSwing * 0.6, -37 + bob, skinShade, skinShade, 4.4, 3.6, skinShade, 3.0);
+      this.drawArticulatedArm(ctx, 7, -56 + bob, 12 + armSwing * 0.4, -46 + bob, 14 + armSwing * 0.7, -37 + bob, skin, skin, 4.5, 3.8, skin, 3.1);
     }
   }
 
   // --- SHOW-ACCURATE ROSE QUARTZ ---
   drawRose(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'rose', bob, animP, actionType, 100)) return;
     const motion = this.getCharacterMotionState();
     const hair = this.getHairSway(animP, actionType);
     const strike = this.getStrikeCurve(animP);
@@ -16965,89 +16533,67 @@ class PlayerHero {
     drawSpiralTubeEnd(-14 + swX * 0.8, -14 + bob + swY, 9);
     drawSpiralTubeEnd(-28 + swX * 0.7, -42 + bob + swY * 0.6, 8);
 
-    // 1. Multi-Tiered Scalloped White & Pastel-Pink Bell Gown (Rose ref!)
+    // 1. Multi-Tiered Scalloped Ivory-to-Blush Bell Gown with Crisp Ink Outlines (Rose.jpeg!)
+    const ink = '#331224';
     const gownSway = swX * 0.45;
-    ctx.fillStyle = '#fbcfe8';
+    ctx.fillStyle = '#fce7f3';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(-17, -42 + bob);
     ctx.lineTo(17, -42 + bob);
-    ctx.quadraticCurveTo(24 + gownSway * 0.5, -18 + bob, 28 + gownSway, 1 + bob);
-    ctx.quadraticCurveTo(0 + gownSway, 4 + bob, -28 + gownSway, 1 + bob);
+    ctx.quadraticCurveTo(25 + gownSway * 0.5, -18 + bob, 29 + gownSway, 1 + bob);
+    ctx.quadraticCurveTo(0 + gownSway, 4 + bob, -29 + gownSway, 1 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
-    // Upper scalloped white/ivory petal tier (#fffbeb)
-    ctx.fillStyle = '#fffbeb';
+    // Scalloped petal tier lines across ballgown (matches Rose.jpeg!)
+    ctx.strokeStyle = '#d69eb8';
+    ctx.lineWidth = 1.4;
     ctx.beginPath();
-    ctx.moveTo(-16, -44 + bob);
-    ctx.lineTo(16, -44 + bob);
-    ctx.lineTo(23 + gownSway * 0.6, -12 + bob);
-    ctx.quadraticCurveTo(11 + gownSway * 0.6, -6 + bob, 0 + gownSway * 0.6, -13 + bob);
-    ctx.quadraticCurveTo(-11 + gownSway * 0.6, -6 + bob, -23 + gownSway * 0.6, -12 + bob);
-    ctx.closePath();
-    ctx.fill();
+    ctx.moveTo(-24 + gownSway * 0.7, -14 + bob);
+    ctx.quadraticCurveTo(-8 + gownSway * 0.6, -10 + bob, 0 + gownSway * 0.6, -17 + bob);
+    ctx.quadraticCurveTo(10 + gownSway * 0.6, -10 + bob, 24 + gownSway * 0.7, -14 + bob);
+    ctx.stroke();
 
-    // 2. Sculpted Regal Cream-Ivory Bodice with Cel-Shaded Corset Seams & Petal Aura
+    // Upper scalloped cream-ivory bodice & skirt tier (#fffbeb)
     ctx.fillStyle = '#fffbeb';
-    ctx.beginPath();
-    ctx.moveTo(-15, -63 + bob);
-    ctx.quadraticCurveTo(0, -59 + bob, 15, -63 + bob);
-    ctx.quadraticCurveTo(16, -51 + bob, 13.5, -40 + bob);
-    ctx.lineTo(-13.5, -40 + bob);
-    ctx.quadraticCurveTo(-16, -51 + bob, -15, -63 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#fde68a';
-    ctx.beginPath();
-    ctx.moveTo(-15, -63 + bob);
-    ctx.lineTo(-8.5, -62 + bob);
-    ctx.quadraticCurveTo(-9, -51 + bob, -8, -40 + bob);
-    ctx.lineTo(-13.5, -40 + bob);
-    ctx.quadraticCurveTo(-16, -51 + bob, -15, -63 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#92400e';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-15, -63 + bob);
-    ctx.quadraticCurveTo(0, -59 + bob, 15, -63 + bob);
-    ctx.quadraticCurveTo(16, -51 + bob, 13.5, -40 + bob);
-    ctx.lineTo(-13.5, -40 + bob);
-    ctx.quadraticCurveTo(-16, -51 + bob, -15, -63 + bob);
+    ctx.moveTo(-15, -62 + bob);
+    ctx.quadraticCurveTo(-6, -65 + bob, 0, -59 + bob);
+    ctx.quadraticCurveTo(6, -65 + bob, 15, -62 + bob);
+    ctx.lineTo(22 + gownSway * 0.4, -27 + bob);
+    ctx.quadraticCurveTo(11 + gownSway * 0.4, -23 + bob, 0 + gownSway * 0.4, -31 + bob);
+    ctx.quadraticCurveTo(-11 + gownSway * 0.4, -23 + bob, -22 + gownSway * 0.4, -27 + bob);
     ctx.closePath();
+    ctx.fill();
     ctx.stroke();
-    // Subtle floating rose-quartz petal glint when idle
-    if (actionType !== 'attack') {
-      const petT = Date.now() * 0.004;
-      ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = '#f9a8d4';
-      ctx.beginPath();
-      ctx.ellipse(-20, -48 + bob + Math.sin(petT) * 3, 3.2, 1.8, 0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
 
-    ctx.fillStyle = '#ff6097';
-    this.drawMiniStar(ctx, 1, -28 + bob, 7);
-    ctx.fillStyle = '#f43f5e';
+    // Iconic 5-point star cutout on stomach displaying Rose Quartz navel gem!
+    ctx.fillStyle = '#fce4ec';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.2;
+    this.drawMiniStar(ctx, 1, -46 + bob, 8.2);
+    ctx.fillStyle = '#f472b6';
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
-    ctx.arc(1, -28 + bob, 4.5, 0, Math.PI * 2);
+    ctx.arc(1, -46 + bob, 4.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    // 3. Sculpted Cream Neck & Gentle Motherly Cel Face
-    this.drawCelTaperedLimb(ctx, 0, -61 + bob, 0, -70 + bob, 4.8, 4.4, '#fed7aa', '#fdba74', 1);
-    ctx.fillStyle = '#fed7aa';
+    // 3. Sculpted Blush-Ivory Neck & Gentle Motherly Cel Face (Rose.jpeg!)
+    this.drawCelTaperedLimb(ctx, 0, -61 + bob, 0, -70 + bob, 4.8, 4.4, '#fce4ec', '#f8bbd0', 1);
+    ctx.fillStyle = '#fce4ec';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.ellipse(0, -80 + bob, 15.2, 16.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -80 + bob, 14.8, 15.6, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#fdba74';
-    ctx.beginPath();
-    ctx.arc(0, -80 + bob, 15.2, 0.25 * Math.PI, 0.88 * Math.PI);
-    ctx.fill();
+    ctx.stroke();
 
     // Romantic Star-Parted Pink Curtain Bangs & Shoulder Spiral Tube Ringlets!
     ctx.fillStyle = '#f472b6';
@@ -17268,7 +16814,6 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE CONNIE MAHESWARAN (SAVE THE LIGHT DESIGN) ---
   drawConnie(ctx, bob, animP = 0, actionType = '') {
-    if (this.draw2DCharacterSprite(ctx, 'connie', bob, animP, actionType, 88)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -17280,12 +16825,13 @@ class PlayerHero {
 
     // Lars/Lion lore: If revived in 2P Arcade Mode, Connie becomes Pink Connie!
     const pinkRev = !!this.isPinkRevived;
-    const hairMain = pinkRev ? '#f472b6' : '#1c1917';
-    const hairSheen = pinkRev ? '#fbcfe8' : '#3f3f46';
-    const skinMain = pinkRev ? '#f9a8d4' : '#a16207';
-    const skinShade = pinkRev ? '#ec4899' : '#78350f';
-    const faceDarkShade = pinkRev ? '#db2777' : '#854d0e';
-    const irisColor = pinkRev ? '#db2777' : '#1c1917';
+    const ink = pinkRev ? '#831843' : '#1c1110';
+    const hairMain = pinkRev ? '#f472b6' : '#1e1114';
+    const hairSheen = pinkRev ? '#fbcfe8' : '#3f282d';
+    const skinMain = pinkRev ? '#f9a8d4' : '#8d4e31';
+    const skinShade = pinkRev ? '#ec4899' : '#6c3820';
+    const faceDarkShade = pinkRev ? '#db2777' : '#733b22';
+    const irisColor = pinkRev ? '#831843' : '#1c1110';
 
     if (pinkRev) {
       ctx.save();
@@ -17345,96 +16891,45 @@ class PlayerHero {
       this.drawArticulatedArm(ctx, -10, -54 + bob, -15 - armSwing * 0.5, -44 + bob, -13 - armSwing, -34 + bob, skinMain, skinMain, 6.2, 5.2, skinMain, 3.6);
     }
 
-    // 3. Diagonal Brass-Capped Scabbard & Contoured Collared Button Shirt
-    ctx.save();
-    ctx.fillStyle = '#92400e';
-    ctx.beginPath();
-    ctx.moveTo(-15, -64 + bob);
-    ctx.lineTo(-10, -64 + bob);
-    ctx.lineTo(-12, -26 + bob);
-    ctx.lineTo(-17, -28 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#451a03';
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(-15.5, -64 + bob, 6, 3);
-    ctx.restore();
-
+    // 3. Clean Collared Sleeveless White Shirt + Slate-Grey Cuffed Shorts (Connie.jpeg!)
     ctx.fillStyle = '#f8fafc';
-    ctx.beginPath();
-    ctx.moveTo(-12.5, -58 + bob);
-    ctx.lineTo(12.5, -58 + bob);
-    ctx.quadraticCurveTo(13.5, -42 + bob, 11.5, -25 + bob);
-    ctx.lineTo(-11.5, -25 + bob);
-    ctx.quadraticCurveTo(-13.5, -42 + bob, -12.5, -58 + bob);
-    ctx.closePath();
-    ctx.fill();
-    // Shirt cel-shadow side fold & crisp collar lapels
-    ctx.fillStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(-12.5, -58 + bob);
-    ctx.lineTo(-6.5, -58 + bob);
-    ctx.lineTo(-6, -25 + bob);
-    ctx.lineTo(-11.5, -25 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(-12.5, -58 + bob);
-    ctx.lineTo(12.5, -58 + bob);
-    ctx.quadraticCurveTo(13.5, -42 + bob, 11.5, -25 + bob);
-    ctx.lineTo(-11.5, -25 + bob);
-    ctx.quadraticCurveTo(-13.5, -42 + bob, -12.5, -58 + bob);
+    ctx.moveTo(-11.5, -57 + bob);
+    ctx.lineTo(11.5, -57 + bob);
+    ctx.quadraticCurveTo(12.5, -42 + bob, 10.5, -28 + bob);
+    ctx.lineTo(-10.5, -28 + bob);
+    ctx.quadraticCurveTo(-12.5, -42 + bob, -11.5, -57 + bob);
     ctx.closePath();
+    ctx.fill();
     ctx.stroke();
-    // V-collar lapels + button placket
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.3;
+    // Crisp pointed shirt collar + two small top buttons (matches Connie.jpeg!)
     ctx.beginPath();
-    ctx.moveTo(-5, -58 + bob);
-    ctx.lineTo(0, -51 + bob);
-    ctx.lineTo(5, -58 + bob);
-    ctx.moveTo(0, -51 + bob);
-    ctx.lineTo(0, -26 + bob);
+    ctx.moveTo(-6, -57 + bob); ctx.lineTo(-2, -51 + bob); ctx.lineTo(0, -54 + bob);
+    ctx.lineTo(2, -51 + bob); ctx.lineTo(6, -57 + bob);
     ctx.stroke();
-    // Crisp shirt collar & button placket
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.lineWidth = 1.6;
+    ctx.fillStyle = '#475569';
     ctx.beginPath();
-    ctx.moveTo(-7, -58 + bob);
-    ctx.lineTo(0, -51 + bob);
-    ctx.lineTo(7, -58 + bob);
-    ctx.moveTo(0, -51 + bob);
-    ctx.lineTo(0, -29 + bob);
+    ctx.arc(0.5, -48 + bob, 1.2, 0, Math.PI * 2);
+    ctx.arc(0.5, -43 + bob, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+    // Slate-grey shorts waist band
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.roundRect(-11, -30 + bob, 22, 7, 2);
+    ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#78350f';
-    ctx.fillRect(-13, -28 + bob, 26, 4);
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(-3, -29 + bob, 6, 6);
-
-    ctx.strokeStyle = '#78350f';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(11, -58 + bob);
-    ctx.lineTo(-11, -28 + bob);
-    ctx.stroke();
-    ctx.fillStyle = '#fbbf24';
-    ctx.fillRect(-2, -45 + bob, 5, 5);
-
-    // 4. Tapered Neck & Sculpted Cel Face (zero polka-dot blush!)
-    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0, -66 + bob, 4.0, 3.5, skinMain, skinShade, 1);
+    // 4. Tapered Neck & Sculpted Cel Face with Crisp Ink Outline (Connie.jpeg!)
+    this.drawCelTaperedLimb(ctx, 0, -57 + bob, 0, -66 + bob, 3.8, 3.4, skinMain, skinShade, 1);
     ctx.fillStyle = skinMain;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.ellipse(0, -74 + bob, 13.6, 14.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, -74 + bob, 13.0, 14.0, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = faceDarkShade;
-    ctx.beginPath();
-    ctx.arc(0, -74 + bob, 13.6, 0.25 * Math.PI, 0.88 * Math.PI);
-    ctx.fill();
+    ctx.stroke();
 
     // Sculpted Wavy Crown Hairline & Cheek-Framing S-Wave Tendrils!
     ctx.fillStyle = hairMain;
@@ -17663,7 +17158,6 @@ class PlayerHero {
       this.drawJasperSpinDash(ctx);
       return;
     }
-    if (this.draw2DCharacterSprite(ctx, 'jasper', bob, animP, actionType, 102)) return;
 
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
@@ -17688,172 +17182,165 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Main towering swept-back wavy Beta Quartz mane (#fed7aa)
-    ctx.fillStyle = '#fed7aa';
+    // Main towering spiky cream-blush Beta Quartz mane with crisp ink outline (Jasper.webp!)
+    const ink = '#241210';
+    ctx.fillStyle = '#fce7dc';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.moveTo(6, -115 + bob);
-    // Sweeping crown crest flowing into 3 heavy S-curved waves down her back (-X)!
-    ctx.bezierCurveTo(-18, -120 + bob, -36 + swX * 0.4, -98 + bob, -29 + swX * 0.6, -76 + bob + swY * 0.4);
-    ctx.bezierCurveTo(-40 + swX * 0.85, -60 + bob + swY * 0.7, -37 + swX * 1.1, -38 + bob + swY, -25 + swX * 1.15, -22 + bob + swY);
-    // Layered wavy mane locks (smooth S-tapers, not circles!)
+    ctx.moveTo(6, -116 + bob);
+    ctx.bezierCurveTo(-18, -122 + bob, -38 + swX * 0.4, -98 + bob, -31 + swX * 0.6, -76 + bob + swY * 0.4);
+    ctx.bezierCurveTo(-42 + swX * 0.85, -60 + bob + swY * 0.7, -38 + swX * 1.1, -38 + bob + swY, -25 + swX * 1.15, -22 + bob + swY);
     ctx.quadraticCurveTo(-16 + swX * 0.9, -30 + bob + swY, -14 + swX * 0.8, -40 + bob + swY * 0.7);
     ctx.quadraticCurveTo(-8 + swX * 0.65, -26 + bob + swY, 0 + swX * 0.45, -24 + bob + swY);
     ctx.quadraticCurveTo(8, -36 + bob, 10, -52 + bob);
-    ctx.bezierCurveTo(24, -60 + bob, 28, -88 + bob, 18, -106 + bob);
-    ctx.quadraticCurveTo(14, -114 + bob, 6, -115 + bob);
+    ctx.bezierCurveTo(24, -60 + bob, 29, -88 + bob, 19, -106 + bob);
+    ctx.quadraticCurveTo(14, -115 + bob, 6, -116 + bob);
     ctx.closePath();
     ctx.fill();
-
-    // Sunlit cream top-crest wave highlight (#ffedd5) + warm wave contour lines
-    ctx.fillStyle = '#ffedd5';
-    ctx.beginPath();
-    ctx.moveTo(4, -114 + bob);
-    ctx.bezierCurveTo(-14, -118 + bob, -28 + swX * 0.4, -98 + bob, -22 + swX * 0.6, -80 + bob);
-    ctx.quadraticCurveTo(-10, -90 + bob, 8, -106 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = '#fb923c';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-14, -98 + bob);
-    ctx.bezierCurveTo(-28 + swX * 0.5, -82 + bob, -20 + swX * 0.7, -62 + bob, -29 + swX, -40 + bob + swY);
     ctx.stroke();
 
-    // 1. Future Jasper: Tapered Torn-Knee Charcoal Pants & Heavy Maroon Combat Boots
+    // 1. Future Jasper: Tapered Dark-Espresso Torn-Knee Pants & Heavy Maroon Boots (Jasper.webp!)
     const drawJasperLeg = (lx, ly, rot, darken) => {
       ctx.save();
       ctx.translate(lx, -34 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 23, 7.4, 5.6, darken ? '#09090b' : '#18181b', '#000000', 1);
-      ctx.fillStyle = '#ea580c';
-      ctx.beginPath(); ctx.roundRect(-3.8, 9.5, 7.6, 5.2, 2); ctx.fill();
-      this.drawCelBoot(ctx, 0.5, 33, 12, 8.8, '#7f1d1d', '#450a0a', '#991b1b');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 23, 7.8, 5.8, darken ? '#1f1212' : '#2b1a19', '#140a0a', 1);
+      // Iconic jagged orange torn-knee cutout!
+      ctx.fillStyle = '#f59e42';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-4, 10); ctx.lineTo(4.5, 9); ctx.lineTo(3, 13.5); ctx.lineTo(-3, 12.5);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      this.drawCelBoot(ctx, 0.5, 33, 12.5, 9.0, '#7f2424', '#3b1212', '#992b2b');
       ctx.restore();
     };
     drawJasperLeg(-9 + legs.backX, legs.backY, legs.backRot, true);
     drawJasperLeg(8 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. Rear Left Muscular Arm w/ Teal Corruption Patch + continuous sway
+    // 2. Rear Left Muscular Arm w/ Crimson Stripe & Teal Corruption Patch (Jasper.webp!)
     if (!(isPunch && combo === 1)) {
       const chamber = (isPunch && (combo === 0 || combo === 2)) ? Math.max(0, strike) * 8 : motion.armSwingB * 14;
-      this.drawArticulatedArm(ctx, -18, -68 + bob, -26 - chamber * 0.5, -56 + bob, -22 - chamber, -44 + bob, '#ea580c', '#c2410c', 12, 10.5, '#991b1b', 7);
-      ctx.fillStyle = '#0d9488';
+      this.drawArticulatedArm(ctx, -18, -68 + bob, -26 - chamber * 0.5, -56 + bob, -22 - chamber, -44 + bob, '#f59e42', '#dc2626', 12, 10.5, '#f59e42', 7);
+      ctx.fillStyle = '#14b8a6';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.ellipse(-20 - chamber * 0.25, -62 + bob, 4, 2.5, -0.3, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.ellipse(-21 - chamber * 0.25, -62 + bob, 4.8, 3.2, -0.3, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
     }
 
-    // 3. Show-Accurate Jasper: Deep Burgundy & Burnt-Orange Homeworld Quartz Warrior Armor + Golden Diamond Crest!
-    ctx.fillStyle = '#7f1d1d';
-    ctx.beginPath();
-    ctx.moveTo(-22, -74 + bob);
-    ctx.lineTo(22, -74 + bob);
-    ctx.lineTo(17, -32 + bob);
-    ctx.lineTo(-17, -32 + bob);
-    ctx.closePath();
-    ctx.fill();
-    // Burnt-orange V-chevron upper chest armor panel
-    ctx.fillStyle = '#c2410c';
-    ctx.beginPath();
-    ctx.moveTo(-22, -74 + bob);
-    ctx.lineTo(22, -74 + bob);
-    ctx.lineTo(14, -54 + bob);
-    ctx.lineTo(0, -44 + bob);
-    ctx.lineTo(-14, -54 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = '#450a0a';
+    // 3. Show-Accurate Future Jasper: Cropped Peach/Maroon V-Cut Quartz Tunic + High-Waist Dark Pants (Jasper.webp!)
+    ctx.fillStyle = '#2b1a19';
+    ctx.strokeStyle = ink;
     ctx.lineWidth = 1.8;
-    ctx.stroke();
-    // Dark maroon waist belt
-    ctx.fillStyle = '#450a0a';
-    ctx.beginPath(); ctx.roundRect(-17, -37 + bob, 34, 6, 2.5); ctx.fill();
-
-    // Iconic Yellow/Amber Diamond Insignia on Chest
-    ctx.fillStyle = '#fde047';
-    this.drawDiamondInsignia(ctx, 1, -57 + bob, 7.5);
-
-    // 4. Tapered Neck & Broad Fierce Tiger-Striped Cel Face
-    this.drawCelTaperedLimb(ctx, 0, -72 + bob, 0, -82 + bob, 6.8, 6.0, '#ea580c', '#c2410c', 1);
     ctx.beginPath();
-    ctx.ellipse(0, -90 + bob, 17, 18, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(-17, -48 + bob);
+    ctx.lineTo(17, -48 + bob);
+    ctx.lineTo(18, -30 + bob);
+    ctx.lineTo(-18, -30 + bob);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
 
-    // Jagged Crimson Quartz Tiger-Mask Stripe across eyes
-    ctx.fillStyle = '#991b1b';
+    // Peach & Maroon diagonal X-strap Quartz sleeveless top!
+    ctx.fillStyle = '#f7c5a8';
     ctx.beginPath();
-    ctx.moveTo(-15, -97 + bob);
-    ctx.lineTo(-5, -94 + bob);
-    ctx.lineTo(0, -96.5 + bob);
-    ctx.lineTo(5, -94 + bob);
-    ctx.lineTo(15, -97 + bob);
-    ctx.lineTo(14.5, -88 + bob);
-    ctx.lineTo(4, -90 + bob);
-    ctx.lineTo(0, -87 + bob);
-    ctx.lineTo(-4, -90 + bob);
-    ctx.lineTo(-14.5, -88 + bob);
+    ctx.moveTo(-21, -74 + bob);
+    ctx.lineTo(-8, -74 + bob);
+    ctx.lineTo(0, -64 + bob);
+    ctx.lineTo(8, -74 + bob);
+    ctx.lineTo(21, -74 + bob);
+    ctx.lineTo(17, -48 + bob);
+    ctx.lineTo(-17, -48 + bob);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#882d2d';
+    ctx.beginPath();
+    ctx.moveTo(-19, -70 + bob); ctx.lineTo(0, -60 + bob); ctx.lineTo(19, -70 + bob);
+    ctx.lineTo(17, -48 + bob); ctx.lineTo(8, -48 + bob); ctx.lineTo(0, -56 + bob);
+    ctx.lineTo(-8, -48 + bob); ctx.lineTo(-17, -48 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#450a0a';
-    ctx.lineWidth = 1.3;
+
+    // 4. Tapered Tangerine-Orange Neck & Broad Fierce Tiger-Striped Cel Face (Jasper.webp!)
+    this.drawCelTaperedLimb(ctx, 0, -72 + bob, 0, -82 + bob, 6.8, 6.0, '#f59e42', '#d97706', 1);
+    ctx.fillStyle = '#f59e42';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.ellipse(0, -90 + bob, 16.2, 16.8, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.stroke();
-    // Future Jasper quartz helmet aura glint when idle
-    if (actionType !== 'attack') {
+
+    // Bold Crimson-Red Quartz Tiger-Mask Stripes across cheeks & brows
+    ctx.fillStyle = '#dc2626';
+    ctx.beginPath();
+    ctx.moveTo(-15, -96 + bob);
+    ctx.lineTo(-4, -93 + bob);
+    ctx.lineTo(0, -96 + bob);
+    ctx.lineTo(4, -93 + bob);
+    ctx.lineTo(15, -96 + bob);
+    ctx.lineTo(14.5, -86 + bob);
+    ctx.lineTo(5, -89 + bob);
+    ctx.lineTo(0, -86 + bob);
+    ctx.lineTo(-5, -89 + bob);
+    ctx.lineTo(-14.5, -86 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Swept-Back Spiky Cream-Blush Hair Framing Face + 2 Iconic Teal Corruption Horns!
+    ctx.fillStyle = '#fce7dc';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(0, -102 + bob);
+    ctx.quadraticCurveTo(-10, -108 + bob, -17, -99 + bob);
+    ctx.quadraticCurveTo(-19, -86 + bob, -14, -77 + bob);
+    ctx.lineTo(-12, -93 + bob);
+    ctx.lineTo(12, -93 + bob);
+    ctx.lineTo(14, -77 + bob);
+    ctx.quadraticCurveTo(19, -86 + bob, 17, -99 + bob);
+    ctx.quadraticCurveTo(10, -108 + bob, 0, -102 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Future Jasper: 2 Rounded Teal-Cyan Forehead Corruption Horns!
+    ctx.fillStyle = '#14b8a6';
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.5;
+    for (const [hx, rot] of [[-8.5, -0.35], [8.5, 0.35]]) {
       ctx.save();
-      ctx.globalAlpha = 0.55 + 0.3 * Math.sin(Date.now() * 0.005);
-      ctx.fillStyle = '#2dd4bf';
+      ctx.translate(hx, -103 + bob);
+      ctx.rotate(rot);
       ctx.beginPath();
-      ctx.arc(-8, -109 + bob, 2, 0, Math.PI * 2);
-      ctx.arc(8, -109 + bob, 2, 0, Math.PI * 2);
+      ctx.roundRect(-3.5, -6, 7, 9, 3);
       ctx.fill();
+      ctx.stroke();
       ctx.restore();
     }
 
-    // Sculpted Swept-Back Wavy Widow's Peak & Temple Locks Framing Face!
-    ctx.fillStyle = '#fed7aa';
-    ctx.beginPath();
-    // Fierce widow's peak at x=1, y=-101 sweeping up and out into wavy side locks!
-    ctx.moveTo(1, -101 + bob);
-    ctx.quadraticCurveTo(-9, -108 + bob, -17, -100 + bob);
-    ctx.bezierCurveTo(-23, -92 + bob, -20, -80 + bob, -24 + swX * 0.3, -72 + bob);
-    ctx.quadraticCurveTo(-16, -78 + bob, -15, -92 + bob);
-    ctx.lineTo(-15, -106 + bob);
-    ctx.lineTo(17, -106 + bob);
-    ctx.lineTo(15, -92 + bob);
-    ctx.quadraticCurveTo(16, -79 + bob, 22, -74 + bob);
-    ctx.bezierCurveTo(20, -84 + bob, 22, -94 + bob, 16, -101 + bob);
-    ctx.quadraticCurveTo(9, -108 + bob, 1, -101 + bob);
-    ctx.closePath();
-    ctx.fill();
-
-    // Future Jasper: 2 Small Teal-Cyan Forehead Corruption Horns!
-    ctx.fillStyle = '#0d9488';
-    ctx.strokeStyle = '#5eead4';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(-11, -101 + bob); ctx.lineTo(-14, -110 + bob); ctx.lineTo(-6, -103 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(11, -101 + bob); ctx.lineTo(14, -110 + bob); ctx.lineTo(6, -103 + bob);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Fierce Golden Eyes with Feline Slit Pupils
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath();
-    ctx.ellipse(-5, -92 + bob, 4, 4.8, 0, 0, Math.PI * 2);
-    ctx.ellipse(5.5, -92 + bob, 4, 4.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#450a0a';
-    ctx.beginPath();
-    ctx.ellipse(-4.8, -92 + bob, 1.6, 3.8, 0, 0, Math.PI * 2);
-    ctx.ellipse(5.7, -92 + bob, 1.6, 3.8, 0, 0, Math.PI * 2);
-    ctx.fill();
+    // Fierce White-Sclera Golden-Iris Eyes (matches Jasper.webp!)
+    for (const ex of [-5.2, 5.6]) {
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = ink;
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.ellipse(ex, -92 + bob, 3.8, 4.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#facc15';
+      ctx.beginPath();
+      ctx.ellipse(ex + 0.3, -92 + bob, 2.3, 3.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = ink;
+      ctx.beginPath();
+      ctx.arc(ex + 0.3, -92 + bob, 1.0, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     // Angry Quartz Brow Ridge
     ctx.strokeStyle = '#450a0a';
@@ -18882,7 +18369,6 @@ class PlayerHero {
 
   // --- 1. STEVONNIE (Steven + Connie) ---
   drawStevonnie(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'stevonnie', bob, animP, actionType, 100)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -19131,7 +18617,6 @@ class PlayerHero {
 
   // --- 2. SMOKY QUARTZ (Steven + Amethyst) ---
   drawSmokyQuartz(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'smoky', bob, animP, actionType, 98)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -19300,7 +18785,6 @@ class PlayerHero {
 
   // --- 3. RAINBOW QUARTZ 2.0 (Steven + Pearl) ---
   drawRainbowQuartz2(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'rainbow2', bob, animP, actionType, 100)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -19454,7 +18938,6 @@ class PlayerHero {
 
   // --- 4. SUNSTONE (Steven + Garnet) — Character style.mp4 Unleash Cel! ---
   drawSunstone(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'sunstone', bob, animP, actionType, 102)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
@@ -19614,7 +19097,6 @@ class PlayerHero {
 
   // --- 5. SUGILITE (Garnet + Amethyst) ---
   drawSugilite(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'sugilite', bob, animP, actionType, 108)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -19793,7 +19275,6 @@ class PlayerHero {
 
   // --- 6. SARDONYX (Garnet + Pearl) ---
   drawSardonyx(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'sardonyx', bob, animP, actionType, 106)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
@@ -19938,7 +19419,6 @@ class PlayerHero {
 
   // --- 7. OPAL (Pearl + Amethyst) ---
   drawOpal(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'opal', bob, animP, actionType, 106)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -20105,7 +19585,6 @@ class PlayerHero {
 
   // --- 8. MALACHITE (Lapis + Jasper) ---
   drawMalachite(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'malachite', bob, animP, actionType, 108)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -20253,7 +19732,6 @@ class PlayerHero {
 
   // --- 9. RAINBOW QUARTZ CLASSIC (Rose + Pearl) ---
   drawRainbowQuartzClassic(ctx, bob, animP, actionType) {
-    if (this.draw2DCharacterSprite(ctx, 'rainbowClassic', bob, animP, actionType, 102)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
