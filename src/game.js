@@ -8177,7 +8177,65 @@ class PlayerHero {
     ctx.restore();
   }
 
+  getLoaded2DSprite(key) {
+    if (typeof SPRITE_IMAGES === 'undefined' || !SPRITE_IMAGES[key] || typeof Image === 'undefined') return null;
+    const cache = (typeof window !== 'undefined' ? (window.__su2DSpriteCache = window.__su2DSpriteCache || {}) : (this._localSpriteCache = this._localSpriteCache || {}));
+    if (!cache[key]) {
+      try {
+        const im = new Image();
+        im.src = SPRITE_IMAGES[key];
+        cache[key] = im;
+      } catch (e) {
+        return null;
+      }
+    }
+    const img = cache[key];
+    return (img && img.complete && img.naturalWidth > 0) ? img : null;
+  }
+
+  draw2DCharacterSprite(ctx, charId, bob = 0, animP = 0, actionType = '', targetHeight = 90) {
+    const spriteKey = (charId === 'connie' && this.isPinkRevived) ? 'connie_pink' : charId;
+    const img = this.getLoaded2DSprite(spriteKey);
+    if (!img) return false;
+
+    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() / 1000 : Date.now() / 1000;
+    const motion = this.getCharacterMotionState();
+    const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
+
+    const scale = targetHeight / Math.max(1, img.naturalHeight);
+    const dw = img.naturalWidth * scale;
+    const dh = targetHeight;
+
+    ctx.save();
+    // Dynamic 2D walk stride bounce, breathing squash-and-stretch & attack lunge tilt
+    const walkTilt = motion.isMoving ? Math.sin(this.walkAnim * 1.8) * 0.055 : 0;
+    const atkTilt = strike * 0.12;
+    const sx = 1 + Math.max(0, strike) * 0.06 + Math.sin(t * 3.6) * 0.012;
+    const sy = 1 - Math.max(0, strike) * 0.04 - Math.sin(t * 3.6) * 0.012;
+
+    ctx.translate(strike * 6, 2 + bob);
+    ctx.rotate(walkTilt + atkTilt);
+    ctx.scale(sx, sy);
+    ctx.drawImage(img, -dw * 0.5, -dh, dw, dh);
+    ctx.restore();
+
+    // Dynamic weapon slash arc when actively striking in-game
+    if ((this.isAttacking || strike > 0.15) && (actionType === 'punch' || actionType === 'throw' || actionType === 'skill')) {
+      const colMap = {
+        steven: '#f472b6', garnet: '#e11d48', amethyst: '#a855f7', pearl: '#38bdf8',
+        bismuth: '#fb923c', peridot: '#4ade80', lapis: '#0ea5e9', rose: '#fb7185',
+        connie: '#f472b6', jasper: '#f59e0b', stevonnie: '#f472b6', smoky: '#fb923c',
+        rainbow2: '#38bdf8', sunstone: '#facc15', sugilite: '#a855f7', sardonyx: '#fb7185',
+        opal: '#818cf8', malachite: '#2dd4bf', rainbowClassic: '#e879f9'
+      };
+      const sCol = colMap[charId] || '#f472b6';
+      this.drawCrescentSlash(ctx, 18 + Math.max(0, strike) * 10, -dh * 0.48 + bob, dh * 0.42, -Math.PI * 0.46, Math.PI * 0.46, sCol + '55', sCol, '#ffffff', 11);
+    }
+    return true;
+  }
+
   drawSteven(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'steven', bob, animP, actionType, 84)) return;
     const motion = this.getCharacterMotionState();
     const isPink = this.isPinkOverdrive;
     const skinColor = isPink ? '#ff6097' : '#fde0d7';
@@ -8561,6 +8619,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE GARNET ---
   drawGarnet(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'garnet', bob, animP, actionType, 102)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -8869,6 +8928,7 @@ class PlayerHero {
       this.drawAmethystSpinDash(ctx);
       return;
     }
+    if (this.draw2DCharacterSprite(ctx, 'amethyst', bob, animP, actionType, 84)) return;
 
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
@@ -9276,6 +9336,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE PEARL ---
   drawPearl(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'pearl', bob, animP, actionType, 100)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -9734,6 +9795,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE BISMUTH ---
   drawBismuth(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'bismuth', bob, animP, actionType, 98)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -10129,6 +10191,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE PERIDOT ---
   drawPeridot(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'peridot', bob, animP, actionType, 86)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -10379,6 +10442,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE LAPIS LAZULI ---
   drawLapis(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'lapis', bob, animP, actionType, 96)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -10733,6 +10797,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE ROSE QUARTZ ---
   drawRose(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'rose', bob, animP, actionType, 100)) return;
     const motion = this.getCharacterMotionState();
     const hair = this.getHairSway(animP, actionType);
     const strike = this.getStrikeCurve(animP);
@@ -11093,6 +11158,7 @@ class PlayerHero {
 
   // --- SHOW-ACCURATE CONNIE MAHESWARAN (SAVE THE LIGHT DESIGN) ---
   drawConnie(ctx, bob, animP = 0, actionType = '') {
+    if (this.draw2DCharacterSprite(ctx, 'connie', bob, animP, actionType, 88)) return;
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
@@ -11487,6 +11553,7 @@ class PlayerHero {
       this.drawJasperSpinDash(ctx);
       return;
     }
+    if (this.draw2DCharacterSprite(ctx, 'jasper', bob, animP, actionType, 102)) return;
 
     const motion = this.getCharacterMotionState();
     const legs = this.getLegKinematics(animP, actionType);
@@ -12705,6 +12772,7 @@ class PlayerHero {
 
   // --- 1. STEVONNIE (Steven + Connie) ---
   drawStevonnie(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'stevonnie', bob, animP, actionType, 100)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -12953,6 +13021,7 @@ class PlayerHero {
 
   // --- 2. SMOKY QUARTZ (Steven + Amethyst) ---
   drawSmokyQuartz(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'smoky', bob, animP, actionType, 98)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -13121,6 +13190,7 @@ class PlayerHero {
 
   // --- 3. RAINBOW QUARTZ 2.0 (Steven + Pearl) ---
   drawRainbowQuartz2(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'rainbow2', bob, animP, actionType, 100)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -13274,6 +13344,7 @@ class PlayerHero {
 
   // --- 4. SUNSTONE (Steven + Garnet) — Character style.mp4 Unleash Cel! ---
   drawSunstone(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'sunstone', bob, animP, actionType, 102)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
@@ -13433,6 +13504,7 @@ class PlayerHero {
 
   // --- 5. SUGILITE (Garnet + Amethyst) ---
   drawSugilite(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'sugilite', bob, animP, actionType, 108)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -13611,6 +13683,7 @@ class PlayerHero {
 
   // --- 6. SARDONYX (Garnet + Pearl) ---
   drawSardonyx(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'sardonyx', bob, animP, actionType, 106)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
@@ -13755,6 +13828,7 @@ class PlayerHero {
 
   // --- 7. OPAL (Pearl + Amethyst) ---
   drawOpal(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'opal', bob, animP, actionType, 106)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -13921,6 +13995,7 @@ class PlayerHero {
 
   // --- 8. MALACHITE (Lapis + Jasper) ---
   drawMalachite(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'malachite', bob, animP, actionType, 108)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
@@ -14068,6 +14143,7 @@ class PlayerHero {
 
   // --- 9. RAINBOW QUARTZ CLASSIC (Rose + Pearl) ---
   drawRainbowQuartzClassic(ctx, bob, animP, actionType) {
+    if (this.draw2DCharacterSprite(ctx, 'rainbowClassic', bob, animP, actionType, 102)) return;
     const legs = this.getLegKinematics(animP, actionType);
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;

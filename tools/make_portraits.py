@@ -19,8 +19,33 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 ROOT = Path(__file__).resolve().parents[1]
 REF = ROOT / "Character reference"
 OUT_DIR = ROOT / "assets" / "portraits"
+SPRITE_DIR = ROOT / "assets" / "sprites"
 JS_OUT = ROOT / "src" / "portraits-data.js"
 SIZE = 640
+
+# Flip map so every full-body 2D sprite faces RIGHT (+X) in PlayerHero local space
+SPRITE_FLIP_X = {
+    "amethyst": True,
+    "pearl": True,
+    "lapis": True,
+    "stevonnie": True,
+    "rainbow2": True,
+    "sardonyx": True,
+    "opal": True,
+    "rainbowClassic": True,
+}
+
+# Exact enclosed background pocket seeds (x, y) in original pre-flip image pixels
+EXTRA_BG_SEEDS = {
+    "bismuth": [(94, 284), (298, 284)],
+    "amethyst": [(236, 419), (274, 471)],
+    "connie": [(302, 88)],
+    "pearl": [(197, 339), (258, 515), (215, 220), (228, 511), (260, 486)],
+    "smoky": [(75, 219), (299, 83), (206, 83)],
+    "sugilite": [(313, 208), (343, 144), (357, 190)],
+    "sardonyx": [(223, 189), (229, 225)],
+    "opal": [(557, 484), (538, 702)],
+}
 
 # Custom zoomed bust framing ratios (x0, y0, x1, y1) inside alpha bbox
 # Focuses closely on face, hair/gem, and upper chest for crisp roster & dialogue portraits
@@ -91,14 +116,30 @@ FILES = {
 }
 
 
-def remove_background(im: Image.Image) -> Image.Image:
+def remove_background(im: Image.Image, cid: str = "") -> Image.Image:
     """Extract character with clean alpha, handling existing transparency, white, and black backdrops."""
-    if 'A' in im.getbands():
-        alpha = im.getchannel('A')
-        if alpha.getextrema()[0] < 200:
-            return im.convert('RGBA')
+    rgba = im.convert('RGBA')
+    alpha = rgba.getchannel('A')
+    if alpha.getextrema()[0] < 100:
+        if cid in EXTRA_BG_SEEDS:
+            rgb = rgba.convert('RGB')
+            work = rgb.copy()
+            key = (0, 255, 0)
+            for sx, sy in EXTRA_BG_SEEDS[cid]:
+                if 0 <= sx < rgba.width and 0 <= sy < rgba.height:
+                    try:
+                        ImageDraw.floodfill(work, (sx, sy), key, thresh=34)
+                    except Exception:
+                        pass
+            wpx = work.load()
+            opx = rgba.load()
+            for y in range(rgba.height):
+                for x in range(rgba.width):
+                    if wpx[x, y] == key:
+                        opx[x, y] = (0, 0, 0, 0)
+        return rgba
 
-    rgb = im.convert('RGB')
+    rgb = rgba.convert('RGB')
     w, h = rgb.size
     corners = [rgb.getpixel((0, 0)), rgb.getpixel((w - 1, 0)), rgb.getpixel((0, h - 1)), rgb.getpixel((w - 1, h - 1))]
     bg_color = max(set(corners), key=corners.count)
@@ -107,9 +148,12 @@ def remove_background(im: Image.Image) -> Image.Image:
 
     work = rgb.copy()
     key = (255, 0, 255) if not is_white and not is_black else ((0, 255, 0) if is_white else (255, 0, 255))
-    thresh = 36 if (is_white or is_black) else 45
-    seeds = [(x, 0) for x in range(0, w, 4)] + [(x, h - 1) for x in range(0, w, 4)]
-    seeds += [(0, y) for y in range(0, h, 4)] + [(w - 1, y) for y in range(0, h, 4)]
+    thresh = 34 if (is_white or is_black) else 42
+    seeds = [(x, 0) for x in range(0, w, 2)] + [(x, h - 1) for x in range(0, w, 2)]
+    seeds += [(0, y) for y in range(0, h, 2)] + [(w - 1, y) for y in range(0, h, 2)]
+    for sx, sy in EXTRA_BG_SEEDS.get(cid, []):
+        if 0 <= sx < w and 0 <= sy < h:
+            seeds.append((sx, sy))
 
     for s in seeds:
         if work.getpixel(s) == key:
@@ -129,16 +173,64 @@ def remove_background(im: Image.Image) -> Image.Image:
             if px[x, y] != key:
                 opx[x, y] = (rpx[x, y][0], rpx[x, y][1], rpx[x, y][2], 255)
 
-    alpha = out.getchannel('A')
-    alpha = alpha.filter(ImageFilter.MinFilter(3))
-    alpha = alpha.filter(ImageFilter.GaussianBlur(0.5))
-    out.putalpha(alpha)
+    # De-fringe 1px outer border halo so dark outlines have zero white/black edge fringe
+    a_chan = out.getchannel('A')
+    eroded = a_chan.filter(ImageFilter.MinFilter(3))
+    epx = eroded.load()
+    apx = a_chan.load()
+    for y in range(h):
+        for x in range(w):
+            if apx[x, y] > 0 and epx[x, y] == 0:
+                r, g, b, _ = opx[x, y]
+                if (is_white and r > 210 and g > 210 and b > 210) or (is_black and r < 38 and g < 38 and b < 38):
+                    opx[x, y] = (r, g, b, 0)
+                else:
+                    opx[x, y] = (r, g, b, 190)
     return out
+
+
+def build_full_sprite(cid: str, src_path: Path) -> Image.Image:
+    """Build clean full-body 2D character sprite oriented toward +X (right)."""
+    raw = Image.open(src_path)
+    im = remove_background(raw, cid)
+    bbox = im.getchannel('A').getbbox()
+    if bbox:
+        im = im.crop(bbox)
+    if SPRITE_FLIP_X.get(cid, False):
+        im = im.transpose(Image.FLIP_LEFT_RIGHT)
+    cw, ch = im.size
+    target_h = 280
+    scale = min(target_h / max(1, ch), 300 / max(1, cw))
+    nw, nh = max(1, int(cw * scale)), max(1, int(ch * scale))
+    im = im.resize((nw, nh), Image.LANCZOS)
+    return im
+
+
+def build_pink_connie_sprite(connie_sp: Image.Image) -> Image.Image:
+    """Create Pink Revived Connie (Lars/Lion cotton-candy pink hair & rose-tinted skin) from Connie's 2D sprite."""
+    sp = connie_sp.copy().convert('RGBA')
+    px = sp.load()
+    w, h = sp.size
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a < 15:
+                continue
+            # Keep true black ink outlines dark
+            if r < 24 and g < 20 and b < 22:
+                continue
+            # Dark brown hair -> cotton-candy pink (#f472b6 / #ec4899)
+            if r < 72 and g < 44 and b < 44:
+                px[x, y] = (244, 114, 182, a)
+            # Warm brown skin -> soft rose-pink revival skin (#f9a8d4)
+            elif r > 105 and g > 42 and g < 135 and b < 95 and r > g > b:
+                px[x, y] = (249, 168, 212, a)
+    return sp
 
 
 def build_portrait(cid: str, src_path: Path) -> Image.Image:
     raw = Image.open(src_path)
-    im = remove_background(raw)
+    im = remove_background(raw, cid)
 
     bbox = im.getchannel('A').getbbox()
     if not bbox:
@@ -210,7 +302,9 @@ def build_portrait(cid: str, src_path: Path) -> Image.Image:
 
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
+    SPRITE_DIR.mkdir(parents=True, exist_ok=True)
     data = {}
+    sprite_data = {}
     missing = []
     for cid, filename in FILES.items():
         src = REF / filename
@@ -223,14 +317,31 @@ def main() -> int:
         webp = OUT_DIR / f"{cid}.webp"
         portrait.save(webp, "WEBP", quality=94, method=6)
         data[cid] = "data:image/webp;base64," + base64.b64encode(webp.read_bytes()).decode("ascii")
-        print(f"  {cid:15s} ← {filename}")
+
+        sp = build_full_sprite(cid, src)
+        sp_png = SPRITE_DIR / f"{cid}.png"
+        sp_webp = SPRITE_DIR / f"{cid}.webp"
+        sp.save(sp_png, "PNG", optimize=True)
+        sp.save(sp_webp, "WEBP", quality=92, method=6)
+        sprite_data[cid] = "data:image/webp;base64," + base64.b64encode(sp_webp.read_bytes()).decode("ascii")
+
+        if cid == "connie":
+            p_sp = build_pink_connie_sprite(sp)
+            p_png = SPRITE_DIR / "connie_pink.png"
+            p_webp = SPRITE_DIR / "connie_pink.webp"
+            p_sp.save(p_png, "PNG", optimize=True)
+            p_sp.save(p_webp, "WEBP", quality=92, method=6)
+            sprite_data["connie_pink"] = "data:image/webp;base64," + base64.b64encode(p_webp.read_bytes()).decode("ascii")
+
+        print(f"  {cid:15s} ← {filename} (portrait + 2D sprite)")
 
     payload = "// Generated by tools/make_portraits.py — do not edit by hand.\n"
     payload += "const PORTRAIT_IMAGES = " + json.dumps(data, separators=(",", ":")) + ";\n"
+    payload += "const SPRITE_IMAGES = " + json.dumps(sprite_data, separators=(",", ":")) + ";\n"
     JS_OUT.write_text(payload, encoding="utf-8")
 
     size_kb = JS_OUT.stat().st_size / 1024
-    print(f"\n{len(data)} HD portraits written · {JS_OUT.relative_to(ROOT)} ({size_kb:.0f} KB)")
+    print(f"\n{len(data)} HD portraits + {len(sprite_data)} 2D sprites written · {JS_OUT.relative_to(ROOT)} ({size_kb:.0f} KB)")
     if missing:
         print("missing references:", ", ".join(missing))
     return 0 if not missing else 1
