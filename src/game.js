@@ -8727,8 +8727,8 @@ class PlayerHero {
     ctx.fill();
     ctx.restore();
 
-    // 5. Sculpted Deep-Umber Cel Jaw (2-tone chin/cheek plane) & Stoic Mouth
-    ctx.fillStyle = '#8b4a42';
+    // 5. Sculpted Deep Maroon-Plum Cel Jaw (Show-accurate Garnet skin tone!) & Stoic Mouth
+    ctx.fillStyle = '#9f1239';
     ctx.beginPath();
     ctx.moveTo(-12.5, -86 + bob);
     ctx.lineTo(12.5, -86 + bob);
@@ -8737,7 +8737,7 @@ class PlayerHero {
     ctx.quadraticCurveTo(-13, -72 + bob, -12.5, -86 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#6b332d';
+    ctx.fillStyle = '#7f1d3a';
     ctx.beginPath();
     ctx.moveTo(-12.5, -86 + bob);
     ctx.lineTo(-4.5, -86 + bob);
@@ -8746,39 +8746,49 @@ class PlayerHero {
     ctx.quadraticCurveTo(-13, -72 + bob, -12.5, -86 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#5b2c28';
-    ctx.beginPath(); ctx.roundRect(-5.5, -71.5 + bob, 11, 2.3, 1.1); ctx.fill();
+    ctx.strokeStyle = '#3b071c';
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+    ctx.fillStyle = '#4c0519';
+    ctx.beginPath(); ctx.roundRect(-5.0, -71.5 + bob, 10, 2.2, 1.1); ctx.fill();
 
-    // 6. Iconic Era 3 Translucent Golden 5-Point Star Visor (with Peridot-grade crystal glass sheen!)
-    const visorGrad = ctx.createLinearGradient(-18, -93 + bob, 18, -76 + bob);
-    visorGrad.addColorStop(0, 'rgba(250, 204, 21, 0.88)');
-    visorGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.92)');
-    visorGrad.addColorStop(1, 'rgba(244, 114, 182, 0.88)');
+    // 6. Show-Accurate Sleek Angular Butterfly / Wing Visor Shades (Ruby-Pink / Peach-Gold / Sapphire-Cyan Sheen!)
+    const visorGrad = ctx.createLinearGradient(-19, -89 + bob, 19, -76 + bob);
+    visorGrad.addColorStop(0, 'rgba(244, 114, 182, 0.92)');
+    visorGrad.addColorStop(0.48, 'rgba(253, 224, 71, 0.94)');
+    visorGrad.addColorStop(1, 'rgba(56, 189, 248, 0.90)');
     ctx.fillStyle = visorGrad;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.moveTo(0, -94 + bob);
-    ctx.lineTo(6, -88 + bob);
-    ctx.lineTo(18, -90 + bob);
-    ctx.lineTo(12, -81 + bob);
-    ctx.lineTo(10, -76 + bob);
-    ctx.lineTo(0, -80 + bob);
-    ctx.lineTo(-10, -76 + bob);
-    ctx.lineTo(-12, -81 + bob);
-    ctx.lineTo(-18, -90 + bob);
-    ctx.lineTo(-6, -88 + bob);
+    ctx.moveTo(-18, -88 + bob);
+    ctx.lineTo(0, -85 + bob);
+    ctx.lineTo(19, -88 + bob);
+    ctx.lineTo(15, -77 + bob);
+    ctx.lineTo(3, -76 + bob);
+    ctx.lineTo(0, -79.5 + bob);
+    ctx.lineTo(-3, -76 + bob);
+    ctx.lineTo(-15, -77 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
 
     // Diagonal crystal visor reflection slash
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
-    ctx.lineWidth = 1.6;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
     ctx.beginPath();
-    ctx.moveTo(-13, -87 + bob);
-    ctx.lineTo(13, -85 + bob);
-    ctx.stroke();
+    ctx.moveTo(-11, -86.5 + bob);
+    ctx.lineTo(-4, -86.2 + bob);
+    ctx.lineTo(-9, -77.5 + bob);
+    ctx.lineTo(-14, -77.8 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(6, -86.2 + bob);
+    ctx.lineTo(12, -86.8 + bob);
+    ctx.lineTo(8, -77.5 + bob);
+    ctx.lineTo(3, -77.2 + bob);
+    ctx.closePath();
+    ctx.fill();
 
     ctx.globalAlpha = this.isAttacking ? 0.95 : 0.72;
     ctx.fillStyle = '#ffffff';
@@ -9785,16 +9795,16 @@ class PlayerHero {
     drawBismuthLeg(-8 + legs.backX, legs.backY, legs.backRot, true);
     drawBismuthLeg(7 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. Rear Left Muscular Arm w/ Black 5-Point Star Tattoo + continuous sway
+    // 2. Rear Left Muscular Arm w/ Black 5-Point Star Tattoo + Show-Accurate Periwinkle-Blue Skin!
     if (!(isPunch && combo === 2)) {
       const armSwing = motion.armSwingB * 14;
-      this.drawArticulatedArm(ctx, -15, -62 + bob, -23 - armSwing * 0.4, -50 + bob, -20 - armSwing, -38 + bob, '#64748b', '#94a3b8', 11, 9.5, '#94a3b8', 6);
+      this.drawArticulatedArm(ctx, -15, -62 + bob, -23 - armSwing * 0.4, -50 + bob, -20 - armSwing, -38 + bob, '#38bdf8', '#7dd3fc', 11, 9.5, '#7dd3fc', 6);
       ctx.fillStyle = '#0f172a';
       this.drawMiniStar(ctx, -19 - armSwing * 0.2, -55 + bob, 4.5);
     }
 
-    // 3. Sculpted Muscular Slate-Blue Torso & Tailored Plum-Maroon Forge Apron w/ Beveled Buckles
-    ctx.fillStyle = '#64748b';
+    // 3. Sculpted Muscular Periwinkle-Blue Torso & Tailored Charcoal/Maroon Forge Apron
+    ctx.fillStyle = '#7dd3fc';
     ctx.beginPath();
     ctx.moveTo(-20, -68 + bob);
     ctx.lineTo(20, -68 + bob);
@@ -9804,7 +9814,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     // Shoulder & oblique cel shading
-    ctx.fillStyle = '#475569';
+    ctx.fillStyle = '#38bdf8';
     ctx.beginPath();
     ctx.moveTo(-20, -68 + bob);
     ctx.lineTo(-11, -68 + bob);
@@ -9813,7 +9823,7 @@ class PlayerHero {
     ctx.quadraticCurveTo(-21, -50 + bob, -20, -68 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = '#1e293b';
+    ctx.strokeStyle = '#0c4a6e';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-20, -68 + bob);
@@ -9917,8 +9927,8 @@ class PlayerHero {
       ctx.fillRect(gemX - 1.5, gemY - 1.5, 3, 3);
     }
 
-    // 5. Muscular Slate-Grey Cel Face & Swept Rainbow Crown Hairline!
-    ctx.fillStyle = '#94a3b8';
+    // 5. Muscular Sky-Blue/Periwinkle Cel Face & Swept Rainbow Crown Dreadlocks!
+    ctx.fillStyle = '#7dd3fc';
     ctx.beginPath();
     ctx.moveTo(-15.5, -88 + bob);
     ctx.quadraticCurveTo(0, -96 + bob, 15.5, -88 + bob);
@@ -9926,20 +9936,24 @@ class PlayerHero {
     ctx.bezierCurveTo(-11, -64 + bob, -16.5, -74 + bob, -15.5, -88 + bob);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = '#64748b';
+    ctx.fillStyle = '#38bdf8';
     ctx.beginPath();
     ctx.moveTo(-15.5, -84 + bob);
     ctx.quadraticCurveTo(-8, -68 + bob, 5, -64 + bob);
     ctx.quadraticCurveTo(-10, -63 + bob, -15.5, -75 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#0c4a6e';
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
 
-    // Swept-back rainbow dreadlock crown roots framing her upper forehead
+    // Swept-back rainbow dreadlock crown roots framing both sides of her upper forehead
     const crownBands = [
-      { c: '#ef4444', y: -96, x1: 8, x2: -10 },
-      { c: '#f97316', y: -93, x1: 5, x2: -12 },
-      { c: '#eab308', y: -90, x1: 1, x2: -14 },
-      { c: '#22c55e', y: -86, x1: -4, x2: -15 }
+      { c: '#ef4444', y: -96, x1: 14, x2: -13 },
+      { c: '#f97316', y: -93, x1: 15, x2: -14 },
+      { c: '#eab308', y: -90, x1: 14, x2: -15 },
+      { c: '#22c55e', y: -87, x1: -4, x2: -16 },
+      { c: '#3b82f6', y: -84, x1: 16, x2: 11 }
     ];
     for (const cb of crownBands) {
       ctx.strokeStyle = cb.c;
@@ -9988,16 +10002,16 @@ class PlayerHero {
     ctx.quadraticCurveTo(0, -68 + bob, -7.5, -73 + bob);
     ctx.fill();
 
-    // 7. TRUE SHAPESHIFTING BLACKSMITH WEAPON ARMS!
+    // 7. TRUE SHAPESHIFTING BLACKSMITH WEAPON ARMS! (Show-accurate Sky-Blue Skin!)
     if (isAnvilThrow) {
       const ext = Math.sin(((animP - 0.28) / 0.72) * Math.PI) * 14;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 20 + ext * 0.5, -54 + bob, 28 + ext, -50 + bob, '#64748b', '#f97316', 11, 9.5, '#fbbf24', 5.5);
+      this.drawArticulatedArm(ctx, 13, -60 + bob, 20 + ext * 0.5, -54 + bob, 28 + ext, -50 + bob, '#7dd3fc', '#f97316', 11, 9.5, '#fbbf24', 5.5);
     } else if (isSkillSlam) {
       // Breaking Point Pneumatic Magma Pile-Driver!
       const slamP = Math.max(0, strike);
       const hy = -42 + bob + slamP * 26;
       const hx = 18 + slamP * 14;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 22, -48 + bob, hx, hy, '#64748b', '#475569', 12, 11);
+      this.drawArticulatedArm(ctx, 13, -60 + bob, 22, -48 + bob, hx, hy, '#7dd3fc', '#38bdf8', 12, 11);
       ctx.save();
       ctx.translate(hx, hy);
       ctx.rotate(0.45);
@@ -10025,7 +10039,7 @@ class PlayerHero {
         const reach = strike * 32;
         const hx = 20 + reach;
         const hy = -50 + bob + Math.max(0, strike) * 4;
-        this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + reach * 0.45, -56 + bob, hx, hy, '#64748b', '#64748b', 11, 9.5);
+        this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + reach * 0.45, -56 + bob, hx, hy, '#7dd3fc', '#38bdf8', 11, 9.5);
         ctx.save();
         ctx.translate(hx, hy);
         ctx.rotate(-0.4 + Math.max(0, strike) * 0.65);
@@ -10052,7 +10066,7 @@ class PlayerHero {
         const reach = strike * 34;
         const hx = 22 + reach;
         const hy = -52 + bob;
-        this.drawArticulatedArm(ctx, 13, -60 + bob, 17 + reach * 0.45, -55 + bob, hx, hy, '#64748b', '#64748b', 11, 9.5);
+        this.drawArticulatedArm(ctx, 13, -60 + bob, 17 + reach * 0.45, -55 + bob, hx, hy, '#7dd3fc', '#38bdf8', 11, 9.5);
         ctx.save();
         ctx.translate(hx, hy);
         ctx.rotate(-0.55 + animP * 1.15);
@@ -10075,8 +10089,8 @@ class PlayerHero {
         // Hit 3: Two-Handed Colossal Molten Anvil-Maul Overhead Smash!
         const reach = Math.max(0, strike) * 34;
         const smashY = animP < 0.34 ? (-88 + bob) : (-88 + bob + Math.min(1, (animP - 0.34) / 0.30) * 64);
-        this.drawArticulatedArm(ctx, -12, -62 + bob, 4 + reach * 0.4, smashY - 6, 18 + reach, smashY, '#64748b', '#64748b', 10.5, 9.5);
-        this.drawArticulatedArm(ctx, 14, -62 + bob, 12 + reach * 0.45, smashY - 4, 22 + reach, smashY, '#64748b', '#64748b', 11, 10);
+        this.drawArticulatedArm(ctx, -12, -62 + bob, 4 + reach * 0.4, smashY - 6, 18 + reach, smashY, '#38bdf8', '#38bdf8', 10.5, 9.5);
+        this.drawArticulatedArm(ctx, 14, -62 + bob, 12 + reach * 0.45, smashY - 4, 22 + reach, smashY, '#7dd3fc', '#38bdf8', 11, 10);
         ctx.save();
         ctx.translate(22 + reach, smashY);
         ctx.rotate(animP < 0.34 ? -0.9 : 0.35);
@@ -10100,7 +10114,7 @@ class PlayerHero {
     } else {
       // Idle Ready Hammer-Fist with continuous forge-ready sway
       const swF = motion.armSwingF * 12;
-      this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + swF * 0.4, -50 + bob, 20 + swF, -46 + bob + swF * 0.25, '#64748b', '#64748b', 10.5, 9);
+      this.drawArticulatedArm(ctx, 13, -60 + bob, 16 + swF * 0.4, -50 + bob, 20 + swF, -46 + bob + swF * 0.25, '#7dd3fc', '#38bdf8', 10.5, 9);
       ctx.fillStyle = '#475569';
       ctx.strokeStyle = '#94a3b8';
       ctx.lineWidth = 1.5;
@@ -11553,8 +11567,8 @@ class PlayerHero {
       ctx.fill();
     }
 
-    // 3. Future Jasper: Tan Sleeveless Top with Maroon X-Harness Straps
-    ctx.fillStyle = '#e7e5e4';
+    // 3. Show-Accurate Jasper: Deep Burgundy & Burnt-Orange Homeworld Quartz Warrior Armor + Golden Diamond Crest!
+    ctx.fillStyle = '#7f1d1d';
     ctx.beginPath();
     ctx.moveTo(-22, -74 + bob);
     ctx.lineTo(22, -74 + bob);
@@ -11562,18 +11576,26 @@ class PlayerHero {
     ctx.lineTo(-17, -32 + bob);
     ctx.closePath();
     ctx.fill();
-    // Maroon X-harness leather straps & belt
-    ctx.strokeStyle = '#7f1d1d';
-    ctx.lineWidth = 4.5;
+    // Burnt-orange V-chevron upper chest armor panel
+    ctx.fillStyle = '#c2410c';
     ctx.beginPath();
-    ctx.moveTo(-18, -73 + bob); ctx.lineTo(16, -34 + bob);
-    ctx.moveTo(18, -73 + bob); ctx.lineTo(-16, -34 + bob);
+    ctx.moveTo(-22, -74 + bob);
+    ctx.lineTo(22, -74 + bob);
+    ctx.lineTo(14, -54 + bob);
+    ctx.lineTo(0, -44 + bob);
+    ctx.lineTo(-14, -54 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#450a0a';
+    ctx.lineWidth = 1.8;
     ctx.stroke();
-    ctx.fillStyle = '#7f1d1d';
+    // Dark maroon waist belt
+    ctx.fillStyle = '#450a0a';
     ctx.beginPath(); ctx.roundRect(-17, -37 + bob, 34, 6, 2.5); ctx.fill();
 
+    // Iconic Yellow/Amber Diamond Insignia on Chest
     ctx.fillStyle = '#fde047';
-    this.drawDiamondInsignia(ctx, 1, -60 + bob, 6.2);
+    this.drawDiamondInsignia(ctx, 1, -57 + bob, 7.5);
 
     // 4. Tapered Neck & Broad Fierce Tiger-Striped Cel Face
     this.drawCelTaperedLimb(ctx, 0, -72 + bob, 0, -82 + bob, 6.8, 6.0, '#ea580c', '#c2410c', 1);
@@ -17785,6 +17807,23 @@ class EnemyManager {
       ctx.fill();
     }
 
+    // Show-Accurate Mother Centipeetle Wild Spiky White Hair Mane & Glowing Acid Sacs!
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#86efac';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(42, -92 + breathe);
+    ctx.lineTo(18, -124 + breathe);
+    ctx.lineTo(30, -96 + breathe);
+    ctx.lineTo(-4, -118 + breathe);
+    ctx.lineTo(14, -88 + breathe);
+    ctx.lineTo(-18, -102 + breathe);
+    ctx.lineTo(18, -74 + breathe);
+    ctx.lineTo(54, -90 + breathe);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
     // Huge Crushing Acid-Dripping Mandible Jaws + Fangs
     ctx.fillStyle = '#022c22';
     ctx.strokeStyle = '#86efac';
@@ -17794,6 +17833,13 @@ class EnemyManager {
     ctx.moveTo(64, -48 + breathe); ctx.quadraticCurveTo(96, -34 + breathe, 102, -62 + breathe); ctx.lineTo(74, -62 + breathe); ctx.closePath();
     ctx.fill(); ctx.stroke();
     this.drawHorrorFangs(ctx, 62, -68 + breathe, 4, 24, 9, 1);
+
+    // Dripping neon-green acid droplets from jaws
+    ctx.fillStyle = '#a3e635';
+    ctx.beginPath();
+    ctx.arc(88, -42 + breathe + Math.sin(e.animTime * 8) * 3, 3.5, 0, Math.PI * 2);
+    ctx.arc(98, -52 + breathe + Math.cos(e.animTime * 9) * 3, 2.8, 0, Math.PI * 2);
+    ctx.fill();
 
     // Massive Fractured Acid Cyclops Gem Eye!
     this.drawCrackedCorruptionGem(ctx, 60, -66 + breathe, 21, isDanger ? '#f43f5e' : '#22c55e', '#dcfce7');
@@ -18020,14 +18066,30 @@ class EnemyManager {
       ctx.closePath(); ctx.fill();
     }
 
-    // Giant Jagged White Bone Dorsal Spikes
-    ctx.fillStyle = '#f8fafc';
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 1.4;
-    for (let x = -34; x <= 18; x += 12) {
+    // Show-Accurate Corrupted Jasper Wild Cream-White Mane & Glowing Turquoise Crystal Horns!
+    ctx.fillStyle = '#fef3c7';
+    ctx.strokeStyle = '#fdba74';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(28, -72 + bob);
+    ctx.lineTo(6, -106 + bob);
+    ctx.lineTo(14, -76 + bob);
+    ctx.lineTo(-14, -104 + bob);
+    ctx.lineTo(-4, -74 + bob);
+    ctx.lineTo(-32, -96 + bob);
+    ctx.lineTo(-20, -66 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Jagged Glowing Turquoise Corruption Horns along Spine
+    ctx.fillStyle = '#14b8a6';
+    ctx.strokeStyle = '#99f6e4';
+    ctx.lineWidth = 1.5;
+    for (let x = -34; x <= 18; x += 13) {
       ctx.beginPath();
       ctx.moveTo(x, -68 + bob);
-      ctx.lineTo(x - 4, -98 + bob);
+      ctx.lineTo(x - 5, -100 + bob);
       ctx.lineTo(x + 10, -68 + bob);
       ctx.closePath();
       ctx.fill(); ctx.stroke();
@@ -28533,7 +28595,7 @@ class StevenUniverseGame {
       const blockers = shuffledSpare.slice(0, 2);
       const mirrors = { ...solutions };
       shuffledSpare.slice(2, 4).forEach(k => {
-        mirrors[k] = Math.random() < 0.5 ? '/' : '\\';
+        mirrors[k] = '/';
       });
 
       const solKeys = this.shufflePuzzleArray(Object.keys(solutions));
@@ -28541,6 +28603,8 @@ class StevenUniverseGame {
       for (let i = 0; i < flipCount; i++) {
         mirrors[solKeys[i]] = '/';
       }
+      // Always flip the first corner mirror so initial beam exits North and never pre-solves via decoys
+      mirrors[`0,${c1}`] = '/';
 
       this.puzzleState.data = {
         size: 4,

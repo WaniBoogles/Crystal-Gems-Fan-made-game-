@@ -3042,6 +3042,23 @@ class EnemyManager {
       ctx.fill();
     }
 
+    // Show-Accurate Mother Centipeetle Wild Spiky White Hair Mane & Glowing Acid Sacs!
+    ctx.fillStyle = '#f8fafc';
+    ctx.strokeStyle = '#86efac';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(42, -92 + breathe);
+    ctx.lineTo(18, -124 + breathe);
+    ctx.lineTo(30, -96 + breathe);
+    ctx.lineTo(-4, -118 + breathe);
+    ctx.lineTo(14, -88 + breathe);
+    ctx.lineTo(-18, -102 + breathe);
+    ctx.lineTo(18, -74 + breathe);
+    ctx.lineTo(54, -90 + breathe);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
     // Huge Crushing Acid-Dripping Mandible Jaws + Fangs
     ctx.fillStyle = '#022c22';
     ctx.strokeStyle = '#86efac';
@@ -3051,6 +3068,13 @@ class EnemyManager {
     ctx.moveTo(64, -48 + breathe); ctx.quadraticCurveTo(96, -34 + breathe, 102, -62 + breathe); ctx.lineTo(74, -62 + breathe); ctx.closePath();
     ctx.fill(); ctx.stroke();
     this.drawHorrorFangs(ctx, 62, -68 + breathe, 4, 24, 9, 1);
+
+    // Dripping neon-green acid droplets from jaws
+    ctx.fillStyle = '#a3e635';
+    ctx.beginPath();
+    ctx.arc(88, -42 + breathe + Math.sin(e.animTime * 8) * 3, 3.5, 0, Math.PI * 2);
+    ctx.arc(98, -52 + breathe + Math.cos(e.animTime * 9) * 3, 2.8, 0, Math.PI * 2);
+    ctx.fill();
 
     // Massive Fractured Acid Cyclops Gem Eye!
     this.drawCrackedCorruptionGem(ctx, 60, -66 + breathe, 21, isDanger ? '#f43f5e' : '#22c55e', '#dcfce7');
@@ -3277,14 +3301,30 @@ class EnemyManager {
       ctx.closePath(); ctx.fill();
     }
 
-    // Giant Jagged White Bone Dorsal Spikes
-    ctx.fillStyle = '#f8fafc';
-    ctx.strokeStyle = '#ea580c';
-    ctx.lineWidth = 1.4;
-    for (let x = -34; x <= 18; x += 12) {
+    // Show-Accurate Corrupted Jasper Wild Cream-White Mane & Glowing Turquoise Crystal Horns!
+    ctx.fillStyle = '#fef3c7';
+    ctx.strokeStyle = '#fdba74';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(28, -72 + bob);
+    ctx.lineTo(6, -106 + bob);
+    ctx.lineTo(14, -76 + bob);
+    ctx.lineTo(-14, -104 + bob);
+    ctx.lineTo(-4, -74 + bob);
+    ctx.lineTo(-32, -96 + bob);
+    ctx.lineTo(-20, -66 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Jagged Glowing Turquoise Corruption Horns along Spine
+    ctx.fillStyle = '#14b8a6';
+    ctx.strokeStyle = '#99f6e4';
+    ctx.lineWidth = 1.5;
+    for (let x = -34; x <= 18; x += 13) {
       ctx.beginPath();
       ctx.moveTo(x, -68 + bob);
-      ctx.lineTo(x - 4, -98 + bob);
+      ctx.lineTo(x - 5, -100 + bob);
       ctx.lineTo(x + 10, -68 + bob);
       ctx.closePath();
       ctx.fill(); ctx.stroke();

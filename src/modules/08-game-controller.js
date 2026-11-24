@@ -7551,7 +7551,7 @@ class StevenUniverseGame {
       const blockers = shuffledSpare.slice(0, 2);
       const mirrors = { ...solutions };
       shuffledSpare.slice(2, 4).forEach(k => {
-        mirrors[k] = Math.random() < 0.5 ? '/' : '\\';
+        mirrors[k] = '/';
       });
 
       const solKeys = this.shufflePuzzleArray(Object.keys(solutions));
@@ -7559,6 +7559,8 @@ class StevenUniverseGame {
       for (let i = 0; i < flipCount; i++) {
         mirrors[solKeys[i]] = '/';
       }
+      // Always flip the first corner mirror so initial beam exits North and never pre-solves via decoys
+      mirrors[`0,${c1}`] = '/';
 
       this.puzzleState.data = {
         size: 4,
