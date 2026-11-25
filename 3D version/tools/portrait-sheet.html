@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Crystal Gems — Portrait Sheet</title>
+<style>html,body{margin:0;background:#0b0714;color:#fff;font-family:monospace}h1{font:700 16px monospace;text-align:center;padding:8px;color:#ffcf33}</style>
+</head><body>
+<h1>Crystal Gems! — super-move portraits (10 guardians + 9 fusions)</h1>
+<canvas id="sheet" width="1420" height="820"></canvas>
+<script src="../src/game.js"></script>
+<script>
+window.addEventListener('load', () => {
+  const IDS = ['steven','garnet','amethyst','pearl','bismuth','peridot','lapis','rose','connie','jasper',
+               'stevonnie','smoky','rainbow2','sunstone','sugilite','sardonyx','opal','malachite','rainbowClassic'];
+  const ctx = document.getElementById('sheet').getContext('2d');
+  ctx.fillStyle = '#0b0714'; ctx.fillRect(0, 0, 1420, 820);
+  const COLS = 7, CELL = 200;
+  IDS.forEach((id, i) => {
+    const cx = (i % COLS) * CELL + 10;
+    const cy = Math.floor(i / COLS) * 268 + 10;
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(cx, cy, CELL - 16, CELL - 16, 14); ctx.clip();
+    ctx.translate(cx, cy);
+    drawPortrait(ctx, id, CELL - 16);
+    ctx.restore();
+    ctx.fillStyle = '#ffcf33'; ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center';
+    ctx.fillText(id.toUpperCase(), cx + (CELL - 16) / 2, cy + CELL + 6);
+  });
+});
+</script>
+</body></html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crystal Gems — Monster Sheet (dev tool)</title>
+<style>
+  html, body { margin: 0; background: #10081d; color: #fff; font-family: monospace; }
+  #sheet { display: block; margin: 0 auto; }
+  h1 { font: 700 18px monospace; text-align: center; padding: 10px; color: #ffcf33; }
+</style>
+</head>
+<body>
+<h1>Crystal Gems! — monster sheet (×2.6 zoom)</h1>
+<canvas id="sheet" width="1400" height="820"></canvas>
+<script src="../src/game.js"></script>
+<script>
+// Dev-only: paints the basic corruptions large so their silhouettes can be judged.
+window.addEventListener('load', () => {
+  const TYPES = [
+    ['centipeetle', 'drawCentipeetleHatchling'],
+    ['acid_centipeetle', 'drawCentipeetleHatchling'],
+    ['winged_centipeetle', 'drawWingedCentipeetle'],
+    ['blade_quartz', 'drawBladeQuartz'],
+    ['ice_monster', 'drawIceMonster'],
+    ['cluster', 'drawClusterMutant'],
+    ['spire_harpy', 'drawSpireHarpy'],
+    ['volcanic_firebird', 'drawVolcanicFirebird'],
+    ['robonoid_scout', 'drawRobonoidScout'],
+    ['forge_automaton', 'drawForgeAutomaton']
+  ];
+  const ctx = document.getElementById('sheet').getContext('2d');
+  const mgr = new EnemyManager(600, 2600);
+  ctx.fillStyle = '#10081d';
+  ctx.fillRect(0, 0, 1400, 820);
+  const COLS = 5, CELL_W = 276, CELL_H = 380;
+  TYPES.forEach(([type, fn], i) => {
+    const cx = (i % COLS) * CELL_W + CELL_W / 2;
+    const cy = Math.floor(i / COLS) * CELL_H + 300;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.beginPath();
+    ctx.roundRect(cx - 128, cy - 300, 256, 360, 14);
+    ctx.fill();
+    ctx.restore();
+
+    const e = {
+      type, x: 0, y: 0, facing: 1, width: 46, height: 52, hp: 50, maxHp: 50,
+      animTime: 1.1, hurtTimer: 0, gemColor: '#22c55e', movementType: 'walk',
+      isBoss: false, isElite: false, windup: 0, attackCooldown: 1.6, attackTimer: 0.4,
+      name: type, vx: 0, vy: 0, phase2: false
+    };
+    if (type === 'acid_centipeetle') e.gemColor = '#a3e635';
+    if (type === 'ice_monster') e.gemColor = '#38bdf8';
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(2.6, 2.6);
+    try { mgr[fn](ctx, e); } catch (err) { console.error(type, err); }
+    ctx.restore();
+
+    ctx.fillStyle = '#ffcf33';
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(type.toUpperCase(), cx, cy + 30);
+  });
+});
+</script>
+</body>
+</html>
