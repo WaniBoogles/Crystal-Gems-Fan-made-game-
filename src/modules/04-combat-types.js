@@ -126,106 +126,119 @@ function typeEffectLabel(mult) {
   return null;
 }
 
+const HERO_PASSIVES = {
+  steven:   { name: 'Spiked Pink Bubble', icon: '🛡️', desc: 'Holding [S] deploys a Spiked Rose Bubble that damages & knocks back enemies on contact!' },
+  garnet:   { name: 'Future Vision',      icon: '👁️', desc: 'Every 7s automatically foresees & parries the next incoming hit (+35% counter DMG)!' },
+  amethyst: { name: 'Wild Momentum',      icon: '⚡', desc: 'Consecutive hits stack up to +30% attack speed & +25% whip/spin damage!' },
+  pearl:    { name: 'Flawless Technique', icon: '💎', desc: 'Every 3rd hit is a guaranteed 1.6x Precision Crit & cuts [K]/[L] cooldowns!' },
+  bismuth:  { name: 'Forge Temper',       icon: '🔥', desc: '-20% incoming damage armor & every 3rd hit triggers an explosive Molten Burn!' },
+  peridot:  { name: 'Ferrokinetic Orbit', icon: '🧲', desc: '2 levitating steel shards orbit Peridot & automatically zap nearby enemies!' },
+  lapis:    { name: 'Hydro-Wing Glide',   icon: '🌊', desc: 'Hold Jump midair to glide on water wings & deal +25% bonus airborne damage!' },
+  rose:     { name: 'Maternal Sanctuary', icon: '🌹', desc: 'Periodically releases healing rose petals for herself & 2P ally (+combo finisher heal)!' },
+  connie:   { name: "Knight's Riposte",   icon: '⚔️', desc: 'Dodging or finishing a combo grants +35% Crit Chance & +25% speed for 2.8s!' },
+  jasper:   { name: 'Apex Quartz',        icon: '☄️', desc: 'Super Armor during attacks & up to +35% Berserker damage as HP drops!' }
+};
+
 const HERO_COMBO_PROFILES = {
   steven: {
-    label: 'Shield Waltz Combo',
-    cadence: [0.19, 0.18, 0.22, 0.32],
-    damage: [1.0, 1.12, 1.32, 1.72],
-    range: [0, 4, 8, 16],
-    knock: [0.9, 1.0, 1.25, 1.6],
-    lunge: [95, 130, 160, 210],
-    moves: ['Shield Jab', 'Spinning Shield Hook', 'Star Uppercut!', 'STAR SHIELD PULSE!'],
-    finisher: { label: 'STAR SHIELD PULSE!', type: 'comboRosePulse', damage: 18, width: 140, height: 95, speed: 340, knockX: 320, knockY: -170, color: '#ff6097' }
+    label: 'Shield-Brawler (4-Hit)',
+    cadence: [0.19, 0.18, 0.21, 0.30],
+    damage: [1.0, 1.15, 1.35, 1.75],
+    range: [0, 6, 10, 18],
+    knock: [0.9, 1.05, 1.3, 1.65],
+    lunge: [95, 130, 165, 215],
+    moves: ['Star-Knuckle Jab', 'Spinning Shield Backhand', 'Rising Shield Uppercut!', 'PINK DIAMOND PULSE!'],
+    finisher: { label: 'PINK DIAMOND PULSE!', type: 'comboRosePulse', damage: 22, width: 155, height: 100, speed: 350, knockX: 340, knockY: -185, color: '#ff6097' }
   },
   garnet: {
-    label: 'Twin Gauntlet Rush',
-    cadence: [0.22, 0.20, 0.24, 0.36],
-    damage: [1.05, 1.18, 1.42, 1.85],
-    range: [0, 4, 8, 14],
-    knock: [1.05, 1.15, 1.45, 1.8],
-    lunge: [110, 145, 185, 250],
-    moves: ['Left Haymaker', 'Body Blow Cross', 'Dragon Upper!', 'GAUNTLET QUAKE!'],
-    finisher: { label: 'GAUNTLET QUAKE!', type: 'comboGauntletQuake', damage: 22, width: 185, height: 75, speed: 290, knockX: 400, knockY: -270, color: '#ef4444' }
+    label: 'Heavy Boxer (4-Hit)',
+    cadence: [0.21, 0.19, 0.22, 0.35],
+    damage: [1.08, 1.22, 1.46, 1.92],
+    range: [0, 4, 8, 16],
+    knock: [1.05, 1.18, 1.5, 1.88],
+    lunge: [120, 155, 195, 260],
+    moves: ['Ruby Straight Jab', 'Sapphire Hook', 'Shoryu Uppercut!', 'TWIN GAUNTLET METEOR!'],
+    finisher: { label: 'GAUNTLET METEOR!', type: 'comboGauntletQuake', damage: 24, width: 190, height: 80, speed: 300, knockX: 420, knockY: -280, color: '#ef4444' }
   },
   amethyst: {
-    label: 'Whip & Spin Mixup',
-    cadence: [0.15, 0.14, 0.18, 0.26],
-    damage: [0.95, 1.05, 1.28, 1.62],
-    range: [8, 12, 16, 22],
-    knock: [0.85, 0.92, 1.15, 1.45],
-    lunge: [90, 110, 150, 190],
-    moves: ['Whip Snap', 'Ankle Sweep', 'Dual Whip Lift', 'WHIP CYCLONE!'],
-    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 17, width: 170, height: 105, speed: 260, knockX: 280, knockY: -195, color: '#c084fc' }
+    label: 'Wild Whip Mixup (4-Hit)',
+    cadence: [0.15, 0.14, 0.17, 0.25],
+    damage: [0.96, 1.08, 1.30, 1.68],
+    range: [12, 18, 22, 28],
+    knock: [0.85, 0.92, 1.18, 1.48],
+    lunge: [95, 120, 160, 200],
+    moves: ['Whip Snap Crack', 'Low Ankle Lash', 'Dual Whip Launcher!', 'WHIP CYCLONE!'],
+    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 19, width: 180, height: 110, speed: 270, knockX: 300, knockY: -205, color: '#c084fc' }
   },
   pearl: {
-    label: 'Ballet Spear Art',
-    cadence: [0.14, 0.13, 0.16, 0.25],
-    damage: [0.9, 1.0, 1.25, 1.58],
-    range: [10, 14, 18, 26],
-    knock: [0.8, 0.85, 1.1, 1.38],
-    lunge: [115, 130, 170, 210],
-    moves: ['Foil Jab', 'Pirouette Cut', 'Skyward Vault Thrust', 'SPEAR FLURRY!'],
-    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 10, speed: 440, knockX: 260, knockY: -140, color: '#22d3ee' }
+    label: 'Ballet Fencer (Rapid Flurry)',
+    cadence: [0.12, 0.11, 0.13, 0.23],
+    damage: [0.88, 0.98, 1.24, 1.65],
+    range: [14, 18, 22, 30],
+    knock: [0.75, 0.80, 1.10, 1.45],
+    lunge: [125, 145, 185, 225],
+    moves: ['En-Garde Foil', 'Twin Ribbon Jab', 'Skyward Vault!', 'RIBBON SPEAR FLURRY!'],
+    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 12, speed: 460, knockX: 280, knockY: -155, color: '#22d3ee' }
   },
   bismuth: {
-    label: 'Forge Breaker Chain',
-    cadence: [0.25, 0.24, 0.28, 0.40],
-    damage: [1.1, 1.25, 1.48, 1.95],
-    range: [0, 3, 6, 12],
-    knock: [1.15, 1.3, 1.55, 1.9],
-    lunge: [90, 130, 170, 240],
-    moves: ['Iron Forearm', 'Anvil Hook', 'Rising Forge Upper!', 'ANVIL ECHO!'],
-    finisher: { label: 'ANVIL ECHO!', type: 'comboAnvilEcho', damage: 24, width: 190, height: 85, speed: 270, knockX: 440, knockY: -290, color: '#f97316' }
+    label: 'Heavy Shapeshifter (Tank)',
+    cadence: [0.25, 0.25, 0.29, 0.42],
+    damage: [1.18, 1.35, 1.58, 2.15],
+    range: [4, 8, 12, 18],
+    knock: [1.20, 1.35, 1.65, 2.1],
+    lunge: [95, 135, 175, 250],
+    moves: ['Spiked Hammer Swing', 'Battle-Axe Cleave!', 'Rising Forge Upper!', 'MOLTEN ANVIL SLAM!'],
+    finisher: { label: 'MOLTEN ANVIL SLAM!', type: 'comboAnvilEcho', damage: 28, width: 205, height: 92, speed: 280, knockX: 460, knockY: -305, color: '#f97316' }
   },
   peridot: {
-    label: 'Ferro-Tech Sequence',
-    cadence: [0.17, 0.16, 0.19, 0.28],
-    damage: [0.95, 1.06, 1.28, 1.55],
-    range: [12, 16, 20, 28],
-    knock: [0.75, 0.85, 1.05, 1.3],
-    lunge: [70, 95, -60, 130],
-    moves: ['Shard Jab', 'Gyro Saw Spin', 'Magnet Snap Back', 'MAGNETIC BURST!'],
-    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 16, width: 160, height: 125, speed: 260, knockX: 230, knockY: -200, color: '#84cc16' }
+    label: 'Ferro-Tech Zoner (4-Hit)',
+    cadence: [0.16, 0.15, 0.18, 0.27],
+    damage: [0.95, 1.08, 1.28, 1.60],
+    range: [16, 22, 26, 32],
+    knock: [0.75, 0.88, 1.05, 1.38],
+    lunge: [70, 95, -85, 135],
+    moves: ['Steel Claw Rake', 'I-Beam Sweeper', 'Magnet Backstep!', 'CRUSHER JAW BURST!'],
+    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 18, width: 170, height: 130, speed: 280, knockX: 250, knockY: -210, color: '#84cc16' }
   },
   lapis: {
-    label: 'Hydro-Lance Flow',
+    label: 'Hydro-Bender (4-Hit Aerial)',
     cadence: [0.16, 0.15, 0.19, 0.27],
-    damage: [1.0, 1.12, 1.32, 1.65],
-    range: [10, 14, 20, 26],
-    knock: [0.9, 0.98, 1.22, 1.48],
-    lunge: [85, 110, 135, 180],
-    moves: ['Water Blade', 'Riptide Low Sweep', 'Geyser Lift!', 'TIDAL LASH!'],
-    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 18, width: 180, height: 95, speed: 340, knockX: 340, knockY: -230, color: '#38bdf8' }
+    damage: [1.0, 1.14, 1.34, 1.70],
+    range: [14, 18, 24, 30],
+    knock: [0.9, 1.0, 1.25, 1.52],
+    lunge: [90, 115, 145, 190],
+    moves: ['Hydro-Scythe Arc', 'Riptide Low Sweep', 'Water-Fist Upper!', 'OCEAN DRAGON LASH!'],
+    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 20, width: 190, height: 100, speed: 360, knockX: 360, knockY: -240, color: '#38bdf8' }
   },
   rose: {
-    label: 'Diamond Knight Waltz',
-    cadence: [0.22, 0.20, 0.25, 0.35],
-    damage: [1.05, 1.18, 1.4, 1.78],
-    range: [2, 6, 10, 16],
-    knock: [1.05, 1.15, 1.35, 1.65],
-    lunge: [95, 135, 165, 220],
-    moves: ['Hilt Strike', 'Rose Cross Cleave', 'Valiant Rising Cut', 'ROSE THORN SWEEP!'],
-    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 20, width: 180, height: 95, speed: 310, knockX: 350, knockY: -210, color: '#f43f5e' }
+    label: 'Paladin Sword & Shield (4-Hit)',
+    cadence: [0.21, 0.19, 0.24, 0.34],
+    damage: [1.05, 1.18, 1.42, 1.82],
+    range: [4, 8, 14, 20],
+    knock: [1.05, 1.18, 1.38, 1.7],
+    lunge: [95, 135, 170, 225],
+    moves: ['Broadsword Cleave', 'Thorny Shield Bash', 'Valiant Rising Cut', 'ROSE SANCTUARY SWEEP!'],
+    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 22, width: 190, height: 100, speed: 320, knockX: 360, knockY: -220, color: '#f43f5e' }
   },
   connie: {
-    label: 'Maheswaran Iaido',
-    cadence: [0.15, 0.14, 0.18, 0.26],
-    damage: [0.95, 1.08, 1.3, 1.65],
-    range: [10, 16, 20, 28],
-    knock: [0.85, 0.92, 1.18, 1.45],
-    lunge: [120, 150, 185, 240],
-    moves: ['Scabbard Draw', 'Diagonal Cross Cut', 'Vaulting Crescent', 'CRESCENT SLASH!'],
-    finisher: { label: 'CRESCENT SLASH!', type: 'comboCrescentSlash', damage: 17, width: 170, height: 75, speed: 460, knockX: 310, knockY: -175, color: '#ec4899' }
+    label: 'Iaido Speed-Fencer',
+    cadence: [0.13, 0.12, 0.15, 0.24],
+    damage: [0.95, 1.08, 1.32, 1.75],
+    range: [12, 16, 22, 32],
+    knock: [0.85, 0.92, 1.2, 1.55],
+    lunge: [130, 160, 200, 260],
+    moves: ['Quick Draw Thrust', 'Diagonal Cross', 'Vaulting Crescent!', 'HELM-SPLITTER SLASH!'],
+    finisher: { label: 'HELM-SPLITTER!', type: 'comboCrescentSlash', damage: 20, width: 185, height: 85, speed: 480, knockX: 330, knockY: -195, color: '#ec4899' }
   },
   jasper: {
-    label: 'Beta Quartz Brawler',
-    cadence: [0.26, 0.24, 0.28, 0.42],
-    damage: [1.15, 1.3, 1.55, 2.05],
-    range: [0, 4, 8, 14],
-    knock: [1.2, 1.35, 1.6, 2.0],
-    lunge: [125, 160, 205, 280],
-    moves: ['Shoulder Check', 'Rib-Crusher Hook', 'Spinning Heel Slam', 'SEISMIC HAYMAKER!'],
-    finisher: { label: 'SEISMIC HAYMAKER!', type: 'comboSeismicSlam', damage: 26, width: 200, height: 75, speed: 270, knockX: 480, knockY: -310, color: '#ea580c' }
+    label: 'Rushdown Juggernaut',
+    cadence: [0.25, 0.24, 0.28, 0.42],
+    damage: [1.22, 1.38, 1.65, 2.25],
+    range: [4, 8, 12, 18],
+    knock: [1.25, 1.40, 1.70, 2.2],
+    lunge: [135, 175, 220, 295],
+    moves: ['Crushing Haymaker', 'Brutal Shoulder Ram!', 'Horned Uppercut!', 'SEISMIC HELMET CRASH!'],
+    finisher: { label: 'SEISMIC CRASH!', type: 'comboSeismicSlam', damage: 30, width: 215, height: 85, speed: 290, knockX: 500, knockY: -330, color: '#ea580c' }
   }
 };
 

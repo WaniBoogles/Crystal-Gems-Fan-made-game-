@@ -100,6 +100,19 @@ class PlayerHero {
     this.blinkTimer = 0;
     this.isBlinking = false;
     this.gameRef = null;
+
+    // Lore-Accurate Unique Passive Ability States (All 10 Guardians!)
+    this.futureVisionTimer = 0;      // Garnet: auto-parry charge (7s)
+    this.futureVisionReady = true;
+    this.counterBuffTimer = 0;       // Garnet: +35% counter damage window
+    this.momentumStacks = 0;         // Amethyst: up to 5 stacks (+speed/+dmg)
+    this.momentumDecayTimer = 0;
+    this.precisionHitCount = 0;      // Pearl: every 3rd hit = 1.6x crit + CDR
+    this.forgeHitCount = 0;          // Bismuth: every 3rd hit = Molten Burn
+    this.orbitZapTimer = 0;          // Peridot: orbiting metal shards auto-zap
+    this.sanctuaryHealTimer = 0;     // Rose: periodic healing petals
+    this.riposteTimer = 0;           // Connie: dodge/finisher +35% crit & speed
+    this.spikeBubbleTickTimer = 0;   // Steven: [S] Spiked Rose Bubble contact thorns
   }
 
   switchCharacter(charName, audioEngine, particles) {
@@ -282,6 +295,82 @@ class PlayerHero {
     if (this.dodgeCooldown > 0) this.dodgeCooldown -= dt;
     if (this.invulnerableTimer > 0) this.invulnerableTimer -= dt;
     if (this.parryWindow > 0) this.parryWindow -= dt;
+    if (this.counterBuffTimer > 0) this.counterBuffTimer -= dt;
+    if (this.riposteTimer > 0) this.riposteTimer -= dt;
+
+    // --- UNIQUE CHARACTER PASSIVES TICK (ALL 10 GUARDIANS) ---
+    if (!this.isFusion) {
+      const c = this.activeChar;
+      if (c === 'steven' && this.isShielding) {
+        // Steven Passive: Spiked Pink Bubble damages & knocks back enemies on contact!
+        this.spikeBubbleTickTimer -= dt;
+        if (this.spikeBubbleTickTimer <= 0 && this.gameRef?.enemyManager?.enemies) {
+          let hitAny = false;
+          for (const e of this.gameRef.enemyManager.enemies) {
+            if (e.hp > 0 && Math.hypot(e.x - this.x, (e.y - 35) - (this.y - 35)) < 76) {
+              const thornDmg = this.isPinkOverdrive ? 26 : 15;
+              e.hp = Math.max(0, e.hp - thornDmg);
+              e.hurtTimer = 0.28;
+              e.vx = (e.x < this.x ? -1 : 1) * 260;
+              e.vy = -120;
+              hitAny = true;
+              if (particles) {
+                particles.addDamageText(e.x, e.y - 48, `-${thornDmg} SPIKE!`, false, '#ff6097');
+                particles.addHitSpark(e.x, e.y - 30, '#ff6097', 16, 0);
+              }
+            }
+          }
+          if (hitAny) {
+            this.spikeBubbleTickTimer = 0.42;
+            if (audioEngine) audioEngine.playSfx('shield');
+          }
+        }
+      } else if (c === 'garnet') {
+        // Garnet Passive: Future Vision auto-recharges every 7s
+        if (!this.futureVisionReady) {
+          this.futureVisionTimer += dt;
+          if (this.futureVisionTimer >= 7.0) {
+            this.futureVisionReady = true;
+            this.futureVisionTimer = 0;
+            if (particles) particles.addDamageText(this.x, this.y - 96, '👁️ FUTURE VISION READY', false, '#fde047');
+          }
+        }
+      } else if (c === 'amethyst' && this.momentumStacks > 0) {
+        this.momentumDecayTimer -= dt;
+        if (this.momentumDecayTimer <= 0) this.momentumStacks = 0;
+      } else if (c === 'peridot') {
+        // Peridot Passive: Orbiting Ferrokinetic Steel Shards auto-zap nearby enemies!
+        this.orbitZapTimer -= dt;
+        if (this.orbitZapTimer <= 0 && this.gameRef?.enemyManager?.enemies) {
+          for (const e of this.gameRef.enemyManager.enemies) {
+            if (e.hp > 0 && Math.hypot(e.x - this.x, e.y - this.y) < 135) {
+              const zapDmg = this.isPinkOverdrive ? 22 : 12;
+              e.hp = Math.max(0, e.hp - zapDmg);
+              e.hurtTimer = 0.2;
+              this.orbitZapTimer = 1.45;
+              if (particles) {
+                particles.addLightningArc(this.x, this.y - 45, e.x, e.y - 30, '#a3e635');
+                particles.addDamageText(e.x, e.y - 52, `-${zapDmg} FERRO-ZAP`, false, '#a3e635');
+              }
+              if (audioEngine) audioEngine.playSfx('metal');
+              break;
+            }
+          }
+        }
+      } else if (c === 'rose') {
+        // Rose Passive: Maternal Sanctuary — periodic healing rose petals!
+        this.sanctuaryHealTimer += dt;
+        if (this.sanctuaryHealTimer >= 6.5) {
+          this.sanctuaryHealTimer = 0;
+          if (particles) particles.addRosePetals(this.x, this.y - 36, 8);
+          if (typeof this.hp === 'number' && typeof this.maxHp === 'number' && this.hp < this.maxHp) {
+            this.hp = Math.min(this.maxHp, this.hp + 1);
+            if (particles) particles.addDamageText(this.x, this.y - 84, '🌹 SANCTUARY +1❤', false, '#fbcfe8');
+          }
+          if (typeof this.onTeamHeal === 'function') this.onTeamHeal(this, 1);
+        }
+      }
+    }
 
     // Guard / Shield input edge detection for Perfect Parry
     const shieldHeld = !!(input.shield || (input.down && !input.jump));
@@ -429,6 +518,8 @@ class PlayerHero {
     if (this.isPinkOverdrive) speed *= 1.85;
     if (this.hasSynergyBuff) speed *= 1.25;
     if (this.isFusion) speed *= 1.12;   // a fusion moves with both partners' weight
+    if (this.riposteTimer > 0 && this.activeChar === 'connie') speed *= 1.25; // Connie Knight's Riposte speed
+    if (this.momentumStacks > 0 && this.activeChar === 'amethyst') speed *= (1 + this.momentumStacks * 0.04);
     if (this.isSpinDashing) speed = 520;
 
     // Footfall dust while running, and a landing squash when we hit the floor.
@@ -535,10 +626,16 @@ class PlayerHero {
       this.isFastFalling = false;
     }
 
-    // Gravity & Position Updates
+    // Gravity & Position Updates (Lapis Passive: Hydro-Wing Glide while holding Jump midair!)
     const prevY = this.y;
     const prevVy = this.vy;
     this.vy += gravity * dt;
+    if (!this.isGrounded && this.activeChar === 'lapis' && !this.isFusion && input.jump && this.vy > 95 && !this.isFastFalling) {
+      this.vy = 95;
+      if (particles && Math.random() < 0.25) {
+        particles.addSparkle(this.x + (Math.random() * 26 - 13), this.y - 45, '#bae6fd', 2, 1.8);
+      }
+    }
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
@@ -746,6 +843,10 @@ class PlayerHero {
     // Interrupt normal attack into dodge (responsive dodge cancel)
     this.isAttacking = false;
     this.actionType = 'dodge';
+    if (this.activeChar === 'connie' && !this.isFusion) {
+      this.riposteTimer = 2.8;
+      if (particles) particles.addDamageText(this.x, this.y - 82, "⚔️ KNIGHT'S RIPOSTE!", false, '#f472b6');
+    }
 
     if (audioEngine) audioEngine.playSfx('dash');
 
@@ -805,7 +906,51 @@ class PlayerHero {
     this.attackKnockMult = profile.knock[this.comboStep];
     this.actionDuration = isFinisher ? 0.34 : (this.comboStep === 0 ? 0.25 : (this.comboStep === 1 ? 0.24 : 0.27));
     this.actionTimer = this.actionDuration;
-    this.attackCooldown = profile.cadence[this.comboStep];
+    let cd = profile.cadence[this.comboStep];
+
+    // Passive Combat Modifiers for All 10 Playable Guardians
+    if (!this.isFusion) {
+      const ch = this.activeChar;
+      if (ch === 'garnet' && this.counterBuffTimer > 0) {
+        this.attackDamageMult *= 1.35;
+      } else if (ch === 'amethyst') {
+        this.momentumStacks = Math.min(5, (this.momentumStacks || 0) + 1);
+        this.momentumDecayTimer = 4.5;
+        this.attackDamageMult *= (1 + this.momentumStacks * 0.05);
+        cd *= Math.max(0.70, 1 - this.momentumStacks * 0.06);
+      } else if (ch === 'pearl') {
+        this.precisionHitCount = (this.precisionHitCount || 0) + 1;
+        if (this.precisionHitCount % 3 === 0) {
+          this.attackDamageMult *= 1.6;
+          this.specialCooldown = Math.max(0, this.specialCooldown - 0.6);
+          this.skillCooldown = Math.max(0, this.skillCooldown - 0.6);
+          if (particles) particles.addDamageText(this.x, this.y - 102, '💎 PRECISION CRIT!', true, '#67e8f9');
+        }
+      } else if (ch === 'bismuth') {
+        this.forgeHitCount = (this.forgeHitCount || 0) + 1;
+        if (this.forgeHitCount % 3 === 0) {
+          this.attackDamageMult *= 1.35;
+          if (particles) {
+            particles.addFireRing(this.x + this.facing * 42, this.y - 18, '#f97316');
+            particles.addDamageText(this.x, this.y - 102, '🔥 MOLTEN TEMPER!', false, '#fb923c');
+          }
+        }
+      } else if (ch === 'lapis' && !this.isGrounded) {
+        this.attackDamageMult *= 1.25;
+      } else if (ch === 'rose' && isFinisher) {
+        if (typeof this.hp === 'number' && typeof this.maxHp === 'number' && this.hp < this.maxHp) {
+          this.hp = Math.min(this.maxHp, this.hp + 1);
+          if (particles) particles.addDamageText(this.x, this.y - 104, '🌹 +1❤ PETAL HEAL', false, '#fbcfe8');
+        }
+      } else if (ch === 'connie') {
+        if (this.riposteTimer > 0) this.attackDamageMult *= 1.35;
+        if (isFinisher) this.riposteTimer = 2.8;
+      } else if (ch === 'jasper') {
+        const hpRatio = (typeof this.hp === 'number' && typeof this.maxHp === 'number' && this.maxHp > 0) ? (this.hp / this.maxHp) : 1;
+        this.attackDamageMult *= (1 + (1 - Math.min(1, hpRatio)) * 0.35);
+      }
+    }
+    this.attackCooldown = cd;
 
     const moveLabel = (profile.moves && profile.moves[this.comboStep]) || '';
     this.comboMoveName = moveLabel;
@@ -1146,23 +1291,27 @@ class PlayerHero {
       }
       particles.addSparkle(this.x + this.facing * 40, this.y - 44, '#67e8f9', 14, 5);
     } else if (this.activeChar === 'bismuth') {
-      // Anvil Hand Launch
+      // Arcing Molten Forge Hammer Toss → Lava Quake!
       audioEngine.playSfx('hammer');
       projectiles.push({
         x: this.x + this.facing * 35,
-        y: this.y - 38,
-        vx: this.facing * 540,
-        vy: 0,
-        radius: 24,
-        damage: Math.round(54 * dmgMult),
+        y: this.y - 46,
+        vx: this.facing * 480,
+        vy: -220,
+        gravity: 720,
+        radius: 26,
+        damage: Math.round(62 * dmgMult),
         type: 'bismuthAnvil',
         color: '#f97316',
-        life: 1.1
+        life: 1.25
       });
-      if (particles) particles.addHammerQuake(this.x + this.facing * 35, this.y, '#f97316');
-      particles.addSparkle(this.x + this.facing * 35, this.y - 38, '#ea580c', 14, 5);
+      if (particles) {
+        particles.addHammerQuake(this.x + this.facing * 35, this.y, '#f97316');
+        particles.addFireRing(this.x + this.facing * 35, this.y - 34, '#fbbf24');
+      }
+      particles.addSparkle(this.x + this.facing * 35, this.y - 38, '#ea580c', 16, 6);
     } else if (this.activeChar === 'peridot') {
-      // Authentic Ferrokinetic Scrap Salvo (Levitates 3 Magnetic Scraps!)
+      // Authentic Ferrokinetic Scrap Salvo (Levitates 3 Homing Magnetic Scraps!)
       this.actionDuration = 0.45;
       this.actionTimer = 0.45;
       audioEngine.playSfx('metal');
@@ -1173,30 +1322,33 @@ class PlayerHero {
           projectiles.push({
             x: this.x + this.facing * (35 + s * 22),
             y: this.y - 46 - (s * 8),
-            vx: this.facing * (540 + s * 55),
+            vx: this.facing * (560 + s * 55),
             vy: (s - 1) * 28,
+            homing: 260,
             radius: 19,
-            damage: Math.round(26 * dmgMult),
+            damage: Math.round(28 * dmgMult),
             type: scrapTypes[s],
             color: '#84cc16',
-            life: 1.1
+            life: 1.25
           });
           particles.addSparkle(this.x + this.facing * 35, this.y - 42, '#a3e635', 12, 4);
         }, s * 75);
       }
     } else if (this.activeChar === 'lapis') {
-      // Giant Hydro-Fist
+      // Hydro-Chains & Giant Water Fist (Snares & stuns enemies!)
       audioEngine.playSfx('water');
       projectiles.push({
         x: this.x + this.facing * 35,
         y: this.y - 40,
-        vx: this.facing * 600,
+        vx: this.facing * 620,
         vy: 0,
-        radius: 26,
-        damage: Math.round(48 * dmgMult),
+        radius: 28,
+        damage: Math.round(50 * dmgMult),
         type: 'hydroFist',
         color: '#38bdf8',
-        life: 1.2
+        stunTime: 0.85,
+        hitText: 'HYDRO SNARE!',
+        life: 1.25
       });
       if (particles) {
         particles.addWaterStream(this.x + this.facing * 35, this.y - 40, this.facing, '#38bdf8');
@@ -1204,70 +1356,79 @@ class PlayerHero {
       }
       particles.addSparkle(this.x + this.facing * 35, this.y - 40, '#0284c7', 16, 5);
     } else if (this.activeChar === 'rose') {
-      // Thorny Bramble Shield Throw (3-Bounce Rose Discus)
+      // Healing Petal Cyclone Wave (Pierces foes & restores ally vigor!)
       audioEngine.playSfx('shield');
       projectiles.push({
         x: this.x + this.facing * 30,
         y: this.y - 38,
-        vx: this.facing * 550,
+        vx: this.facing * 520,
         vy: 0,
-        radius: 21,
-        damage: Math.round(42 * dmgMult),
+        radius: 26,
+        pierceLeft: 3,
+        damage: Math.round(44 * dmgMult),
         type: 'roseShield',
         color: '#f43f5e',
         bounces: 3,
         startX: this.x,
-        life: 1.7
+        life: 1.8
       });
+      if (typeof this.onTeamHeal === 'function') this.onTeamHeal(this, 1);
       if (particles) particles.addHolyHeal(this.x + this.facing * 25, this.y - 38, '#f43f5e');
-      particles.addRosePetals(this.x, this.y - 35, 10);
+      particles.addRosePetals(this.x, this.y - 35, 14);
     } else if (this.activeChar === 'connie') {
-      // Pink Sword Flying Arc (Crescent Sword Beam Projectile)
+      // Sworn to the Sword: Fencing Lunge Dash + Razor Crescent Sword Wave!
       audioEngine.playSfx('sword');
       audioEngine.playSfx('laser');
+      this.comboImpulseVx = this.facing * 420;
+      this.comboImpulseTimer = 0.22;
       projectiles.push({
-        x: this.x + this.facing * 38,
+        x: this.x + this.facing * 42,
         y: this.y - 38,
-        vx: this.facing * 640,
+        vx: this.facing * 700,
         vy: 0,
-        width: 42,
-        height: 70,
-        radius: 26,
-        damage: Math.round(46 * dmgMult),
+        width: 48,
+        height: 76,
+        radius: 28,
+        pierceLeft: 2,
+        damage: Math.round(50 * dmgMult),
         type: 'connieSwordBeam',
         color: '#f472b6',
-        life: 1.2
+        life: 1.25
       });
       if (particles) {
         particles.addThrustPierce(this.x + this.facing * 35, this.y - 38, this.facing, '#f472b6');
         particles.addDoubleSlashX(this.x + this.facing * 35, this.y - 38, this.facing, '#f472b6');
       }
-      particles.addSparkle(this.x + this.facing * 40, this.y - 38, '#fbcfe8', 16, 6);
+      particles.addSparkle(this.x + this.facing * 40, this.y - 38, '#fbcfe8', 18, 6);
     } else if (this.activeChar === 'jasper') {
-      // Crash Helmet Comet Charge (Battering Ram Projectile / Rush)
+      // Crash Helmet Comet Charge: Physical Armored Ram Rush!
       audioEngine.playSfx('rocket');
       audioEngine.playSfx('hammer');
       this.actionType = 'throw';
-      this.actionDuration = 0.45;
-      this.actionTimer = 0.45;
+      this.actionDuration = 0.48;
+      this.actionTimer = 0.48;
+      this.comboImpulseVx = this.facing * 560;
+      this.comboImpulseTimer = 0.34;
+      this.invulnerableTimer = Math.max(this.invulnerableTimer, 0.34);
       projectiles.push({
         x: this.x + this.facing * 38,
         y: this.y - 44,
-        vx: this.facing * 660,
+        vx: this.facing * 640,
         vy: 0,
-        width: 68,
-        height: 54,
-        radius: 30,
-        damage: Math.round(56 * dmgMult),
+        width: 74,
+        height: 58,
+        radius: 32,
+        pierceLeft: 3,
+        damage: Math.round(62 * dmgMult),
         type: 'jasperCrashHelmet',
         color: '#ea580c',
-        life: 1.0
+        life: 0.72
       });
       if (particles) {
         particles.addHammerQuake(this.x + this.facing * 35, this.y, '#ea580c');
         particles.addFireRing(this.x + this.facing * 35, this.y, '#ea580c');
       }
-      particles.addSparkle(this.x + this.facing * 35, this.y - 44, '#f97316', 18, 6);
+      particles.addSparkle(this.x + this.facing * 35, this.y - 44, '#f97316', 20, 6);
     }
   }
 
@@ -2146,14 +2307,39 @@ class PlayerHero {
     }
 
     if (this.invulnerableTimer > 0 || this.isSpinDashing) return false;
+    // Garnet Passive: Future Vision automatically foresees & parries the next incoming hit!
+    if (!this.isFusion && this.activeChar === 'garnet' && this.futureVisionReady) {
+      this.futureVisionReady = false;
+      this.futureVisionTimer = 0;
+      this.counterBuffTimer = 3.0;
+      this.invulnerableTimer = 0.55;
+      if (audioEngine) audioEngine.playSfx('parry');
+      if (particles) {
+        particles.addPerfectParryVFX(this.x, this.y - 38);
+        particles.addDamageText(this.x, this.y - 82, '👁️ FUTURE VISION!', true, '#fde047');
+      }
+      return false;
+    }
     if (this.isShielding) {
       this.invulnerableTimer = 0.28;
       if (audioEngine) audioEngine.playSfx('shield');
-      if (particles) particles.addShieldBlockRipple(this.x, this.y - 34, this.facing, '#62c8f4');
+      if (particles) particles.addShieldBlockRipple(this.x, this.y - 34, this.facing, this.activeChar === 'steven' ? '#ff6097' : '#62c8f4');
+      // Steven Spiked Pink Bubble reflects thorn damage to nearby attackers on block!
+      if (this.activeChar === 'steven' && this.gameRef?.enemyManager?.enemies) {
+        for (const e of this.gameRef.enemyManager.enemies) {
+          if (e.hp > 0 && Math.hypot(e.x - this.x, e.y - this.y) < 120) {
+            e.hp = Math.max(0, e.hp - 18);
+            e.hurtTimer = 0.35;
+            e.vx = (e.x < this.x ? -1 : 1) * 290;
+            if (particles) particles.addDamageText(e.x, e.y - 52, '-18 SPIKE COUNTER!', true, '#ff6097');
+          }
+        }
+      }
       return false;
     }
     this.invulnerableTimer = 1.25; // Generous 1.25s iframes to prevent rapid tick deaths!
-    const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5)) : amount;
+    const bismuthArmor = (!this.isFusion && this.activeChar === 'bismuth') ? 0.80 : 1.0;
+    const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5 * bismuthArmor)) : Math.max(1, Math.round(amount * bismuthArmor));
     if (audioEngine) audioEngine.playSfx('hurt');
     const stats = (typeof this.getCombatStats === 'function') ? this.getCombatStats() : { defense: 35 };
     const baseUnitDmg = (finalDamage || 1) * 95;
@@ -4141,34 +4327,40 @@ class PlayerHero {
       // Right arm raised high in Bubble Summon pose!
       this.drawArticulatedArm(ctx, 12, -46 + bob, 21, -52 + bob, 27, -60 + bob, shirtColor, skinColor, 8.5, 7, skinColor, 5);
     } else {
-      // Ready Forearm holding Canonical Rose Shield with continuous subtle guard motion
+      // Ready Forearm holding Show-Accurate Rose's Shield (cyan rim + pink thorn spiral + diamond core!)
       const fSw = motion.armSwingF * 11;
-      const shieldX = (isShieldStance ? 18 : 14) + fSw * 0.45;
+      const shieldX = (isShieldStance ? 18 : 15) + fSw * 0.45;
       const shieldY = (isShieldStance ? -38 : -34) + bob + fSw * 0.28;
-      this.drawArticulatedArm(ctx, 10, -44 + bob, 12 + fSw * 0.25, -39 + bob, shieldX, shieldY, jacketColor, jacketColor, 8.5, 7);
+      this.drawArticulatedArm(ctx, 11, -44 + bob, 13 + fSw * 0.25, -39 + bob, shieldX, shieldY, jacketColor, jacketColor, 8.8, 7.2);
       ctx.save();
-      ctx.fillStyle = 'rgba(255, 96, 151, 0.88)';
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.86)';
+      ctx.strokeStyle = '#bae6fd';
+      ctx.lineWidth = 3.2;
       ctx.beginPath();
-      ctx.arc(shieldX, shieldY, 17, 0, Math.PI * 2);
+      ctx.arc(shieldX, shieldY, 18.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      ctx.strokeStyle = '#f43f5e';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.arc(shieldX, shieldY, 8, 0, Math.PI * 1.6);
+      ctx.arc(shieldX, shieldY, 13.5, 0.3, Math.PI * 1.85);
       ctx.stroke();
 
-      ctx.fillStyle = '#10b981';
-      for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 2) {
-        const tx = shieldX + Math.cos(angle) * 14;
-        const ty = shieldY + Math.sin(angle) * 14;
-        ctx.beginPath();
-        ctx.arc(tx, ty, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.strokeStyle = '#be185d';
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.arc(shieldX, shieldY, 8.2, 0, Math.PI * 1.65);
+      ctx.stroke();
+
+      // Faceted pink diamond center core
+      ctx.fillStyle = '#e11d48';
+      ctx.strokeStyle = '#fbcfe8';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(shieldX, shieldY, 4.0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
       ctx.restore();
     }
   }
@@ -5144,10 +5336,35 @@ class PlayerHero {
 
   drawBubbleShield(ctx) {
     ctx.save();
+    const t = (typeof performance !== 'undefined' && performance.now) ? performance.now() / 1000 : Date.now() / 1000;
     const bubbleGrad = ctx.createRadialGradient(0, -45, 10, 0, -45, 55);
-    bubbleGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-    bubbleGrad.addColorStop(0.6, 'rgba(255, 96, 151, 0.5)');
-    bubbleGrad.addColorStop(1, 'rgba(244, 63, 94, 0.85)');
+    bubbleGrad.addColorStop(0, 'rgba(255, 255, 255, 0.42)');
+    bubbleGrad.addColorStop(0.6, 'rgba(255, 96, 151, 0.48)');
+    bubbleGrad.addColorStop(1, 'rgba(244, 63, 94, 0.86)');
+
+    // Steven Universe Future: Spiked Pink Diamond Bubble!
+    if (this.activeChar === 'steven') {
+      const spikes = 12;
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.88)';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < spikes; i++) {
+        const a = (i * Math.PI * 2) / spikes + t * 0.8;
+        const bx = Math.cos(a) * 49;
+        const by = -45 + Math.sin(a) * 49;
+        const tx = Math.cos(a) * 65;
+        const ty = -45 + Math.sin(a) * 65;
+        const pX = -Math.sin(a) * 6.5;
+        const pY = Math.cos(a) * 6.5;
+        ctx.beginPath();
+        ctx.moveTo(bx + pX, by + pY);
+        ctx.lineTo(tx, ty);
+        ctx.lineTo(bx - pX, by - pY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
 
     ctx.fillStyle = bubbleGrad;
     ctx.strokeStyle = '#ffffff';
@@ -5157,7 +5374,7 @@ class PlayerHero {
     ctx.fill();
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.82)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(0, -45, 46, -Math.PI * 0.75, -Math.PI * 0.25);
@@ -5179,37 +5396,36 @@ class PlayerHero {
     const skin = '#8ba0cb';
     const skinShade = '#6b82b2';
 
-    // 1. Articulated Plum-Magenta Overalls Legs & Dark Forge Boots (Bismuth.png!)
+    // 1. Articulated BUFFED Plum-Magenta Overalls Legs & Heavy Forge Boots (Bismuth.png!)
     const drawBismuthLeg = (lx, ly, rot, darken) => {
       ctx.save();
-      ctx.translate(lx, -29 + bob + ly);
+      ctx.translate(lx, -30 + bob + ly);
       ctx.rotate(rot);
-      this.drawCelTaperedLimb(ctx, 0, 0, 0, 21, 7.6, 6.0, darken ? '#601744' : '#7b2059', '#4a1033', 1);
-      // Dark espresso blacksmith boots with crisp outline
-      this.drawCelBoot(ctx, 1, 28, 12, 8, '#23141c', '#12090e', '#3b2430');
+      this.drawCelTaperedLimb(ctx, 0, 0, 0, 21, 9.5, 7.6, darken ? '#601744' : '#7b2059', '#4a1033', 1);
+      this.drawCelBoot(ctx, 1, 28, 14, 8.5, '#23141c', '#12090e', '#3b2430');
       ctx.restore();
     };
-    drawBismuthLeg(-9 + legs.backX, legs.backY, legs.backRot, true);
-    drawBismuthLeg(9 + legs.frontX, legs.frontY, legs.frontRot, false);
+    drawBismuthLeg(-11.5 + legs.backX, legs.backY, legs.backRot, true);
+    drawBismuthLeg(11.5 + legs.frontX, legs.frontY, legs.frontRot, false);
 
-    // 2. Rear Muscular Periwinkle-Blue Arm with Dark Star Tattoo (Bismuth.png!)
+    // 2. Rear MASSIVE Buffed Periwinkle-Blue Arm with Dark Star Shoulder Tattoo (Bismuth.png!)
     if (!(isPunch && combo === 2)) {
       const armSwing = motion.armSwingB * 13;
-      this.drawArticulatedArm(ctx, -17, -62 + bob, -24 - armSwing * 0.4, -49 + bob, -21 - armSwing, -37 + bob, skinShade, skin, 11.5, 9.8, skin, 6.2);
+      this.drawArticulatedArm(ctx, -22, -64 + bob, -31 - armSwing * 0.4, -48 + bob, -28 - armSwing, -33 + bob, skinShade, skin, 14.5, 12.2, skin, 8.2);
       ctx.fillStyle = '#2d1c2e';
-      this.drawMiniStar(ctx, -20 - armSwing * 0.2, -55 + bob, 4.8);
+      this.drawMiniStar(ctx, -26 - armSwing * 0.2, -56 + bob, 5.8);
     }
 
-    // 3. Broad Blacksmith Torso + Plum-Magenta Overalls + Gold Chevron Clasps (Bismuth.png!)
+    // 3. POWERFUL Broad Blacksmith Torso + Plum-Magenta Overalls + Gold Chevron Clasps (Bismuth.png!)
     ctx.fillStyle = skin;
     ctx.strokeStyle = ink;
-    ctx.lineWidth = 1.8;
+    ctx.lineWidth = 1.9;
     ctx.beginPath();
-    ctx.moveTo(-21, -69 + bob);
-    ctx.quadraticCurveTo(0, -72 + bob, 21, -69 + bob);
-    ctx.quadraticCurveTo(22, -49 + bob, 17, -27 + bob);
-    ctx.lineTo(-17, -27 + bob);
-    ctx.quadraticCurveTo(-22, -49 + bob, -21, -69 + bob);
+    ctx.moveTo(-27, -71 + bob);
+    ctx.quadraticCurveTo(0, -75 + bob, 27, -71 + bob);
+    ctx.quadraticCurveTo(28, -48 + bob, 21, -26 + bob);
+    ctx.lineTo(-21, -26 + bob);
+    ctx.quadraticCurveTo(-28, -48 + bob, -27, -71 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -5217,40 +5433,40 @@ class PlayerHero {
     // Plum-magenta blacksmith overalls bib, waist seam & shoulder straps
     ctx.fillStyle = '#7b2059';
     ctx.beginPath();
-    ctx.moveTo(-16, -54 + bob);
-    ctx.lineTo(16, -54 + bob);
-    ctx.quadraticCurveTo(18, -40 + bob, 16.5, -26 + bob);
-    ctx.lineTo(-16.5, -26 + bob);
-    ctx.quadraticCurveTo(-18, -40 + bob, -16, -54 + bob);
+    ctx.moveTo(-21, -54 + bob);
+    ctx.lineTo(21, -54 + bob);
+    ctx.quadraticCurveTo(23, -40 + bob, 20.5, -26 + bob);
+    ctx.lineTo(-20.5, -26 + bob);
+    ctx.quadraticCurveTo(-23, -40 + bob, -21, -54 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     // Stitched vertical apron seams & waist band
     ctx.strokeStyle = '#4a1033';
-    ctx.lineWidth = 1.4;
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-16, -37 + bob); ctx.lineTo(16, -37 + bob);
-    ctx.moveTo(-6, -54 + bob); ctx.lineTo(-6, -40 + bob);
-    ctx.moveTo(6, -54 + bob); ctx.lineTo(6, -40 + bob);
+    ctx.moveTo(-20, -37 + bob); ctx.lineTo(20, -37 + bob);
+    ctx.moveTo(-8, -54 + bob); ctx.lineTo(-8, -40 + bob);
+    ctx.moveTo(8, -54 + bob); ctx.lineTo(8, -40 + bob);
     ctx.moveTo(0, -54 + bob); ctx.lineTo(0, -42 + bob);
     ctx.stroke();
 
     // Thick plum straps + iconic golden chevron clasps (Bismuth.png!)
     ctx.fillStyle = '#7b2059';
     ctx.strokeStyle = ink;
-    ctx.lineWidth = 1.6;
-    for (const sx of [-15, 9]) {
+    ctx.lineWidth = 1.7;
+    for (const sx of [-19.5, 12]) {
       ctx.beginPath();
-      ctx.roundRect(sx, -69 + bob, 6.5, 17, 2);
+      ctx.roundRect(sx, -71 + bob, 7.8, 19, 2);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = '#facc15';
       ctx.beginPath();
       ctx.moveTo(sx - 1.5, -57 + bob);
-      ctx.lineTo(sx + 8, -57 + bob);
-      ctx.lineTo(sx + 8, -52 + bob);
-      ctx.lineTo(sx + 3.2, -48.5 + bob);
-      ctx.lineTo(sx - 1.5, -52 + bob);
+      ctx.lineTo(sx + 9.2, -57 + bob);
+      ctx.lineTo(sx + 9.2, -51.5 + bob);
+      ctx.lineTo(sx + 3.8, -47.5 + bob);
+      ctx.lineTo(sx - 1.5, -51.5 + bob);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -5465,9 +5681,9 @@ class PlayerHero {
         ctx.restore();
       }
     } else {
-      // Idle Ready Powerful Blacksmith Arm + Forged Hammer-Fist
+      // Idle Ready MASSIVE Buffed Blacksmith Arm & Clenched Forge Fist (Bismuth.png!)
       const swF = motion.armSwingF * 11;
-      this.drawArticulatedArm(ctx, 15, -60 + bob, 20 + swF * 0.4, -49 + bob, 22 + swF, -43 + bob + swF * 0.25, skin, skin, 11.5, 9.5, skin, 6.8);
+      this.drawArticulatedArm(ctx, 21, -62 + bob, 29 + swF * 0.4, -47 + bob, 28 + swF, -33 + bob + swF * 0.25, skin, skin, 14.5, 12.2, skin, 8.6);
     }
   }
 
@@ -6040,16 +6256,20 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Lush sculpted main pink wave cascade (#f472b6)
-    ctx.fillStyle = '#f472b6';
+    // Lush sculpted main pink wave cascade with crisp cartoon outline (Rose.jpeg!)
+    const inkR = '#331224';
+    ctx.fillStyle = '#f59bc0';
+    ctx.strokeStyle = inkR;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.moveTo(2, -100 + bob);
-    ctx.bezierCurveTo(-22, -101 + bob, -33 + swX * 0.4, -76 + bob, -28 + swX * 0.7, -50 + bob + swY);
-    ctx.bezierCurveTo(-34 + swX, -32 + bob + swY, -28 + swX, -14 + bob + swY, -16 + swX * 0.8, -14 + bob + swY);
-    ctx.quadraticCurveTo(0, -18 + bob, 16, -38 + bob);
-    ctx.bezierCurveTo(28, -56 + bob, 26, -94 + bob, 2, -100 + bob);
+    ctx.moveTo(2, -102 + bob);
+    ctx.bezierCurveTo(-24, -103 + bob, -35 + swX * 0.4, -76 + bob, -30 + swX * 0.7, -50 + bob + swY);
+    ctx.bezierCurveTo(-36 + swX, -32 + bob + swY, -30 + swX, -14 + bob + swY, -16 + swX * 0.8, -14 + bob + swY);
+    ctx.quadraticCurveTo(0, -18 + bob, 18, -38 + bob);
+    ctx.bezierCurveTo(30, -56 + bob, 28, -94 + bob, 2, -102 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     // 3 Sculpted Hollow-Center Rose-Tube Spiral Curl Tips at bottom of cascade!
     drawSpiralTubeEnd(-25 + swX, -20 + bob + swY, 8.5);
@@ -6368,19 +6588,21 @@ class PlayerHero {
       ctx.restore();
     }
 
-    // 0. LUSH, NATURAL FLOWING DARK/PINK WAVY HAIR (BACK CASCADE — ZERO CIRCLES ON TOP!)
+    // 0. LUSH FLOWING ESPRESSO / PINK WAVY HAIR WITH CRISP INK OUTLINE (Connie.jpeg!)
     const swX = hair.swayX * 0.85;
     const swY = hair.swayY * 0.5;
     ctx.fillStyle = hairMain;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.7;
     ctx.beginPath();
-    ctx.moveTo(2, -90 + bob);
-    // Flowing S-wave back cascade streaming behind her (-X) when dashing & fencing!
-    ctx.bezierCurveTo(-16, -91 + bob, -25 + swX * 0.5, -75 + bob, -21 + swX * 0.7, -58 + bob + swY * 0.5);
-    ctx.bezierCurveTo(-29 + swX, -48 + bob + swY, -27 + swX * 1.1, -38 + bob + swY, -16 + swX, -39 + bob + swY);
-    ctx.quadraticCurveTo(-8 + swX * 0.6, -44 + bob, 14, -46 + bob);
-    ctx.bezierCurveTo(21, -54 + bob, 20, -76 + bob, 13, -86 + bob);
+    ctx.moveTo(2, -91 + bob);
+    ctx.bezierCurveTo(-18, -92 + bob, -27 + swX * 0.5, -75 + bob, -23 + swX * 0.7, -57 + bob + swY * 0.5);
+    ctx.bezierCurveTo(-31 + swX, -46 + bob + swY, -28 + swX * 1.1, -35 + bob + swY, -16 + swX, -37 + bob + swY);
+    ctx.quadraticCurveTo(-8 + swX * 0.6, -42 + bob, 14, -46 + bob);
+    ctx.bezierCurveTo(21, -54 + bob, 20, -76 + bob, 13, -87 + bob);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
 
     // Wave sheen ribbon inside hair
     ctx.strokeStyle = hairSheen;
@@ -6472,16 +6694,11 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // 5. Signature Turquoise / Teal Headband Nestled Naturally Into Wavy Crown!
-    ctx.strokeStyle = '#0d9488';
-    ctx.lineWidth = 4.2;
+    // 5. Clean Parted Forehead Highlight (matches Connie.jpeg — no distracting teal bar!)
+    ctx.strokeStyle = hairSheen;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.arc(0, -76.5 + bob, 13.8, Math.PI * 1.06, Math.PI * 1.94);
-    ctx.stroke();
-    ctx.strokeStyle = '#2dd4bf';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(0, -76.5 + bob, 13.8, Math.PI * 1.2, Math.PI * 1.65);
+    ctx.arc(0, -77 + bob, 13.0, Math.PI * 1.15, Math.PI * 1.85);
     ctx.stroke();
 
     // Soft sculpted under-nose cel hint (Connie ref)

@@ -2562,8 +2562,30 @@ class StevenUniverseGame {
           p.vy = (p.vy || 0) + ((ty / d) * spd - (p.vy || 0)) * steer;
         }
       }
+      if (p.gravity) {
+        p.vy = (p.vy || 0) + p.gravity * dt;
+      }
       p.x += (p.vx || 0) * dt;
       p.y += (p.vy || 0) * dt;
+      // Arcing Molten Hammer ground slam shockwave (Bismuth [K])
+      if (p.gravity && p.y >= this.groundY - 12 && p.type === 'bismuthAnvil') {
+        p.y = this.groundY - 12;
+        p.life = 0;
+        if (this.particles) {
+          this.particles.addHammerQuake(p.x, this.groundY, '#f97316');
+          this.particles.addExplosion(p.x, this.groundY - 10, '#fbbf24', 18);
+        }
+        if (this.enemyManager && this.enemyManager.enemies) {
+          for (const e of this.enemyManager.enemies) {
+            if (!e.isPoofed && Math.abs(e.x - p.x) < 125 && Math.abs(e.y - this.groundY) < 95) {
+              e.hp = Math.max(0, e.hp - Math.round((p.damage || 45) * 0.75));
+              e.hurtTimer = 0.45;
+              e.vy = -190;
+              if (this.particles) this.particles.addDamageText(e.x, e.y - 52, '🔥 LAVA QUAKE!', true, '#fb923c');
+            }
+          }
+        }
+      }
       p.life -= dt;
 
       if (p.hitCooldowns) {
