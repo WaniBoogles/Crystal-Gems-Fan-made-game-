@@ -573,7 +573,7 @@ const GUARDIAN_DATA = {
     title: 'The Heart of the Crystal Gems',
     desc: 'Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Healing Saliva (+1 Heart)',
     lore: 'Half-human, half-gem hero. Uses Rose Quartz\'s magical shield, his canon healing saliva, and channels his terrifying Pink Overdrive state — plus a well-earned Cookie Cat snack when things get rough!',
-    j: { name: 'Shield Strike', icon: '🛡️', desc: 'Fast shield bash and punch combo with pink star sparks' },
+    j: { name: 'Shield-Guard Brawler', icon: '🛡️', desc: '3-hit guarded combo — raises frontal Rose Shield during swings (50% DMG reduction) and ends with Pink Bubble Pop launch' },
     k: { name: 'Shield Throw', icon: '💫', desc: 'Bouncing Rose Shield projectile ricocheting off foes (35 DMG)' },
     l: { name: 'Bubble & Heal', icon: '🫧', desc: 'Spawns a crystalline Bubble Shield shockwave and restores +1 Heart with his healing saliva (canon power)' }
   },
@@ -585,7 +585,7 @@ const GUARDIAN_DATA = {
     title: 'Leader of the Crystal Gems (Ruby & Sapphire Fusion)',
     desc: 'Heavy Gauntlet Combo • Rocket Gauntlet Blast • Giant Gauntlets Seismic Slam',
     lore: 'Physical powerhouse and leader of the Crystal Gems. Made of love, packing twin spiked rocket gauntlets and the ability to enlarge them into titanic Giant Gauntlets that crush the earth!',
-    j: { name: 'Gauntlet Combo', icon: '🥊', desc: 'Heavy dual spiked gauntlet punch flurry with KAPOW! impact' },
+    j: { name: 'Orthodox Power Boxer', icon: '🥊', desc: '4-hit boxing chain: Ruby Jab → Sapphire Cross → Hopping Shoryu Uppercut → Twin Gauntlet Meteor' },
     k: { name: 'Rocket Gauntlet', icon: '🚀', desc: 'Fires rocket-propelled spiked gauntlets across the screen (40 DMG)' },
     l: { name: 'Giant Gauntlets Slam', icon: '💥', desc: 'Enlarges gauntlets to titanic size and slams downward with high-voltage seismic tremor (65 DMG)' }
   },
@@ -597,7 +597,7 @@ const GUARDIAN_DATA = {
     title: 'Wild Earth-Born Quartz Warrior',
     desc: 'Spiked Dual Whip Flurry • Sonic Spin Dash (Quartz Buzzsaw) • Dual Whip Violet Energy Geysers',
     lore: 'Earth-born warrior from Prime Kindergarten. Attacks with spiked dual whips, curls into a high-speed rotating Quartz Buzzsaw ball, and erupts 4 rising violet volcanic energy geysers!',
-    j: { name: 'Whip Flurry', icon: '🟣', desc: 'Dual whip slashing combo sweeping through nearby enemies' },
+    j: { name: 'Wild Whip-Acrobat', icon: '🟣', desc: '5-hit whip chain: extended lashes pull foes inward before an acrobatic Cartwheel Kick & Whip Cyclone' },
     k: { name: 'Sonic Spin Dash', icon: '🌀', desc: 'Authentic Quartz Buzzsaw roll charging through enemy ranks at high speed (45 DMG)' },
     l: { name: 'Whip Quake', icon: '🔥', desc: 'Slams both whips into the ground, cracking the arena in four violet shockwaves (40 DMG each)' }
   },
@@ -609,7 +609,7 @@ const GUARDIAN_DATA = {
     title: 'Elegant Tactician & Master Spearwoman',
     desc: 'Spear Flurry • Laser Blast • Holo-Pearl Training Clone',
     lore: 'Graceful swordmaster and spear prodigy. Summons holographic Holo-Pearl sparring clones and pierces corruptions with laser beams!',
-    j: { name: 'Spear Flurry', icon: '🗡️', desc: 'Rapid thrusting spear combo piercing enemy defenses' },
+    j: { name: 'Ballet Spear Fencer', icon: '🗡️', desc: '4-hit precision foil chain: rapid En-Garde pokes → Skyward Pirouette Vault → Ribbon Spear Flurry' },
     k: { name: 'Holo-Spear Volley', icon: '✨', desc: 'Projects three hard-light Holo-Pearl spears that pierce through the corruption (35 DMG)' },
     l: { name: 'Holo-Pearl Clone', icon: '🤺', desc: 'Summons an animated holographic sparring clone that dashes forward lunging with fencing thrusts (55 DMG)' }
   },
@@ -621,8 +621,8 @@ const GUARDIAN_DATA = {
     title: 'Master Blacksmith & Weapon Forger',
     desc: 'Heavy Knockback Hammers • Forged Anvil Toss • Breaking Point Molten Fissure',
     lore: 'Legendary Crystal Gem blacksmith with a 98-facet rainbow crystal. Her brutal hammer swings and anvil launches send enemies flying backward, while the Breaking Point ruptures molten fissures!',
-    j: { name: 'Heavy Hammer Combo', icon: '🔨', desc: 'Shapeshifting 4-hit blacksmith chain: Hammer Swing → Battle-Axe Cleave → Forge Upper → Molten Anvil Slam' },
-    k: { name: 'Molten Hammer Leap', icon: '⚒️', desc: '[MELEE LEAP] Vaults forward with a titanic shapeshifted Forge Hammer, crashing down in a close-range molten shockwave!' },
+    j: { name: 'Heavy Forge Shapeshifter', icon: '🔨', desc: '3-hit weapon-morph chain: Forge Warhammer → Armor-Breaking Battle-Axe → Molten Anvil Shatter' },
+    k: { name: 'Molten Hammer Leap', icon: '⚒️', desc: 'Melee leap: vaults forward with a shapeshifted Forge Hammer, crashing down in a molten shockwave' },
     l: { name: 'Breaking Point', icon: '🌋', desc: 'Shatters the ground with the Breaking Point, catapulting enemies into the air with lava plumes (70 DMG)' }
   },
   peridot: {
@@ -633,7 +633,7 @@ const GUARDIAN_DATA = {
     title: 'Certified Kindergartener & Metal Master',
     desc: 'Ferrokinetic Swipes • Scrap Metal Salvo (3 Magnetic Scraps) • Flask Robonoid Drone & EMP Vortex',
     lore: 'Former Homeworld technician who discovered ferrokinesis on Earth! Controls metal scraps, hurls levitating scrap salvos, and deploys Homeworld Flask Robonoids with EMP magnetic vortex fields!',
-    j: { name: 'Magnetic Swipe', icon: '🔩', desc: 'Quick ferrokinetic scrap swipe combo knocking back targets' },
+    j: { name: 'Ferrokinetic Scrapper', icon: '🔩', desc: '3-hit mid-range magnetic strikes finishing with an evasive Backstep Hop & Crusher Jaw Burst' },
     k: { name: 'Scrap Salvo', icon: '⚙️', desc: 'Levitates and hurls 3 magnetic scrap chunks: steel girder, gear, and trash lid (24 DMG each)' },
     l: { name: 'Flask Robonoid', icon: '🤖', desc: 'Deploys a walking Homeworld Flask Robonoid drone & concentric Magnetic EMP Vortex (55 DMG)' }
   },
@@ -645,7 +645,7 @@ const GUARDIAN_DATA = {
     title: 'Powerful Hydrokinetic Gem',
     desc: 'Water Scythe Combo • Hydro Fist • Giant Tidal Wave Surge',
     lore: 'Powerful Gem capable of controlling Earth\'s oceans. Manifests majestic liquid water wings and summons tidal waves!',
-    j: { name: 'Water Scythe', icon: '💧', desc: 'Fluid liquid blade slash combo cutting through multiple monsters' },
+    j: { name: 'Aerial Hydro-Weaver', icon: '💧', desc: '4-hit mid-range water-blade arcs lifting foes with a Rising Hydro-Geyser into Ocean Dragon Lash' },
     k: { name: 'Hydro Fist', icon: '🌊', desc: 'Launches a massive pressurized water fist projectile (40 DMG)' },
     l: { name: 'Tidal Wave', icon: '🌀', desc: 'Summons a roaring ocean tidal wave crashing across the battlefield (60 DMG)' }
   },
@@ -657,7 +657,7 @@ const GUARDIAN_DATA = {
     title: 'Founder & Commander of the Rebellion',
     desc: 'Rose Broadsword Slash • Bouncing Rose Crest • Sacred Tears of Resurrection (+2 Hearts)',
     lore: 'Rebel leader who fought for organic life on Earth. Wields her custom broadsword, throws her indestructible spinning crest shield, and weeps Sacred Tears of Life that blossom into a pink mandala restoring +2 Hearts and dropping 2 Cookie Cats!',
-    j: { name: 'Rose Sword', icon: '🌹', desc: 'Graceful broadsword strikes with rose petal flurry and impact stars' },
+    j: { name: 'Noble Paladin', icon: '🌹', desc: '3-hit Broadsword & Shield rhythm: Cleave → Guarded Shield Bash → Sanctuary Petal Spiral (+1 Heart heal)' },
     k: { name: 'Rose Crest Shield', icon: '🛡️', desc: 'Hurls high-speed spinning Rose Quartz crest shield (40 DMG)' },
     l: { name: 'Sacred Tears of Life', icon: '💖', desc: 'Blossoms an 8-petaled Rose Mandala shockwave, restoring +2 Hearts and spawning 2 Cookie Cats (50 DMG)' }
   },
@@ -669,8 +669,8 @@ const GUARDIAN_DATA = {
     title: 'Swordmaster & Knight of the Crystal Gems',
     desc: 'Knight Fencing Flurry • Pink Sword Flying Arc • Shadow Step Blade Dash',
     lore: 'Human sword prodigy trained in classical fencing and combat choreography by Pearl. Armed with the custom Pink Sword forged by Bismuth, Connie dashes swiftly across battlefields, parrying corruptions and executing high-velocity sword flurries!',
-    j: { name: 'Iaido Sword Flurry', icon: '⚔️', desc: 'Lightning 4-hit swordmaster chain: Quick Draw → Diagonal Cross → Vaulting Crescent → Helm-Splitter!' },
-    k: { name: 'Sworn Iai-Lunge', icon: '💨', desc: "[MELEE DASH] Pure human swordcraft — dashes straight through enemies with a razor-close crescent cut & deflects shots!" },
+    j: { name: 'Lightning Iaido Swordmaster', icon: '⚔️', desc: 'Fastest 5-hit blade chain: Quick-Draw → Reverse Flash → Step-In Cross → Vaulting Crescent → Helm-Splitter' },
+    k: { name: 'Sworn Iai-Lunge', icon: '💨', desc: 'Melee dash: pure human swordcraft lunging straight through enemies with a crescent cut that deflects shots' },
     l: { name: 'Tactical Parry', icon: '⚡', desc: 'The guard stance Pearl drilled into her — slips through every strike, then answers it (60 DMG)' }
   },
   jasper: {
@@ -681,8 +681,8 @@ const GUARDIAN_DATA = {
     title: 'Supreme Beta Quartz Juggernaut',
     desc: 'Beta Brawler Flurry • Crash Helmet Bull-Rush • Quartz Tornado Spin Dash',
     lore: 'The ultimate Quartz soldier born from the Beta Kindergarten. Pure physical brutality with zero ranged gimmicks — overwhelms enemies with armored Crash Helmet bull-rushes, seismic haymakers, and unstoppable Quartz Spin Dashes!',
-    j: { name: 'Beta Juggernaut', icon: '👊', desc: 'Brutal 4-hit brawler chain: Crushing Haymaker → Shoulder Ram → Horned Uppercut → Seismic Helmet Crash!' },
-    k: { name: 'Crash Helmet Bull-Rush', icon: '🪖', desc: '[MELEE CHARGE] Summons her spiked Crash Helmet and physically rockets forward as an armored battering ram (no ranged shot!)' },
+    j: { name: 'Beta Juggernaut', icon: '👊', desc: '3-hit Super-Armor brawler chain: Crushing Haymaker → Armored Shoulder Tackle → Seismic Helmet Crash' },
+    k: { name: 'Crash Helmet Bull-Rush', icon: '🪖', desc: 'Melee charge: summons her spiked Crash Helmet and rockets forward as an armored battering ram' },
     l: { name: 'Quartz Tornado', icon: '🔥', desc: 'Curls into a flaming spiked Beta Spin Dash ball erupting seismic shockwaves (65 DMG)' }
   }
 };

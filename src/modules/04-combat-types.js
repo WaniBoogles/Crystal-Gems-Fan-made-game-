@@ -172,127 +172,152 @@ const HERO_PASSIVES = {
   rose: {
     name: 'Maternal Sanctuary', icon: '🌹', role: 'PALADIN / HEALER', hasHeal: true, kTag: 'SHIELD & HEAL',
     desc: 'Periodically drifts healing petals to herself & 2P ally, plus finishing a 4-hit [J] combo heals +1 Heart!',
-    howToUse: 'Complete full 4-hit [J] Paladin combos to heal, and press [L] Sacred Tears (+2 Hearts) in emergencies.',
+    howToUse: 'Complete full 3-hit [J] Paladin combos to heal, and press [L] Sacred Tears (+2 Hearts) in emergencies.',
     bars: { offense: 2, defense: 5, support: 5, speed: 3 }
   },
   connie: {
     name: "Knight's Riposte", icon: '⚔️', role: 'SPEED SWORDMASTER', hasHeal: false, kTag: 'IAI DASH CUT',
-    desc: 'Dodging [Shift] or finishing a [J] combo triggers +35% Riposte DMG & +25% movement speed for 2.8s!',
-    howToUse: 'Dodge through enemy swings, then blitz back in with [K] Sword Iai-Lunge and rapid [J] slashes!',
+    desc: 'Dodging [Shift] or finishing a 5-hit [J] combo triggers +35% Riposte DMG & +25% movement speed for 2.8s.',
+    howToUse: 'Dodge through enemy swings, then blitz back in with [K] Sword Iai-Lunge and 5-hit [J] Iaido chains.',
     bars: { offense: 4, defense: 2, support: 1, speed: 5 }
   },
   jasper: {
     name: 'Apex Quartz', icon: '☄️', role: 'APEX JUGGERNAUT', hasHeal: false, kTag: 'HELMET RUSH',
-    desc: 'Unflinching Super Armor during attacks & up to +35% Berserker damage as her HP gets lower!',
-    howToUse: 'Plow straight through attacks with [J] Haymakers and [K] Crash Helmet Bull-Rush — never back down!',
+    desc: 'Unflinching Super Armor during attacks & up to +35% Berserker damage as her HP gets lower.',
+    howToUse: 'Plow straight through attacks with 3-hit [J] Armored Ram combos and [K] Crash Helmet Bull-Rush.',
     bars: { offense: 5, defense: 4, support: 1, speed: 3 }
   }
 };
 
+// Truly differentiated per-Guardian fighting styles (3-hit, 4-hit, and 5-hit martial identities)
 const HERO_COMBO_PROFILES = {
   steven: {
-    label: 'Shield-Brawler (4-Hit)',
-    cadence: [0.19, 0.18, 0.21, 0.30],
-    damage: [1.0, 1.15, 1.35, 1.75],
-    range: [0, 6, 10, 18],
-    knock: [0.9, 1.05, 1.3, 1.65],
-    lunge: [95, 130, 165, 215],
-    moves: ['Star-Knuckle Jab', 'Spinning Shield Backhand', 'Rising Shield Uppercut!', 'PINK DIAMOND PULSE!'],
-    finisher: { label: 'PINK DIAMOND PULSE!', type: 'comboRosePulse', damage: 22, width: 155, height: 100, speed: 350, knockX: 340, knockY: -185, color: '#ff6097' }
+    label: 'Shield-Guard Brawler (3-Hit)',
+    style: 'guardBrawler',
+    cadence: [0.20, 0.21, 0.30],
+    damage: [1.0, 1.24, 1.72],
+    range: [4, 10, 18],
+    knock: [0.95, 1.25, 1.68],
+    lunge: [95, 140, 185],
+    guard: [0.18, 0.24, 0.22],
+    hop: [0, 0, -145],
+    moves: ['Shield-Rim Jab', 'Guarded Bubble Bash', 'PINK BUBBLE POP!'],
+    finisher: { label: 'PINK DIAMOND PULSE!', type: 'comboRosePulse', damage: 22, width: 155, height: 100, speed: 350, knockX: 340, knockY: -200, color: '#ff6097' }
   },
   garnet: {
-    label: 'Heavy Boxer (4-Hit)',
-    cadence: [0.21, 0.19, 0.22, 0.35],
-    damage: [1.08, 1.22, 1.46, 1.92],
+    label: 'Orthodox Power Boxer (4-Hit)',
+    style: 'boxer',
+    cadence: [0.18, 0.17, 0.22, 0.35],
+    damage: [1.08, 1.22, 1.48, 1.95],
     range: [0, 4, 8, 16],
-    knock: [1.05, 1.18, 1.5, 1.88],
+    knock: [1.05, 1.18, 1.52, 1.90],
     lunge: [120, 155, 195, 260],
-    moves: ['Ruby Straight Jab', 'Sapphire Hook', 'Shoryu Uppercut!', 'TWIN GAUNTLET METEOR!'],
-    finisher: { label: 'GAUNTLET METEOR!', type: 'comboGauntletQuake', damage: 24, width: 190, height: 80, speed: 300, knockX: 420, knockY: -280, color: '#ef4444' }
+    hop: [0, 0, -210, 0],
+    moves: ['Ruby Straight Jab', 'Sapphire Cross Hook', 'Shoryu Uppercut!', 'TWIN GAUNTLET METEOR!'],
+    finisher: { label: 'GAUNTLET METEOR!', type: 'comboGauntletQuake', damage: 25, width: 190, height: 82, speed: 300, knockX: 430, knockY: -285, color: '#ef4444' }
   },
   amethyst: {
-    label: 'Wild Whip Mixup (4-Hit)',
-    cadence: [0.15, 0.14, 0.17, 0.25],
-    damage: [0.96, 1.08, 1.30, 1.68],
-    range: [12, 18, 22, 28],
-    knock: [0.85, 0.92, 1.18, 1.48],
-    lunge: [95, 120, 160, 200],
-    moves: ['Whip Snap Crack', 'Low Ankle Lash', 'Dual Whip Launcher!', 'WHIP CYCLONE!'],
-    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 19, width: 180, height: 110, speed: 270, knockX: 300, knockY: -205, color: '#c084fc' }
+    label: 'Wild Whip-Acrobat (5-Hit)',
+    style: 'whipAcrobat',
+    cadence: [0.13, 0.12, 0.13, 0.16, 0.26],
+    damage: [0.82, 0.92, 1.05, 1.26, 1.68],
+    range: [18, 26, 30, 26, 34],
+    knock: [0.65, 0.55, 0.55, 1.15, 1.55],
+    lunge: [85, 105, 115, 175, 205],
+    pull: [false, true, true, false, false],
+    hop: [0, 0, 0, -185, 0],
+    moves: ['Whip Snap', 'Lash Snare', 'Whip Yank-In', 'Cartwheel Heel Kick!', 'WHIP CYCLONE!'],
+    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 20, width: 185, height: 110, speed: 270, knockX: 310, knockY: -210, color: '#c084fc' }
   },
   pearl: {
-    label: 'Ballet Fencer (Rapid Flurry)',
-    cadence: [0.12, 0.11, 0.13, 0.23],
-    damage: [0.88, 0.98, 1.24, 1.65],
-    range: [14, 18, 22, 30],
-    knock: [0.75, 0.80, 1.10, 1.45],
-    lunge: [125, 145, 185, 225],
-    moves: ['En-Garde Foil', 'Twin Ribbon Jab', 'Skyward Vault!', 'RIBBON SPEAR FLURRY!'],
-    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 12, speed: 460, knockX: 280, knockY: -155, color: '#22d3ee' }
+    label: 'Ballet Spear Fencer (4-Hit)',
+    style: 'fencer',
+    cadence: [0.11, 0.10, 0.15, 0.24],
+    damage: [0.88, 0.98, 1.26, 1.68],
+    range: [18, 22, 26, 34],
+    knock: [0.72, 0.78, 1.12, 1.48],
+    lunge: [130, 155, 190, 230],
+    hop: [0, 0, -230, 0],
+    lift: [0, 0, -240, 0],
+    moves: ['En-Garde Foil', 'Glissade Double Poke', 'Pirouette Vault!', 'RIBBON SPEAR FLURRY!'],
+    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 13, speed: 460, knockX: 280, knockY: -155, color: '#22d3ee' }
   },
   bismuth: {
-    label: 'Heavy Shapeshifter (Tank)',
-    cadence: [0.25, 0.25, 0.29, 0.42],
-    damage: [1.18, 1.35, 1.58, 2.15],
-    range: [4, 8, 12, 18],
-    knock: [1.20, 1.35, 1.65, 2.1],
-    lunge: [95, 135, 175, 250],
-    moves: ['Spiked Hammer Swing', 'Battle-Axe Cleave!', 'Rising Forge Upper!', 'MOLTEN ANVIL SLAM!'],
-    finisher: { label: 'MOLTEN ANVIL SLAM!', type: 'comboAnvilEcho', damage: 28, width: 205, height: 92, speed: 280, knockX: 460, knockY: -305, color: '#f97316' }
+    label: 'Heavy Forge Shapeshifter (3-Hit)',
+    style: 'heavyForge',
+    cadence: [0.27, 0.29, 0.43],
+    damage: [1.30, 1.58, 2.28],
+    range: [6, 12, 20],
+    knock: [1.28, 1.55, 2.15],
+    lunge: [105, 155, 255],
+    armorBreak: [false, true, true],
+    moves: ['Forge Warhammer', 'Battle-Axe Armor Break!', 'MOLTEN ANVIL SHATTER!'],
+    finisher: { label: 'MOLTEN ANVIL SHATTER!', type: 'comboAnvilEcho', damage: 30, width: 210, height: 95, speed: 280, knockX: 470, knockY: -310, color: '#f97316' }
   },
   peridot: {
-    label: 'Ferro-Tech Zoner (4-Hit)',
-    cadence: [0.16, 0.15, 0.18, 0.27],
-    damage: [0.95, 1.08, 1.28, 1.60],
-    range: [16, 22, 26, 32],
-    knock: [0.75, 0.88, 1.05, 1.38],
-    lunge: [70, 95, -85, 135],
-    moves: ['Steel Claw Rake', 'I-Beam Sweeper', 'Magnet Backstep!', 'CRUSHER JAW BURST!'],
-    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 18, width: 170, height: 130, speed: 280, knockX: 250, knockY: -210, color: '#84cc16' }
+    label: 'Ferrokinetic Scrapper (3-Hit)',
+    style: 'ferroZoner',
+    cadence: [0.17, 0.17, 0.27],
+    damage: [1.0, 1.18, 1.62],
+    range: [24, 30, 38],
+    knock: [0.82, 1.0, 1.42],
+    lunge: [55, 85, -145],
+    hop: [0, 0, -155],
+    moves: ['Hovering Steel Claw', 'I-Beam Magnet Sweep', 'BACKSTEP JAW BURST!'],
+    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 20, width: 175, height: 130, speed: 290, knockX: 260, knockY: -215, color: '#84cc16' }
   },
   lapis: {
-    label: 'Hydro-Bender (4-Hit Aerial)',
-    cadence: [0.16, 0.15, 0.19, 0.27],
-    damage: [1.0, 1.14, 1.34, 1.70],
-    range: [14, 18, 24, 30],
-    knock: [0.9, 1.0, 1.25, 1.52],
-    lunge: [90, 115, 145, 190],
-    moves: ['Hydro-Scythe Arc', 'Riptide Low Sweep', 'Water-Fist Upper!', 'OCEAN DRAGON LASH!'],
-    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 20, width: 190, height: 100, speed: 360, knockX: 360, knockY: -240, color: '#38bdf8' }
+    label: 'Aerial Hydro-Weaver (4-Hit)',
+    style: 'hydroWeaver',
+    cadence: [0.15, 0.15, 0.18, 0.27],
+    damage: [1.0, 1.14, 1.36, 1.72],
+    range: [18, 24, 28, 36],
+    knock: [0.85, 0.95, 1.25, 1.55],
+    lunge: [85, 110, 145, 195],
+    hop: [0, 0, -195, 0],
+    lift: [0, 0, -285, -240],
+    moves: ['Hydro-Scythe Arc', 'Riptide Undercurrent', 'Rising Water Geyser!', 'OCEAN DRAGON LASH!'],
+    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 22, width: 195, height: 105, speed: 360, knockX: 360, knockY: -245, color: '#38bdf8' }
   },
   rose: {
-    label: 'Paladin Sword & Shield (4-Hit)',
-    cadence: [0.21, 0.19, 0.24, 0.34],
-    damage: [1.05, 1.18, 1.42, 1.82],
-    range: [4, 8, 14, 20],
-    knock: [1.05, 1.18, 1.38, 1.7],
-    lunge: [95, 135, 170, 225],
-    moves: ['Broadsword Cleave', 'Thorny Shield Bash', 'Valiant Rising Cut', 'ROSE SANCTUARY SWEEP!'],
-    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 22, width: 190, height: 100, speed: 320, knockX: 360, knockY: -220, color: '#f43f5e' }
+    label: 'Noble Paladin (3-Hit)',
+    style: 'paladin',
+    cadence: [0.22, 0.23, 0.34],
+    damage: [1.12, 1.32, 1.85],
+    range: [8, 12, 24],
+    knock: [1.08, 1.30, 1.75],
+    lunge: [100, 150, 220],
+    guard: [0, 0.25, 0.22],
+    moves: ['Broadsword Cleave', 'Advancing Shield Bash', 'SANCTUARY PETAL SPIRAL!'],
+    finisher: { label: 'ROSE SANCTUARY!', type: 'comboRoseThorn', damage: 24, width: 195, height: 105, speed: 320, knockX: 365, knockY: -225, color: '#f43f5e' }
   },
   connie: {
-    label: 'Iaido Speed-Fencer',
-    cadence: [0.13, 0.12, 0.15, 0.24],
-    damage: [0.95, 1.08, 1.32, 1.75],
-    range: [12, 16, 22, 32],
-    knock: [0.85, 0.92, 1.2, 1.55],
-    lunge: [130, 160, 200, 260],
-    moves: ['Quick Draw Thrust', 'Diagonal Cross', 'Vaulting Crescent!', 'HELM-SPLITTER SLASH!'],
-    finisher: { label: 'HELM-SPLITTER!', type: 'comboCrescentSlash', damage: 20, width: 185, height: 85, speed: 480, knockX: 330, knockY: -195, color: '#ec4899' }
+    label: 'Lightning Iaido Swordmaster (5-Hit)',
+    style: 'iaido',
+    cadence: [0.10, 0.10, 0.12, 0.14, 0.24],
+    damage: [0.80, 0.90, 1.05, 1.28, 1.78],
+    range: [12, 16, 20, 24, 34],
+    knock: [0.68, 0.72, 0.85, 1.15, 1.58],
+    lunge: [135, 155, 175, 210, 265],
+    hop: [0, 0, 0, -190, 0],
+    moves: ['Quick-Draw Cut', 'Reverse Flash', 'Step-In Cross', 'Vaulting Crescent!', 'HELM-SPLITTER!'],
+    finisher: { label: 'HELM-SPLITTER!', type: 'comboCrescentSlash', damage: 22, width: 190, height: 88, speed: 480, knockX: 335, knockY: -200, color: '#ec4899' }
   },
   jasper: {
-    label: 'Rushdown Juggernaut',
-    cadence: [0.25, 0.24, 0.28, 0.42],
-    damage: [1.22, 1.38, 1.65, 2.25],
-    range: [4, 8, 12, 18],
-    knock: [1.25, 1.40, 1.70, 2.2],
-    lunge: [135, 175, 220, 295],
-    moves: ['Crushing Haymaker', 'Brutal Shoulder Ram!', 'Horned Uppercut!', 'SEISMIC HELMET CRASH!'],
-    finisher: { label: 'SEISMIC CRASH!', type: 'comboSeismicSlam', damage: 30, width: 215, height: 85, speed: 290, knockX: 500, knockY: -330, color: '#ea580c' }
+    label: 'Brutal Beta Juggernaut (3-Hit)',
+    style: 'juggernaut',
+    cadence: [0.25, 0.26, 0.42],
+    damage: [1.34, 1.62, 2.34],
+    range: [6, 12, 20],
+    knock: [1.32, 1.65, 2.25],
+    lunge: [145, 230, 295],
+    superArmor: [true, true, true],
+    moves: ['Crushing Haymaker', 'Armored Shoulder Tackle!', 'SEISMIC HELMET CRASH!'],
+    finisher: { label: 'SEISMIC CRASH!', type: 'comboSeismicSlam', damage: 32, width: 220, height: 88, speed: 295, knockX: 510, knockY: -335, color: '#ea580c' }
   }
 };
 
-// Distinct Tekken-style 4-hit combos for all 9 Crystal Gem Fusions!
+// Distinct signature 4-hit combos for all 9 Crystal Gem Fusions
 const FUSION_COMBO_PROFILES = {
   stevonnie: {
     label: 'Sword-Shield Dance',

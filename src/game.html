@@ -331,9 +331,8 @@
           <span class="jukebox-now-playing">SOUNDTRACK:</span>
         </div>
         <select id="lobbySelectBgm" class="su-select lobby-select-bgm" title="Select and play any Steven Universe theme">
-          <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
-          <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
-          <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+          <option value="intro_launch" selected>"Temple Sunset" (Launch Theme)</option>
+          <option value="distant_shore">"That Distant Shore" (Lapis Theme)</option>
           <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
           <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
           <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
@@ -443,37 +442,37 @@
     <div id="characterSelectScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card char-select-modal hover-float">
         <div class="modal-header">
-          <h2 id="charSelectModalTitle">CHARACTER / GEM SELECTION</h2>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h2 id="charSelectModalTitle">SELECT GUARDIAN</h2>
+            <span class="mode-diff-badge" id="modeDiffBadge">STORY MODE</span>
+          </div>
           <button class="btn-close" id="btnCloseCharSelect">✕</button>
         </div>
         <div class="modal-body char-select-body">
-          <!-- Mode Badge Header -->
-          <div id="modeDiffPopup" class="mode-diff-popup">
-            <span class="mode-diff-badge" id="modeDiffBadge">STORY MODE</span>
-          </div>
+          <div id="modeDiffPopup" style="display:none;"></div>
 
-          <!-- Top Bar: Difficulty Button + 1P/2P Toggle + Optional Episode Jump -->
+          <!-- Top Bar: Difficulty + Players + Optional Episodes -->
           <div class="char-top-controls">
             <div class="char-control-group">
               <button type="button" class="pill-action-btn" id="btnCharDiff" title="Click to cycle or choose difficulty">DIFFICULTY: <span id="charDiffLabel">MEDIUM</span></button>
               <button type="button" class="pill-action-btn" id="btnCharPlayerMode" title="Toggle Solo 1P or Co-Op 2P">PLAYERS: <span id="charPlayerModeLabel">1P SOLO</span></button>
             </div>
             <div class="char-control-group">
-              <button type="button" class="pill-action-btn" id="btnCharEpisodes">EPISODE CHAPTERS</button>
+              <button type="button" class="pill-action-btn" id="btnCharEpisodes">EPISODES</button>
             </div>
           </div>
 
           <!-- 2P Mode Guardian Tabs -->
           <div class="char-player-tabs" id="charPlayerTabs" style="display: none;">
-            <button class="tab-btn active" id="tabSelectP1" type="button">PLAYER 1 GUARDIAN</button>
-            <button class="tab-btn" id="tabSelectP2" type="button">PLAYER 2 GUARDIAN</button>
+            <button class="tab-btn active" id="tabSelectP1" type="button">PLAYER 1</button>
+            <button class="tab-btn" id="tabSelectP2" type="button">PLAYER 2</button>
           </div>
           <div class="char-grid-8" id="charGrid8">
             <!-- Row 1: Garnet, Amethyst, Pearl, Steven, Connie -->
             <div class="char-grid-item" data-char="garnet">
               <div class="char-item-bubble garnet-bg"></div>
               <span class="char-item-name">Garnet</span>
-              <span class="char-item-role">Leader</span>
+              <span class="char-item-role">Striker</span>
             </div>
             <div class="char-grid-item" data-char="amethyst">
               <div class="char-item-bubble amethyst-bg"></div>
@@ -499,22 +498,22 @@
             <div class="char-grid-item" data-char="bismuth">
               <div class="char-item-bubble bismuth-bg"></div>
               <span class="char-item-name">Bismuth</span>
-              <span class="char-item-role">Blacksmith</span>
+              <span class="char-item-role">Breaker</span>
             </div>
             <div class="char-grid-item" data-char="peridot">
               <div class="char-item-bubble peridot-bg"></div>
               <span class="char-item-name">Peridot</span>
-              <span class="char-item-role">Technician</span>
+              <span class="char-item-role">Tactician</span>
             </div>
             <div class="char-grid-item" data-char="lapis">
               <div class="char-item-bubble lapis-bg"></div>
               <span class="char-item-name">Lapis Lazuli</span>
-              <span class="char-item-role">Water Mage</span>
+              <span class="char-item-role">Hydro Mage</span>
             </div>
             <div class="char-grid-item" data-char="rose">
               <div class="char-item-bubble rose-bg"></div>
               <span class="char-item-name">Rose Quartz</span>
-              <span class="char-item-role">Healer / Knight</span>
+              <span class="char-item-role">Paladin</span>
             </div>
             <div class="char-grid-item" data-char="jasper">
               <div class="char-item-bubble jasper-bg"></div>
@@ -523,69 +522,72 @@
             </div>
           </div>
 
-          <!-- Selected Character Full Dossier Preview -->
+          <!-- Clean, Minimal Guardian Dossier (Zero Sticker Clutter, Single Stat System) -->
           <div class="char-preview-pane" id="charPreviewPane">
             <div class="char-pane-header">
               <div class="char-pane-icon" id="paneIcon"></div>
               <div style="flex: 1; min-width: 0;">
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <div class="char-pane-title-row">
                   <h3 class="char-pane-name" id="paneName">Steven Universe</h3>
-                  <span class="char-role-pill" id="paneRoleBadge">🛡️ TANK / HEALER</span>
-                  <span class="char-heal-pill has-heal" id="paneHealBadge">💚 HEALING</span>
+                  <span class="char-meta-sep">·</span>
+                  <span class="char-role-text" id="paneRoleBadge">Defender / Healer</span>
+                  <span class="char-heal-text has-heal" id="paneHealBadge">Healing</span>
                 </div>
-                <span class="char-pane-title" id="paneTitle">The Heart of the Crystal Gems</span>
-                <div class="char-types-row" id="paneTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
+                <div class="char-pane-sub-row">
+                  <span class="char-pane-title" id="paneTitle">The Heart of the Crystal Gems</span>
+                  <div class="char-types-row" id="paneTypes"></div>
+                </div>
               </div>
             </div>
-            <p class="char-pane-lore" id="paneLore">Half-human, half-gem hero. Uses Rose Quartz's magical shield and soothing Cookie Cat healing powers to defend Earth!</p>
-            <!-- Visible Passive Ability & How-To-Use Card -->
+            <p class="char-pane-lore" id="paneLore" style="display:none;"></p>
+            <!-- Single Clean Stat Row (No Duplicate Bars + Numbers) -->
+            <div class="char-stats-clean" id="paneStats"></div>
+            <!-- Clean Passive Ability Block -->
             <div class="char-passive-card" id="panePassiveCard">
               <div class="char-passive-top">
-                <span class="char-passive-title" id="panePassiveTitle">🛡️ PASSIVE: Spiked Pink Bubble</span>
-                <span class="char-style-pill" id="paneStylePill">🥋 Shield-Brawler (4-Hit)</span>
+                <span class="char-passive-title" id="panePassiveTitle">PASSIVE — Spiked Pink Bubble</span>
+                <span class="char-style-pill" id="paneStylePill">Shield-Guard Brawler (3-Hit)</span>
               </div>
-              <div class="char-passive-desc" id="panePassiveDesc">Holding [S] deploys a Spiked Rose Bubble that damages &amp; knocks back enemies on contact!</div>
-              <div class="char-passive-tip" id="panePassiveTip"><b>HOW TO USE:</b> Hold [S] when enemies close in to spike-counter them; press [L] for Healing Saliva.</div>
+              <div class="char-passive-desc" id="panePassiveDesc">Holding [S] raises a Spiked Rose Bubble that reflects thorn damage and knocks back attackers.</div>
+              <div class="char-passive-tip" id="panePassiveTip">Hold [S] to counter close foes; press [L] for Healing Saliva (+1 Heart).</div>
             </div>
-            <div class="char-balance-bars" id="paneBalanceBars"></div>
-            <div class="char-pane-stats" id="paneStats"></div>
+            <div id="paneBalanceBars" style="display:none;"></div>
             <div class="char-pane-powers">
-              <div class="power-tag"><b id="paneJLabel">[J] Fighting Style:</b> <span id="paneJ">Shield Strike & Rose Punch combo</span></div>
+              <div class="power-tag"><b id="paneJLabel">[J] Style:</b> <span id="paneJ">Shield bash and bubble-pop combo</span></div>
               <div class="power-tag"><b id="paneKLabel">[K] Signature:</b> <span id="paneK">Bouncing Rose Shield Throw</span></div>
-              <div class="power-tag"><b id="paneLLabel">[L] Gem Skill:</b> <span id="paneL">Bubble Shield & Cookie Cat heal (+1 Heart)</span></div>
+              <div class="power-tag"><b id="paneLLabel">[L] Skill:</b> <span id="paneL">Bubble Shield &amp; Healing Saliva (+1 Heart)</span></div>
             </div>
 
-            <!-- Canonical Fusion Compatibility Dossier -->
             <div class="char-fusion-preview" id="charFusionPreview">
-              <span class="fusion-preview-badge">CANON FUSIONS FOR THIS GEM</span>
+              <span class="fusion-preview-badge">FUSIONS</span>
               <div class="fusion-preview-list" id="fusionPreviewList">
                 <span class="fusion-chip"><b>Stevonnie</b> (+ Connie)</span>
               </div>
             </div>
           </div></div>
         <div class="modal-footer" style="display: flex; gap: 10px;">
-          <button class="btn-secondary hover-float" id="btnCharBackMenu" style="flex: 0.45;">MAIN MENU</button>
-          <button class="btn-primary hover-float" id="btnConfirmChar" style="flex: 1;">PLAY ➔</button>
+          <button class="btn-secondary hover-float" id="btnCharBackMenu" style="flex: 0.42;">MAIN MENU</button>
+          <button class="btn-primary hover-float" id="btnConfirmChar" style="flex: 1;">PLAY</button>
         </div>
       </div>
     </div>
 
-    <!-- 1.55. Arcade Map Selection Screen (10 Rectangles with Map Previews & Names) -->
+    <!-- 1.55. Arcade Map Selection Screen -->
     <div id="mapSelectScreen" class="overlay-screen modal-screen" style="display: none;">
       <div class="modal-card map-select-card hover-float">
         <div class="modal-header">
-          <h2>MAP SELECTION</h2>
+          <h2>SELECT ARENA</h2>
           <button class="btn-close" id="btnCloseMapSelect">✕</button>
         </div>
         <div class="modal-body">
-          <p class="settings-desc" style="margin-bottom: 12px;">Choose any arena for Endless Arcade Rush — corrupted gems &amp; bosses warp in endlessly!</p>
+          <p class="settings-desc" style="margin-bottom: 12px;">Choose an arena for Endless Arcade Rush — corrupted gems &amp; bosses warp in endlessly.</p>
           <div class="map-select-grid" id="mapSelectGrid">
-            <!-- Populated dynamically with 10 live rendered map preview canvases & names -->
           </div>
         </div>
-        <div class="modal-footer" style="display: flex; gap: 12px;">
-          <button class="btn-secondary hover-float" id="btnMapBack" style="flex: 0.4;">BACK TO CHARACTERS</button>
-          <button class="btn-primary hover-float" id="btnPlayArcadeMap" style="flex: 1;">PLAY ➔</button>
+        <div class="modal-footer" style="display: flex; gap: 10px;">
+          <button class="btn-secondary hover-float" id="btnMapMainMenu" style="flex: 0.35;">MAIN MENU</button>
+          <button class="btn-secondary hover-float" id="btnMapBack" style="flex: 0.35;">CHARACTERS</button>
+          <button class="btn-primary hover-float" id="btnPlayArcadeMap" style="flex: 1;">START ARCADE</button>
         </div>
       </div>
     </div>
@@ -716,59 +718,47 @@
       </div>
     </div>
 
-    <!-- 1.60. Rolling Credits Screen -->
+    <!-- 1.60. Rolling Credits Screen (Formal Tribute, Lore & Craft) -->
     <div id="creditsScreen" class="overlay-screen credits-screen" style="display: none;">
       <div class="credits-viewport">
         <div class="credits-track" id="creditsTrack">
           <div class="credits-block">
-            <h1 class="main-title" style="font-size: 40px;">CRYSTAL GEMS!</h1>
-            <p style="color: #fde68a; letter-spacing: 2px; font-weight: 800;">THANK YOU FOR DEFENDING EARTH &amp; HOMEWORLD</p>
+            <h1 class="main-title" style="font-size: 38px;">CRYSTAL GEMS!</h1>
+            <p style="color: #fde68a; letter-spacing: 2.2px; font-weight: 700;">CREDITS, LORE &amp; PRODUCTION NOTES</p>
           </div>
           <div class="credits-block">
-            <h3>ORIGINAL SERIES HOMAGE</h3>
-            <p>Inspired by <b>Steven Universe</b> &amp; <b>Steven Universe Future</b><br>Created by <b>Rebecca Sugar</b> · Cartoon Network Studios</p>
+            <h3>ORIGINAL SERIES TRIBUTE</h3>
+            <p>A fan-crafted action tribute honoring <b>Steven Universe</b> and <b>Steven Universe Future</b>,<br>created by <b>Rebecca Sugar</b> and produced by Cartoon Network Studios.</p>
           </div>
           <div class="credits-block">
-            <h3>PLAYABLE GUARDIANS (10 HEROES)</h3>
-            <p>Steven Universe · Garnet · Amethyst · Pearl · Bismuth<br>Peridot · Lapis Lazuli · Rose Quartz · Connie Maheswaran · Jasper</p>
+            <h3>THE LORE OF THE REBELLION</h3>
+            <p>Thousands of years ago, Rose Quartz and her Pearl stood against the Diamond Authority to protect the fragile life of Earth. Alongside Garnet, Amethyst, Bismuth, Peridot, Lapis Lazuli, Connie, and Steven, the Crystal Gems remain sworn to heal the corrupted and defend Beach City.</p>
           </div>
           <div class="credits-block">
-            <h3>CANON GEM FUSIONS (9 FUSIONS)</h3>
-            <p>Stevonnie · Smoky Quartz · Rainbow Quartz 2.0 · Sunstone<br>Sugilite · Sardonyx · Opal · Malachite · Rainbow Quartz Classic</p>
+            <h3>THE GUARDIANS &amp; CANON FUSIONS</h3>
+            <p><b>Guardians:</b> Steven · Garnet · Amethyst · Pearl · Bismuth · Peridot · Lapis Lazuli · Rose Quartz · Connie · Jasper<br><b>Fusions:</b> Stevonnie · Smoky Quartz · Rainbow Quartz 2.0 · Sunstone · Sugilite · Sardonyx · Opal · Malachite · Classic Rainbow Quartz</p>
           </div>
           <div class="credits-block">
-            <h3>COMBAT SYSTEM &amp; TECHNIQUES</h3>
-            <p>Accessible 4-Hit Tekken-Style Combo Chains · Directional Stepping &amp; Air Launchers<br>11-Type Gem Matchup Chart · STAB Multiplier · Status Riders<br>Hyper Fusion Co-Op Link · Gem Surge Resonance State</p>
+            <h3>REALMS OF EARTH &amp; HOMEWORLD</h3>
+            <p>Beach City Boardwalk · Galaxy Warp &amp; Ancient Spire · Prime Kindergarten · Earth's Mantle Cluster · Bismuth's Forge · The Frozen North · Pink Diamond's Zoo · Abduction Shore · Homeworld Courtroom · White Diamond's Citadel</p>
           </div>
           <div class="credits-block">
-            <h3>STORY MODE EPISODES &amp; LORE PUZZLES</h3>
-            <p>Ep 1: Beach City Boardwalk · Ep 2: Galaxy Warp &amp; Spire<br>Ep 3: Prime Kindergarten · Ep 4: Earth's Mantle Cluster<br>Ep 5: Bismuth's Forge · Ep 6: The Frozen North<br>Ep 7: Pink Diamond's Zoo · Ep 8: Homeworld Abduction Shore<br>Ep 9: Homeworld Trial &amp; Off-Colors · Ep 10: Change Your Mind Finale</p>
+            <h3>HOW IT WAS MADE</h3>
+            <p>Hand-built as a self-contained offline HTML5 Canvas application with zero external runtime dependencies. Every Guardian, Fusion, Corrupted Gem, and Diamond boss is animated in real time through procedural 2D vector rigs, paired with custom parallax environments and a real-time Web Audio synthesizer scoring each realm.</p>
           </div>
           <div class="credits-block">
-            <h3>GEM PUZZLE ARCHITECTURE</h3>
-            <p>Crystal Temple Harmony Sequences · Warp Prism Pair Matching<br>Kindergarten Conduit Circuits · Diamond Light Mirror Alignment</p>
-          </div>
-          <div class="credits-block">
-            <h3>CORRUPTED MONSTERS &amp; BOSS ROSTER</h3>
-            <p>Centipeetle Hatchlings · Acid Centipeetles · Blade Quartzes · Cluster Mutants<br>Ice Monsters · Volcanic Firebirds · Forge Automatons · Destabilizers<br>Mother Centipeetle · Spire Bird · Cluster Core · Jasper · Holy Blue Agate · Topaz · White Diamond Mecha</p>
-          </div>
-          <div class="credits-block">
-            <h3>DYNAMIC WEBAUDIO SOUNDTRACK</h3>
-            <p><i>"Temple Sunset"</i> Launch Theme · <i>"That Distant Shore"</i> · 10 Distinct Per-Stage Scores<br>Real-Time Multi-Voice Synthesis, Biquad Filtering &amp; Custom Percussion</p>
-          </div>
-          <div class="credits-block">
-            <h3>CONCEPT UI, ENGINEERING &amp; POLISH</h3>
-            <p>Built with HTML5 Canvas, Modular Game Engine &amp; Offline Zero-Asset Bundle<br>Concept Navigation Architecture by <b>Wanibur</b></p>
+            <h3>DIRECTION &amp; DEVELOPMENT</h3>
+            <p>Concept, Direction &amp; Curation by <b>Wanibur</b><br>Engine Architecture, Character Animation, Combat Balance &amp; Audio Synthesis</p>
           </div>
           <div class="credits-block" style="margin-top: 24px;">
-            <h3>WE ARE THE CRYSTAL GEMS!</h3>
+            <h3>WE ARE THE CRYSTAL GEMS</h3>
             <p>"If you could only know what we really are..."</p>
           </div>
         </div>
       </div>
       <div class="credits-footer-bar">
-        <button type="button" class="btn-secondary hover-float" id="btnCreditsSpeed" title="Hold button or [SPACE] / [↓] to fast-forward">HOLD TO SPEED UP (4X)</button>
-        <button type="button" class="btn-primary hover-float" id="btnCreditsMenu">BACK TO MAIN MENU (ESC / RETURN)</button>
+        <button type="button" class="btn-secondary hover-float" id="btnCreditsSpeed" title="Hold button or [SPACE] / [↓] to fast-forward">HOLD TO FAST-FORWARD</button>
+        <button type="button" class="btn-primary hover-float" id="btnCreditsMenu">MAIN MENU</button>
       </div>
     </div>
 
@@ -849,9 +839,8 @@
                 ACTIVE SOUNDTRACK (JUKEBOX)
               </label>
               <select id="selectBgmTrack" class="su-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 12px; border: 1.5px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
-                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
-                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="intro_launch" selected>"Temple Sunset" (Launch Theme)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Theme)</option>
                 <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
                 <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
                 <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>
@@ -1138,9 +1127,8 @@
             <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
               <span style="font-size: 11px; font-weight: 700; color: #a5f3fc;">Soundtrack:</span>
               <select id="pauseSelectBgmTrack" class="su-select" style="width: 100%; padding: 6px 10px; border-radius: 8px; background: #0b1329; color: #ffffff; font-family: var(--su-font-main); font-weight: 700; font-size: 11px; border: 1.2px solid #38bdf8; outline: none; cursor: pointer;">
-                <option value="auto" selected>Auto (Relaxing Intro + Per-Stage Music)</option>
-                <option value="intro_launch">"Temple Sunset" (Relaxing Launch Intro)</option>
-                <option value="distant_shore">"That Distant Shore" (Lapis Peace Theme)</option>
+                <option value="intro_launch" selected>"Temple Sunset" (Launch Theme)</option>
+                <option value="distant_shore">"That Distant Shore" (Lapis Theme)</option>
                 <option value="defenders_deep">Ep 1: "Defenders of the Deep" (Beach City)</option>
                 <option value="lapis_tower">Ep 2: "Galaxy Warp / Tower of Water"</option>
                 <option value="stage_3">Ep 3: "Hollow Canyons" (Kindergarten)</option>

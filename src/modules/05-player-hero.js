@@ -27,16 +27,26 @@ class PlayerHero {
     this.specialCooldown = 0;
     this.skillCooldown = 0;
 
-    // Tekken-style combo-chain state: timing window, step impulses, reach, damage and finisher
+    // Signature per-Guardian combo-chain state: timing window, step impulses, reach, damage and traits
     this.comboStep = 0;
     this.comboStepTimer = 0;
     this.comboLinkBonus = 0;
     this.attackDamageMult = 1;
     this.attackRangeBonus = 0;
     this.attackKnockMult = 1;
+    this.attackStyle = 'guardBrawler';
+    this.attackGuardTimer = 0;
+    this.attackSuperArmorTimer = 0;
+    this.attackPullIn = false;
+    this.attackLiftY = 0;
+    this.attackArmorBreak = false;
     this.comboImpulseVx = 0;
     this.comboImpulseTimer = 0;
     this.comboMoveName = '';
+
+    // Double-Tap Sprint / Speed-Run state
+    this.isSprinting = false;
+    this.sprintBurstTimer = 0;
 
     // Steven Bubble Shield state (Fully movable!)
     this.isShielding = false;
@@ -297,6 +307,8 @@ class PlayerHero {
     if (this.parryWindow > 0) this.parryWindow -= dt;
     if (this.counterBuffTimer > 0) this.counterBuffTimer -= dt;
     if (this.riposteTimer > 0) this.riposteTimer -= dt;
+    if (this.attackGuardTimer > 0) this.attackGuardTimer -= dt;
+    if (this.attackSuperArmorTimer > 0) this.attackSuperArmorTimer -= dt;
 
     // --- UNIQUE CHARACTER PASSIVES TICK (ALL 10 GUARDIANS) ---
     if (!this.isFusion) {
@@ -522,13 +534,37 @@ class PlayerHero {
     if (this.momentumStacks > 0 && this.activeChar === 'amethyst') speed *= (1 + this.momentumStacks * 0.04);
     if (this.isSpinDashing) speed = 520;
 
+    // Double-Tap A / D Sprint Speed-Run (1.58x burst speed with dedicated sprint kinematics & dust bursts!)
+    const wantsMove = !!(input.left || input.right);
+    const wasSprinting = this.isSprinting;
+    this.isSprinting = !!(input.sprint && wantsMove && !this.isShielding && !this.isAttacking && !this.isDodging && !this.isSpinDashing);
+    if (this.isSprinting) {
+      speed *= 1.58;
+      if (!wasSprinting && this.isGrounded && particles && particles.addPoof) {
+        particles.addPoof(this.x - this.facing * 14, this.y - 6, '#e2e8f0');
+        if (audioEngine && audioEngine.playSfx) audioEngine.playSfx('whoosh');
+      }
+      this.sprintBurstTimer = (this.sprintBurstTimer || 0) - dt;
+      if (this.sprintBurstTimer <= 0) {
+        this.sprintBurstTimer = 0.08;
+        if (this.isGrounded && particles && particles.addSparkle) {
+          particles.addSparkle(this.x - this.facing * 16, this.y - 6, '#e2e8f0', 3, 2.2);
+        }
+        if (this.afterimages.length < 3) {
+          this.afterimages.push({ x: this.x, y: this.y, facing: this.facing, life: 0.14, maxLife: 0.14 });
+        }
+      }
+    } else {
+      this.sprintBurstTimer = 0;
+    }
+
     // Footfall dust while running, and a landing squash when we hit the floor.
     if (this.isGrounded && Math.abs(this.vx) > 40) {
       this.runDustTimer -= dt;
       if (this.runDustTimer <= 0) {
-        this.runDustTimer = 0.16;
+        this.runDustTimer = this.isSprinting ? 0.09 : 0.16;
         if (particles && particles.addSparkle) {
-          particles.addSparkle(this.x - this.facing * 9, this.y - 3, '#cbd5e1', 2, 1.4);
+          particles.addSparkle(this.x - this.facing * 9, this.y - 3, this.isSprinting ? '#f8fafc' : '#cbd5e1', this.isSprinting ? 3 : 2, this.isSprinting ? 2.0 : 1.4);
         }
       }
     } else {
@@ -542,24 +578,25 @@ class PlayerHero {
     }
     this.wasGrounded = this.isGrounded;
 
-    // Fluid Horizontal Movement (Responsive ramp + Tekken strike step impulse, zero drift when idle)
+    // Fluid Horizontal Movement (Responsive ramp + strike step impulse, zero drift when idle)
     const targetVx = input.left ? -speed : (input.right ? speed : (this.isSpinDashing ? this.facing * 480 : 0));
     if (this.comboImpulseTimer > 0) {
       this.comboImpulseTimer = Math.max(0, this.comboImpulseTimer - dt);
       if (this.comboImpulseTimer <= 0) this.comboImpulseVx = 0;
     }
+    const strideRate = (this.isFusion ? 11.5 : 14) * (this.isSprinting ? 1.52 : 1.0);
     if (this.isDodging) {
       // Movement velocity is handled smoothly by dodge physics
     } else if (input.left) {
       this.facing = -1;
       const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
       this.vx = this.vx + (targetVx - this.vx) * blend;
-      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
+      this.walkAnim += dt * strideRate;
     } else if (input.right) {
       this.facing = 1;
       const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
       this.vx = this.vx + (targetVx - this.vx) * blend;
-      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
+      this.walkAnim += dt * strideRate;
     } else {
       if (this.isSpinDashing) {
         this.vx = this.facing * 480;
@@ -882,7 +919,7 @@ class PlayerHero {
     }
   }
 
-  // --- [J] TEKKEN-STYLE 4-HIT COMBO (10 GUARDIANS & 9 FUSIONS) ---
+  // --- [J] SIGNATURE PER-GUARDIAN FIGHTING STYLES (10 GUARDIANS & 9 FUSIONS) ---
   executeAttackJ(audioEngine, particles, projectiles) {
     this.isAttacking = true;
     this.attackType = 'J';
@@ -900,13 +937,26 @@ class PlayerHero {
     const perfectLink = (this.comboStepTimer > 0.12 && this.comboStep > 0);
     this.comboLinkBonus = perfectLink ? 0.12 : 0;
     this.attackCombo = this.comboStep;
+    this.attackStyle = profile.style || 'boxer';
     this.comboStepTimer = profile.cadence[this.comboStep] + 0.36;
     this.attackDamageMult = profile.damage[this.comboStep] * (1 + this.comboLinkBonus);
     this.attackRangeBonus = profile.range ? (profile.range[this.comboStep] || 0) : 0;
     this.attackKnockMult = profile.knock[this.comboStep];
-    this.actionDuration = isFinisher ? 0.34 : (this.comboStep === 0 ? 0.25 : (this.comboStep === 1 ? 0.24 : 0.27));
+    this.attackGuardTimer = (profile.guard && profile.guard[this.comboStep]) ? profile.guard[this.comboStep] : 0;
+    this.attackSuperArmorTimer = (profile.superArmor && profile.superArmor[this.comboStep]) ? (profile.cadence[this.comboStep] + 0.14) : 0;
+    this.attackPullIn = !!(profile.pull && profile.pull[this.comboStep]);
+    this.attackLiftY = (profile.lift && profile.lift[this.comboStep]) ? profile.lift[this.comboStep] : 0;
+    this.attackArmorBreak = !!(profile.armorBreak && profile.armorBreak[this.comboStep]);
+    this.actionDuration = isFinisher ? 0.34 : Math.max(0.18, profile.cadence[this.comboStep] + 0.08);
     this.actionTimer = this.actionDuration;
     let cd = profile.cadence[this.comboStep];
+
+    // Style-specific vertical hop / vault / backstep kinematics
+    const stepHop = (profile.hop && profile.hop[this.comboStep]) ? profile.hop[this.comboStep] : 0;
+    if (stepHop < 0 && this.isGrounded) {
+      this.vy = Math.min(this.vy, stepHop);
+      this.isGrounded = false;
+    }
 
     // Passive Combat Modifiers for All 10 Playable Guardians
     if (!this.isFusion) {
@@ -2370,9 +2420,21 @@ class PlayerHero {
       }
       return false;
     }
+    // Steven & Rose Shield-Guard attack frames reduce incoming damage by 50% without interrupting their swing
+    let attackGuardMult = 1.0;
+    if (this.attackGuardTimer > 0) {
+      attackGuardMult = 0.50;
+      if (audioEngine) audioEngine.playSfx('shield');
+      if (particles) {
+        particles.addShieldBlockRipple(this.x, this.y - 34, this.facing, '#ff94ba');
+        particles.addDamageText(this.x, this.y - 84, 'GUARDED!', false, '#fbcfe8');
+      }
+    }
     this.invulnerableTimer = 1.25; // Generous 1.25s iframes to prevent rapid tick deaths!
     const bismuthArmor = (!this.isFusion && this.activeChar === 'bismuth') ? 0.80 : 1.0;
-    const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5 * bismuthArmor)) : Math.max(1, Math.round(amount * bismuthArmor));
+    const finalDamage = this.isPinkOverdrive
+      ? Math.max(1, Math.round(amount * 0.5 * bismuthArmor * attackGuardMult))
+      : Math.max(1, Math.round(amount * bismuthArmor * attackGuardMult));
     if (audioEngine) audioEngine.playSfx('hurt');
     const stats = (typeof this.getCombatStats === 'function') ? this.getCombatStats() : { defense: 35 };
     const baseUnitDmg = (finalDamage || 1) * 95;
@@ -2451,39 +2513,136 @@ class PlayerHero {
       const strike = this.getStrikeCurve(animP);
       const posStrike = Math.max(0, strike);
       if (this.actionType === 'punch') {
-        // Tekken-Style 4-Hit Combo Kinetics (Jab -> Low Sweep -> Skyward Launcher -> Ground Smash Finisher!)
+        // Differentiated per-Guardian fighting style kinetics
         const combo = this.attackCombo || 0;
-        if (combo === 0) {
-          actionLunge = strike * 20;
-          actionLiftY = -posStrike * 3;
-          actionTorsoTilt = strike * 0.16;
-          actionScaleX = 1 + posStrike * 0.05;
-          actionScaleY = 1 - posStrike * 0.03;
-        } else if (combo === 1) {
-          actionLunge = strike * 20;
-          actionLiftY = posStrike * 4;
-          actionTorsoTilt = -strike * 0.19;
-          actionScaleX = 1 + posStrike * 0.05;
-        } else if (combo === 2) {
-          actionLunge = strike * 22;
-          actionLiftY = -posStrike * 15;
-          actionTorsoTilt = -posStrike * 0.16;
-          actionScaleX = 1 - posStrike * 0.03;
-          actionScaleY = 1 + posStrike * 0.07;
-        } else {
-          // Hit 4: Weighty aerial cleave / seismic finisher!
-          actionLunge = strike * 32;
-          if (animP < 0.40) {
-            const leap = Math.sin((animP / 0.40) * (Math.PI / 2));
-            actionLiftY = -22 * leap;
-            actionTorsoTilt = -0.24 * leap;
-            actionScaleY = 1 + 0.07 * leap;
+        const st = this.attackStyle || 'boxer';
+        if (st === 'guardBrawler' || st === 'paladin') {
+          // Shield-forward braced steps -> rising guardian sweep
+          if (combo === 0) {
+            actionLunge = strike * 18;
+            actionTorsoTilt = strike * 0.12;
+            actionScaleX = 1 + posStrike * 0.05;
+          } else if (combo === 1) {
+            actionLunge = strike * 26;
+            actionLiftY = posStrike * 4;
+            actionTorsoTilt = strike * 0.18;
+            actionScaleX = 1 + posStrike * 0.08;
+            actionScaleY = 1 - posStrike * 0.05;
           } else {
-            const slam = Math.sin(((animP - 0.40) / 0.60) * Math.PI);
-            actionLiftY = 10 * slam;
-            actionTorsoTilt = 0.30 * slam;
-            actionScaleX = 1 + 0.08 * slam;
-            actionScaleY = 1 - 0.07 * slam;
+            actionLunge = strike * 24;
+            actionLiftY = -posStrike * 18;
+            actionTorsoTilt = -posStrike * 0.18;
+            actionScaleY = 1 + posStrike * 0.08;
+          }
+        } else if (st === 'whipAcrobat' || st === 'iaido') {
+          // Rapid 5-hit fluid martial chain (snaps -> diagonal twist -> vault -> finisher)
+          if (combo === 0 || combo === 2) {
+            actionLunge = strike * (st === 'iaido' ? 28 : 16);
+            actionTorsoTilt = strike * 0.22;
+            actionScaleX = 1 + posStrike * 0.07;
+          } else if (combo === 1) {
+            actionLunge = strike * (st === 'iaido' ? 24 : 10);
+            actionLiftY = posStrike * 5;
+            actionTorsoTilt = -strike * 0.20;
+          } else if (combo === 3) {
+            actionLunge = strike * 24;
+            actionLiftY = -posStrike * 20;
+            actionTorsoTilt = -posStrike * 0.26;
+            actionScaleY = 1 + posStrike * 0.09;
+          } else {
+            actionLunge = strike * 34;
+            actionLiftY = (animP < 0.38) ? -18 * Math.sin((animP / 0.38) * (Math.PI / 2)) : 8 * Math.sin(((animP - 0.38) / 0.62) * Math.PI);
+            actionTorsoTilt = (animP < 0.38) ? -0.22 : 0.32 * posStrike;
+            actionScaleX = 1 + posStrike * 0.09;
+          }
+        } else if (st === 'fencer' || st === 'hydroWeaver') {
+          // Graceful linear thrusts & airborne pirouette/geyser lift
+          if (combo === 0 || combo === 1) {
+            actionLunge = strike * 26;
+            actionLiftY = -posStrike * 4;
+            actionTorsoTilt = strike * 0.14;
+            actionScaleX = 1 + posStrike * 0.06;
+          } else if (combo === 2) {
+            actionLunge = strike * 20;
+            actionLiftY = -posStrike * 24;
+            actionTorsoTilt = -posStrike * 0.22;
+            actionScaleY = 1 + posStrike * 0.10;
+          } else {
+            actionLunge = strike * 30;
+            actionLiftY = -posStrike * 10;
+            actionTorsoTilt = strike * 0.24;
+            actionScaleX = 1 + posStrike * 0.08;
+          }
+        } else if (st === 'ferroZoner') {
+          // Telekinetic stance + Hit 3 tactical backstep hop
+          if (combo < 2) {
+            actionLunge = strike * 10;
+            actionTorsoTilt = -strike * 0.10;
+            actionScaleY = 1 + posStrike * 0.05;
+          } else {
+            actionLunge = -strike * 22;
+            actionLiftY = -posStrike * 14;
+            actionTorsoTilt = -posStrike * 0.24;
+          }
+        } else if (st === 'heavyForge' || st === 'juggernaut') {
+          // Heavy windup -> thunderous forward shoulder ram / molten anvil drop
+          if (combo === 0) {
+            actionLunge = strike * 24;
+            actionTorsoTilt = strike * 0.22;
+            actionScaleX = 1 + posStrike * 0.08;
+          } else if (combo === 1) {
+            actionLunge = strike * 36;
+            actionLiftY = posStrike * 6;
+            actionTorsoTilt = strike * 0.30;
+            actionScaleX = 1 + posStrike * 0.10;
+            actionScaleY = 1 - posStrike * 0.08;
+          } else {
+            actionLunge = strike * 38;
+            if (animP < 0.42) {
+              const leap = Math.sin((animP / 0.42) * (Math.PI / 2));
+              actionLiftY = -26 * leap;
+              actionTorsoTilt = -0.28 * leap;
+              actionScaleY = 1 + 0.09 * leap;
+            } else {
+              const slam = Math.sin(((animP - 0.42) / 0.58) * Math.PI);
+              actionLiftY = 12 * slam;
+              actionTorsoTilt = 0.34 * slam;
+              actionScaleX = 1 + 0.11 * slam;
+              actionScaleY = 1 - 0.09 * slam;
+            }
+          }
+        } else {
+          // Orthodox Boxer (Garnet): 1-2 Jab-Cross -> Rising Shoryu Uppercut -> Electro-Meteor Slam
+          if (combo === 0) {
+            actionLunge = strike * 22;
+            actionLiftY = -posStrike * 3;
+            actionTorsoTilt = strike * 0.16;
+            actionScaleX = 1 + posStrike * 0.06;
+            actionScaleY = 1 - posStrike * 0.03;
+          } else if (combo === 1) {
+            actionLunge = strike * 22;
+            actionLiftY = posStrike * 4;
+            actionTorsoTilt = -strike * 0.18;
+            actionScaleX = 1 + posStrike * 0.06;
+          } else if (combo === 2) {
+            actionLunge = strike * 22;
+            actionLiftY = -posStrike * 20;
+            actionTorsoTilt = -posStrike * 0.18;
+            actionScaleY = 1 + posStrike * 0.09;
+          } else {
+            actionLunge = strike * 32;
+            if (animP < 0.40) {
+              const leap = Math.sin((animP / 0.40) * (Math.PI / 2));
+              actionLiftY = -22 * leap;
+              actionTorsoTilt = -0.24 * leap;
+              actionScaleY = 1 + 0.07 * leap;
+            } else {
+              const slam = Math.sin(((animP - 0.40) / 0.60) * Math.PI);
+              actionLiftY = 10 * slam;
+              actionTorsoTilt = 0.30 * slam;
+              actionScaleX = 1 + 0.08 * slam;
+              actionScaleY = 1 - 0.07 * slam;
+            }
           }
         }
       } else if (this.actionType === 'throw') {
@@ -2596,7 +2755,23 @@ class PlayerHero {
     ctx.scale(this.facing * dodgeScaleX * actionScaleX * landX * motion.breathScaleX * uSq.sx, dodgeScaleY * actionScaleY * landY * motion.breathScaleY * uSq.sy);
     if (motion.hoverY) ctx.translate(0, motion.hoverY);
 
-    // Dodge ghost trail
+    // Dodge ghost trail & Double-Tap Sprint Speed-Lines
+    if (this.isSprinting) {
+      ctx.save();
+      const sPulse = Math.sin((this.animTime || 0) * 28);
+      ctx.strokeStyle = 'rgba(224, 242, 254, 0.72)';
+      ctx.lineCap = 'round';
+      for (let sl = 0; sl < 4; sl++) {
+        const ly = -16 - sl * 15 + (sl % 2 === 0 ? sPulse * 2 : -sPulse * 2);
+        const len = 24 + (sl % 3) * 14;
+        ctx.lineWidth = sl === 1 ? 2.4 : 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-18 - sl * 5, ly);
+        ctx.lineTo(-18 - sl * 5 - len, ly);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (this.isDodging) {
       for (let gI = 1; gI <= 3; gI++) {
         ctx.save();
@@ -3371,31 +3546,38 @@ class PlayerHero {
 
     const bSin = Math.sin(t * breathFreq);
     const bCos = Math.cos(t * breathFreq * 0.5);
+    const isSprinting = !!this.isSprinting && isMoving;
     const walkWave = Math.sin(this.walkAnim || 0);
     const walkDouble = Math.abs(Math.sin(this.walkAnim || 0));
     const idleBob = grounded ? bSin * 2.1 : Math.sin(t * 4.5) * 1.6;
-    const runBob = grounded ? (-walkDouble * 4.2 + Math.sin((this.walkAnim || 0) * 2) * 1.4) : Math.max(-5, Math.min(5, this.vy * 0.01));
+    const runBob = grounded
+      ? (-walkDouble * (isSprinting ? 6.2 : 4.2) + Math.sin((this.walkAnim || 0) * 2) * (isSprinting ? 2.0 : 1.4))
+      : Math.max(-5, Math.min(5, this.vy * 0.01));
     const bob = isMoving ? runBob : idleBob;
     const hoverY = hoverAmp ? (Math.sin(t * 2.4) * hoverAmp - (isMoving ? hoverAmp * 0.45 : hoverAmp * 0.6)) : 0;
 
-    // Forward sprint torso lean + idle rhythmic stance shift
+    // Forward sprint torso lean (deep aerodynamic speed-run lean when double-tap sprinting!) + idle rhythmic stance shift
     const torsoTilt = isMoving
-      ? (grounded ? sprintLean * (0.65 + 0.35 * runSpeed) + walkWave * 0.025 : Math.max(-0.14, Math.min(0.18, this.vy * 0.00035)))
+      ? (grounded
+        ? (isSprinting ? (sprintLean + 0.165) : sprintLean * (0.65 + 0.35 * runSpeed)) + walkWave * (isSprinting ? 0.042 : 0.025)
+        : Math.max(-0.14, Math.min(0.24, this.vy * 0.00035 + (isSprinting ? 0.10 : 0))))
       : bCos * idleSwayAmp;
 
-    const breathScaleX = 1 + (isMoving ? -0.012 : -bSin * breathAmp * 0.65);
-    const breathScaleY = 1 + (isMoving ? 0.014 : bSin * breathAmp);
+    const breathScaleX = 1 + (isSprinting ? 0.032 : (isMoving ? -0.012 : -bSin * breathAmp * 0.65));
+    const breathScaleY = 1 + (isSprinting ? -0.032 : (isMoving ? 0.014 : bSin * breathAmp));
 
-    // Continuous dual-phase arm oscillation (keeps shoulders/elbows alive in idle & full swing in sprint)
-    const armSwingF = isMoving ? (Math.sin(this.walkAnim || 0) * 0.58) : (Math.sin(t * breathFreq * 0.85) * idleArmAmp);
-    const armSwingB = isMoving ? (-Math.sin(this.walkAnim || 0) * 0.54) : (-Math.sin(t * breathFreq * 0.85 + 0.9) * idleArmAmp * 0.85);
-    const headBob = isMoving ? (Math.cos((this.walkAnim || 0) * 2) * 1.2) : (bSin * 1.1);
-    const headTilt = isMoving ? (walkWave * 0.035) : (Math.sin(t * breathFreq * 0.5) * 0.035);
+    // Continuous dual-phase arm oscillation (vigorous athletic pumping when sprinting!)
+    const armAmp = isSprinting ? 0.88 : 0.58;
+    const armSwingF = isMoving ? (Math.sin(this.walkAnim || 0) * armAmp) : (Math.sin(t * breathFreq * 0.85) * idleArmAmp);
+    const armSwingB = isMoving ? (-Math.sin(this.walkAnim || 0) * (armAmp * 0.94)) : (-Math.sin(t * breathFreq * 0.85 + 0.9) * idleArmAmp * 0.85);
+    const headBob = isMoving ? (Math.cos((this.walkAnim || 0) * 2) * (isSprinting ? 1.8 : 1.2)) : (bSin * 1.1);
+    const headTilt = isMoving ? (walkWave * (isSprinting ? 0.055 : 0.035) + (isSprinting ? 0.06 : 0)) : (Math.sin(t * breathFreq * 0.5) * 0.035);
 
     return {
       id,
       t,
       isMoving,
+      isSprinting,
       grounded,
       bob,
       hoverY,
@@ -3412,12 +3594,15 @@ class PlayerHero {
   getHairSway(animP = 0, actionType = '') {
     const t = this.animTime || (Date.now() / 1000);
     const isMoving = Math.abs(this.vx) > 12;
+    const isSprinting = !!this.isSprinting && isMoving;
     const strike = actionType ? this.getStrikeCurve(animP) : 0;
-    // Trailing backward (-X) when running forward or lunging into a strike
-    const runTrail = isMoving ? (-6.5 + Math.sin(this.walkAnim * 1.6) * 2.8) : (Math.sin(t * 3.1) * 2.1);
+    // Trailing backward (-X) when running/sprinting forward or lunging into a strike
+    const runTrail = isMoving
+      ? ((isSprinting ? -13.5 : -6.5) + Math.sin(this.walkAnim * (isSprinting ? 2.2 : 1.6)) * (isSprinting ? 3.8 : 2.8))
+      : (Math.sin(t * 3.1) * 2.1);
     const strikeTrail = -strike * 7.2;
-    const airLift = !this.isGrounded ? Math.max(-8, Math.min(8, this.vy * 0.014)) : 0;
-    const walkBounce = isMoving ? Math.cos(this.walkAnim * 2) * 2.2 : Math.cos(t * 2.7) * 1.2;
+    const airLift = !this.isGrounded ? Math.max(-8, Math.min(8, this.vy * 0.014)) : (isSprinting ? -1.8 : 0);
+    const walkBounce = isMoving ? Math.cos(this.walkAnim * 2) * (isSprinting ? 3.2 : 2.2) : Math.cos(t * 2.7) * 1.2;
     return {
       swayX: runTrail + strikeTrail,
       swayY: airLift + walkBounce
@@ -3427,10 +3612,12 @@ class PlayerHero {
   getLegKinematics(animP = 0, actionType = '') {
     const t = this.animTime || 0;
     const isMoving = Math.abs(this.vx) > 12;
+    const isSprinting = !!this.isSprinting && isMoving;
     const walkS = isMoving ? Math.sin(this.walkAnim) : 0;
     const walkC = isMoving ? Math.cos(this.walkAnim) : 0;
-    const walkLiftB = isMoving ? Math.max(0, -walkS) * 5.2 : 0;
-    const walkLiftF = isMoving ? Math.max(0, walkS) * 5.2 : 0;
+    const liftMult = isSprinting ? 9.0 : 5.2;
+    const walkLiftB = isMoving ? Math.max(0, -walkS) * liftMult : 0;
+    const walkLiftF = isMoving ? Math.max(0, walkS) * liftMult : 0;
 
     if (!this.isGrounded && !actionType) {
       const airT = Math.sin(t * 8) * 1.4;
@@ -3463,13 +3650,15 @@ class PlayerHero {
         frontRot: -0.04 - shift * 0.045
       };
     }
+    const strideX = isSprinting ? 11.8 : 7.8;
+    const strideRot = isSprinting ? 0.44 : 0.28;
     return {
-      backX: -walkS * 7.8 + walkC * 1.4,
+      backX: -walkS * strideX + walkC * (isSprinting ? 2.2 : 1.4),
       backY: -walkLiftB,
-      backRot: walkS * 0.28,
-      frontX: walkS * 7.8 - walkC * 1.4,
+      backRot: walkS * strideRot,
+      frontX: walkS * strideX - walkC * (isSprinting ? 2.2 : 1.4),
       frontY: -walkLiftF,
-      frontRot: -walkS * 0.28
+      frontRot: -walkS * strideRot
     };
   }
 
@@ -8124,6 +8313,24 @@ class PlayerHero {
     ctx.translate(this.x + actionLunge * this.facing, this.y + motion.hoverY);
     ctx.scale(this.facing * scale * actionScaleX * motion.breathScaleX * uSq.sx, scale * actionScaleY * motion.breathScaleY * uSq.sy);
     ctx.rotate(actionTorsoTilt + motion.torsoTilt);
+
+    // Sprint Speed-Lines behind sprinting Canon Fusions!
+    if (this.isSprinting) {
+      ctx.save();
+      const sPulse = Math.sin((this.animTime || 0) * 26);
+      ctx.strokeStyle = 'rgba(224, 242, 254, 0.72)';
+      ctx.lineCap = 'round';
+      for (let sl = 0; sl < 5; sl++) {
+        const ly = -16 - sl * 16 + (sl % 2 === 0 ? sPulse * 2 : -sPulse * 2);
+        const len = 26 + (sl % 3) * 14;
+        ctx.lineWidth = sl === 2 ? 2.4 : 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-22 - sl * 5, ly);
+        ctx.lineTo(-22 - sl * 5 - len, ly);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     // 1. Luminous Grand Rainbow / Prism Fusion Aura + Fusion Overdrive Halo + Crisp Fusion Rim Glow
     this.drawFusionAura(ctx, fusion, bob);

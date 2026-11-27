@@ -63,10 +63,43 @@ class GemAudioEngine {
           this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
           this.sfxGainNode.connect(this.ctx.destination);
 
-          // Music Master Gain: Smooth musical volume
+          // Music Master Gain + Warm Spatial Echo Bus (Aivi & Surasshu lush atmosphere)
           this.musicGainNode = this.ctx.createGain();
           this.musicGainNode.gain.setValueAtTime(this.musicEnabled ? this.musicVolume : 0, this.ctx.currentTime);
-          this.musicGainNode.connect(this.ctx.destination);
+          let musicOut = this.ctx.destination;
+          try {
+            if (typeof this.ctx.createDynamicsCompressor === 'function') {
+              this.musicCompressor = this.ctx.createDynamicsCompressor();
+              this.musicCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+              this.musicCompressor.knee.setValueAtTime(18, this.ctx.currentTime);
+              this.musicCompressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+              this.musicCompressor.connect(this.ctx.destination);
+              musicOut = this.musicCompressor;
+            }
+          } catch (ce) {}
+          this.musicGainNode.connect(musicOut);
+
+          // Gentle warm low-pass echo send for dreamy acoustic / cosmic depth
+          try {
+            if (typeof this.ctx.createDelay === 'function' && typeof this.ctx.createBiquadFilter === 'function') {
+              const delay = this.ctx.createDelay(1.0);
+              delay.delayTime.setValueAtTime(0.24, this.ctx.currentTime);
+              const dFilter = this.ctx.createBiquadFilter();
+              dFilter.type = 'lowpass';
+              dFilter.frequency.setValueAtTime(1650, this.ctx.currentTime);
+              const fb = this.ctx.createGain();
+              fb.gain.setValueAtTime(0.26, this.ctx.currentTime);
+              const wet = this.ctx.createGain();
+              wet.gain.setValueAtTime(0.22, this.ctx.currentTime);
+              this.musicGainNode.connect(delay);
+              delay.connect(dFilter);
+              dFilter.connect(fb);
+              fb.connect(delay);
+              dFilter.connect(wet);
+              wet.connect(musicOut);
+              this._musicEchoNodes = { delay, dFilter, fb, wet };
+            }
+          } catch (de) {}
 
           // Pre-build short white-noise buffer once for synth percussion
           try {
@@ -1466,6 +1499,12 @@ class GemAudioEngine {
 
     this.musicBeat = 0;
     this.fadeInMusic(0.75);
+    if (typeof window !== 'undefined' && window.game && typeof window.game.syncBgmUI === 'function') {
+      try { window.game.syncBgmUI(); } catch (e) {}
+    }
+
+    const isLushAcoustic = (trackId === 'intro_launch' || trackId === 'menu' || trackId === 'distant_shore' || trackId === 'lapis_tower' || trackId === 'stage_6' || trackId === 'stage_7');
+    const isEpicChoral = (trackId === 'stage_10' || isBoss);
 
     this.musicInterval = setInterval(() => {
       if (!this.ctx || !this.musicEnabled) return;
@@ -1527,6 +1566,21 @@ class GemAudioEngine {
           osc.start(t);
           osc.stop(t + leadDecay + 0.02);
 
+          // Acoustic ukulele / crystal celesta overtone shimmer on gentle tracks
+          if (isLushAcoustic) {
+            const pOsc = this.ctx.createOscillator();
+            const pGain = this.ctx.createGain();
+            pOsc.type = 'sine';
+            pOsc.frequency.setValueAtTime(freq * 2, t);
+            pGain.gain.setValueAtTime(0.0001, t);
+            pGain.gain.linearRampToValueAtTime(leadVol * 0.24, t + 0.006);
+            pGain.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(0.18, leadDecay * 0.45));
+            pOsc.connect(pGain);
+            pGain.connect(this.getMusicDestination());
+            pOsc.start(t);
+            pOsc.stop(t + 0.20);
+          }
+
           // Optional chorus detune layer for lush cosmic/finale tracks
           if (theme.leadDetune) {
             const osc2 = this.ctx.createOscillator();
@@ -1544,23 +1598,33 @@ class GemAudioEngine {
           }
         }
 
-        // 2. Chords / Shimmer harmonics with gentle envelope
+        // 2. Warm Multi-Voice Chord Pad & Shimmer Harmonics (Maj7 / 5th / Choral Voicings)
         const harmStep = theme.harmStep || (isBoss ? 2 : 4);
         if (this.musicBeat % harmStep === 0 && harmonics && harmonics.length > 0) {
-          const hOsc = this.ctx.createOscillator();
-          const hGain = this.ctx.createGain();
           const hIdx = Math.floor((this.musicBeat / harmStep) % harmonics.length);
-          hOsc.type = theme.harmType || 'sine';
-          hOsc.frequency.setValueAtTime(harmonics[hIdx], t);
-          const hVol = theme.harmVol || (isBoss ? 0.045 : 0.032);
-          const hDecay = theme.harmDecay || (harmStep * 0.14);
-          hGain.gain.setValueAtTime(0.0001, t);
-          hGain.gain.linearRampToValueAtTime(hVol, t + 0.02);
-          hGain.gain.exponentialRampToValueAtTime(0.0001, t + hDecay);
-          hOsc.connect(hGain);
-          hGain.connect(this.getMusicDestination());
-          hOsc.start(t);
-          hOsc.stop(t + hDecay + 0.02);
+          const rootF = harmonics[hIdx];
+          const hVol = theme.harmVol || (isBoss ? 0.045 : 0.036);
+          const hDecay = (theme.harmDecay || (harmStep * 0.16)) * (isLushAcoustic ? 1.35 : 1.1);
+          const ratios = isLushAcoustic ? [0.5, 1.0, 1.25] : (isEpicChoral ? [0.5, 1.0, 1.498] : [1.0, 1.498]);
+          for (let vi = 0; vi < ratios.length; vi++) {
+            const hOsc = this.ctx.createOscillator();
+            const hFilter = this.ctx.createBiquadFilter();
+            const hGain = this.ctx.createGain();
+            hOsc.type = (vi === 0) ? 'sine' : (theme.harmType || 'triangle');
+            hOsc.frequency.setValueAtTime(rootF * ratios[vi], t);
+            if (vi === 2) hOsc.detune.setValueAtTime(isLushAcoustic ? 5 : -6, t);
+            hFilter.type = 'lowpass';
+            hFilter.frequency.setValueAtTime(isLushAcoustic ? 1500 : 2100, t);
+            const vScale = vi === 1 ? 0.65 : 0.42;
+            hGain.gain.setValueAtTime(0.0001, t);
+            hGain.gain.linearRampToValueAtTime(hVol * vScale, t + (isLushAcoustic ? 0.055 : 0.024));
+            hGain.gain.exponentialRampToValueAtTime(0.0001, t + hDecay);
+            hOsc.connect(hFilter);
+            hFilter.connect(hGain);
+            hGain.connect(this.getMusicDestination());
+            hOsc.start(t);
+            hOsc.stop(t + hDecay + 0.03);
+          }
         }
 
         // 3. Driving rhythmic bassline with warm acoustic body
@@ -2830,208 +2894,750 @@ class EnvironmentRenderer {
       this.drawCloud(ctx, cx, c.y, c.scale, stageIndex);
     }
 
-    // Parallax Distant Silhouettes (Canon Steven Universe Landmarks)
-    const bgOffset = cameraX * 0.32;
+    // Parallax Distant Silhouettes & Painted Steven Universe Landmarks (All 10 Stages + Sky Arena)
+    const bgOffset = cameraX * 0.30;
+    const farOffset = cameraX * 0.14;
     const anim = this.animTime || 0;
 
-    if (stageIndex === 1) {
-      // Beach City: Colossal Obsidian Temple Cliff, Lighthouse Bluff & Funland Wheel
+    if (stageIndex === 0 || isPractice) {
+      // Practice Sky Arena: Floating Cloud Sea, Ancient Marble Arches & Fluttering Rebellion Banners
       ctx.save();
-      // Ancient Multi-Armed Temple Obsidian Carving
-      ctx.fillStyle = 'rgba(76, 29, 149, 0.38)';
-      const tx = 1120 - bgOffset;
-      ctx.beginPath();
-      ctx.arc(tx, this.groundY - 170, 90, 0, Math.PI * 2); // Temple head
-      ctx.fill();
-      ctx.fillRect(tx - 70, this.groundY - 130, 140, 130); // Torso & Arms
-      // Cliffside rocks
-      ctx.beginPath();
-      ctx.moveTo(tx - 180, this.groundY);
-      ctx.lineTo(tx - 80, this.groundY - 190);
-      ctx.lineTo(tx + 160, this.groundY - 200);
-      ctx.lineTo(tx + 240, this.groundY);
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(59, 7, 100, 0.32)';
-      ctx.fill();
+      // Soft rose-gold horizon sun halo
+      const sunG = ctx.createRadialGradient(this.canvasWidth * 0.5, this.groundY - 120, 12, this.canvasWidth * 0.5, this.groundY - 120, 280);
+      sunG.addColorStop(0, 'rgba(254, 240, 138, 0.32)');
+      sunG.addColorStop(0.5, 'rgba(103, 232, 249, 0.16)');
+      sunG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sunG;
+      ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
 
-      // Lighthouse on bluff
-      const lx = 420 - bgOffset;
-      ctx.fillStyle = 'rgba(88, 28, 135, 0.35)';
-      ctx.fillRect(lx - 12, this.groundY - 130, 24, 130);
-      ctx.beginPath();
-      ctx.arc(lx, this.groundY - 135, 16, Math.PI, 0);
-      ctx.fill();
-      // Lighthouse rotating beam
-      const beamAngle = Math.sin(anim * 1.2) * 0.4;
-      ctx.save();
-      ctx.translate(lx, this.groundY - 135);
-      ctx.rotate(beamAngle);
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.14)';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(260, -45);
-      ctx.lineTo(260, 45);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      // Distant Funland Ferris Wheel
-      const fx = 1850 - bgOffset;
-      ctx.strokeStyle = 'rgba(244, 114, 182, 0.30)';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(fx, this.groundY - 125, 75, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    } else if (stageIndex === 2) {
-      // Galaxy Warp: Floating Ancient Gem Spire Monoliths & Star Arches
-      ctx.save();
-      ctx.fillStyle = 'rgba(34, 211, 238, 0.22)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-      ctx.lineWidth = 2;
-      for (const sx of [380, 880, 1420, 2020]) {
-        const x = sx - bgOffset;
-        const floatY = Math.sin(anim * 1.5 + sx) * 8;
+      // Distant floating broken Sky Arena marble arches
+      for (const ax of [260, 740, 1260, 1780]) {
+        const x = ax - farOffset;
+        const bobY = Math.sin(anim * 0.9 + ax * 0.01) * 5;
+        ctx.fillStyle = 'rgba(165, 180, 252, 0.22)';
+        ctx.fillRect(x - 62, this.groundY - 220 + bobY, 18, 220);
+        ctx.fillRect(x + 44, this.groundY - 220 + bobY, 18, 220);
+        ctx.strokeStyle = 'rgba(224, 231, 255, 0.30)';
+        ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.moveTo(x - 22, this.groundY - 90 + floatY);
-        ctx.lineTo(x, this.groundY - 210 + floatY);
-        ctx.lineTo(x + 22, this.groundY - 90 + floatY);
+        ctx.arc(x, this.groundY - 216 + bobY, 53, Math.PI, 0);
+        ctx.stroke();
+        // Fluttering Rose Rebellion Banner
+        const wave = Math.sin(anim * 2.6 + ax) * 7;
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.42)';
+        ctx.beginPath();
+        ctx.moveTo(x - 16, this.groundY - 210 + bobY);
+        ctx.lineTo(x + 16, this.groundY - 210 + bobY);
+        ctx.quadraticCurveTo(x + 14 + wave, this.groundY - 145 + bobY, x + 8 + wave * 1.4, this.groundY - 105 + bobY);
+        ctx.lineTo(x + wave * 0.8, this.groundY - 120 + bobY);
+        ctx.lineTo(x - 10 + wave * 1.1, this.groundY - 105 + bobY);
         ctx.closePath();
         ctx.fill();
+      }
+      // Pastel Cloud Sea rolling below horizon
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.20)';
+      for (let cx = -80; cx < this.canvasWidth + 160; cx += 150) {
+        const bx = cx - (farOffset % 150);
+        ctx.beginPath();
+        ctx.arc(bx, this.groundY - 12, 85, Math.PI, 0);
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (stageIndex === 1) {
+      // Beach City: Sunset Ocean Horizon, Sculpted Crystal Temple Obsidian Statue + Beach House, Lighthouse & Funland Ferris Wheel
+      ctx.save();
+      // Glowing Sunset Disc & Horizon Reflection
+      const sunX = 760 - farOffset * 0.5;
+      const sunY = this.groundY - 145;
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 14, sunX, sunY, 175);
+      sunGlow.addColorStop(0, 'rgba(254, 249, 195, 0.92)');
+      sunGlow.addColorStop(0.28, 'rgba(251, 146, 60, 0.48)');
+      sunGlow.addColorStop(0.65, 'rgba(244, 114, 182, 0.18)');
+      sunGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 175, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Distant Sunset Ocean Band + Shimmering Water Ripples
+      const seaY = this.groundY - 62;
+      const seaG = ctx.createLinearGradient(0, seaY, 0, this.groundY);
+      seaG.addColorStop(0, 'rgba(190, 24, 93, 0.52)');
+      seaG.addColorStop(0.5, 'rgba(126, 34, 206, 0.48)');
+      seaG.addColorStop(1, 'rgba(30, 27, 75, 0.58)');
+      ctx.fillStyle = seaG;
+      ctx.fillRect(0, seaY, this.canvasWidth, 62);
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.38)';
+      for (let r = 0; r < 6; r++) {
+        const rw = 90 - r * 11 + Math.sin(anim * 2.2 + r) * 8;
+        ctx.fillRect(sunX - rw * 0.5, seaY + 6 + r * 8, rw, 2.5);
+      }
+
+      // Colossal Crystal Temple Obsidian Statue & Cliff Bluff
+      const tx = 1080 - bgOffset;
+      // Layered sunset cliff behind statue
+      ctx.fillStyle = '#3b154d';
+      ctx.beginPath();
+      ctx.moveTo(tx - 245, this.groundY);
+      ctx.lineTo(tx - 155, this.groundY - 215);
+      ctx.lineTo(tx - 55, this.groundY - 240);
+      ctx.lineTo(tx + 125, this.groundY - 230);
+      ctx.lineTo(tx + 240, this.groundY - 125);
+      ctx.lineTo(tx + 310, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      // Grassy green cliff crest
+      ctx.fillStyle = 'rgba(22, 101, 52, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(tx - 155, this.groundY - 215);
+      ctx.quadraticCurveTo(tx - 5, this.groundY - 252, tx + 128, this.groundY - 228);
+      ctx.lineTo(tx + 120, this.groundY - 214);
+      ctx.lineTo(tx - 145, this.groundY - 202);
+      ctx.closePath();
+      ctx.fill();
+
+      // Carved Obsidian Temple Goddess (Multi-armed stone relief + serene face + billowing stone curls)
+      ctx.fillStyle = '#4c1d6e';
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.35)';
+      ctx.lineWidth = 2;
+      // Stone curl halo
+      ctx.beginPath();
+      ctx.arc(tx - 58, this.groundY - 188, 36, 0, Math.PI * 2);
+      ctx.arc(tx + 58, this.groundY - 188, 36, 0, Math.PI * 2);
+      ctx.arc(tx, this.groundY - 222, 48, 0, Math.PI * 2);
+      ctx.fill();
+      // Sculpted head & torso
+      ctx.fillStyle = '#581c87';
+      ctx.beginPath();
+      ctx.ellipse(tx, this.groundY - 186, 42, 46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Serene closed eyes & gemstone forehead mark
+      ctx.strokeStyle = 'rgba(251, 207, 232, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tx - 15, this.groundY - 184, 8, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.moveTo(tx + 7, this.groundY - 184);
+      ctx.arc(tx + 15, this.groundY - 184, 8, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.72)';
+      this.drawDiamondInsignia(ctx, tx, this.groundY - 204, 7);
+      // Outstretched stone forearms framing the Beach House
+      ctx.fillStyle = '#4c1d6e';
+      ctx.beginPath();
+      ctx.moveTo(tx - 140, this.groundY - 110);
+      ctx.lineTo(tx - 65, this.groundY - 140);
+      ctx.lineTo(tx - 60, this.groundY - 96);
+      ctx.lineTo(tx - 125, this.groundY - 82);
+      ctx.closePath();
+      ctx.moveTo(tx + 140, this.groundY - 110);
+      ctx.lineTo(tx + 65, this.groundY - 140);
+      ctx.lineTo(tx + 60, this.groundY - 96);
+      ctx.lineTo(tx + 125, this.groundY - 82);
+      ctx.closePath();
+      ctx.fill();
+
+      // Steven's Beach House perched on the Temple front!
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(tx - 54, this.groundY - 94, 108, 56);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(tx - 48, this.groundY - 88, 96, 44);
+      // Pitched cedar roof
+      ctx.fillStyle = '#9a3412';
+      ctx.beginPath();
+      ctx.moveTo(tx - 62, this.groundY - 88);
+      ctx.lineTo(tx, this.groundY - 126);
+      ctx.lineTo(tx + 62, this.groundY - 88);
+      ctx.closePath();
+      ctx.fill();
+      // Warm glowing Beach House windows & wooden deck railing
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(tx - 34, this.groundY - 78, 18, 22);
+      ctx.fillRect(tx + 16, this.groundY - 78, 18, 22);
+      ctx.fillStyle = '#fb923c';
+      ctx.fillRect(tx - 8, this.groundY - 76, 16, 30);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(tx - 60, this.groundY - 46, 120, 6);
+      ctx.fillRect(tx - 52, this.groundY - 40, 8, 40);
+      ctx.fillRect(tx + 44, this.groundY - 40, 8, 40);
+
+      // Beach City Hilltop Lighthouse + Volumetric Rotating Beam
+      const lx = 390 - bgOffset;
+      ctx.fillStyle = '#4c1d6e';
+      ctx.beginPath();
+      ctx.moveTo(lx - 75, this.groundY);
+      ctx.quadraticCurveTo(lx, this.groundY - 95, lx + 82, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(lx - 14, this.groundY - 70);
+      ctx.lineTo(lx - 10, this.groundY - 155);
+      ctx.lineTo(lx + 10, this.groundY - 155);
+      ctx.lineTo(lx + 14, this.groundY - 70);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(lx - 12, this.groundY - 135, 24, 14);
+      ctx.fillRect(lx - 13, this.groundY - 102, 26, 14);
+      ctx.fillStyle = '#be123c';
+      ctx.beginPath();
+      ctx.arc(lx, this.groundY - 160, 12, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(lx - 8, this.groundY - 162, 16, 8);
+      const beamAngle = Math.sin(anim * 0.95) * 0.34;
+      ctx.save();
+      ctx.translate(lx, this.groundY - 158);
+      ctx.rotate(beamAngle);
+      const beamG = ctx.createLinearGradient(0, 0, 320, 0);
+      beamG.addColorStop(0, 'rgba(254, 249, 195, 0.34)');
+      beamG.addColorStop(1, 'rgba(254, 249, 195, 0)');
+      ctx.fillStyle = beamG;
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(320, -56);
+      ctx.lineTo(320, 56);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Funland Ferris Wheel (Spokes, A-Frame Legs & Rotating Lit Gondolas!)
+      const fx = 1780 - bgOffset;
+      const fy = this.groundY - 128;
+      const fr = 82;
+      ctx.strokeStyle = 'rgba(251, 207, 232, 0.45)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(fx - 46, this.groundY); ctx.lineTo(fx, fy); ctx.lineTo(fx + 46, this.groundY);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.55)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr * 0.68, 0, Math.PI * 2);
+      ctx.stroke();
+      const rot = anim * 0.25;
+      for (let g = 0; g < 10; g++) {
+        const a = rot + (g * Math.PI * 2) / 10;
+        const gx = fx + Math.cos(a) * fr;
+        const gy = fy + Math.sin(a) * fr;
+        ctx.strokeStyle = 'rgba(251, 207, 232, 0.32)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy); ctx.lineTo(gx, gy);
+        ctx.stroke();
+        ctx.fillStyle = g % 2 === 0 ? '#fde047' : '#f472b6';
+        ctx.fillRect(gx - 5, gy - 2, 10, 9);
+      }
+      ctx.restore();
+    } else if (stageIndex === 2) {
+      // Galaxy Warp & Lunar Sea Spire: Floating Broken Spire Columns, Cascading Sky Waterfalls & Warp Beams
+      ctx.save();
+      // Cosmic nebula cloud bands
+      const neb = ctx.createRadialGradient(this.canvasWidth * 0.45, 160, 20, this.canvasWidth * 0.45, 160, 420);
+      neb.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+      neb.addColorStop(0.55, 'rgba(139, 92, 246, 0.14)');
+      neb.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = neb;
+      ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+
+      // Towering Ancient Lunar Sea Spire Towers & Broken Aqueducts with Waterfalls
+      for (const sx of [320, 860, 1440, 2040]) {
+        const x = sx - bgOffset;
+        const floatY = Math.sin(anim * 1.1 + sx * 0.01) * 7;
+        // Translucent floating crystal obelisk
+        const obG = ctx.createLinearGradient(x - 36, this.groundY - 260, x + 36, this.groundY);
+        obG.addColorStop(0, 'rgba(186, 230, 253, 0.42)');
+        obG.addColorStop(0.5, 'rgba(56, 189, 248, 0.24)');
+        obG.addColorStop(1, 'rgba(30, 27, 75, 0.40)');
+        ctx.fillStyle = obG;
+        ctx.beginPath();
+        ctx.moveTo(x - 32, this.groundY - 50 + floatY);
+        ctx.lineTo(x - 24, this.groundY - 230 + floatY);
+        ctx.lineTo(x, this.groundY - 275 + floatY);
+        ctx.lineTo(x + 24, this.groundY - 230 + floatY);
+        ctx.lineTo(x + 32, this.groundY - 50 + floatY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Cascading glowing waterfall pouring off spire ledge into the clouds
+        const wfGrad = ctx.createLinearGradient(x, this.groundY - 190, x, this.groundY);
+        wfGrad.addColorStop(0, 'rgba(186, 230, 253, 0.55)');
+        wfGrad.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
+        ctx.fillStyle = wfGrad;
+        ctx.fillRect(x - 9, this.groundY - 185 + floatY, 18, 185 - floatY);
+        // Animated water shimmer lines
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        const dropY = ((anim * 95 + sx) % 160);
+        ctx.fillRect(x - 4, this.groundY - 180 + dropY, 3, 24);
+        ctx.fillRect(x + 2, this.groundY - 180 + ((dropY + 80) % 160), 2, 18);
+
+        // Orbiting crystal halo ring
+        ctx.strokeStyle = 'rgba(165, 243, 252, 0.48)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.ellipse(x, this.groundY - 220 + floatY, 44, 11, -0.14, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();
     } else if (stageIndex === 3) {
-      // Prime Kindergarten: Towering Injector Drills on Layered Basalt Bluffs
+      // Prime Kindergarten: Sheer Violet Canyon Walls Dotted with Gem Exit Holes + Weathered Injector Drills
       ctx.save();
-      ctx.fillStyle = 'rgba(88, 28, 135, 0.42)';
-      for (const drillX of [320, 780, 1260, 1740, 2220]) {
-        const dx = drillX - bgOffset;
-        // Injector Drill Head & Canister
-        ctx.beginPath();
-        ctx.moveTo(dx - 30, this.groundY - 200);
-        ctx.lineTo(dx + 30, this.groundY - 200);
-        ctx.lineTo(dx, this.groundY - 20);
-        ctx.closePath();
-        ctx.fill();
-        // Nutrient fluid canister glow
-        ctx.fillStyle = 'rgba(192, 132, 252, 0.30)';
-        ctx.fillRect(dx - 12, this.groundY - 180, 24, 60);
-        ctx.fillStyle = 'rgba(88, 28, 135, 0.42)';
-      }
-      ctx.restore();
-    } else if (stageIndex === 4) {
-      // Mantle Core: Geothermal Magma Spires & Heat Shimmer
-      ctx.save();
-      ctx.fillStyle = 'rgba(185, 28, 28, 0.32)';
-      for (const gx of [450, 1100, 1750, 2300]) {
-        const x = gx - bgOffset;
-        ctx.beginPath();
-        ctx.moveTo(x - 40, this.groundY);
-        ctx.lineTo(x - 12, this.groundY - 160);
-        ctx.lineTo(x + 12, this.groundY - 160);
-        ctx.lineTo(x + 40, this.groundY);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    } else if (stageIndex === 5) {
-      // Bismuth Forge: Volcanic Smelter Furnaces & Massive Hanging Chains
-      ctx.save();
-      ctx.fillStyle = 'rgba(124, 45, 18, 0.38)';
-      for (const fx of [500, 1200, 1900]) {
-        const x = fx - bgOffset;
-        ctx.fillRect(x - 45, this.groundY - 170, 90, 170);
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.35)';
-        ctx.beginPath();
-        ctx.arc(x, this.groundY - 100, 30, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(124, 45, 18, 0.38)';
-      }
-      ctx.restore();
-    } else if (stageIndex === 6) {
-      // Frozen North: Glacial Ice Peaks & Aurora Ribbons
-      ctx.save();
-      const auroraPulse = 0.18 + 0.10 * Math.sin(anim * 1.5);
-      ctx.fillStyle = `rgba(16, 185, 129, ${auroraPulse})`;
+      // Tiered Canyon Cliffs with Carved Gem Exit Holes
+      ctx.fillStyle = '#240b47';
       ctx.beginPath();
-      ctx.moveTo(0, 80);
-      ctx.bezierCurveTo(300, 30 + Math.sin(anim) * 20, 600, 110 - Math.sin(anim) * 20, 1000, 60);
-      ctx.lineTo(1000, 140);
-      ctx.bezierCurveTo(600, 170, 300, 90, 0, 140);
+      ctx.moveTo(-200, this.groundY);
+      ctx.lineTo(-200, this.groundY - 255);
+      for (let cx = -120; cx < 2800; cx += 180) {
+        const px = cx - farOffset;
+        const h = 230 + Math.sin(cx * 0.015) * 42;
+        ctx.lineTo(px, this.groundY - h);
+      }
+      ctx.lineTo(this.canvasWidth + 200, this.groundY);
       ctx.closePath();
       ctx.fill();
 
-      // Sharp Ice Peaks
-      ctx.fillStyle = 'rgba(15, 59, 76, 0.40)';
-      for (const px of [300, 750, 1300, 1850, 2350]) {
-        const x = px - bgOffset;
+      // Iconic Kindergarten Wall Exit Holes (humanoid / quartz birth hollows carved into sheer rock!)
+      for (let hx = 120; hx < 2500; hx += 165) {
+        const x = hx - farOffset;
+        const hy = this.groundY - 70 - ((hx * 37) % 130);
+        ctx.fillStyle = '#090314';
         ctx.beginPath();
-        ctx.moveTo(x - 55, this.groundY);
-        ctx.lineTo(x, this.groundY - 190);
-        ctx.lineTo(x + 55, this.groundY);
+        ctx.arc(x, hy - 20, 9, 0, Math.PI * 2);
+        ctx.fillRect(x - 11, hy - 12, 22, 24);
+        ctx.fillRect(x - 16, hy - 11, 32, 7);
+        ctx.fillRect(x - 9, hy + 11, 7, 14);
+        ctx.fillRect(x + 2, hy + 11, 7, 14);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Detailed Towering Homeworld Injector Drills
+      for (const drillX of [310, 790, 1290, 1780, 2240]) {
+        const dx = drillX - bgOffset;
+        // Jointed tripod legs
+        ctx.strokeStyle = '#4c1d95';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(dx - 16, this.groundY - 125); ctx.lineTo(dx - 54, this.groundY - 62); ctx.lineTo(dx - 44, this.groundY);
+        ctx.moveTo(dx + 16, this.groundY - 125); ctx.lineTo(dx + 54, this.groundY - 62); ctx.lineTo(dx + 44, this.groundY);
+        ctx.stroke();
+        // Central iron drill shaft & spiral auger
+        ctx.fillStyle = '#3b0764';
+        ctx.fillRect(dx - 10, this.groundY - 130, 20, 130);
+        ctx.fillStyle = '#581c87';
+        ctx.beginPath();
+        ctx.moveTo(dx - 24, this.groundY - 140);
+        ctx.lineTo(dx + 24, this.groundY - 140);
+        ctx.lineTo(dx, this.groundY - 8);
+        ctx.closePath();
+        ctx.fill();
+        // Faceted glowing crystal bio-poison reservoir on top
+        const glowA = 0.45 + 0.22 * Math.sin(anim * 2.2 + drillX);
+        ctx.fillStyle = `rgba(216, 180, 254, ${glowA})`;
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(dx, this.groundY - 275);
+        ctx.lineTo(dx + 26, this.groundY - 232);
+        ctx.lineTo(dx + 22, this.groundY - 150);
+        ctx.lineTo(dx - 22, this.groundY - 150);
+        ctx.lineTo(dx - 26, this.groundY - 232);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Inner specular facet highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.beginPath();
+        ctx.moveTo(dx, this.groundY - 270);
+        ctx.lineTo(dx + 10, this.groundY - 232);
+        ctx.lineTo(dx + 8, this.groundY - 154);
+        ctx.lineTo(dx - 4, this.groundY - 154);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
-    } else if (stageIndex === 7) {
-      // Pink Diamond Zoo: Cosmic Glass Stasis Domes & Saturnian Rings
+    } else if (stageIndex === 4) {
+      // Earth's Mantle Core: Subterranean Stalactites, Cascading Magma Rivers & The Colossal Pulsing Cluster Bubble!
       ctx.save();
-      ctx.fillStyle = 'rgba(219, 39, 119, 0.28)';
-      ctx.strokeStyle = 'rgba(244, 114, 182, 0.40)';
-      ctx.lineWidth = 2.5;
-      for (const zx of [500, 1250, 2000]) {
-        const x = zx - bgOffset;
+      // Colossal Cluster Bubble Pulsing in the Abyss
+      const clX = 960 - farOffset;
+      const clY = this.groundY - 165;
+      const clPulse = 1 + Math.sin(anim * 1.8) * 0.035;
+      const clG = ctx.createRadialGradient(clX, clY, 24, clX, clY, 185 * clPulse);
+      clG.addColorStop(0, 'rgba(254, 240, 138, 0.50)');
+      clG.addColorStop(0.45, 'rgba(244, 114, 182, 0.32)');
+      clG.addColorStop(0.82, 'rgba(234, 88, 12, 0.22)');
+      clG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = clG;
+      ctx.beginPath();
+      ctx.arc(clX, clY, 185 * clPulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(254, 215, 170, 0.45)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(clX, clY, 128 * clPulse, 0, Math.PI * 2);
+      ctx.stroke();
+      // Swirling multicolored gem-shard constellations sealed inside the Cluster bubble
+      const shardCols = ['#fb7185', '#38bdf8', '#fde047', '#c084fc', '#4ade80'];
+      for (let s = 0; s < 14; s++) {
+        const ang = anim * 0.35 + (s * Math.PI * 2) / 14;
+        const rad = 32 + (s % 4) * 22;
+        ctx.fillStyle = shardCols[s % shardCols.length];
+        ctx.globalAlpha = 0.52;
+        this.drawDiamondInsignia(ctx, clX + Math.cos(ang) * rad, clY + Math.sin(ang) * rad, 5 + (s % 3) * 2);
+      }
+      ctx.globalAlpha = 1;
+
+      // Volcanic Cavern Stalactites hanging from ceiling + Magma Falls
+      ctx.fillStyle = '#290707';
+      for (let sx = 60; sx < 2600; sx += 155) {
+        const x = sx - bgOffset;
+        const len = 75 + ((sx * 17) % 85);
         ctx.beginPath();
-        ctx.arc(x, this.groundY - 80, 80, Math.PI, 0);
+        ctx.moveTo(x - 36, 0); ctx.lineTo(x + 36, 0); ctx.lineTo(x, len);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Rising Geothermal Magma Spires & Pouring Lava Columns
+      for (const gx of [430, 1120, 1780, 2320]) {
+        const x = gx - bgOffset;
+        ctx.fillStyle = '#450a0a';
+        ctx.beginPath();
+        ctx.moveTo(x - 58, this.groundY);
+        ctx.lineTo(x - 20, this.groundY - 210);
+        ctx.lineTo(x + 20, this.groundY - 210);
+        ctx.lineTo(x + 58, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        // Glowing lava fissure streak
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.55)';
+        ctx.fillRect(x - 5, this.groundY - 200, 10, 200);
+      }
+      ctx.restore();
+    } else if (stageIndex === 5) {
+      // Bismuth's Forge: Vaulted Smelter Arches, Pouring Lava Waterfalls, Hanging Iron Chains & Weapon Silhouettes
+      ctx.save();
+      // Vaulted Obsidian Forge Arches & Roaring Furnaces
+      for (const fx of [420, 1080, 1740, 2320]) {
+        const x = fx - bgOffset;
+        // Heavy vaulted masonry arch
+        ctx.fillStyle = '#3b1006';
+        ctx.fillRect(x - 75, this.groundY - 240, 150, 240);
+        // Blazing circular smelter hearth inside
+        const fPulse = 0.65 + 0.25 * Math.sin(anim * 3.8 + fx);
+        const fGrad = ctx.createRadialGradient(x, this.groundY - 115, 8, x, this.groundY - 115, 58);
+        fGrad.addColorStop(0, `rgba(254, 249, 195, ${fPulse})`);
+        fGrad.addColorStop(0.5, `rgba(249, 115, 22, ${fPulse * 0.85})`);
+        fGrad.addColorStop(1, 'rgba(124, 45, 18, 0)');
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.arc(x, this.groundY - 115, 58, 0, Math.PI * 2);
+        ctx.fill();
+        // Vertical pouring molten lava waterfall stream
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.65)';
+        ctx.fillRect(x - 10, 0, 20, this.groundY);
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.75)';
+        ctx.fillRect(x - 4, 0, 8, this.groundY);
+        // Heavy swaying iron chains beside furnace
+        const sway = Math.sin(anim * 1.4 + fx) * 6;
+        ctx.strokeStyle = '#1c1917';
+        ctx.lineWidth = 4;
+        for (const side of [-52, 52]) {
+          ctx.beginPath();
+          ctx.moveTo(x + side, 0);
+          ctx.quadraticCurveTo(x + side + sway, 135, x + side + sway * 1.3, 240);
+          ctx.stroke();
+          // Chain links
+          for (let cy = 18; cy < 235; cy += 22) {
+            ctx.beginPath();
+            ctx.ellipse(x + side + sway * (cy / 240), cy, 4, 7, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    } else if (stageIndex === 6) {
+      // Frozen North: Multi-Ribbon Undulating Aurora Borealis & Crystalline Ice Cathedral Spires
+      ctx.save();
+      // Multi-ribbon luminous Aurora curtains
+      const ribbons = [
+        { y: 78, col: 'rgba(16, 185, 129, 0.30)', phase: 0 },
+        { y: 112, col: 'rgba(56, 189, 248, 0.25)', phase: 1.8 },
+        { y: 54, col: 'rgba(167, 139, 250, 0.20)', phase: 3.4 }
+      ];
+      for (const r of ribbons) {
+        const w1 = Math.sin(anim * 1.1 + r.phase) * 26;
+        const w2 = Math.cos(anim * 0.9 + r.phase) * 24;
+        ctx.fillStyle = r.col;
+        ctx.beginPath();
+        ctx.moveTo(0, r.y);
+        ctx.bezierCurveTo(this.canvasWidth * 0.33, r.y - 38 + w1, this.canvasWidth * 0.66, r.y + 42 + w2, this.canvasWidth, r.y - 12);
+        ctx.lineTo(this.canvasWidth, r.y + 72);
+        ctx.bezierCurveTo(this.canvasWidth * 0.66, r.y + 98 + w2, this.canvasWidth * 0.33, r.y + 22 + w1, 0, r.y + 68);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Far sunlit glacial mountain range
+      ctx.fillStyle = 'rgba(12, 74, 110, 0.50)';
+      for (const px of [240, 680, 1180, 1720, 2280]) {
+        const x = px - farOffset;
+        ctx.beginPath();
+        ctx.moveTo(x - 135, this.groundY);
+        ctx.lineTo(x, this.groundY - 265);
+        ctx.lineTo(x + 135, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        // Lit ice facet on right slope
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.24)';
+        ctx.beginPath();
+        ctx.moveTo(x, this.groundY - 265);
+        ctx.lineTo(x + 135, this.groundY);
+        ctx.lineTo(x + 18, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'rgba(12, 74, 110, 0.50)';
+      }
+      // Closer translucent crystalline Ice Cathedral Spires
+      for (const sx of [380, 960, 1580, 2140]) {
+        const x = sx - bgOffset;
+        ctx.fillStyle = 'rgba(125, 211, 252, 0.24)';
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.50)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 34, this.groundY);
+        ctx.lineTo(x - 16, this.groundY - 175);
+        ctx.lineTo(x, this.groundY - 215);
+        ctx.lineTo(x + 18, this.groundY - 165);
+        ctx.lineTo(x + 34, this.groundY);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
       }
       ctx.restore();
-    } else if (stageIndex === 8) {
-      // Homeworld Abduction Shore: Looming Green Hand Warship
+    } else if (stageIndex === 7) {
+      // Pink Diamond's Zoo: Ringed Rose-Gold Gas Giant Planet, Luminous Bio-Domes with Pink Trees & Orbital Arches
       ctx.save();
-      ctx.fillStyle = 'rgba(2, 132, 199, 0.42)';
+      // Giant Ringed Rose-Cosmos Planet
+      const plX = 720 - farOffset * 0.45;
+      const plY = 148;
+      const plG = ctx.createRadialGradient(plX - 24, plY - 22, 12, plX, plY, 92);
+      plG.addColorStop(0, '#fbcfe8');
+      plG.addColorStop(0.55, '#db2777');
+      plG.addColorStop(1, '#4c0519');
+      ctx.fillStyle = plG;
       ctx.beginPath();
-      ctx.arc(900 - bgOffset, 120, 140, 0, Math.PI * 2);
+      ctx.arc(plX, plY, 82, 0, Math.PI * 2);
       ctx.fill();
-      // Warship fingers
-      ctx.fillRect(800 - bgOffset, 70, 30, 90);
-      ctx.fillRect(850 - bgOffset, 50, 30, 120);
-      ctx.fillRect(900 - bgOffset, 50, 30, 120);
-      ctx.fillRect(950 - bgOffset, 70, 30, 90);
-      ctx.restore();
-    } else if (stageIndex === 9) {
-      // Homeworld Courtroom: Monolithic Diamond Statues
-      ctx.save();
-      ctx.fillStyle = 'rgba(6, 78, 59, 0.45)';
-      for (const cx of [600, 1300, 2000]) {
-        const x = cx - bgOffset;
-        ctx.fillRect(x - 40, this.groundY - 210, 80, 210);
+      ctx.strokeStyle = 'rgba(253, 242, 248, 0.52)';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.ellipse(plX, plY + 4, 148, 24, -0.22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Gleaming Rose-Quartz Habitat Bio-Domes enclosing Pink Blossom Trees
+      for (const zx of [460, 1180, 1920]) {
+        const x = zx - bgOffset;
+        const domeG = ctx.createRadialGradient(x - 20, this.groundY - 120, 10, x, this.groundY - 60, 120);
+        domeG.addColorStop(0, 'rgba(253, 242, 248, 0.36)');
+        domeG.addColorStop(0.6, 'rgba(244, 114, 182, 0.22)');
+        domeG.addColorStop(1, 'rgba(131, 24, 67, 0.35)');
+        ctx.fillStyle = domeG;
+        ctx.strokeStyle = 'rgba(251, 207, 232, 0.60)';
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
-        ctx.moveTo(x - 55, this.groundY - 210);
-        ctx.lineTo(x, this.groundY - 250);
-        ctx.lineTo(x + 55, this.groundY - 210);
+        ctx.arc(x, this.groundY, 115, Math.PI, 0);
         ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Tiny pink sanctuary cherry-blossom trees inside the dome
+        ctx.fillStyle = '#831843';
+        ctx.fillRect(x - 36, this.groundY - 52, 7, 52);
+        ctx.fillRect(x + 22, this.groundY - 64, 8, 64);
+        ctx.fillStyle = 'rgba(249, 168, 212, 0.72)';
+        ctx.beginPath();
+        ctx.arc(x - 32, this.groundY - 62, 24, 0, Math.PI * 2);
+        ctx.arc(x + 26, this.groundY - 76, 30, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
-    } else if (stageIndex === 10) {
-      // Change Your Mind: White Diamond Mecha Citadel & Radiant Crown Beams
+    } else if (stageIndex === 8) {
+      // Homeworld Abduction Shore: Looming Colossal Emerald Hand Warship Descending Through Storm Clouds
       ctx.save();
-      const mechaX = 950 - bgOffset;
-      const pulse = 0.22 + 0.12 * Math.sin(anim * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+      const shipX = 820 - bgOffset * 0.75;
+      const shipY = 148 + Math.sin(anim * 1.1) * 6;
+      // Pulsing emerald tractor-beam cone sweeping down onto the shore
+      const beamAlpha = 0.16 + 0.08 * Math.sin(anim * 2.8);
+      const trG = ctx.createLinearGradient(shipX, shipY + 40, shipX, this.groundY);
+      trG.addColorStop(0, `rgba(52, 211, 153, ${beamAlpha * 1.6})`);
+      trG.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+      ctx.fillStyle = trG;
       ctx.beginPath();
-      ctx.arc(mechaX, 90, 140, 0, Math.PI * 2);
+      ctx.moveTo(shipX - 55, shipY + 35);
+      ctx.lineTo(shipX + 55, shipY + 35);
+      ctx.lineTo(shipX + 210, this.groundY);
+      ctx.lineTo(shipX - 210, this.groundY);
+      ctx.closePath();
       ctx.fill();
-      // Radiant Light Beams
-      ctx.strokeStyle = `rgba(254, 240, 138, ${pulse * 0.8})`;
-      ctx.lineWidth = 3;
-      for (let a = -0.8; a <= 0.8; a += 0.3) {
+
+      // Sculpted Emerald Hand Warship (Palm + 5 Articulated Fingers with Neon Conduit Seams)
+      const hullG = ctx.createLinearGradient(shipX - 180, shipY - 110, shipX + 180, shipY + 80);
+      hullG.addColorStop(0, '#10b981');
+      hullG.addColorStop(0.5, '#047857');
+      hullG.addColorStop(1, '#064e3b');
+      ctx.fillStyle = hullG;
+      ctx.strokeStyle = '#6ee7b7';
+      ctx.lineWidth = 2.5;
+      // Palm & forearm hull
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(shipX - 135, shipY - 34, 245, 92, 26) : ctx.rect(shipX - 135, shipY - 34, 245, 92);
+      ctx.fill();
+      ctx.stroke();
+      // Five colossal emerald warship fingers jutting forward/upward
+      const fingers = [
+        { x: -115, y: -118, w: 32, h: 98 },
+        { x: -62, y: -142, w: 34, h: 122 },
+        { x: -6, y: -148, w: 34, h: 128 },
+        { x: 50, y: -134, w: 32, h: 112 },
+        { x: 90, y: -24, w: 58, h: 32 }
+      ];
+      for (const fg of fingers) {
+        ctx.fillStyle = hullG;
         ctx.beginPath();
-        ctx.moveTo(mechaX, 90);
-        ctx.lineTo(mechaX + Math.sin(a) * 320, 90 - Math.cos(a) * 220);
+        ctx.roundRect ? ctx.roundRect(shipX + fg.x, shipY + fg.y, fg.w, fg.h, 12) : ctx.rect(shipX + fg.x, shipY + fg.y, fg.w, fg.h);
+        ctx.fill();
+        ctx.stroke();
+        // Glowing cyan bridge/conduit line
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(shipX + fg.x + fg.w * 0.42, shipY + fg.y + 12, 4, Math.max(12, fg.h - 24));
+      }
+      // Central emerald bridge diamond core
+      ctx.fillStyle = '#ecfdf5';
+      this.drawDiamondInsignia(ctx, shipX - 12, shipY + 12, 16);
+      ctx.restore();
+    } else if (stageIndex === 9) {
+      // Homeworld Trial & Courtroom: Monumental Jade Columns, Glowing Yellow & Blue Diamond Stained Crests & Floating Palanquins
+      ctx.save();
+      for (const cx of [460, 1080, 1720, 2320]) {
+        const x = cx - bgOffset;
+        // Towering obsidian-jade fluted pillar
+        ctx.fillStyle = '#064e3b';
+        ctx.fillRect(x - 42, 0, 84, this.groundY);
+        ctx.fillStyle = 'rgba(110, 231, 183, 0.16)';
+        ctx.fillRect(x - 24, 0, 10, this.groundY);
+        ctx.fillRect(x + 14, 0, 10, this.groundY);
+        // Tall stained-glass Diamond Authority crest window between columns
+        const wx = x + 310;
+        ctx.fillStyle = 'rgba(2, 44, 34, 0.72)';
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(wx, 42);
+        ctx.lineTo(wx + 72, 185);
+        ctx.lineTo(wx, 330);
+        ctx.lineTo(wx - 72, 185);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Yellow & Blue Diamond luminous inner panes
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.42)';
+        this.drawDiamondInsignia(ctx, wx - 26, 185, 22);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.42)';
+        this.drawDiamondInsignia(ctx, wx + 26, 185, 22);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        this.drawDiamondInsignia(ctx, wx, 134, 20);
+      }
+      ctx.restore();
+    } else if (stageIndex === 10) {
+      // White Diamond's Citadel: Towering Monochrome-Prismatic Mecha Head Silhouette, Sweeping Blinding God-Rays & Floating Monoliths
+      ctx.save();
+      const mechaX = 760 - bgOffset * 0.55;
+      const mechaY = 175;
+      const pulse = 0.28 + 0.12 * Math.sin(anim * 1.9);
+
+      // Sweeping Cathedral God-Rays radiating from White Diamond's Crown
+      for (let i = -5; i <= 5; i++) {
+        const ang = i * 0.22 + Math.sin(anim * 0.4) * 0.04;
+        ctx.fillStyle = i % 2 === 0 ? `rgba(255, 255, 255, ${pulse * 0.75})` : `rgba(254, 240, 138, ${pulse * 0.48})`;
+        ctx.beginPath();
+        ctx.moveTo(mechaX, mechaY);
+        ctx.lineTo(mechaX + Math.sin(ang - 0.05) * 680, mechaY - Math.cos(ang - 0.05) * 480);
+        ctx.lineTo(mechaX + Math.sin(ang + 0.05) * 680, mechaY - Math.cos(ang + 0.05) * 480);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Towering White Diamond Head-Ship Silhouette (Iconic 5-Spiked Star Hair + Glowing Forehead Diamond)
+      const headG = ctx.createRadialGradient(mechaX, mechaY, 18, mechaX, mechaY, 190);
+      headG.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+      headG.addColorStop(0.55, 'rgba(226, 232, 240, 0.52)');
+      headG.addColorStop(1, 'rgba(148, 163, 184, 0.08)');
+      ctx.fillStyle = headG;
+      // 5 Iconic towering star-crown hair spikes
+      ctx.beginPath();
+      ctx.moveTo(mechaX - 95, mechaY + 80);
+      ctx.lineTo(mechaX - 185, mechaY + 12);
+      ctx.lineTo(mechaX - 115, mechaY - 30);
+      ctx.lineTo(mechaX - 140, mechaY - 120);
+      ctx.lineTo(mechaX - 48, mechaY - 76);
+      ctx.lineTo(mechaX, mechaY - 165);
+      ctx.lineTo(mechaX + 48, mechaY - 76);
+      ctx.lineTo(mechaX + 140, mechaY - 120);
+      ctx.lineTo(mechaX + 115, mechaY - 30);
+      ctx.lineTo(mechaX + 185, mechaY + 12);
+      ctx.lineTo(mechaX + 95, mechaY + 80);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Monumental Mecha Torso & Glowing Forehead Diamond Core
+      ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(mechaX - 115, this.groundY);
+      ctx.lineTo(mechaX - 68, mechaY + 62);
+      ctx.lineTo(mechaX + 68, mechaY + 62);
+      ctx.lineTo(mechaX + 115, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      // Forehead radiant White Diamond jewel
+      ctx.fillStyle = '#ffffff';
+      this.drawDiamondInsignia(ctx, mechaX, mechaY - 22, 24);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(mechaX, mechaY - 22, 34 + Math.sin(anim * 3) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Floating Monochrome Citadel Obelisks
+      for (const ox of [240, 1360, 1880, 2360]) {
+        const x = ox - bgOffset;
+        const fy = Math.sin(anim * 1.2 + ox) * 8;
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.35)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(x, this.groundY - 235 + fy);
+        ctx.lineTo(x + 28, this.groundY - 125 + fy);
+        ctx.lineTo(x, this.groundY - 35 + fy);
+        ctx.lineTo(x - 28, this.groundY - 125 + fy);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
       }
       ctx.restore();
@@ -3182,6 +3788,13 @@ class EnvironmentRenderer {
         ctx.beginPath();
         ctx.ellipse(padX, this.groundY - 2, 42, 9, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // Translucent rising warp-stream beam above active warp dais
+        const beamG = ctx.createLinearGradient(padX, this.groundY - 190, padX, this.groundY - 2);
+        beamG.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        beamG.addColorStop(1, `rgba(103, 232, 249, ${warpPulse * 0.42})`);
+        ctx.fillStyle = beamG;
+        ctx.fillRect(padX - 28, this.groundY - 190, 56, 188);
 
         // Central Warp Gem Insignia
         ctx.fillStyle = '#ffffff';
@@ -3363,11 +3976,19 @@ class EnvironmentRenderer {
       ctx.fillStyle = citadelGrad;
       ctx.fillRect(bleedL, this.groundY, bleedW, bleedH);
 
-      // Prismatic Rainbow Shimmer along the grand platform
+      // Prismatic Rainbow Shimmer & Diamond Floor Facet Seams along the grand platform
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.5;
+      for (let gx = bleedL; gx < bleedL + bleedW; gx += 120) {
+        ctx.beginPath();
+        ctx.moveTo(gx, this.groundY);
+        ctx.lineTo(gx - 42, this.groundY + 75);
+        ctx.stroke();
+      }
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(bleedL, this.groundY - 6, bleedW, 8);
       for (let dx = 350; dx < this.stageWidth; dx += 500) {
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = '#fde047';
         this.drawDiamondInsignia(ctx, dx, this.groundY + 30, 22);
       }
     }
@@ -4190,127 +4811,152 @@ const HERO_PASSIVES = {
   rose: {
     name: 'Maternal Sanctuary', icon: '🌹', role: 'PALADIN / HEALER', hasHeal: true, kTag: 'SHIELD & HEAL',
     desc: 'Periodically drifts healing petals to herself & 2P ally, plus finishing a 4-hit [J] combo heals +1 Heart!',
-    howToUse: 'Complete full 4-hit [J] Paladin combos to heal, and press [L] Sacred Tears (+2 Hearts) in emergencies.',
+    howToUse: 'Complete full 3-hit [J] Paladin combos to heal, and press [L] Sacred Tears (+2 Hearts) in emergencies.',
     bars: { offense: 2, defense: 5, support: 5, speed: 3 }
   },
   connie: {
     name: "Knight's Riposte", icon: '⚔️', role: 'SPEED SWORDMASTER', hasHeal: false, kTag: 'IAI DASH CUT',
-    desc: 'Dodging [Shift] or finishing a [J] combo triggers +35% Riposte DMG & +25% movement speed for 2.8s!',
-    howToUse: 'Dodge through enemy swings, then blitz back in with [K] Sword Iai-Lunge and rapid [J] slashes!',
+    desc: 'Dodging [Shift] or finishing a 5-hit [J] combo triggers +35% Riposte DMG & +25% movement speed for 2.8s.',
+    howToUse: 'Dodge through enemy swings, then blitz back in with [K] Sword Iai-Lunge and 5-hit [J] Iaido chains.',
     bars: { offense: 4, defense: 2, support: 1, speed: 5 }
   },
   jasper: {
     name: 'Apex Quartz', icon: '☄️', role: 'APEX JUGGERNAUT', hasHeal: false, kTag: 'HELMET RUSH',
-    desc: 'Unflinching Super Armor during attacks & up to +35% Berserker damage as her HP gets lower!',
-    howToUse: 'Plow straight through attacks with [J] Haymakers and [K] Crash Helmet Bull-Rush — never back down!',
+    desc: 'Unflinching Super Armor during attacks & up to +35% Berserker damage as her HP gets lower.',
+    howToUse: 'Plow straight through attacks with 3-hit [J] Armored Ram combos and [K] Crash Helmet Bull-Rush.',
     bars: { offense: 5, defense: 4, support: 1, speed: 3 }
   }
 };
 
+// Truly differentiated per-Guardian fighting styles (3-hit, 4-hit, and 5-hit martial identities)
 const HERO_COMBO_PROFILES = {
   steven: {
-    label: 'Shield-Brawler (4-Hit)',
-    cadence: [0.19, 0.18, 0.21, 0.30],
-    damage: [1.0, 1.15, 1.35, 1.75],
-    range: [0, 6, 10, 18],
-    knock: [0.9, 1.05, 1.3, 1.65],
-    lunge: [95, 130, 165, 215],
-    moves: ['Star-Knuckle Jab', 'Spinning Shield Backhand', 'Rising Shield Uppercut!', 'PINK DIAMOND PULSE!'],
-    finisher: { label: 'PINK DIAMOND PULSE!', type: 'comboRosePulse', damage: 22, width: 155, height: 100, speed: 350, knockX: 340, knockY: -185, color: '#ff6097' }
+    label: 'Shield-Guard Brawler (3-Hit)',
+    style: 'guardBrawler',
+    cadence: [0.20, 0.21, 0.30],
+    damage: [1.0, 1.24, 1.72],
+    range: [4, 10, 18],
+    knock: [0.95, 1.25, 1.68],
+    lunge: [95, 140, 185],
+    guard: [0.18, 0.24, 0.22],
+    hop: [0, 0, -145],
+    moves: ['Shield-Rim Jab', 'Guarded Bubble Bash', 'PINK BUBBLE POP!'],
+    finisher: { label: 'PINK DIAMOND PULSE!', type: 'comboRosePulse', damage: 22, width: 155, height: 100, speed: 350, knockX: 340, knockY: -200, color: '#ff6097' }
   },
   garnet: {
-    label: 'Heavy Boxer (4-Hit)',
-    cadence: [0.21, 0.19, 0.22, 0.35],
-    damage: [1.08, 1.22, 1.46, 1.92],
+    label: 'Orthodox Power Boxer (4-Hit)',
+    style: 'boxer',
+    cadence: [0.18, 0.17, 0.22, 0.35],
+    damage: [1.08, 1.22, 1.48, 1.95],
     range: [0, 4, 8, 16],
-    knock: [1.05, 1.18, 1.5, 1.88],
+    knock: [1.05, 1.18, 1.52, 1.90],
     lunge: [120, 155, 195, 260],
-    moves: ['Ruby Straight Jab', 'Sapphire Hook', 'Shoryu Uppercut!', 'TWIN GAUNTLET METEOR!'],
-    finisher: { label: 'GAUNTLET METEOR!', type: 'comboGauntletQuake', damage: 24, width: 190, height: 80, speed: 300, knockX: 420, knockY: -280, color: '#ef4444' }
+    hop: [0, 0, -210, 0],
+    moves: ['Ruby Straight Jab', 'Sapphire Cross Hook', 'Shoryu Uppercut!', 'TWIN GAUNTLET METEOR!'],
+    finisher: { label: 'GAUNTLET METEOR!', type: 'comboGauntletQuake', damage: 25, width: 190, height: 82, speed: 300, knockX: 430, knockY: -285, color: '#ef4444' }
   },
   amethyst: {
-    label: 'Wild Whip Mixup (4-Hit)',
-    cadence: [0.15, 0.14, 0.17, 0.25],
-    damage: [0.96, 1.08, 1.30, 1.68],
-    range: [12, 18, 22, 28],
-    knock: [0.85, 0.92, 1.18, 1.48],
-    lunge: [95, 120, 160, 200],
-    moves: ['Whip Snap Crack', 'Low Ankle Lash', 'Dual Whip Launcher!', 'WHIP CYCLONE!'],
-    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 19, width: 180, height: 110, speed: 270, knockX: 300, knockY: -205, color: '#c084fc' }
+    label: 'Wild Whip-Acrobat (5-Hit)',
+    style: 'whipAcrobat',
+    cadence: [0.13, 0.12, 0.13, 0.16, 0.26],
+    damage: [0.82, 0.92, 1.05, 1.26, 1.68],
+    range: [18, 26, 30, 26, 34],
+    knock: [0.65, 0.55, 0.55, 1.15, 1.55],
+    lunge: [85, 105, 115, 175, 205],
+    pull: [false, true, true, false, false],
+    hop: [0, 0, 0, -185, 0],
+    moves: ['Whip Snap', 'Lash Snare', 'Whip Yank-In', 'Cartwheel Heel Kick!', 'WHIP CYCLONE!'],
+    finisher: { label: 'WHIP CYCLONE!', type: 'comboWhipCyclone', damage: 20, width: 185, height: 110, speed: 270, knockX: 310, knockY: -210, color: '#c084fc' }
   },
   pearl: {
-    label: 'Ballet Fencer (Rapid Flurry)',
-    cadence: [0.12, 0.11, 0.13, 0.23],
-    damage: [0.88, 0.98, 1.24, 1.65],
-    range: [14, 18, 22, 30],
-    knock: [0.75, 0.80, 1.10, 1.45],
-    lunge: [125, 145, 185, 225],
-    moves: ['En-Garde Foil', 'Twin Ribbon Jab', 'Skyward Vault!', 'RIBBON SPEAR FLURRY!'],
-    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 12, speed: 460, knockX: 280, knockY: -155, color: '#22d3ee' }
+    label: 'Ballet Spear Fencer (4-Hit)',
+    style: 'fencer',
+    cadence: [0.11, 0.10, 0.15, 0.24],
+    damage: [0.88, 0.98, 1.26, 1.68],
+    range: [18, 22, 26, 34],
+    knock: [0.72, 0.78, 1.12, 1.48],
+    lunge: [130, 155, 190, 230],
+    hop: [0, 0, -230, 0],
+    lift: [0, 0, -240, 0],
+    moves: ['En-Garde Foil', 'Glissade Double Poke', 'Pirouette Vault!', 'RIBBON SPEAR FLURRY!'],
+    finisher: { label: 'SPEAR FLURRY!', type: 'comboSpearFlurry', count: 3, spread: 24, radius: 14, damage: 13, speed: 460, knockX: 280, knockY: -155, color: '#22d3ee' }
   },
   bismuth: {
-    label: 'Heavy Shapeshifter (Tank)',
-    cadence: [0.25, 0.25, 0.29, 0.42],
-    damage: [1.18, 1.35, 1.58, 2.15],
-    range: [4, 8, 12, 18],
-    knock: [1.20, 1.35, 1.65, 2.1],
-    lunge: [95, 135, 175, 250],
-    moves: ['Spiked Hammer Swing', 'Battle-Axe Cleave!', 'Rising Forge Upper!', 'MOLTEN ANVIL SLAM!'],
-    finisher: { label: 'MOLTEN ANVIL SLAM!', type: 'comboAnvilEcho', damage: 28, width: 205, height: 92, speed: 280, knockX: 460, knockY: -305, color: '#f97316' }
+    label: 'Heavy Forge Shapeshifter (3-Hit)',
+    style: 'heavyForge',
+    cadence: [0.27, 0.29, 0.43],
+    damage: [1.30, 1.58, 2.28],
+    range: [6, 12, 20],
+    knock: [1.28, 1.55, 2.15],
+    lunge: [105, 155, 255],
+    armorBreak: [false, true, true],
+    moves: ['Forge Warhammer', 'Battle-Axe Armor Break!', 'MOLTEN ANVIL SHATTER!'],
+    finisher: { label: 'MOLTEN ANVIL SHATTER!', type: 'comboAnvilEcho', damage: 30, width: 210, height: 95, speed: 280, knockX: 470, knockY: -310, color: '#f97316' }
   },
   peridot: {
-    label: 'Ferro-Tech Zoner (4-Hit)',
-    cadence: [0.16, 0.15, 0.18, 0.27],
-    damage: [0.95, 1.08, 1.28, 1.60],
-    range: [16, 22, 26, 32],
-    knock: [0.75, 0.88, 1.05, 1.38],
-    lunge: [70, 95, -85, 135],
-    moves: ['Steel Claw Rake', 'I-Beam Sweeper', 'Magnet Backstep!', 'CRUSHER JAW BURST!'],
-    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 18, width: 170, height: 130, speed: 280, knockX: 250, knockY: -210, color: '#84cc16' }
+    label: 'Ferrokinetic Scrapper (3-Hit)',
+    style: 'ferroZoner',
+    cadence: [0.17, 0.17, 0.27],
+    damage: [1.0, 1.18, 1.62],
+    range: [24, 30, 38],
+    knock: [0.82, 1.0, 1.42],
+    lunge: [55, 85, -145],
+    hop: [0, 0, -155],
+    moves: ['Hovering Steel Claw', 'I-Beam Magnet Sweep', 'BACKSTEP JAW BURST!'],
+    finisher: { label: 'MAGNETIC BURST!', type: 'comboMagneticBurst', damage: 20, width: 175, height: 130, speed: 290, knockX: 260, knockY: -215, color: '#84cc16' }
   },
   lapis: {
-    label: 'Hydro-Bender (4-Hit Aerial)',
-    cadence: [0.16, 0.15, 0.19, 0.27],
-    damage: [1.0, 1.14, 1.34, 1.70],
-    range: [14, 18, 24, 30],
-    knock: [0.9, 1.0, 1.25, 1.52],
-    lunge: [90, 115, 145, 190],
-    moves: ['Hydro-Scythe Arc', 'Riptide Low Sweep', 'Water-Fist Upper!', 'OCEAN DRAGON LASH!'],
-    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 20, width: 190, height: 100, speed: 360, knockX: 360, knockY: -240, color: '#38bdf8' }
+    label: 'Aerial Hydro-Weaver (4-Hit)',
+    style: 'hydroWeaver',
+    cadence: [0.15, 0.15, 0.18, 0.27],
+    damage: [1.0, 1.14, 1.36, 1.72],
+    range: [18, 24, 28, 36],
+    knock: [0.85, 0.95, 1.25, 1.55],
+    lunge: [85, 110, 145, 195],
+    hop: [0, 0, -195, 0],
+    lift: [0, 0, -285, -240],
+    moves: ['Hydro-Scythe Arc', 'Riptide Undercurrent', 'Rising Water Geyser!', 'OCEAN DRAGON LASH!'],
+    finisher: { label: 'TIDAL LASH!', type: 'comboTidalLash', damage: 22, width: 195, height: 105, speed: 360, knockX: 360, knockY: -245, color: '#38bdf8' }
   },
   rose: {
-    label: 'Paladin Sword & Shield (4-Hit)',
-    cadence: [0.21, 0.19, 0.24, 0.34],
-    damage: [1.05, 1.18, 1.42, 1.82],
-    range: [4, 8, 14, 20],
-    knock: [1.05, 1.18, 1.38, 1.7],
-    lunge: [95, 135, 170, 225],
-    moves: ['Broadsword Cleave', 'Thorny Shield Bash', 'Valiant Rising Cut', 'ROSE SANCTUARY SWEEP!'],
-    finisher: { label: 'ROSE THORN SWEEP!', type: 'comboRoseThorn', damage: 22, width: 190, height: 100, speed: 320, knockX: 360, knockY: -220, color: '#f43f5e' }
+    label: 'Noble Paladin (3-Hit)',
+    style: 'paladin',
+    cadence: [0.22, 0.23, 0.34],
+    damage: [1.12, 1.32, 1.85],
+    range: [8, 12, 24],
+    knock: [1.08, 1.30, 1.75],
+    lunge: [100, 150, 220],
+    guard: [0, 0.25, 0.22],
+    moves: ['Broadsword Cleave', 'Advancing Shield Bash', 'SANCTUARY PETAL SPIRAL!'],
+    finisher: { label: 'ROSE SANCTUARY!', type: 'comboRoseThorn', damage: 24, width: 195, height: 105, speed: 320, knockX: 365, knockY: -225, color: '#f43f5e' }
   },
   connie: {
-    label: 'Iaido Speed-Fencer',
-    cadence: [0.13, 0.12, 0.15, 0.24],
-    damage: [0.95, 1.08, 1.32, 1.75],
-    range: [12, 16, 22, 32],
-    knock: [0.85, 0.92, 1.2, 1.55],
-    lunge: [130, 160, 200, 260],
-    moves: ['Quick Draw Thrust', 'Diagonal Cross', 'Vaulting Crescent!', 'HELM-SPLITTER SLASH!'],
-    finisher: { label: 'HELM-SPLITTER!', type: 'comboCrescentSlash', damage: 20, width: 185, height: 85, speed: 480, knockX: 330, knockY: -195, color: '#ec4899' }
+    label: 'Lightning Iaido Swordmaster (5-Hit)',
+    style: 'iaido',
+    cadence: [0.10, 0.10, 0.12, 0.14, 0.24],
+    damage: [0.80, 0.90, 1.05, 1.28, 1.78],
+    range: [12, 16, 20, 24, 34],
+    knock: [0.68, 0.72, 0.85, 1.15, 1.58],
+    lunge: [135, 155, 175, 210, 265],
+    hop: [0, 0, 0, -190, 0],
+    moves: ['Quick-Draw Cut', 'Reverse Flash', 'Step-In Cross', 'Vaulting Crescent!', 'HELM-SPLITTER!'],
+    finisher: { label: 'HELM-SPLITTER!', type: 'comboCrescentSlash', damage: 22, width: 190, height: 88, speed: 480, knockX: 335, knockY: -200, color: '#ec4899' }
   },
   jasper: {
-    label: 'Rushdown Juggernaut',
-    cadence: [0.25, 0.24, 0.28, 0.42],
-    damage: [1.22, 1.38, 1.65, 2.25],
-    range: [4, 8, 12, 18],
-    knock: [1.25, 1.40, 1.70, 2.2],
-    lunge: [135, 175, 220, 295],
-    moves: ['Crushing Haymaker', 'Brutal Shoulder Ram!', 'Horned Uppercut!', 'SEISMIC HELMET CRASH!'],
-    finisher: { label: 'SEISMIC CRASH!', type: 'comboSeismicSlam', damage: 30, width: 215, height: 85, speed: 290, knockX: 500, knockY: -330, color: '#ea580c' }
+    label: 'Brutal Beta Juggernaut (3-Hit)',
+    style: 'juggernaut',
+    cadence: [0.25, 0.26, 0.42],
+    damage: [1.34, 1.62, 2.34],
+    range: [6, 12, 20],
+    knock: [1.32, 1.65, 2.25],
+    lunge: [145, 230, 295],
+    superArmor: [true, true, true],
+    moves: ['Crushing Haymaker', 'Armored Shoulder Tackle!', 'SEISMIC HELMET CRASH!'],
+    finisher: { label: 'SEISMIC CRASH!', type: 'comboSeismicSlam', damage: 32, width: 220, height: 88, speed: 295, knockX: 510, knockY: -335, color: '#ea580c' }
   }
 };
 
-// Distinct Tekken-style 4-hit combos for all 9 Crystal Gem Fusions!
+// Distinct signature 4-hit combos for all 9 Crystal Gem Fusions
 const FUSION_COMBO_PROFILES = {
   stevonnie: {
     label: 'Sword-Shield Dance',
@@ -4457,16 +5103,26 @@ class PlayerHero {
     this.specialCooldown = 0;
     this.skillCooldown = 0;
 
-    // Tekken-style combo-chain state: timing window, step impulses, reach, damage and finisher
+    // Signature per-Guardian combo-chain state: timing window, step impulses, reach, damage and traits
     this.comboStep = 0;
     this.comboStepTimer = 0;
     this.comboLinkBonus = 0;
     this.attackDamageMult = 1;
     this.attackRangeBonus = 0;
     this.attackKnockMult = 1;
+    this.attackStyle = 'guardBrawler';
+    this.attackGuardTimer = 0;
+    this.attackSuperArmorTimer = 0;
+    this.attackPullIn = false;
+    this.attackLiftY = 0;
+    this.attackArmorBreak = false;
     this.comboImpulseVx = 0;
     this.comboImpulseTimer = 0;
     this.comboMoveName = '';
+
+    // Double-Tap Sprint / Speed-Run state
+    this.isSprinting = false;
+    this.sprintBurstTimer = 0;
 
     // Steven Bubble Shield state (Fully movable!)
     this.isShielding = false;
@@ -4727,6 +5383,8 @@ class PlayerHero {
     if (this.parryWindow > 0) this.parryWindow -= dt;
     if (this.counterBuffTimer > 0) this.counterBuffTimer -= dt;
     if (this.riposteTimer > 0) this.riposteTimer -= dt;
+    if (this.attackGuardTimer > 0) this.attackGuardTimer -= dt;
+    if (this.attackSuperArmorTimer > 0) this.attackSuperArmorTimer -= dt;
 
     // --- UNIQUE CHARACTER PASSIVES TICK (ALL 10 GUARDIANS) ---
     if (!this.isFusion) {
@@ -4952,13 +5610,37 @@ class PlayerHero {
     if (this.momentumStacks > 0 && this.activeChar === 'amethyst') speed *= (1 + this.momentumStacks * 0.04);
     if (this.isSpinDashing) speed = 520;
 
+    // Double-Tap A / D Sprint Speed-Run (1.58x burst speed with dedicated sprint kinematics & dust bursts!)
+    const wantsMove = !!(input.left || input.right);
+    const wasSprinting = this.isSprinting;
+    this.isSprinting = !!(input.sprint && wantsMove && !this.isShielding && !this.isAttacking && !this.isDodging && !this.isSpinDashing);
+    if (this.isSprinting) {
+      speed *= 1.58;
+      if (!wasSprinting && this.isGrounded && particles && particles.addPoof) {
+        particles.addPoof(this.x - this.facing * 14, this.y - 6, '#e2e8f0');
+        if (audioEngine && audioEngine.playSfx) audioEngine.playSfx('whoosh');
+      }
+      this.sprintBurstTimer = (this.sprintBurstTimer || 0) - dt;
+      if (this.sprintBurstTimer <= 0) {
+        this.sprintBurstTimer = 0.08;
+        if (this.isGrounded && particles && particles.addSparkle) {
+          particles.addSparkle(this.x - this.facing * 16, this.y - 6, '#e2e8f0', 3, 2.2);
+        }
+        if (this.afterimages.length < 3) {
+          this.afterimages.push({ x: this.x, y: this.y, facing: this.facing, life: 0.14, maxLife: 0.14 });
+        }
+      }
+    } else {
+      this.sprintBurstTimer = 0;
+    }
+
     // Footfall dust while running, and a landing squash when we hit the floor.
     if (this.isGrounded && Math.abs(this.vx) > 40) {
       this.runDustTimer -= dt;
       if (this.runDustTimer <= 0) {
-        this.runDustTimer = 0.16;
+        this.runDustTimer = this.isSprinting ? 0.09 : 0.16;
         if (particles && particles.addSparkle) {
-          particles.addSparkle(this.x - this.facing * 9, this.y - 3, '#cbd5e1', 2, 1.4);
+          particles.addSparkle(this.x - this.facing * 9, this.y - 3, this.isSprinting ? '#f8fafc' : '#cbd5e1', this.isSprinting ? 3 : 2, this.isSprinting ? 2.0 : 1.4);
         }
       }
     } else {
@@ -4972,24 +5654,25 @@ class PlayerHero {
     }
     this.wasGrounded = this.isGrounded;
 
-    // Fluid Horizontal Movement (Responsive ramp + Tekken strike step impulse, zero drift when idle)
+    // Fluid Horizontal Movement (Responsive ramp + strike step impulse, zero drift when idle)
     const targetVx = input.left ? -speed : (input.right ? speed : (this.isSpinDashing ? this.facing * 480 : 0));
     if (this.comboImpulseTimer > 0) {
       this.comboImpulseTimer = Math.max(0, this.comboImpulseTimer - dt);
       if (this.comboImpulseTimer <= 0) this.comboImpulseVx = 0;
     }
+    const strideRate = (this.isFusion ? 11.5 : 14) * (this.isSprinting ? 1.52 : 1.0);
     if (this.isDodging) {
       // Movement velocity is handled smoothly by dodge physics
     } else if (input.left) {
       this.facing = -1;
       const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
       this.vx = this.vx + (targetVx - this.vx) * blend;
-      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
+      this.walkAnim += dt * strideRate;
     } else if (input.right) {
       this.facing = 1;
       const blend = Math.min(1, dt * (this.isGrounded ? 20 : 12));
       this.vx = this.vx + (targetVx - this.vx) * blend;
-      this.walkAnim += dt * (this.isFusion ? 11.5 : 14);
+      this.walkAnim += dt * strideRate;
     } else {
       if (this.isSpinDashing) {
         this.vx = this.facing * 480;
@@ -5312,7 +5995,7 @@ class PlayerHero {
     }
   }
 
-  // --- [J] TEKKEN-STYLE 4-HIT COMBO (10 GUARDIANS & 9 FUSIONS) ---
+  // --- [J] SIGNATURE PER-GUARDIAN FIGHTING STYLES (10 GUARDIANS & 9 FUSIONS) ---
   executeAttackJ(audioEngine, particles, projectiles) {
     this.isAttacking = true;
     this.attackType = 'J';
@@ -5330,13 +6013,26 @@ class PlayerHero {
     const perfectLink = (this.comboStepTimer > 0.12 && this.comboStep > 0);
     this.comboLinkBonus = perfectLink ? 0.12 : 0;
     this.attackCombo = this.comboStep;
+    this.attackStyle = profile.style || 'boxer';
     this.comboStepTimer = profile.cadence[this.comboStep] + 0.36;
     this.attackDamageMult = profile.damage[this.comboStep] * (1 + this.comboLinkBonus);
     this.attackRangeBonus = profile.range ? (profile.range[this.comboStep] || 0) : 0;
     this.attackKnockMult = profile.knock[this.comboStep];
-    this.actionDuration = isFinisher ? 0.34 : (this.comboStep === 0 ? 0.25 : (this.comboStep === 1 ? 0.24 : 0.27));
+    this.attackGuardTimer = (profile.guard && profile.guard[this.comboStep]) ? profile.guard[this.comboStep] : 0;
+    this.attackSuperArmorTimer = (profile.superArmor && profile.superArmor[this.comboStep]) ? (profile.cadence[this.comboStep] + 0.14) : 0;
+    this.attackPullIn = !!(profile.pull && profile.pull[this.comboStep]);
+    this.attackLiftY = (profile.lift && profile.lift[this.comboStep]) ? profile.lift[this.comboStep] : 0;
+    this.attackArmorBreak = !!(profile.armorBreak && profile.armorBreak[this.comboStep]);
+    this.actionDuration = isFinisher ? 0.34 : Math.max(0.18, profile.cadence[this.comboStep] + 0.08);
     this.actionTimer = this.actionDuration;
     let cd = profile.cadence[this.comboStep];
+
+    // Style-specific vertical hop / vault / backstep kinematics
+    const stepHop = (profile.hop && profile.hop[this.comboStep]) ? profile.hop[this.comboStep] : 0;
+    if (stepHop < 0 && this.isGrounded) {
+      this.vy = Math.min(this.vy, stepHop);
+      this.isGrounded = false;
+    }
 
     // Passive Combat Modifiers for All 10 Playable Guardians
     if (!this.isFusion) {
@@ -6800,9 +7496,21 @@ class PlayerHero {
       }
       return false;
     }
+    // Steven & Rose Shield-Guard attack frames reduce incoming damage by 50% without interrupting their swing
+    let attackGuardMult = 1.0;
+    if (this.attackGuardTimer > 0) {
+      attackGuardMult = 0.50;
+      if (audioEngine) audioEngine.playSfx('shield');
+      if (particles) {
+        particles.addShieldBlockRipple(this.x, this.y - 34, this.facing, '#ff94ba');
+        particles.addDamageText(this.x, this.y - 84, 'GUARDED!', false, '#fbcfe8');
+      }
+    }
     this.invulnerableTimer = 1.25; // Generous 1.25s iframes to prevent rapid tick deaths!
     const bismuthArmor = (!this.isFusion && this.activeChar === 'bismuth') ? 0.80 : 1.0;
-    const finalDamage = this.isPinkOverdrive ? Math.max(1, Math.round(amount * 0.5 * bismuthArmor)) : Math.max(1, Math.round(amount * bismuthArmor));
+    const finalDamage = this.isPinkOverdrive
+      ? Math.max(1, Math.round(amount * 0.5 * bismuthArmor * attackGuardMult))
+      : Math.max(1, Math.round(amount * bismuthArmor * attackGuardMult));
     if (audioEngine) audioEngine.playSfx('hurt');
     const stats = (typeof this.getCombatStats === 'function') ? this.getCombatStats() : { defense: 35 };
     const baseUnitDmg = (finalDamage || 1) * 95;
@@ -6881,39 +7589,136 @@ class PlayerHero {
       const strike = this.getStrikeCurve(animP);
       const posStrike = Math.max(0, strike);
       if (this.actionType === 'punch') {
-        // Tekken-Style 4-Hit Combo Kinetics (Jab -> Low Sweep -> Skyward Launcher -> Ground Smash Finisher!)
+        // Differentiated per-Guardian fighting style kinetics
         const combo = this.attackCombo || 0;
-        if (combo === 0) {
-          actionLunge = strike * 20;
-          actionLiftY = -posStrike * 3;
-          actionTorsoTilt = strike * 0.16;
-          actionScaleX = 1 + posStrike * 0.05;
-          actionScaleY = 1 - posStrike * 0.03;
-        } else if (combo === 1) {
-          actionLunge = strike * 20;
-          actionLiftY = posStrike * 4;
-          actionTorsoTilt = -strike * 0.19;
-          actionScaleX = 1 + posStrike * 0.05;
-        } else if (combo === 2) {
-          actionLunge = strike * 22;
-          actionLiftY = -posStrike * 15;
-          actionTorsoTilt = -posStrike * 0.16;
-          actionScaleX = 1 - posStrike * 0.03;
-          actionScaleY = 1 + posStrike * 0.07;
-        } else {
-          // Hit 4: Weighty aerial cleave / seismic finisher!
-          actionLunge = strike * 32;
-          if (animP < 0.40) {
-            const leap = Math.sin((animP / 0.40) * (Math.PI / 2));
-            actionLiftY = -22 * leap;
-            actionTorsoTilt = -0.24 * leap;
-            actionScaleY = 1 + 0.07 * leap;
+        const st = this.attackStyle || 'boxer';
+        if (st === 'guardBrawler' || st === 'paladin') {
+          // Shield-forward braced steps -> rising guardian sweep
+          if (combo === 0) {
+            actionLunge = strike * 18;
+            actionTorsoTilt = strike * 0.12;
+            actionScaleX = 1 + posStrike * 0.05;
+          } else if (combo === 1) {
+            actionLunge = strike * 26;
+            actionLiftY = posStrike * 4;
+            actionTorsoTilt = strike * 0.18;
+            actionScaleX = 1 + posStrike * 0.08;
+            actionScaleY = 1 - posStrike * 0.05;
           } else {
-            const slam = Math.sin(((animP - 0.40) / 0.60) * Math.PI);
-            actionLiftY = 10 * slam;
-            actionTorsoTilt = 0.30 * slam;
-            actionScaleX = 1 + 0.08 * slam;
-            actionScaleY = 1 - 0.07 * slam;
+            actionLunge = strike * 24;
+            actionLiftY = -posStrike * 18;
+            actionTorsoTilt = -posStrike * 0.18;
+            actionScaleY = 1 + posStrike * 0.08;
+          }
+        } else if (st === 'whipAcrobat' || st === 'iaido') {
+          // Rapid 5-hit fluid martial chain (snaps -> diagonal twist -> vault -> finisher)
+          if (combo === 0 || combo === 2) {
+            actionLunge = strike * (st === 'iaido' ? 28 : 16);
+            actionTorsoTilt = strike * 0.22;
+            actionScaleX = 1 + posStrike * 0.07;
+          } else if (combo === 1) {
+            actionLunge = strike * (st === 'iaido' ? 24 : 10);
+            actionLiftY = posStrike * 5;
+            actionTorsoTilt = -strike * 0.20;
+          } else if (combo === 3) {
+            actionLunge = strike * 24;
+            actionLiftY = -posStrike * 20;
+            actionTorsoTilt = -posStrike * 0.26;
+            actionScaleY = 1 + posStrike * 0.09;
+          } else {
+            actionLunge = strike * 34;
+            actionLiftY = (animP < 0.38) ? -18 * Math.sin((animP / 0.38) * (Math.PI / 2)) : 8 * Math.sin(((animP - 0.38) / 0.62) * Math.PI);
+            actionTorsoTilt = (animP < 0.38) ? -0.22 : 0.32 * posStrike;
+            actionScaleX = 1 + posStrike * 0.09;
+          }
+        } else if (st === 'fencer' || st === 'hydroWeaver') {
+          // Graceful linear thrusts & airborne pirouette/geyser lift
+          if (combo === 0 || combo === 1) {
+            actionLunge = strike * 26;
+            actionLiftY = -posStrike * 4;
+            actionTorsoTilt = strike * 0.14;
+            actionScaleX = 1 + posStrike * 0.06;
+          } else if (combo === 2) {
+            actionLunge = strike * 20;
+            actionLiftY = -posStrike * 24;
+            actionTorsoTilt = -posStrike * 0.22;
+            actionScaleY = 1 + posStrike * 0.10;
+          } else {
+            actionLunge = strike * 30;
+            actionLiftY = -posStrike * 10;
+            actionTorsoTilt = strike * 0.24;
+            actionScaleX = 1 + posStrike * 0.08;
+          }
+        } else if (st === 'ferroZoner') {
+          // Telekinetic stance + Hit 3 tactical backstep hop
+          if (combo < 2) {
+            actionLunge = strike * 10;
+            actionTorsoTilt = -strike * 0.10;
+            actionScaleY = 1 + posStrike * 0.05;
+          } else {
+            actionLunge = -strike * 22;
+            actionLiftY = -posStrike * 14;
+            actionTorsoTilt = -posStrike * 0.24;
+          }
+        } else if (st === 'heavyForge' || st === 'juggernaut') {
+          // Heavy windup -> thunderous forward shoulder ram / molten anvil drop
+          if (combo === 0) {
+            actionLunge = strike * 24;
+            actionTorsoTilt = strike * 0.22;
+            actionScaleX = 1 + posStrike * 0.08;
+          } else if (combo === 1) {
+            actionLunge = strike * 36;
+            actionLiftY = posStrike * 6;
+            actionTorsoTilt = strike * 0.30;
+            actionScaleX = 1 + posStrike * 0.10;
+            actionScaleY = 1 - posStrike * 0.08;
+          } else {
+            actionLunge = strike * 38;
+            if (animP < 0.42) {
+              const leap = Math.sin((animP / 0.42) * (Math.PI / 2));
+              actionLiftY = -26 * leap;
+              actionTorsoTilt = -0.28 * leap;
+              actionScaleY = 1 + 0.09 * leap;
+            } else {
+              const slam = Math.sin(((animP - 0.42) / 0.58) * Math.PI);
+              actionLiftY = 12 * slam;
+              actionTorsoTilt = 0.34 * slam;
+              actionScaleX = 1 + 0.11 * slam;
+              actionScaleY = 1 - 0.09 * slam;
+            }
+          }
+        } else {
+          // Orthodox Boxer (Garnet): 1-2 Jab-Cross -> Rising Shoryu Uppercut -> Electro-Meteor Slam
+          if (combo === 0) {
+            actionLunge = strike * 22;
+            actionLiftY = -posStrike * 3;
+            actionTorsoTilt = strike * 0.16;
+            actionScaleX = 1 + posStrike * 0.06;
+            actionScaleY = 1 - posStrike * 0.03;
+          } else if (combo === 1) {
+            actionLunge = strike * 22;
+            actionLiftY = posStrike * 4;
+            actionTorsoTilt = -strike * 0.18;
+            actionScaleX = 1 + posStrike * 0.06;
+          } else if (combo === 2) {
+            actionLunge = strike * 22;
+            actionLiftY = -posStrike * 20;
+            actionTorsoTilt = -posStrike * 0.18;
+            actionScaleY = 1 + posStrike * 0.09;
+          } else {
+            actionLunge = strike * 32;
+            if (animP < 0.40) {
+              const leap = Math.sin((animP / 0.40) * (Math.PI / 2));
+              actionLiftY = -22 * leap;
+              actionTorsoTilt = -0.24 * leap;
+              actionScaleY = 1 + 0.07 * leap;
+            } else {
+              const slam = Math.sin(((animP - 0.40) / 0.60) * Math.PI);
+              actionLiftY = 10 * slam;
+              actionTorsoTilt = 0.30 * slam;
+              actionScaleX = 1 + 0.08 * slam;
+              actionScaleY = 1 - 0.07 * slam;
+            }
           }
         }
       } else if (this.actionType === 'throw') {
@@ -7026,7 +7831,23 @@ class PlayerHero {
     ctx.scale(this.facing * dodgeScaleX * actionScaleX * landX * motion.breathScaleX * uSq.sx, dodgeScaleY * actionScaleY * landY * motion.breathScaleY * uSq.sy);
     if (motion.hoverY) ctx.translate(0, motion.hoverY);
 
-    // Dodge ghost trail
+    // Dodge ghost trail & Double-Tap Sprint Speed-Lines
+    if (this.isSprinting) {
+      ctx.save();
+      const sPulse = Math.sin((this.animTime || 0) * 28);
+      ctx.strokeStyle = 'rgba(224, 242, 254, 0.72)';
+      ctx.lineCap = 'round';
+      for (let sl = 0; sl < 4; sl++) {
+        const ly = -16 - sl * 15 + (sl % 2 === 0 ? sPulse * 2 : -sPulse * 2);
+        const len = 24 + (sl % 3) * 14;
+        ctx.lineWidth = sl === 1 ? 2.4 : 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-18 - sl * 5, ly);
+        ctx.lineTo(-18 - sl * 5 - len, ly);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
     if (this.isDodging) {
       for (let gI = 1; gI <= 3; gI++) {
         ctx.save();
@@ -7801,31 +8622,38 @@ class PlayerHero {
 
     const bSin = Math.sin(t * breathFreq);
     const bCos = Math.cos(t * breathFreq * 0.5);
+    const isSprinting = !!this.isSprinting && isMoving;
     const walkWave = Math.sin(this.walkAnim || 0);
     const walkDouble = Math.abs(Math.sin(this.walkAnim || 0));
     const idleBob = grounded ? bSin * 2.1 : Math.sin(t * 4.5) * 1.6;
-    const runBob = grounded ? (-walkDouble * 4.2 + Math.sin((this.walkAnim || 0) * 2) * 1.4) : Math.max(-5, Math.min(5, this.vy * 0.01));
+    const runBob = grounded
+      ? (-walkDouble * (isSprinting ? 6.2 : 4.2) + Math.sin((this.walkAnim || 0) * 2) * (isSprinting ? 2.0 : 1.4))
+      : Math.max(-5, Math.min(5, this.vy * 0.01));
     const bob = isMoving ? runBob : idleBob;
     const hoverY = hoverAmp ? (Math.sin(t * 2.4) * hoverAmp - (isMoving ? hoverAmp * 0.45 : hoverAmp * 0.6)) : 0;
 
-    // Forward sprint torso lean + idle rhythmic stance shift
+    // Forward sprint torso lean (deep aerodynamic speed-run lean when double-tap sprinting!) + idle rhythmic stance shift
     const torsoTilt = isMoving
-      ? (grounded ? sprintLean * (0.65 + 0.35 * runSpeed) + walkWave * 0.025 : Math.max(-0.14, Math.min(0.18, this.vy * 0.00035)))
+      ? (grounded
+        ? (isSprinting ? (sprintLean + 0.165) : sprintLean * (0.65 + 0.35 * runSpeed)) + walkWave * (isSprinting ? 0.042 : 0.025)
+        : Math.max(-0.14, Math.min(0.24, this.vy * 0.00035 + (isSprinting ? 0.10 : 0))))
       : bCos * idleSwayAmp;
 
-    const breathScaleX = 1 + (isMoving ? -0.012 : -bSin * breathAmp * 0.65);
-    const breathScaleY = 1 + (isMoving ? 0.014 : bSin * breathAmp);
+    const breathScaleX = 1 + (isSprinting ? 0.032 : (isMoving ? -0.012 : -bSin * breathAmp * 0.65));
+    const breathScaleY = 1 + (isSprinting ? -0.032 : (isMoving ? 0.014 : bSin * breathAmp));
 
-    // Continuous dual-phase arm oscillation (keeps shoulders/elbows alive in idle & full swing in sprint)
-    const armSwingF = isMoving ? (Math.sin(this.walkAnim || 0) * 0.58) : (Math.sin(t * breathFreq * 0.85) * idleArmAmp);
-    const armSwingB = isMoving ? (-Math.sin(this.walkAnim || 0) * 0.54) : (-Math.sin(t * breathFreq * 0.85 + 0.9) * idleArmAmp * 0.85);
-    const headBob = isMoving ? (Math.cos((this.walkAnim || 0) * 2) * 1.2) : (bSin * 1.1);
-    const headTilt = isMoving ? (walkWave * 0.035) : (Math.sin(t * breathFreq * 0.5) * 0.035);
+    // Continuous dual-phase arm oscillation (vigorous athletic pumping when sprinting!)
+    const armAmp = isSprinting ? 0.88 : 0.58;
+    const armSwingF = isMoving ? (Math.sin(this.walkAnim || 0) * armAmp) : (Math.sin(t * breathFreq * 0.85) * idleArmAmp);
+    const armSwingB = isMoving ? (-Math.sin(this.walkAnim || 0) * (armAmp * 0.94)) : (-Math.sin(t * breathFreq * 0.85 + 0.9) * idleArmAmp * 0.85);
+    const headBob = isMoving ? (Math.cos((this.walkAnim || 0) * 2) * (isSprinting ? 1.8 : 1.2)) : (bSin * 1.1);
+    const headTilt = isMoving ? (walkWave * (isSprinting ? 0.055 : 0.035) + (isSprinting ? 0.06 : 0)) : (Math.sin(t * breathFreq * 0.5) * 0.035);
 
     return {
       id,
       t,
       isMoving,
+      isSprinting,
       grounded,
       bob,
       hoverY,
@@ -7842,12 +8670,15 @@ class PlayerHero {
   getHairSway(animP = 0, actionType = '') {
     const t = this.animTime || (Date.now() / 1000);
     const isMoving = Math.abs(this.vx) > 12;
+    const isSprinting = !!this.isSprinting && isMoving;
     const strike = actionType ? this.getStrikeCurve(animP) : 0;
-    // Trailing backward (-X) when running forward or lunging into a strike
-    const runTrail = isMoving ? (-6.5 + Math.sin(this.walkAnim * 1.6) * 2.8) : (Math.sin(t * 3.1) * 2.1);
+    // Trailing backward (-X) when running/sprinting forward or lunging into a strike
+    const runTrail = isMoving
+      ? ((isSprinting ? -13.5 : -6.5) + Math.sin(this.walkAnim * (isSprinting ? 2.2 : 1.6)) * (isSprinting ? 3.8 : 2.8))
+      : (Math.sin(t * 3.1) * 2.1);
     const strikeTrail = -strike * 7.2;
-    const airLift = !this.isGrounded ? Math.max(-8, Math.min(8, this.vy * 0.014)) : 0;
-    const walkBounce = isMoving ? Math.cos(this.walkAnim * 2) * 2.2 : Math.cos(t * 2.7) * 1.2;
+    const airLift = !this.isGrounded ? Math.max(-8, Math.min(8, this.vy * 0.014)) : (isSprinting ? -1.8 : 0);
+    const walkBounce = isMoving ? Math.cos(this.walkAnim * 2) * (isSprinting ? 3.2 : 2.2) : Math.cos(t * 2.7) * 1.2;
     return {
       swayX: runTrail + strikeTrail,
       swayY: airLift + walkBounce
@@ -7857,10 +8688,12 @@ class PlayerHero {
   getLegKinematics(animP = 0, actionType = '') {
     const t = this.animTime || 0;
     const isMoving = Math.abs(this.vx) > 12;
+    const isSprinting = !!this.isSprinting && isMoving;
     const walkS = isMoving ? Math.sin(this.walkAnim) : 0;
     const walkC = isMoving ? Math.cos(this.walkAnim) : 0;
-    const walkLiftB = isMoving ? Math.max(0, -walkS) * 5.2 : 0;
-    const walkLiftF = isMoving ? Math.max(0, walkS) * 5.2 : 0;
+    const liftMult = isSprinting ? 9.0 : 5.2;
+    const walkLiftB = isMoving ? Math.max(0, -walkS) * liftMult : 0;
+    const walkLiftF = isMoving ? Math.max(0, walkS) * liftMult : 0;
 
     if (!this.isGrounded && !actionType) {
       const airT = Math.sin(t * 8) * 1.4;
@@ -7893,13 +8726,15 @@ class PlayerHero {
         frontRot: -0.04 - shift * 0.045
       };
     }
+    const strideX = isSprinting ? 11.8 : 7.8;
+    const strideRot = isSprinting ? 0.44 : 0.28;
     return {
-      backX: -walkS * 7.8 + walkC * 1.4,
+      backX: -walkS * strideX + walkC * (isSprinting ? 2.2 : 1.4),
       backY: -walkLiftB,
-      backRot: walkS * 0.28,
-      frontX: walkS * 7.8 - walkC * 1.4,
+      backRot: walkS * strideRot,
+      frontX: walkS * strideX - walkC * (isSprinting ? 2.2 : 1.4),
       frontY: -walkLiftF,
-      frontRot: -walkS * 0.28
+      frontRot: -walkS * strideRot
     };
   }
 
@@ -12555,6 +13390,24 @@ class PlayerHero {
     ctx.scale(this.facing * scale * actionScaleX * motion.breathScaleX * uSq.sx, scale * actionScaleY * motion.breathScaleY * uSq.sy);
     ctx.rotate(actionTorsoTilt + motion.torsoTilt);
 
+    // Sprint Speed-Lines behind sprinting Canon Fusions!
+    if (this.isSprinting) {
+      ctx.save();
+      const sPulse = Math.sin((this.animTime || 0) * 26);
+      ctx.strokeStyle = 'rgba(224, 242, 254, 0.72)';
+      ctx.lineCap = 'round';
+      for (let sl = 0; sl < 5; sl++) {
+        const ly = -16 - sl * 16 + (sl % 2 === 0 ? sPulse * 2 : -sPulse * 2);
+        const len = 26 + (sl % 3) * 14;
+        ctx.lineWidth = sl === 2 ? 2.4 : 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-22 - sl * 5, ly);
+        ctx.lineTo(-22 - sl * 5 - len, ly);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
     // 1. Luminous Grand Rainbow / Prism Fusion Aura + Fusion Overdrive Halo + Crisp Fusion Rim Glow
     this.drawFusionAura(ctx, fusion, bob);
     ctx.save();
@@ -16469,10 +17322,25 @@ class EnemyManager {
           e.vx = player.facing * 140;
           e.hurtTimer = 0.25;
         }
-        // Heavier chain steps launch further; finishers add extra lift
-        e.vx *= (player.attackKnockMult || 1);
-        if (this.knockbackResist) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
-        if (player.comboStep >= 2 && e.vy) e.vy *= 1.15;
+        // Heavier chain steps launch further; style traits apply pull-in, hydro/vault lift, and armor-break!
+        if (player.attackPullIn) {
+          // Amethyst whip snare pulls enemy slightly inward into sweet-spot range
+          const pullDir = (e.x > player.x) ? -1 : 1;
+          e.vx = pullDir * 240;
+          e.vy = -125;
+        } else {
+          e.vx *= (player.attackKnockMult || 1);
+          if (this.knockbackResist && !player.attackArmorBreak) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
+          if (player.attackLiftY && player.attackLiftY < 0) {
+            e.vy = Math.min(e.vy || 0, player.attackLiftY);
+          } else if (player.comboStep >= 2 && e.vy) {
+            e.vy *= 1.15;
+          }
+        }
+        if (player.attackArmorBreak) {
+          e.hurtTimer = Math.max(e.hurtTimer, 0.56);
+          if (particles) particles.addDamageText(e.x, e.y - e.height - 16, 'ARMOR BREAK!', true, '#fb923c');
+        }
         e.attackTimer = 0;
 
         // Airborne Juggle State: Striking airborne enemies in mid-air suspends both aloft
@@ -20256,7 +21124,7 @@ const GUARDIAN_DATA = {
     title: 'The Heart of the Crystal Gems',
     desc: 'Rose Punch Combo • Bouncing Shield Throw • Crystalline Bubble & Healing Saliva (+1 Heart)',
     lore: 'Half-human, half-gem hero. Uses Rose Quartz\'s magical shield, his canon healing saliva, and channels his terrifying Pink Overdrive state — plus a well-earned Cookie Cat snack when things get rough!',
-    j: { name: 'Shield Strike', icon: '🛡️', desc: 'Fast shield bash and punch combo with pink star sparks' },
+    j: { name: 'Shield-Guard Brawler', icon: '🛡️', desc: '3-hit guarded combo — raises frontal Rose Shield during swings (50% DMG reduction) and ends with Pink Bubble Pop launch' },
     k: { name: 'Shield Throw', icon: '💫', desc: 'Bouncing Rose Shield projectile ricocheting off foes (35 DMG)' },
     l: { name: 'Bubble & Heal', icon: '🫧', desc: 'Spawns a crystalline Bubble Shield shockwave and restores +1 Heart with his healing saliva (canon power)' }
   },
@@ -20268,7 +21136,7 @@ const GUARDIAN_DATA = {
     title: 'Leader of the Crystal Gems (Ruby & Sapphire Fusion)',
     desc: 'Heavy Gauntlet Combo • Rocket Gauntlet Blast • Giant Gauntlets Seismic Slam',
     lore: 'Physical powerhouse and leader of the Crystal Gems. Made of love, packing twin spiked rocket gauntlets and the ability to enlarge them into titanic Giant Gauntlets that crush the earth!',
-    j: { name: 'Gauntlet Combo', icon: '🥊', desc: 'Heavy dual spiked gauntlet punch flurry with KAPOW! impact' },
+    j: { name: 'Orthodox Power Boxer', icon: '🥊', desc: '4-hit boxing chain: Ruby Jab → Sapphire Cross → Hopping Shoryu Uppercut → Twin Gauntlet Meteor' },
     k: { name: 'Rocket Gauntlet', icon: '🚀', desc: 'Fires rocket-propelled spiked gauntlets across the screen (40 DMG)' },
     l: { name: 'Giant Gauntlets Slam', icon: '💥', desc: 'Enlarges gauntlets to titanic size and slams downward with high-voltage seismic tremor (65 DMG)' }
   },
@@ -20280,7 +21148,7 @@ const GUARDIAN_DATA = {
     title: 'Wild Earth-Born Quartz Warrior',
     desc: 'Spiked Dual Whip Flurry • Sonic Spin Dash (Quartz Buzzsaw) • Dual Whip Violet Energy Geysers',
     lore: 'Earth-born warrior from Prime Kindergarten. Attacks with spiked dual whips, curls into a high-speed rotating Quartz Buzzsaw ball, and erupts 4 rising violet volcanic energy geysers!',
-    j: { name: 'Whip Flurry', icon: '🟣', desc: 'Dual whip slashing combo sweeping through nearby enemies' },
+    j: { name: 'Wild Whip-Acrobat', icon: '🟣', desc: '5-hit whip chain: extended lashes pull foes inward before an acrobatic Cartwheel Kick & Whip Cyclone' },
     k: { name: 'Sonic Spin Dash', icon: '🌀', desc: 'Authentic Quartz Buzzsaw roll charging through enemy ranks at high speed (45 DMG)' },
     l: { name: 'Whip Quake', icon: '🔥', desc: 'Slams both whips into the ground, cracking the arena in four violet shockwaves (40 DMG each)' }
   },
@@ -20292,7 +21160,7 @@ const GUARDIAN_DATA = {
     title: 'Elegant Tactician & Master Spearwoman',
     desc: 'Spear Flurry • Laser Blast • Holo-Pearl Training Clone',
     lore: 'Graceful swordmaster and spear prodigy. Summons holographic Holo-Pearl sparring clones and pierces corruptions with laser beams!',
-    j: { name: 'Spear Flurry', icon: '🗡️', desc: 'Rapid thrusting spear combo piercing enemy defenses' },
+    j: { name: 'Ballet Spear Fencer', icon: '🗡️', desc: '4-hit precision foil chain: rapid En-Garde pokes → Skyward Pirouette Vault → Ribbon Spear Flurry' },
     k: { name: 'Holo-Spear Volley', icon: '✨', desc: 'Projects three hard-light Holo-Pearl spears that pierce through the corruption (35 DMG)' },
     l: { name: 'Holo-Pearl Clone', icon: '🤺', desc: 'Summons an animated holographic sparring clone that dashes forward lunging with fencing thrusts (55 DMG)' }
   },
@@ -20304,8 +21172,8 @@ const GUARDIAN_DATA = {
     title: 'Master Blacksmith & Weapon Forger',
     desc: 'Heavy Knockback Hammers • Forged Anvil Toss • Breaking Point Molten Fissure',
     lore: 'Legendary Crystal Gem blacksmith with a 98-facet rainbow crystal. Her brutal hammer swings and anvil launches send enemies flying backward, while the Breaking Point ruptures molten fissures!',
-    j: { name: 'Heavy Hammer Combo', icon: '🔨', desc: 'Shapeshifting 4-hit blacksmith chain: Hammer Swing → Battle-Axe Cleave → Forge Upper → Molten Anvil Slam' },
-    k: { name: 'Molten Hammer Leap', icon: '⚒️', desc: '[MELEE LEAP] Vaults forward with a titanic shapeshifted Forge Hammer, crashing down in a close-range molten shockwave!' },
+    j: { name: 'Heavy Forge Shapeshifter', icon: '🔨', desc: '3-hit weapon-morph chain: Forge Warhammer → Armor-Breaking Battle-Axe → Molten Anvil Shatter' },
+    k: { name: 'Molten Hammer Leap', icon: '⚒️', desc: 'Melee leap: vaults forward with a shapeshifted Forge Hammer, crashing down in a molten shockwave' },
     l: { name: 'Breaking Point', icon: '🌋', desc: 'Shatters the ground with the Breaking Point, catapulting enemies into the air with lava plumes (70 DMG)' }
   },
   peridot: {
@@ -20316,7 +21184,7 @@ const GUARDIAN_DATA = {
     title: 'Certified Kindergartener & Metal Master',
     desc: 'Ferrokinetic Swipes • Scrap Metal Salvo (3 Magnetic Scraps) • Flask Robonoid Drone & EMP Vortex',
     lore: 'Former Homeworld technician who discovered ferrokinesis on Earth! Controls metal scraps, hurls levitating scrap salvos, and deploys Homeworld Flask Robonoids with EMP magnetic vortex fields!',
-    j: { name: 'Magnetic Swipe', icon: '🔩', desc: 'Quick ferrokinetic scrap swipe combo knocking back targets' },
+    j: { name: 'Ferrokinetic Scrapper', icon: '🔩', desc: '3-hit mid-range magnetic strikes finishing with an evasive Backstep Hop & Crusher Jaw Burst' },
     k: { name: 'Scrap Salvo', icon: '⚙️', desc: 'Levitates and hurls 3 magnetic scrap chunks: steel girder, gear, and trash lid (24 DMG each)' },
     l: { name: 'Flask Robonoid', icon: '🤖', desc: 'Deploys a walking Homeworld Flask Robonoid drone & concentric Magnetic EMP Vortex (55 DMG)' }
   },
@@ -20328,7 +21196,7 @@ const GUARDIAN_DATA = {
     title: 'Powerful Hydrokinetic Gem',
     desc: 'Water Scythe Combo • Hydro Fist • Giant Tidal Wave Surge',
     lore: 'Powerful Gem capable of controlling Earth\'s oceans. Manifests majestic liquid water wings and summons tidal waves!',
-    j: { name: 'Water Scythe', icon: '💧', desc: 'Fluid liquid blade slash combo cutting through multiple monsters' },
+    j: { name: 'Aerial Hydro-Weaver', icon: '💧', desc: '4-hit mid-range water-blade arcs lifting foes with a Rising Hydro-Geyser into Ocean Dragon Lash' },
     k: { name: 'Hydro Fist', icon: '🌊', desc: 'Launches a massive pressurized water fist projectile (40 DMG)' },
     l: { name: 'Tidal Wave', icon: '🌀', desc: 'Summons a roaring ocean tidal wave crashing across the battlefield (60 DMG)' }
   },
@@ -20340,7 +21208,7 @@ const GUARDIAN_DATA = {
     title: 'Founder & Commander of the Rebellion',
     desc: 'Rose Broadsword Slash • Bouncing Rose Crest • Sacred Tears of Resurrection (+2 Hearts)',
     lore: 'Rebel leader who fought for organic life on Earth. Wields her custom broadsword, throws her indestructible spinning crest shield, and weeps Sacred Tears of Life that blossom into a pink mandala restoring +2 Hearts and dropping 2 Cookie Cats!',
-    j: { name: 'Rose Sword', icon: '🌹', desc: 'Graceful broadsword strikes with rose petal flurry and impact stars' },
+    j: { name: 'Noble Paladin', icon: '🌹', desc: '3-hit Broadsword & Shield rhythm: Cleave → Guarded Shield Bash → Sanctuary Petal Spiral (+1 Heart heal)' },
     k: { name: 'Rose Crest Shield', icon: '🛡️', desc: 'Hurls high-speed spinning Rose Quartz crest shield (40 DMG)' },
     l: { name: 'Sacred Tears of Life', icon: '💖', desc: 'Blossoms an 8-petaled Rose Mandala shockwave, restoring +2 Hearts and spawning 2 Cookie Cats (50 DMG)' }
   },
@@ -20352,8 +21220,8 @@ const GUARDIAN_DATA = {
     title: 'Swordmaster & Knight of the Crystal Gems',
     desc: 'Knight Fencing Flurry • Pink Sword Flying Arc • Shadow Step Blade Dash',
     lore: 'Human sword prodigy trained in classical fencing and combat choreography by Pearl. Armed with the custom Pink Sword forged by Bismuth, Connie dashes swiftly across battlefields, parrying corruptions and executing high-velocity sword flurries!',
-    j: { name: 'Iaido Sword Flurry', icon: '⚔️', desc: 'Lightning 4-hit swordmaster chain: Quick Draw → Diagonal Cross → Vaulting Crescent → Helm-Splitter!' },
-    k: { name: 'Sworn Iai-Lunge', icon: '💨', desc: "[MELEE DASH] Pure human swordcraft — dashes straight through enemies with a razor-close crescent cut & deflects shots!" },
+    j: { name: 'Lightning Iaido Swordmaster', icon: '⚔️', desc: 'Fastest 5-hit blade chain: Quick-Draw → Reverse Flash → Step-In Cross → Vaulting Crescent → Helm-Splitter' },
+    k: { name: 'Sworn Iai-Lunge', icon: '💨', desc: 'Melee dash: pure human swordcraft lunging straight through enemies with a crescent cut that deflects shots' },
     l: { name: 'Tactical Parry', icon: '⚡', desc: 'The guard stance Pearl drilled into her — slips through every strike, then answers it (60 DMG)' }
   },
   jasper: {
@@ -20364,8 +21232,8 @@ const GUARDIAN_DATA = {
     title: 'Supreme Beta Quartz Juggernaut',
     desc: 'Beta Brawler Flurry • Crash Helmet Bull-Rush • Quartz Tornado Spin Dash',
     lore: 'The ultimate Quartz soldier born from the Beta Kindergarten. Pure physical brutality with zero ranged gimmicks — overwhelms enemies with armored Crash Helmet bull-rushes, seismic haymakers, and unstoppable Quartz Spin Dashes!',
-    j: { name: 'Beta Juggernaut', icon: '👊', desc: 'Brutal 4-hit brawler chain: Crushing Haymaker → Shoulder Ram → Horned Uppercut → Seismic Helmet Crash!' },
-    k: { name: 'Crash Helmet Bull-Rush', icon: '🪖', desc: '[MELEE CHARGE] Summons her spiked Crash Helmet and physically rockets forward as an armored battering ram (no ranged shot!)' },
+    j: { name: 'Beta Juggernaut', icon: '👊', desc: '3-hit Super-Armor brawler chain: Crushing Haymaker → Armored Shoulder Tackle → Seismic Helmet Crash' },
+    k: { name: 'Crash Helmet Bull-Rush', icon: '🪖', desc: 'Melee charge: summons her spiked Crash Helmet and rockets forward as an armored battering ram' },
     l: { name: 'Quartz Tornado', icon: '🔥', desc: 'Curls into a flaming spiked Beta Spin Dash ball erupting seismic shockwaves (65 DMG)' }
   }
 };
@@ -21949,29 +22817,22 @@ class StevenUniverseGame {
     const beginFadeOut = () => {
       if (this._splashFadingOut) return;
       this._splashFadingOut = true;
-      this._splashGuardUntil = Date.now() + 1400;
+      this._splashGuardUntil = Date.now() + 180;
       this._splashTimers.forEach(t => clearTimeout(t));
       this._splashTimers = [];
 
       splash.classList.remove('phase-in');
       splash.classList.add('phase-text-out');
+      splash.classList.add('phase-fade-out');
+      if (titleScreen) {
+        titleScreen.classList.remove('splash-pending');
+      }
+      if (typeof fitGameToViewport === 'function') fitGameToViewport();
 
-      const tScreenFade = setTimeout(() => {
-        splash.classList.add('phase-fade-out');
-        if (titleScreen) {
-          titleScreen.classList.remove('splash-pending');
-          titleScreen.classList.add('splash-reveal');
-        }
-        if (typeof fitGameToViewport === 'function') fitGameToViewport();
-        const tDone = setTimeout(() => {
-          finishSplash();
-          if (titleScreen) {
-            setTimeout(() => titleScreen.classList.remove('splash-reveal'), 250);
-          }
-        }, 680);
-        this._splashTimers.push(tDone);
-      }, 460);
-      this._splashTimers.push(tScreenFade);
+      const tDone = setTimeout(() => {
+        finishSplash();
+      }, 520);
+      this._splashTimers.push(tDone);
     };
 
     this.skipStartupSplash = () => {
@@ -22018,16 +22879,14 @@ class StevenUniverseGame {
       window.addEventListener('mousedown', this._onSplashSwallowClick, true);
     }
 
-    // Dark grey full screen -> "Crystal Gems!" fades in -> holds 3 seconds -> fades out -> Main Menu fades in
-    const tIn = setTimeout(() => {
-      if (!this.splashActive || this._splashFadingOut) return;
-      splash.classList.add('phase-in');
-      const tHold = setTimeout(() => {
-        beginFadeOut();
-      }, 3000);
-      this._splashTimers.push(tHold);
-    }, 100);
-    this._splashTimers.push(tIn);
+    // Pre-fit viewport before fade so Main Menu never resizes/jumps during startup
+    if (typeof fitGameToViewport === 'function') fitGameToViewport();
+    // Smooth startup splash: fades in immediately -> holds 1.7s -> fades seamlessly into ready Main Menu
+    splash.classList.add('phase-in');
+    const tHold = setTimeout(() => {
+      beginFadeOut();
+    }, 1700);
+    this._splashTimers.push(tHold);
   }
 
   getHeartPoolSpec(hero) {
@@ -22345,7 +23204,6 @@ class StevenUniverseGame {
     const pStyle = document.getElementById('paneStylePill');
     const pDesc = document.getElementById('panePassiveDesc');
     const pTip = document.getElementById('panePassiveTip');
-    const balEl = document.getElementById('paneBalanceBars');
     const kLbl = document.getElementById('paneKLabel');
     const jLbl = document.getElementById('paneJLabel');
     const lLbl = document.getElementById('paneLLabel');
@@ -22355,44 +23213,35 @@ class StevenUniverseGame {
     if (lLbl) lLbl.textContent = `[L] ${data.l.name}:`;
 
     if (passive) {
-      if (roleEl) roleEl.textContent = `${passive.icon} ${passive.role || 'GUARDIAN'}`;
+      if (roleEl) roleEl.textContent = passive.role || 'Guardian';
       if (healEl) {
-        healEl.className = `char-heal-pill ${passive.hasHeal ? 'has-heal' : 'no-heal'}`;
-        healEl.textContent = passive.hasHeal ? '💚 HEALING' : '⚔️ NO HEAL';
+        healEl.className = `char-heal-text ${passive.hasHeal ? 'has-heal' : 'no-heal'}`;
+        healEl.textContent = passive.hasHeal ? 'Healing' : 'No Heal';
       }
-      if (pTitle) pTitle.textContent = `${passive.icon} PASSIVE: ${passive.name}`;
-      if (pStyle) pStyle.textContent = `🥋 ${comboProf ? comboProf.label : '4-Hit Combo'}`;
+      if (pTitle) pTitle.textContent = `PASSIVE — ${passive.name}`;
+      if (pStyle) pStyle.textContent = comboProf ? comboProf.label : 'Combo Chain';
       if (pDesc) pDesc.textContent = passive.desc;
-      if (pTip) pTip.innerHTML = `<b>HOW TO USE:</b> ${passive.howToUse || passive.desc}`;
-      if (balEl && passive.bars) {
-        const b = passive.bars;
-        const barRow = (lbl, val, col) =>
-          `<div class="bal-meter"><div class="bal-meter-lbl"><span>${lbl}</span><span>${val}/5</span></div>` +
-          `<div class="bal-meter-track"><div class="bal-meter-fill" style="width:${val * 20}%;background:${col};"></div></div></div>`;
-        balEl.innerHTML =
-          barRow('OFFENSE', b.offense, '#fb7185') +
-          barRow('DEFENSE', b.defense, '#38bdf8') +
-          barRow('SUPPORT', b.support, '#4ade80') +
-          barRow('SPEED', b.speed, '#facc15');
-      }
+      if (pTip) pTip.textContent = `How to use: ${passive.howToUse || passive.desc}`;
     }
 
     if (paneTypes) {
       paneTypes.innerHTML = (data.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
     }
 
+    // Single unified stat readout (clean bar + exact value, zero duplicate stat rows!)
     const statsEl = document.getElementById('paneStats');
     if (statsEl && typeof getHeroCombatStats === 'function') {
       const s = getHeroCombatStats(charId, null, false);
-      const critPct = `${Math.round(s.critChance * 100)}%`;
-      const critDmgPct = `${Math.round(s.critDamage * 100)}%`;
+      const statCell = (lbl, val, max, col) => {
+        const pct = Math.max(10, Math.min(100, Math.round((val / max) * 100)));
+        return `<div class="clean-stat"><div class="clean-stat-head"><span>${lbl}</span><strong>${val}</strong></div>` +
+          `<div class="clean-stat-track"><div class="clean-stat-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+      };
       statsEl.innerHTML =
-        `<span class="stat-pill"><b>HP</b> ${s.hp}</span>` +
-        `<span class="stat-pill"><b>DEF</b> ${s.defense}</span>` +
-        `<span class="stat-pill"><b>ATK</b> ${s.attack}</span>` +
-        `<span class="stat-pill"><b>MAG</b> ${s.magic}</span>` +
-        `<span class="stat-pill"><b>CRIT</b> ${critPct}</span>` +
-        `<span class="stat-pill"><b>CRIT DMG</b> ${critDmgPct}</span>`;
+        statCell('HP', s.hp, 185, '#4ade80') +
+        statCell('ATK', s.attack, 60, '#fb7185') +
+        statCell('DEF', s.defense, 60, '#38bdf8') +
+        statCell('MAG', s.magic, 62, '#c084fc');
     }
 
     const fList = document.getElementById('fusionPreviewList');
@@ -22410,7 +23259,7 @@ class StevenUniverseGame {
       } else {
         const chip = document.createElement('span');
         chip.className = 'fusion-chip none';
-        chip.innerHTML = `⚠️ Independent Gem — No canon show fusion`;
+        chip.textContent = 'Independent Gem — No canon show fusion';
         fList.appendChild(chip);
       }
     }
@@ -22922,7 +23771,7 @@ class StevenUniverseGame {
   // Zero every held input. Called on blur, tab hide, pause and menu changes so a
   // missed keyup can never leave the hero sliding on their own.
   releaseAllInputs() {
-    const blank = { left: false, right: false, jump: false, down: false, shield: false, dodge: false, attack: false, special: false, skill: false, overdrive: false };
+    const blank = { left: false, right: false, jump: false, down: false, shield: false, dodge: false, attack: false, special: false, skill: false, overdrive: false, sprint: false };
     this.keysP1 = Object.assign(this.keysP1 || {}, blank);
     this.keysP2 = Object.assign(this.keysP2 || {}, blank);
     for (const hero of [this.player, this.player2]) {
@@ -22930,6 +23779,7 @@ class StevenUniverseGame {
       hero.vx = 0;
       hero.isShielding = false;
       hero.isDodging = false;
+      hero.isSprinting = false;
     }
     // Release any on-screen touch buttons stuck in the pressed state
     document.querySelectorAll('.touch-btn.pressed, .touch-btn.active').forEach(el => el.classList.remove('pressed', 'active'));
@@ -24018,6 +24868,7 @@ class StevenUniverseGame {
       const sharedKeys = {
         left: this.keysP1.left || this.keysP2.left,
         right: this.keysP1.right || this.keysP2.right,
+        sprint: this.keysP1.sprint || this.keysP2.sprint,
         jump: this.keysP1.jump || this.keysP2.jump,
         down: this.keysP1.down || this.keysP2.down,
         shield: this.keysP1.shield || this.keysP2.shield,
@@ -26862,7 +27713,8 @@ class StevenUniverseGame {
     const barNameP2 = document.getElementById('barNameP2');
 
     if (actionBars) {
-      actionBars.style.display = this.isRealMobile ? 'none' : 'flex';
+      const inCombatState = (this.state === 'playing' || this.state === 'paused' || this.state === 'arcade_wait');
+      actionBars.style.display = (this.isRealMobile || !inCombatState) ? 'none' : 'flex';
     }
 
     if (this.playerMode === '2p' && this.player2) {
@@ -27176,6 +28028,7 @@ class StevenUniverseGame {
       this.keysP1.special = false;
       this.keysP1.skill = false;
       this.keysP1.overdrive = false;
+      this.keysP1.sprint = false;
 
       this.keysP2.left = false;
       this.keysP2.right = false;
@@ -27187,17 +28040,20 @@ class StevenUniverseGame {
       this.keysP2.special = false;
       this.keysP2.skill = false;
       this.keysP2.overdrive = false;
+      this.keysP2.sprint = false;
 
       if (this.player) {
         this.player.vx = 0;
         this.player.isGuarding = false;
         this.player.isSpinDashing = false;
+        this.player.isSprinting = false;
         if (this.player.state === 'running' || this.player.state === 'walk') this.player.state = 'idle';
       }
       if (this.player2) {
         this.player2.vx = 0;
         this.player2.isGuarding = false;
         this.player2.isSpinDashing = false;
+        this.player2.isSprinting = false;
         if (this.player2.state === 'running' || this.player2.state === 'walk') this.player2.state = 'idle';
       }
 
@@ -27412,10 +28268,26 @@ class StevenUniverseGame {
         this.triggerFusion();
       }
 
+      // Double-tap A / D (and ArrowLeft / ArrowRight for 2P) Sprint / Speed-Run detection!
+      const nowTap = performance.now();
+      const handleSprintTap = (keysObj, dirKey, codeStr) => {
+        if (e.repeat) return;
+        const alreadyHeld = !!keysObj[dirKey];
+        if (!alreadyHeld) {
+          if (keysObj._lastTapCode === codeStr && (nowTap - (keysObj._lastTapTime || 0)) < 290) {
+            keysObj.sprint = true;
+          } else {
+            keysObj.sprint = false;
+          }
+          keysObj._lastTapCode = codeStr;
+          keysObj._lastTapTime = nowTap;
+        }
+      };
+
       if (this.playerMode === '2p') {
         // Player 1 Controls (Left Hand side of keyboard)
-        if (e.code === 'KeyA') this.keysP1.left = true;
-        if (e.code === 'KeyD') this.keysP1.right = true;
+        if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
+        if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
         if (e.code === 'KeyW') this.keysP1.jump = true;
         if (e.code === 'KeyS') { this.keysP1.down = true; this.keysP1.shield = true; }
         if (e.code === 'KeyE') { this.keysP1.dodge = true; this.triggerSlotAnimation('slotI'); }
@@ -27425,8 +28297,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyR') { this.activatePinkOverdrive('p1'); }
 
         // Player 2 Controls (Right Hand side / Arrow keys)
-        if (e.code === 'ArrowLeft') this.keysP2.left = true;
-        if (e.code === 'ArrowRight') this.keysP2.right = true;
+        if (e.code === 'ArrowLeft') { handleSprintTap(this.keysP2, 'left', 'ArrowLeft'); this.keysP2.left = true; }
+        if (e.code === 'ArrowRight') { handleSprintTap(this.keysP2, 'right', 'ArrowRight'); this.keysP2.right = true; }
         if (e.code === 'ArrowUp') this.keysP2.jump = true;
         if (e.code === 'ArrowDown') { this.keysP2.down = true; this.keysP2.shield = true; }
         if (e.code === 'KeyI') { this.keysP2.dodge = true; this.triggerSlotAnimation('slotP2_I'); }
@@ -27436,8 +28308,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyO' || e.code === 'KeyP') { this.activatePinkOverdrive('p2'); }
       } else {
         // Solo 1-Player Mode: STRICTLY A, D, W/Space, S, J, K, L, I (Dodge), U/O (Overdrive)
-        if (e.code === 'KeyA') this.keysP1.left = true;
-        if (e.code === 'KeyD') this.keysP1.right = true;
+        if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
+        if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
         if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = true;
         if (e.code === 'KeyS') {
           this.keysP1.down = true;
@@ -27479,8 +28351,8 @@ class StevenUniverseGame {
 
     window.addEventListener('keyup', (e) => {
       if (this.playerMode === '2p') {
-        if (e.code === 'KeyA') this.keysP1.left = false;
-        if (e.code === 'KeyD') this.keysP1.right = false;
+        if (e.code === 'KeyA') { this.keysP1.left = false; if (!this.keysP1.right) this.keysP1.sprint = false; }
+        if (e.code === 'KeyD') { this.keysP1.right = false; if (!this.keysP1.left) this.keysP1.sprint = false; }
         if (e.code === 'KeyW') this.keysP1.jump = false;
         if (e.code === 'KeyS') {
           this.keysP1.down = false;
@@ -27491,8 +28363,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyG') this.keysP1.special = false;
         if (e.code === 'KeyH') this.keysP1.skill = false;
 
-        if (e.code === 'ArrowLeft') this.keysP2.left = false;
-        if (e.code === 'ArrowRight') this.keysP2.right = false;
+        if (e.code === 'ArrowLeft') { this.keysP2.left = false; if (!this.keysP2.right) this.keysP2.sprint = false; }
+        if (e.code === 'ArrowRight') { this.keysP2.right = false; if (!this.keysP2.left) this.keysP2.sprint = false; }
         if (e.code === 'ArrowUp') this.keysP2.jump = false;
         if (e.code === 'ArrowDown') {
           this.keysP2.down = false;
@@ -27503,8 +28375,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyK') this.keysP2.special = false;
         if (e.code === 'KeyL') this.keysP2.skill = false;
       } else {
-        if (e.code === 'KeyA') this.keysP1.left = false;
-        if (e.code === 'KeyD') this.keysP1.right = false;
+        if (e.code === 'KeyA') { this.keysP1.left = false; if (!this.keysP1.right) this.keysP1.sprint = false; }
+        if (e.code === 'KeyD') { this.keysP1.right = false; if (!this.keysP1.left) this.keysP1.sprint = false; }
         if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = false;
         if (e.code === 'KeyS') {
           this.keysP1.down = false;
@@ -27618,6 +28490,12 @@ class StevenUniverseGame {
       const mScreen = document.getElementById('mapSelectScreen');
       if (mScreen) mScreen.style.display = 'none';
       this.openCharacterSelect('arcade');
+    });
+    safeClick('btnMapMainMenu', () => {
+      this.audio.playSfx('menuTap');
+      const mScreen = document.getElementById('mapSelectScreen');
+      if (mScreen) mScreen.style.display = 'none';
+      this.showTitleScreen();
     });
     safeClick('btnPlayArcadeMap', () => {
       this.audio.playSfx('warpPad');
@@ -27927,8 +28805,8 @@ class StevenUniverseGame {
     const lobbySelectBgm = document.getElementById('lobbySelectBgm');
 
     const syncBgmUI = () => {
-      let cur = this.audio.bgmOverrideManual ? (this.audio.selectedBgm || 'auto') : 'auto';
-      if (cur === 'menu') cur = 'auto';
+      let cur = this.audio.bgmOverrideManual ? (this.audio.selectedBgm || 'intro_launch') : (this.audio.currentTrack || 'intro_launch');
+      if (cur === 'auto' || cur === 'menu') cur = 'intro_launch';
       if (selectBgm) selectBgm.value = cur;
       if (pauseSelectBgm) pauseSelectBgm.value = cur;
       if (lobbySelectBgm) lobbySelectBgm.value = cur;
@@ -28625,6 +29503,12 @@ class StevenUniverseGame {
     this.releaseAllInputs();
     if (this.audio) this.audio.stopMusic();
     if (document.body) document.body.classList.remove('in-game');
+    const hudEl = document.getElementById('hud');
+    if (hudEl) hudEl.style.display = 'none';
+    const abEl = document.getElementById('actionBarsContainer') || document.getElementById('actionBar');
+    if (abEl) abEl.style.display = 'none';
+    const bhEl = document.getElementById('bossHud');
+    if (bhEl) bhEl.style.display = 'none';
     const mapInfo = (typeof ARCADE_MAPS !== 'undefined' && ARCADE_MAPS[this.stageIndex - 1])
       ? ARCADE_MAPS[this.stageIndex - 1]
       : { name: `Arena ${this.stageIndex}` };

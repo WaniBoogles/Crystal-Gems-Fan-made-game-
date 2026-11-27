@@ -138,208 +138,750 @@ class EnvironmentRenderer {
       this.drawCloud(ctx, cx, c.y, c.scale, stageIndex);
     }
 
-    // Parallax Distant Silhouettes (Canon Steven Universe Landmarks)
-    const bgOffset = cameraX * 0.32;
+    // Parallax Distant Silhouettes & Painted Steven Universe Landmarks (All 10 Stages + Sky Arena)
+    const bgOffset = cameraX * 0.30;
+    const farOffset = cameraX * 0.14;
     const anim = this.animTime || 0;
 
-    if (stageIndex === 1) {
-      // Beach City: Colossal Obsidian Temple Cliff, Lighthouse Bluff & Funland Wheel
+    if (stageIndex === 0 || isPractice) {
+      // Practice Sky Arena: Floating Cloud Sea, Ancient Marble Arches & Fluttering Rebellion Banners
       ctx.save();
-      // Ancient Multi-Armed Temple Obsidian Carving
-      ctx.fillStyle = 'rgba(76, 29, 149, 0.38)';
-      const tx = 1120 - bgOffset;
-      ctx.beginPath();
-      ctx.arc(tx, this.groundY - 170, 90, 0, Math.PI * 2); // Temple head
-      ctx.fill();
-      ctx.fillRect(tx - 70, this.groundY - 130, 140, 130); // Torso & Arms
-      // Cliffside rocks
-      ctx.beginPath();
-      ctx.moveTo(tx - 180, this.groundY);
-      ctx.lineTo(tx - 80, this.groundY - 190);
-      ctx.lineTo(tx + 160, this.groundY - 200);
-      ctx.lineTo(tx + 240, this.groundY);
-      ctx.closePath();
-      ctx.fillStyle = 'rgba(59, 7, 100, 0.32)';
-      ctx.fill();
+      // Soft rose-gold horizon sun halo
+      const sunG = ctx.createRadialGradient(this.canvasWidth * 0.5, this.groundY - 120, 12, this.canvasWidth * 0.5, this.groundY - 120, 280);
+      sunG.addColorStop(0, 'rgba(254, 240, 138, 0.32)');
+      sunG.addColorStop(0.5, 'rgba(103, 232, 249, 0.16)');
+      sunG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sunG;
+      ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
 
-      // Lighthouse on bluff
-      const lx = 420 - bgOffset;
-      ctx.fillStyle = 'rgba(88, 28, 135, 0.35)';
-      ctx.fillRect(lx - 12, this.groundY - 130, 24, 130);
-      ctx.beginPath();
-      ctx.arc(lx, this.groundY - 135, 16, Math.PI, 0);
-      ctx.fill();
-      // Lighthouse rotating beam
-      const beamAngle = Math.sin(anim * 1.2) * 0.4;
-      ctx.save();
-      ctx.translate(lx, this.groundY - 135);
-      ctx.rotate(beamAngle);
-      ctx.fillStyle = 'rgba(254, 240, 138, 0.14)';
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(260, -45);
-      ctx.lineTo(260, 45);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      // Distant Funland Ferris Wheel
-      const fx = 1850 - bgOffset;
-      ctx.strokeStyle = 'rgba(244, 114, 182, 0.30)';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(fx, this.groundY - 125, 75, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.restore();
-    } else if (stageIndex === 2) {
-      // Galaxy Warp: Floating Ancient Gem Spire Monoliths & Star Arches
-      ctx.save();
-      ctx.fillStyle = 'rgba(34, 211, 238, 0.22)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
-      ctx.lineWidth = 2;
-      for (const sx of [380, 880, 1420, 2020]) {
-        const x = sx - bgOffset;
-        const floatY = Math.sin(anim * 1.5 + sx) * 8;
+      // Distant floating broken Sky Arena marble arches
+      for (const ax of [260, 740, 1260, 1780]) {
+        const x = ax - farOffset;
+        const bobY = Math.sin(anim * 0.9 + ax * 0.01) * 5;
+        ctx.fillStyle = 'rgba(165, 180, 252, 0.22)';
+        ctx.fillRect(x - 62, this.groundY - 220 + bobY, 18, 220);
+        ctx.fillRect(x + 44, this.groundY - 220 + bobY, 18, 220);
+        ctx.strokeStyle = 'rgba(224, 231, 255, 0.30)';
+        ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.moveTo(x - 22, this.groundY - 90 + floatY);
-        ctx.lineTo(x, this.groundY - 210 + floatY);
-        ctx.lineTo(x + 22, this.groundY - 90 + floatY);
+        ctx.arc(x, this.groundY - 216 + bobY, 53, Math.PI, 0);
+        ctx.stroke();
+        // Fluttering Rose Rebellion Banner
+        const wave = Math.sin(anim * 2.6 + ax) * 7;
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.42)';
+        ctx.beginPath();
+        ctx.moveTo(x - 16, this.groundY - 210 + bobY);
+        ctx.lineTo(x + 16, this.groundY - 210 + bobY);
+        ctx.quadraticCurveTo(x + 14 + wave, this.groundY - 145 + bobY, x + 8 + wave * 1.4, this.groundY - 105 + bobY);
+        ctx.lineTo(x + wave * 0.8, this.groundY - 120 + bobY);
+        ctx.lineTo(x - 10 + wave * 1.1, this.groundY - 105 + bobY);
         ctx.closePath();
         ctx.fill();
+      }
+      // Pastel Cloud Sea rolling below horizon
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.20)';
+      for (let cx = -80; cx < this.canvasWidth + 160; cx += 150) {
+        const bx = cx - (farOffset % 150);
+        ctx.beginPath();
+        ctx.arc(bx, this.groundY - 12, 85, Math.PI, 0);
+        ctx.fill();
+      }
+      ctx.restore();
+    } else if (stageIndex === 1) {
+      // Beach City: Sunset Ocean Horizon, Sculpted Crystal Temple Obsidian Statue + Beach House, Lighthouse & Funland Ferris Wheel
+      ctx.save();
+      // Glowing Sunset Disc & Horizon Reflection
+      const sunX = 760 - farOffset * 0.5;
+      const sunY = this.groundY - 145;
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 14, sunX, sunY, 175);
+      sunGlow.addColorStop(0, 'rgba(254, 249, 195, 0.92)');
+      sunGlow.addColorStop(0.28, 'rgba(251, 146, 60, 0.48)');
+      sunGlow.addColorStop(0.65, 'rgba(244, 114, 182, 0.18)');
+      sunGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 175, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Distant Sunset Ocean Band + Shimmering Water Ripples
+      const seaY = this.groundY - 62;
+      const seaG = ctx.createLinearGradient(0, seaY, 0, this.groundY);
+      seaG.addColorStop(0, 'rgba(190, 24, 93, 0.52)');
+      seaG.addColorStop(0.5, 'rgba(126, 34, 206, 0.48)');
+      seaG.addColorStop(1, 'rgba(30, 27, 75, 0.58)');
+      ctx.fillStyle = seaG;
+      ctx.fillRect(0, seaY, this.canvasWidth, 62);
+      ctx.fillStyle = 'rgba(254, 240, 138, 0.38)';
+      for (let r = 0; r < 6; r++) {
+        const rw = 90 - r * 11 + Math.sin(anim * 2.2 + r) * 8;
+        ctx.fillRect(sunX - rw * 0.5, seaY + 6 + r * 8, rw, 2.5);
+      }
+
+      // Colossal Crystal Temple Obsidian Statue & Cliff Bluff
+      const tx = 1080 - bgOffset;
+      // Layered sunset cliff behind statue
+      ctx.fillStyle = '#3b154d';
+      ctx.beginPath();
+      ctx.moveTo(tx - 245, this.groundY);
+      ctx.lineTo(tx - 155, this.groundY - 215);
+      ctx.lineTo(tx - 55, this.groundY - 240);
+      ctx.lineTo(tx + 125, this.groundY - 230);
+      ctx.lineTo(tx + 240, this.groundY - 125);
+      ctx.lineTo(tx + 310, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      // Grassy green cliff crest
+      ctx.fillStyle = 'rgba(22, 101, 52, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(tx - 155, this.groundY - 215);
+      ctx.quadraticCurveTo(tx - 5, this.groundY - 252, tx + 128, this.groundY - 228);
+      ctx.lineTo(tx + 120, this.groundY - 214);
+      ctx.lineTo(tx - 145, this.groundY - 202);
+      ctx.closePath();
+      ctx.fill();
+
+      // Carved Obsidian Temple Goddess (Multi-armed stone relief + serene face + billowing stone curls)
+      ctx.fillStyle = '#4c1d6e';
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.35)';
+      ctx.lineWidth = 2;
+      // Stone curl halo
+      ctx.beginPath();
+      ctx.arc(tx - 58, this.groundY - 188, 36, 0, Math.PI * 2);
+      ctx.arc(tx + 58, this.groundY - 188, 36, 0, Math.PI * 2);
+      ctx.arc(tx, this.groundY - 222, 48, 0, Math.PI * 2);
+      ctx.fill();
+      // Sculpted head & torso
+      ctx.fillStyle = '#581c87';
+      ctx.beginPath();
+      ctx.ellipse(tx, this.groundY - 186, 42, 46, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Serene closed eyes & gemstone forehead mark
+      ctx.strokeStyle = 'rgba(251, 207, 232, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(tx - 15, this.groundY - 184, 8, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.moveTo(tx + 7, this.groundY - 184);
+      ctx.arc(tx + 15, this.groundY - 184, 8, 0.15 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(244, 114, 182, 0.72)';
+      this.drawDiamondInsignia(ctx, tx, this.groundY - 204, 7);
+      // Outstretched stone forearms framing the Beach House
+      ctx.fillStyle = '#4c1d6e';
+      ctx.beginPath();
+      ctx.moveTo(tx - 140, this.groundY - 110);
+      ctx.lineTo(tx - 65, this.groundY - 140);
+      ctx.lineTo(tx - 60, this.groundY - 96);
+      ctx.lineTo(tx - 125, this.groundY - 82);
+      ctx.closePath();
+      ctx.moveTo(tx + 140, this.groundY - 110);
+      ctx.lineTo(tx + 65, this.groundY - 140);
+      ctx.lineTo(tx + 60, this.groundY - 96);
+      ctx.lineTo(tx + 125, this.groundY - 82);
+      ctx.closePath();
+      ctx.fill();
+
+      // Steven's Beach House perched on the Temple front!
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(tx - 54, this.groundY - 94, 108, 56);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(tx - 48, this.groundY - 88, 96, 44);
+      // Pitched cedar roof
+      ctx.fillStyle = '#9a3412';
+      ctx.beginPath();
+      ctx.moveTo(tx - 62, this.groundY - 88);
+      ctx.lineTo(tx, this.groundY - 126);
+      ctx.lineTo(tx + 62, this.groundY - 88);
+      ctx.closePath();
+      ctx.fill();
+      // Warm glowing Beach House windows & wooden deck railing
+      ctx.fillStyle = '#fde047';
+      ctx.fillRect(tx - 34, this.groundY - 78, 18, 22);
+      ctx.fillRect(tx + 16, this.groundY - 78, 18, 22);
+      ctx.fillStyle = '#fb923c';
+      ctx.fillRect(tx - 8, this.groundY - 76, 16, 30);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(tx - 60, this.groundY - 46, 120, 6);
+      ctx.fillRect(tx - 52, this.groundY - 40, 8, 40);
+      ctx.fillRect(tx + 44, this.groundY - 40, 8, 40);
+
+      // Beach City Hilltop Lighthouse + Volumetric Rotating Beam
+      const lx = 390 - bgOffset;
+      ctx.fillStyle = '#4c1d6e';
+      ctx.beginPath();
+      ctx.moveTo(lx - 75, this.groundY);
+      ctx.quadraticCurveTo(lx, this.groundY - 95, lx + 82, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(lx - 14, this.groundY - 70);
+      ctx.lineTo(lx - 10, this.groundY - 155);
+      ctx.lineTo(lx + 10, this.groundY - 155);
+      ctx.lineTo(lx + 14, this.groundY - 70);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#e11d48';
+      ctx.fillRect(lx - 12, this.groundY - 135, 24, 14);
+      ctx.fillRect(lx - 13, this.groundY - 102, 26, 14);
+      ctx.fillStyle = '#be123c';
+      ctx.beginPath();
+      ctx.arc(lx, this.groundY - 160, 12, Math.PI, 0);
+      ctx.fill();
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(lx - 8, this.groundY - 162, 16, 8);
+      const beamAngle = Math.sin(anim * 0.95) * 0.34;
+      ctx.save();
+      ctx.translate(lx, this.groundY - 158);
+      ctx.rotate(beamAngle);
+      const beamG = ctx.createLinearGradient(0, 0, 320, 0);
+      beamG.addColorStop(0, 'rgba(254, 249, 195, 0.34)');
+      beamG.addColorStop(1, 'rgba(254, 249, 195, 0)');
+      ctx.fillStyle = beamG;
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(320, -56);
+      ctx.lineTo(320, 56);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Funland Ferris Wheel (Spokes, A-Frame Legs & Rotating Lit Gondolas!)
+      const fx = 1780 - bgOffset;
+      const fy = this.groundY - 128;
+      const fr = 82;
+      ctx.strokeStyle = 'rgba(251, 207, 232, 0.45)';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(fx - 46, this.groundY); ctx.lineTo(fx, fy); ctx.lineTo(fx + 46, this.groundY);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.55)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(fx, fy, fr * 0.68, 0, Math.PI * 2);
+      ctx.stroke();
+      const rot = anim * 0.25;
+      for (let g = 0; g < 10; g++) {
+        const a = rot + (g * Math.PI * 2) / 10;
+        const gx = fx + Math.cos(a) * fr;
+        const gy = fy + Math.sin(a) * fr;
+        ctx.strokeStyle = 'rgba(251, 207, 232, 0.32)';
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(fx, fy); ctx.lineTo(gx, gy);
+        ctx.stroke();
+        ctx.fillStyle = g % 2 === 0 ? '#fde047' : '#f472b6';
+        ctx.fillRect(gx - 5, gy - 2, 10, 9);
+      }
+      ctx.restore();
+    } else if (stageIndex === 2) {
+      // Galaxy Warp & Lunar Sea Spire: Floating Broken Spire Columns, Cascading Sky Waterfalls & Warp Beams
+      ctx.save();
+      // Cosmic nebula cloud bands
+      const neb = ctx.createRadialGradient(this.canvasWidth * 0.45, 160, 20, this.canvasWidth * 0.45, 160, 420);
+      neb.addColorStop(0, 'rgba(56, 189, 248, 0.22)');
+      neb.addColorStop(0.55, 'rgba(139, 92, 246, 0.14)');
+      neb.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = neb;
+      ctx.fillRect(0, 0, this.canvasWidth, this.groundY);
+
+      // Towering Ancient Lunar Sea Spire Towers & Broken Aqueducts with Waterfalls
+      for (const sx of [320, 860, 1440, 2040]) {
+        const x = sx - bgOffset;
+        const floatY = Math.sin(anim * 1.1 + sx * 0.01) * 7;
+        // Translucent floating crystal obelisk
+        const obG = ctx.createLinearGradient(x - 36, this.groundY - 260, x + 36, this.groundY);
+        obG.addColorStop(0, 'rgba(186, 230, 253, 0.42)');
+        obG.addColorStop(0.5, 'rgba(56, 189, 248, 0.24)');
+        obG.addColorStop(1, 'rgba(30, 27, 75, 0.40)');
+        ctx.fillStyle = obG;
+        ctx.beginPath();
+        ctx.moveTo(x - 32, this.groundY - 50 + floatY);
+        ctx.lineTo(x - 24, this.groundY - 230 + floatY);
+        ctx.lineTo(x, this.groundY - 275 + floatY);
+        ctx.lineTo(x + 24, this.groundY - 230 + floatY);
+        ctx.lineTo(x + 32, this.groundY - 50 + floatY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Cascading glowing waterfall pouring off spire ledge into the clouds
+        const wfGrad = ctx.createLinearGradient(x, this.groundY - 190, x, this.groundY);
+        wfGrad.addColorStop(0, 'rgba(186, 230, 253, 0.55)');
+        wfGrad.addColorStop(1, 'rgba(56, 189, 248, 0.05)');
+        ctx.fillStyle = wfGrad;
+        ctx.fillRect(x - 9, this.groundY - 185 + floatY, 18, 185 - floatY);
+        // Animated water shimmer lines
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+        const dropY = ((anim * 95 + sx) % 160);
+        ctx.fillRect(x - 4, this.groundY - 180 + dropY, 3, 24);
+        ctx.fillRect(x + 2, this.groundY - 180 + ((dropY + 80) % 160), 2, 18);
+
+        // Orbiting crystal halo ring
+        ctx.strokeStyle = 'rgba(165, 243, 252, 0.48)';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.ellipse(x, this.groundY - 220 + floatY, 44, 11, -0.14, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.restore();
     } else if (stageIndex === 3) {
-      // Prime Kindergarten: Towering Injector Drills on Layered Basalt Bluffs
+      // Prime Kindergarten: Sheer Violet Canyon Walls Dotted with Gem Exit Holes + Weathered Injector Drills
       ctx.save();
-      ctx.fillStyle = 'rgba(88, 28, 135, 0.42)';
-      for (const drillX of [320, 780, 1260, 1740, 2220]) {
-        const dx = drillX - bgOffset;
-        // Injector Drill Head & Canister
-        ctx.beginPath();
-        ctx.moveTo(dx - 30, this.groundY - 200);
-        ctx.lineTo(dx + 30, this.groundY - 200);
-        ctx.lineTo(dx, this.groundY - 20);
-        ctx.closePath();
-        ctx.fill();
-        // Nutrient fluid canister glow
-        ctx.fillStyle = 'rgba(192, 132, 252, 0.30)';
-        ctx.fillRect(dx - 12, this.groundY - 180, 24, 60);
-        ctx.fillStyle = 'rgba(88, 28, 135, 0.42)';
-      }
-      ctx.restore();
-    } else if (stageIndex === 4) {
-      // Mantle Core: Geothermal Magma Spires & Heat Shimmer
-      ctx.save();
-      ctx.fillStyle = 'rgba(185, 28, 28, 0.32)';
-      for (const gx of [450, 1100, 1750, 2300]) {
-        const x = gx - bgOffset;
-        ctx.beginPath();
-        ctx.moveTo(x - 40, this.groundY);
-        ctx.lineTo(x - 12, this.groundY - 160);
-        ctx.lineTo(x + 12, this.groundY - 160);
-        ctx.lineTo(x + 40, this.groundY);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.restore();
-    } else if (stageIndex === 5) {
-      // Bismuth Forge: Volcanic Smelter Furnaces & Massive Hanging Chains
-      ctx.save();
-      ctx.fillStyle = 'rgba(124, 45, 18, 0.38)';
-      for (const fx of [500, 1200, 1900]) {
-        const x = fx - bgOffset;
-        ctx.fillRect(x - 45, this.groundY - 170, 90, 170);
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.35)';
-        ctx.beginPath();
-        ctx.arc(x, this.groundY - 100, 30, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = 'rgba(124, 45, 18, 0.38)';
-      }
-      ctx.restore();
-    } else if (stageIndex === 6) {
-      // Frozen North: Glacial Ice Peaks & Aurora Ribbons
-      ctx.save();
-      const auroraPulse = 0.18 + 0.10 * Math.sin(anim * 1.5);
-      ctx.fillStyle = `rgba(16, 185, 129, ${auroraPulse})`;
+      // Tiered Canyon Cliffs with Carved Gem Exit Holes
+      ctx.fillStyle = '#240b47';
       ctx.beginPath();
-      ctx.moveTo(0, 80);
-      ctx.bezierCurveTo(300, 30 + Math.sin(anim) * 20, 600, 110 - Math.sin(anim) * 20, 1000, 60);
-      ctx.lineTo(1000, 140);
-      ctx.bezierCurveTo(600, 170, 300, 90, 0, 140);
+      ctx.moveTo(-200, this.groundY);
+      ctx.lineTo(-200, this.groundY - 255);
+      for (let cx = -120; cx < 2800; cx += 180) {
+        const px = cx - farOffset;
+        const h = 230 + Math.sin(cx * 0.015) * 42;
+        ctx.lineTo(px, this.groundY - h);
+      }
+      ctx.lineTo(this.canvasWidth + 200, this.groundY);
       ctx.closePath();
       ctx.fill();
 
-      // Sharp Ice Peaks
-      ctx.fillStyle = 'rgba(15, 59, 76, 0.40)';
-      for (const px of [300, 750, 1300, 1850, 2350]) {
-        const x = px - bgOffset;
+      // Iconic Kindergarten Wall Exit Holes (humanoid / quartz birth hollows carved into sheer rock!)
+      for (let hx = 120; hx < 2500; hx += 165) {
+        const x = hx - farOffset;
+        const hy = this.groundY - 70 - ((hx * 37) % 130);
+        ctx.fillStyle = '#090314';
         ctx.beginPath();
-        ctx.moveTo(x - 55, this.groundY);
-        ctx.lineTo(x, this.groundY - 190);
-        ctx.lineTo(x + 55, this.groundY);
+        ctx.arc(x, hy - 20, 9, 0, Math.PI * 2);
+        ctx.fillRect(x - 11, hy - 12, 22, 24);
+        ctx.fillRect(x - 16, hy - 11, 32, 7);
+        ctx.fillRect(x - 9, hy + 11, 7, 14);
+        ctx.fillRect(x + 2, hy + 11, 7, 14);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Detailed Towering Homeworld Injector Drills
+      for (const drillX of [310, 790, 1290, 1780, 2240]) {
+        const dx = drillX - bgOffset;
+        // Jointed tripod legs
+        ctx.strokeStyle = '#4c1d95';
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.moveTo(dx - 16, this.groundY - 125); ctx.lineTo(dx - 54, this.groundY - 62); ctx.lineTo(dx - 44, this.groundY);
+        ctx.moveTo(dx + 16, this.groundY - 125); ctx.lineTo(dx + 54, this.groundY - 62); ctx.lineTo(dx + 44, this.groundY);
+        ctx.stroke();
+        // Central iron drill shaft & spiral auger
+        ctx.fillStyle = '#3b0764';
+        ctx.fillRect(dx - 10, this.groundY - 130, 20, 130);
+        ctx.fillStyle = '#581c87';
+        ctx.beginPath();
+        ctx.moveTo(dx - 24, this.groundY - 140);
+        ctx.lineTo(dx + 24, this.groundY - 140);
+        ctx.lineTo(dx, this.groundY - 8);
+        ctx.closePath();
+        ctx.fill();
+        // Faceted glowing crystal bio-poison reservoir on top
+        const glowA = 0.45 + 0.22 * Math.sin(anim * 2.2 + drillX);
+        ctx.fillStyle = `rgba(216, 180, 254, ${glowA})`;
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(dx, this.groundY - 275);
+        ctx.lineTo(dx + 26, this.groundY - 232);
+        ctx.lineTo(dx + 22, this.groundY - 150);
+        ctx.lineTo(dx - 22, this.groundY - 150);
+        ctx.lineTo(dx - 26, this.groundY - 232);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Inner specular facet highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.beginPath();
+        ctx.moveTo(dx, this.groundY - 270);
+        ctx.lineTo(dx + 10, this.groundY - 232);
+        ctx.lineTo(dx + 8, this.groundY - 154);
+        ctx.lineTo(dx - 4, this.groundY - 154);
         ctx.closePath();
         ctx.fill();
       }
       ctx.restore();
-    } else if (stageIndex === 7) {
-      // Pink Diamond Zoo: Cosmic Glass Stasis Domes & Saturnian Rings
+    } else if (stageIndex === 4) {
+      // Earth's Mantle Core: Subterranean Stalactites, Cascading Magma Rivers & The Colossal Pulsing Cluster Bubble!
       ctx.save();
-      ctx.fillStyle = 'rgba(219, 39, 119, 0.28)';
-      ctx.strokeStyle = 'rgba(244, 114, 182, 0.40)';
-      ctx.lineWidth = 2.5;
-      for (const zx of [500, 1250, 2000]) {
-        const x = zx - bgOffset;
+      // Colossal Cluster Bubble Pulsing in the Abyss
+      const clX = 960 - farOffset;
+      const clY = this.groundY - 165;
+      const clPulse = 1 + Math.sin(anim * 1.8) * 0.035;
+      const clG = ctx.createRadialGradient(clX, clY, 24, clX, clY, 185 * clPulse);
+      clG.addColorStop(0, 'rgba(254, 240, 138, 0.50)');
+      clG.addColorStop(0.45, 'rgba(244, 114, 182, 0.32)');
+      clG.addColorStop(0.82, 'rgba(234, 88, 12, 0.22)');
+      clG.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = clG;
+      ctx.beginPath();
+      ctx.arc(clX, clY, 185 * clPulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(254, 215, 170, 0.45)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(clX, clY, 128 * clPulse, 0, Math.PI * 2);
+      ctx.stroke();
+      // Swirling multicolored gem-shard constellations sealed inside the Cluster bubble
+      const shardCols = ['#fb7185', '#38bdf8', '#fde047', '#c084fc', '#4ade80'];
+      for (let s = 0; s < 14; s++) {
+        const ang = anim * 0.35 + (s * Math.PI * 2) / 14;
+        const rad = 32 + (s % 4) * 22;
+        ctx.fillStyle = shardCols[s % shardCols.length];
+        ctx.globalAlpha = 0.52;
+        this.drawDiamondInsignia(ctx, clX + Math.cos(ang) * rad, clY + Math.sin(ang) * rad, 5 + (s % 3) * 2);
+      }
+      ctx.globalAlpha = 1;
+
+      // Volcanic Cavern Stalactites hanging from ceiling + Magma Falls
+      ctx.fillStyle = '#290707';
+      for (let sx = 60; sx < 2600; sx += 155) {
+        const x = sx - bgOffset;
+        const len = 75 + ((sx * 17) % 85);
         ctx.beginPath();
-        ctx.arc(x, this.groundY - 80, 80, Math.PI, 0);
+        ctx.moveTo(x - 36, 0); ctx.lineTo(x + 36, 0); ctx.lineTo(x, len);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Rising Geothermal Magma Spires & Pouring Lava Columns
+      for (const gx of [430, 1120, 1780, 2320]) {
+        const x = gx - bgOffset;
+        ctx.fillStyle = '#450a0a';
+        ctx.beginPath();
+        ctx.moveTo(x - 58, this.groundY);
+        ctx.lineTo(x - 20, this.groundY - 210);
+        ctx.lineTo(x + 20, this.groundY - 210);
+        ctx.lineTo(x + 58, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        // Glowing lava fissure streak
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.55)';
+        ctx.fillRect(x - 5, this.groundY - 200, 10, 200);
+      }
+      ctx.restore();
+    } else if (stageIndex === 5) {
+      // Bismuth's Forge: Vaulted Smelter Arches, Pouring Lava Waterfalls, Hanging Iron Chains & Weapon Silhouettes
+      ctx.save();
+      // Vaulted Obsidian Forge Arches & Roaring Furnaces
+      for (const fx of [420, 1080, 1740, 2320]) {
+        const x = fx - bgOffset;
+        // Heavy vaulted masonry arch
+        ctx.fillStyle = '#3b1006';
+        ctx.fillRect(x - 75, this.groundY - 240, 150, 240);
+        // Blazing circular smelter hearth inside
+        const fPulse = 0.65 + 0.25 * Math.sin(anim * 3.8 + fx);
+        const fGrad = ctx.createRadialGradient(x, this.groundY - 115, 8, x, this.groundY - 115, 58);
+        fGrad.addColorStop(0, `rgba(254, 249, 195, ${fPulse})`);
+        fGrad.addColorStop(0.5, `rgba(249, 115, 22, ${fPulse * 0.85})`);
+        fGrad.addColorStop(1, 'rgba(124, 45, 18, 0)');
+        ctx.fillStyle = fGrad;
+        ctx.beginPath();
+        ctx.arc(x, this.groundY - 115, 58, 0, Math.PI * 2);
+        ctx.fill();
+        // Vertical pouring molten lava waterfall stream
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.65)';
+        ctx.fillRect(x - 10, 0, 20, this.groundY);
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.75)';
+        ctx.fillRect(x - 4, 0, 8, this.groundY);
+        // Heavy swaying iron chains beside furnace
+        const sway = Math.sin(anim * 1.4 + fx) * 6;
+        ctx.strokeStyle = '#1c1917';
+        ctx.lineWidth = 4;
+        for (const side of [-52, 52]) {
+          ctx.beginPath();
+          ctx.moveTo(x + side, 0);
+          ctx.quadraticCurveTo(x + side + sway, 135, x + side + sway * 1.3, 240);
+          ctx.stroke();
+          // Chain links
+          for (let cy = 18; cy < 235; cy += 22) {
+            ctx.beginPath();
+            ctx.ellipse(x + side + sway * (cy / 240), cy, 4, 7, 0, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        }
+      }
+      ctx.restore();
+    } else if (stageIndex === 6) {
+      // Frozen North: Multi-Ribbon Undulating Aurora Borealis & Crystalline Ice Cathedral Spires
+      ctx.save();
+      // Multi-ribbon luminous Aurora curtains
+      const ribbons = [
+        { y: 78, col: 'rgba(16, 185, 129, 0.30)', phase: 0 },
+        { y: 112, col: 'rgba(56, 189, 248, 0.25)', phase: 1.8 },
+        { y: 54, col: 'rgba(167, 139, 250, 0.20)', phase: 3.4 }
+      ];
+      for (const r of ribbons) {
+        const w1 = Math.sin(anim * 1.1 + r.phase) * 26;
+        const w2 = Math.cos(anim * 0.9 + r.phase) * 24;
+        ctx.fillStyle = r.col;
+        ctx.beginPath();
+        ctx.moveTo(0, r.y);
+        ctx.bezierCurveTo(this.canvasWidth * 0.33, r.y - 38 + w1, this.canvasWidth * 0.66, r.y + 42 + w2, this.canvasWidth, r.y - 12);
+        ctx.lineTo(this.canvasWidth, r.y + 72);
+        ctx.bezierCurveTo(this.canvasWidth * 0.66, r.y + 98 + w2, this.canvasWidth * 0.33, r.y + 22 + w1, 0, r.y + 68);
+        ctx.closePath();
+        ctx.fill();
+      }
+      // Far sunlit glacial mountain range
+      ctx.fillStyle = 'rgba(12, 74, 110, 0.50)';
+      for (const px of [240, 680, 1180, 1720, 2280]) {
+        const x = px - farOffset;
+        ctx.beginPath();
+        ctx.moveTo(x - 135, this.groundY);
+        ctx.lineTo(x, this.groundY - 265);
+        ctx.lineTo(x + 135, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        // Lit ice facet on right slope
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.24)';
+        ctx.beginPath();
+        ctx.moveTo(x, this.groundY - 265);
+        ctx.lineTo(x + 135, this.groundY);
+        ctx.lineTo(x + 18, this.groundY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = 'rgba(12, 74, 110, 0.50)';
+      }
+      // Closer translucent crystalline Ice Cathedral Spires
+      for (const sx of [380, 960, 1580, 2140]) {
+        const x = sx - bgOffset;
+        ctx.fillStyle = 'rgba(125, 211, 252, 0.24)';
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.50)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x - 34, this.groundY);
+        ctx.lineTo(x - 16, this.groundY - 175);
+        ctx.lineTo(x, this.groundY - 215);
+        ctx.lineTo(x + 18, this.groundY - 165);
+        ctx.lineTo(x + 34, this.groundY);
+        ctx.closePath();
         ctx.fill();
         ctx.stroke();
       }
       ctx.restore();
-    } else if (stageIndex === 8) {
-      // Homeworld Abduction Shore: Looming Green Hand Warship
+    } else if (stageIndex === 7) {
+      // Pink Diamond's Zoo: Ringed Rose-Gold Gas Giant Planet, Luminous Bio-Domes with Pink Trees & Orbital Arches
       ctx.save();
-      ctx.fillStyle = 'rgba(2, 132, 199, 0.42)';
+      // Giant Ringed Rose-Cosmos Planet
+      const plX = 720 - farOffset * 0.45;
+      const plY = 148;
+      const plG = ctx.createRadialGradient(plX - 24, plY - 22, 12, plX, plY, 92);
+      plG.addColorStop(0, '#fbcfe8');
+      plG.addColorStop(0.55, '#db2777');
+      plG.addColorStop(1, '#4c0519');
+      ctx.fillStyle = plG;
       ctx.beginPath();
-      ctx.arc(900 - bgOffset, 120, 140, 0, Math.PI * 2);
+      ctx.arc(plX, plY, 82, 0, Math.PI * 2);
       ctx.fill();
-      // Warship fingers
-      ctx.fillRect(800 - bgOffset, 70, 30, 90);
-      ctx.fillRect(850 - bgOffset, 50, 30, 120);
-      ctx.fillRect(900 - bgOffset, 50, 30, 120);
-      ctx.fillRect(950 - bgOffset, 70, 30, 90);
-      ctx.restore();
-    } else if (stageIndex === 9) {
-      // Homeworld Courtroom: Monolithic Diamond Statues
-      ctx.save();
-      ctx.fillStyle = 'rgba(6, 78, 59, 0.45)';
-      for (const cx of [600, 1300, 2000]) {
-        const x = cx - bgOffset;
-        ctx.fillRect(x - 40, this.groundY - 210, 80, 210);
+      ctx.strokeStyle = 'rgba(253, 242, 248, 0.52)';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.ellipse(plX, plY + 4, 148, 24, -0.22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Gleaming Rose-Quartz Habitat Bio-Domes enclosing Pink Blossom Trees
+      for (const zx of [460, 1180, 1920]) {
+        const x = zx - bgOffset;
+        const domeG = ctx.createRadialGradient(x - 20, this.groundY - 120, 10, x, this.groundY - 60, 120);
+        domeG.addColorStop(0, 'rgba(253, 242, 248, 0.36)');
+        domeG.addColorStop(0.6, 'rgba(244, 114, 182, 0.22)');
+        domeG.addColorStop(1, 'rgba(131, 24, 67, 0.35)');
+        ctx.fillStyle = domeG;
+        ctx.strokeStyle = 'rgba(251, 207, 232, 0.60)';
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
-        ctx.moveTo(x - 55, this.groundY - 210);
-        ctx.lineTo(x, this.groundY - 250);
-        ctx.lineTo(x + 55, this.groundY - 210);
+        ctx.arc(x, this.groundY, 115, Math.PI, 0);
         ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Tiny pink sanctuary cherry-blossom trees inside the dome
+        ctx.fillStyle = '#831843';
+        ctx.fillRect(x - 36, this.groundY - 52, 7, 52);
+        ctx.fillRect(x + 22, this.groundY - 64, 8, 64);
+        ctx.fillStyle = 'rgba(249, 168, 212, 0.72)';
+        ctx.beginPath();
+        ctx.arc(x - 32, this.groundY - 62, 24, 0, Math.PI * 2);
+        ctx.arc(x + 26, this.groundY - 76, 30, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
-    } else if (stageIndex === 10) {
-      // Change Your Mind: White Diamond Mecha Citadel & Radiant Crown Beams
+    } else if (stageIndex === 8) {
+      // Homeworld Abduction Shore: Looming Colossal Emerald Hand Warship Descending Through Storm Clouds
       ctx.save();
-      const mechaX = 950 - bgOffset;
-      const pulse = 0.22 + 0.12 * Math.sin(anim * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+      const shipX = 820 - bgOffset * 0.75;
+      const shipY = 148 + Math.sin(anim * 1.1) * 6;
+      // Pulsing emerald tractor-beam cone sweeping down onto the shore
+      const beamAlpha = 0.16 + 0.08 * Math.sin(anim * 2.8);
+      const trG = ctx.createLinearGradient(shipX, shipY + 40, shipX, this.groundY);
+      trG.addColorStop(0, `rgba(52, 211, 153, ${beamAlpha * 1.6})`);
+      trG.addColorStop(1, 'rgba(16, 185, 129, 0.02)');
+      ctx.fillStyle = trG;
       ctx.beginPath();
-      ctx.arc(mechaX, 90, 140, 0, Math.PI * 2);
+      ctx.moveTo(shipX - 55, shipY + 35);
+      ctx.lineTo(shipX + 55, shipY + 35);
+      ctx.lineTo(shipX + 210, this.groundY);
+      ctx.lineTo(shipX - 210, this.groundY);
+      ctx.closePath();
       ctx.fill();
-      // Radiant Light Beams
-      ctx.strokeStyle = `rgba(254, 240, 138, ${pulse * 0.8})`;
-      ctx.lineWidth = 3;
-      for (let a = -0.8; a <= 0.8; a += 0.3) {
+
+      // Sculpted Emerald Hand Warship (Palm + 5 Articulated Fingers with Neon Conduit Seams)
+      const hullG = ctx.createLinearGradient(shipX - 180, shipY - 110, shipX + 180, shipY + 80);
+      hullG.addColorStop(0, '#10b981');
+      hullG.addColorStop(0.5, '#047857');
+      hullG.addColorStop(1, '#064e3b');
+      ctx.fillStyle = hullG;
+      ctx.strokeStyle = '#6ee7b7';
+      ctx.lineWidth = 2.5;
+      // Palm & forearm hull
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(shipX - 135, shipY - 34, 245, 92, 26) : ctx.rect(shipX - 135, shipY - 34, 245, 92);
+      ctx.fill();
+      ctx.stroke();
+      // Five colossal emerald warship fingers jutting forward/upward
+      const fingers = [
+        { x: -115, y: -118, w: 32, h: 98 },
+        { x: -62, y: -142, w: 34, h: 122 },
+        { x: -6, y: -148, w: 34, h: 128 },
+        { x: 50, y: -134, w: 32, h: 112 },
+        { x: 90, y: -24, w: 58, h: 32 }
+      ];
+      for (const fg of fingers) {
+        ctx.fillStyle = hullG;
         ctx.beginPath();
-        ctx.moveTo(mechaX, 90);
-        ctx.lineTo(mechaX + Math.sin(a) * 320, 90 - Math.cos(a) * 220);
+        ctx.roundRect ? ctx.roundRect(shipX + fg.x, shipY + fg.y, fg.w, fg.h, 12) : ctx.rect(shipX + fg.x, shipY + fg.y, fg.w, fg.h);
+        ctx.fill();
+        ctx.stroke();
+        // Glowing cyan bridge/conduit line
+        ctx.fillStyle = '#a7f3d0';
+        ctx.fillRect(shipX + fg.x + fg.w * 0.42, shipY + fg.y + 12, 4, Math.max(12, fg.h - 24));
+      }
+      // Central emerald bridge diamond core
+      ctx.fillStyle = '#ecfdf5';
+      this.drawDiamondInsignia(ctx, shipX - 12, shipY + 12, 16);
+      ctx.restore();
+    } else if (stageIndex === 9) {
+      // Homeworld Trial & Courtroom: Monumental Jade Columns, Glowing Yellow & Blue Diamond Stained Crests & Floating Palanquins
+      ctx.save();
+      for (const cx of [460, 1080, 1720, 2320]) {
+        const x = cx - bgOffset;
+        // Towering obsidian-jade fluted pillar
+        ctx.fillStyle = '#064e3b';
+        ctx.fillRect(x - 42, 0, 84, this.groundY);
+        ctx.fillStyle = 'rgba(110, 231, 183, 0.16)';
+        ctx.fillRect(x - 24, 0, 10, this.groundY);
+        ctx.fillRect(x + 14, 0, 10, this.groundY);
+        // Tall stained-glass Diamond Authority crest window between columns
+        const wx = x + 310;
+        ctx.fillStyle = 'rgba(2, 44, 34, 0.72)';
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(wx, 42);
+        ctx.lineTo(wx + 72, 185);
+        ctx.lineTo(wx, 330);
+        ctx.lineTo(wx - 72, 185);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Yellow & Blue Diamond luminous inner panes
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.42)';
+        this.drawDiamondInsignia(ctx, wx - 26, 185, 22);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.42)';
+        this.drawDiamondInsignia(ctx, wx + 26, 185, 22);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        this.drawDiamondInsignia(ctx, wx, 134, 20);
+      }
+      ctx.restore();
+    } else if (stageIndex === 10) {
+      // White Diamond's Citadel: Towering Monochrome-Prismatic Mecha Head Silhouette, Sweeping Blinding God-Rays & Floating Monoliths
+      ctx.save();
+      const mechaX = 760 - bgOffset * 0.55;
+      const mechaY = 175;
+      const pulse = 0.28 + 0.12 * Math.sin(anim * 1.9);
+
+      // Sweeping Cathedral God-Rays radiating from White Diamond's Crown
+      for (let i = -5; i <= 5; i++) {
+        const ang = i * 0.22 + Math.sin(anim * 0.4) * 0.04;
+        ctx.fillStyle = i % 2 === 0 ? `rgba(255, 255, 255, ${pulse * 0.75})` : `rgba(254, 240, 138, ${pulse * 0.48})`;
+        ctx.beginPath();
+        ctx.moveTo(mechaX, mechaY);
+        ctx.lineTo(mechaX + Math.sin(ang - 0.05) * 680, mechaY - Math.cos(ang - 0.05) * 480);
+        ctx.lineTo(mechaX + Math.sin(ang + 0.05) * 680, mechaY - Math.cos(ang + 0.05) * 480);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Towering White Diamond Head-Ship Silhouette (Iconic 5-Spiked Star Hair + Glowing Forehead Diamond)
+      const headG = ctx.createRadialGradient(mechaX, mechaY, 18, mechaX, mechaY, 190);
+      headG.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+      headG.addColorStop(0.55, 'rgba(226, 232, 240, 0.52)');
+      headG.addColorStop(1, 'rgba(148, 163, 184, 0.08)');
+      ctx.fillStyle = headG;
+      // 5 Iconic towering star-crown hair spikes
+      ctx.beginPath();
+      ctx.moveTo(mechaX - 95, mechaY + 80);
+      ctx.lineTo(mechaX - 185, mechaY + 12);
+      ctx.lineTo(mechaX - 115, mechaY - 30);
+      ctx.lineTo(mechaX - 140, mechaY - 120);
+      ctx.lineTo(mechaX - 48, mechaY - 76);
+      ctx.lineTo(mechaX, mechaY - 165);
+      ctx.lineTo(mechaX + 48, mechaY - 76);
+      ctx.lineTo(mechaX + 140, mechaY - 120);
+      ctx.lineTo(mechaX + 115, mechaY - 30);
+      ctx.lineTo(mechaX + 185, mechaY + 12);
+      ctx.lineTo(mechaX + 95, mechaY + 80);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Monumental Mecha Torso & Glowing Forehead Diamond Core
+      ctx.fillStyle = 'rgba(248, 250, 252, 0.55)';
+      ctx.beginPath();
+      ctx.moveTo(mechaX - 115, this.groundY);
+      ctx.lineTo(mechaX - 68, mechaY + 62);
+      ctx.lineTo(mechaX + 68, mechaY + 62);
+      ctx.lineTo(mechaX + 115, this.groundY);
+      ctx.closePath();
+      ctx.fill();
+      // Forehead radiant White Diamond jewel
+      ctx.fillStyle = '#ffffff';
+      this.drawDiamondInsignia(ctx, mechaX, mechaY - 22, 24);
+      ctx.strokeStyle = 'rgba(254, 240, 138, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(mechaX, mechaY - 22, 34 + Math.sin(anim * 3) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Floating Monochrome Citadel Obelisks
+      for (const ox of [240, 1360, 1880, 2360]) {
+        const x = ox - bgOffset;
+        const fy = Math.sin(anim * 1.2 + ox) * 8;
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.35)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(x, this.groundY - 235 + fy);
+        ctx.lineTo(x + 28, this.groundY - 125 + fy);
+        ctx.lineTo(x, this.groundY - 35 + fy);
+        ctx.lineTo(x - 28, this.groundY - 125 + fy);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
       }
       ctx.restore();
@@ -490,6 +1032,13 @@ class EnvironmentRenderer {
         ctx.beginPath();
         ctx.ellipse(padX, this.groundY - 2, 42, 9, 0, 0, Math.PI * 2);
         ctx.fill();
+
+        // Translucent rising warp-stream beam above active warp dais
+        const beamG = ctx.createLinearGradient(padX, this.groundY - 190, padX, this.groundY - 2);
+        beamG.addColorStop(0, 'rgba(56, 189, 248, 0)');
+        beamG.addColorStop(1, `rgba(103, 232, 249, ${warpPulse * 0.42})`);
+        ctx.fillStyle = beamG;
+        ctx.fillRect(padX - 28, this.groundY - 190, 56, 188);
 
         // Central Warp Gem Insignia
         ctx.fillStyle = '#ffffff';
@@ -671,11 +1220,19 @@ class EnvironmentRenderer {
       ctx.fillStyle = citadelGrad;
       ctx.fillRect(bleedL, this.groundY, bleedW, bleedH);
 
-      // Prismatic Rainbow Shimmer along the grand platform
+      // Prismatic Rainbow Shimmer & Diamond Floor Facet Seams along the grand platform
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+      ctx.lineWidth = 1.5;
+      for (let gx = bleedL; gx < bleedL + bleedW; gx += 120) {
+        ctx.beginPath();
+        ctx.moveTo(gx, this.groundY);
+        ctx.lineTo(gx - 42, this.groundY + 75);
+        ctx.stroke();
+      }
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(bleedL, this.groundY - 6, bleedW, 8);
       for (let dx = 350; dx < this.stageWidth; dx += 500) {
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = '#fde047';
         this.drawDiamondInsignia(ctx, dx, this.groundY + 30, 22);
       }
     }

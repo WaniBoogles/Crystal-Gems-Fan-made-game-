@@ -63,10 +63,43 @@ class GemAudioEngine {
           this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
           this.sfxGainNode.connect(this.ctx.destination);
 
-          // Music Master Gain: Smooth musical volume
+          // Music Master Gain + Warm Spatial Echo Bus (Aivi & Surasshu lush atmosphere)
           this.musicGainNode = this.ctx.createGain();
           this.musicGainNode.gain.setValueAtTime(this.musicEnabled ? this.musicVolume : 0, this.ctx.currentTime);
-          this.musicGainNode.connect(this.ctx.destination);
+          let musicOut = this.ctx.destination;
+          try {
+            if (typeof this.ctx.createDynamicsCompressor === 'function') {
+              this.musicCompressor = this.ctx.createDynamicsCompressor();
+              this.musicCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+              this.musicCompressor.knee.setValueAtTime(18, this.ctx.currentTime);
+              this.musicCompressor.ratio.setValueAtTime(4, this.ctx.currentTime);
+              this.musicCompressor.connect(this.ctx.destination);
+              musicOut = this.musicCompressor;
+            }
+          } catch (ce) {}
+          this.musicGainNode.connect(musicOut);
+
+          // Gentle warm low-pass echo send for dreamy acoustic / cosmic depth
+          try {
+            if (typeof this.ctx.createDelay === 'function' && typeof this.ctx.createBiquadFilter === 'function') {
+              const delay = this.ctx.createDelay(1.0);
+              delay.delayTime.setValueAtTime(0.24, this.ctx.currentTime);
+              const dFilter = this.ctx.createBiquadFilter();
+              dFilter.type = 'lowpass';
+              dFilter.frequency.setValueAtTime(1650, this.ctx.currentTime);
+              const fb = this.ctx.createGain();
+              fb.gain.setValueAtTime(0.26, this.ctx.currentTime);
+              const wet = this.ctx.createGain();
+              wet.gain.setValueAtTime(0.22, this.ctx.currentTime);
+              this.musicGainNode.connect(delay);
+              delay.connect(dFilter);
+              dFilter.connect(fb);
+              fb.connect(delay);
+              dFilter.connect(wet);
+              wet.connect(musicOut);
+              this._musicEchoNodes = { delay, dFilter, fb, wet };
+            }
+          } catch (de) {}
 
           // Pre-build short white-noise buffer once for synth percussion
           try {
@@ -1466,6 +1499,12 @@ class GemAudioEngine {
 
     this.musicBeat = 0;
     this.fadeInMusic(0.75);
+    if (typeof window !== 'undefined' && window.game && typeof window.game.syncBgmUI === 'function') {
+      try { window.game.syncBgmUI(); } catch (e) {}
+    }
+
+    const isLushAcoustic = (trackId === 'intro_launch' || trackId === 'menu' || trackId === 'distant_shore' || trackId === 'lapis_tower' || trackId === 'stage_6' || trackId === 'stage_7');
+    const isEpicChoral = (trackId === 'stage_10' || isBoss);
 
     this.musicInterval = setInterval(() => {
       if (!this.ctx || !this.musicEnabled) return;
@@ -1527,6 +1566,21 @@ class GemAudioEngine {
           osc.start(t);
           osc.stop(t + leadDecay + 0.02);
 
+          // Acoustic ukulele / crystal celesta overtone shimmer on gentle tracks
+          if (isLushAcoustic) {
+            const pOsc = this.ctx.createOscillator();
+            const pGain = this.ctx.createGain();
+            pOsc.type = 'sine';
+            pOsc.frequency.setValueAtTime(freq * 2, t);
+            pGain.gain.setValueAtTime(0.0001, t);
+            pGain.gain.linearRampToValueAtTime(leadVol * 0.24, t + 0.006);
+            pGain.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(0.18, leadDecay * 0.45));
+            pOsc.connect(pGain);
+            pGain.connect(this.getMusicDestination());
+            pOsc.start(t);
+            pOsc.stop(t + 0.20);
+          }
+
           // Optional chorus detune layer for lush cosmic/finale tracks
           if (theme.leadDetune) {
             const osc2 = this.ctx.createOscillator();
@@ -1544,23 +1598,33 @@ class GemAudioEngine {
           }
         }
 
-        // 2. Chords / Shimmer harmonics with gentle envelope
+        // 2. Warm Multi-Voice Chord Pad & Shimmer Harmonics (Maj7 / 5th / Choral Voicings)
         const harmStep = theme.harmStep || (isBoss ? 2 : 4);
         if (this.musicBeat % harmStep === 0 && harmonics && harmonics.length > 0) {
-          const hOsc = this.ctx.createOscillator();
-          const hGain = this.ctx.createGain();
           const hIdx = Math.floor((this.musicBeat / harmStep) % harmonics.length);
-          hOsc.type = theme.harmType || 'sine';
-          hOsc.frequency.setValueAtTime(harmonics[hIdx], t);
-          const hVol = theme.harmVol || (isBoss ? 0.045 : 0.032);
-          const hDecay = theme.harmDecay || (harmStep * 0.14);
-          hGain.gain.setValueAtTime(0.0001, t);
-          hGain.gain.linearRampToValueAtTime(hVol, t + 0.02);
-          hGain.gain.exponentialRampToValueAtTime(0.0001, t + hDecay);
-          hOsc.connect(hGain);
-          hGain.connect(this.getMusicDestination());
-          hOsc.start(t);
-          hOsc.stop(t + hDecay + 0.02);
+          const rootF = harmonics[hIdx];
+          const hVol = theme.harmVol || (isBoss ? 0.045 : 0.036);
+          const hDecay = (theme.harmDecay || (harmStep * 0.16)) * (isLushAcoustic ? 1.35 : 1.1);
+          const ratios = isLushAcoustic ? [0.5, 1.0, 1.25] : (isEpicChoral ? [0.5, 1.0, 1.498] : [1.0, 1.498]);
+          for (let vi = 0; vi < ratios.length; vi++) {
+            const hOsc = this.ctx.createOscillator();
+            const hFilter = this.ctx.createBiquadFilter();
+            const hGain = this.ctx.createGain();
+            hOsc.type = (vi === 0) ? 'sine' : (theme.harmType || 'triangle');
+            hOsc.frequency.setValueAtTime(rootF * ratios[vi], t);
+            if (vi === 2) hOsc.detune.setValueAtTime(isLushAcoustic ? 5 : -6, t);
+            hFilter.type = 'lowpass';
+            hFilter.frequency.setValueAtTime(isLushAcoustic ? 1500 : 2100, t);
+            const vScale = vi === 1 ? 0.65 : 0.42;
+            hGain.gain.setValueAtTime(0.0001, t);
+            hGain.gain.linearRampToValueAtTime(hVol * vScale, t + (isLushAcoustic ? 0.055 : 0.024));
+            hGain.gain.exponentialRampToValueAtTime(0.0001, t + hDecay);
+            hOsc.connect(hFilter);
+            hFilter.connect(hGain);
+            hGain.connect(this.getMusicDestination());
+            hOsc.start(t);
+            hOsc.stop(t + hDecay + 0.03);
+          }
         }
 
         // 3. Driving rhythmic bassline with warm acoustic body

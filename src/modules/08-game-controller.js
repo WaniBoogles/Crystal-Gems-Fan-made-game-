@@ -381,29 +381,22 @@ class StevenUniverseGame {
     const beginFadeOut = () => {
       if (this._splashFadingOut) return;
       this._splashFadingOut = true;
-      this._splashGuardUntil = Date.now() + 1400;
+      this._splashGuardUntil = Date.now() + 180;
       this._splashTimers.forEach(t => clearTimeout(t));
       this._splashTimers = [];
 
       splash.classList.remove('phase-in');
       splash.classList.add('phase-text-out');
+      splash.classList.add('phase-fade-out');
+      if (titleScreen) {
+        titleScreen.classList.remove('splash-pending');
+      }
+      if (typeof fitGameToViewport === 'function') fitGameToViewport();
 
-      const tScreenFade = setTimeout(() => {
-        splash.classList.add('phase-fade-out');
-        if (titleScreen) {
-          titleScreen.classList.remove('splash-pending');
-          titleScreen.classList.add('splash-reveal');
-        }
-        if (typeof fitGameToViewport === 'function') fitGameToViewport();
-        const tDone = setTimeout(() => {
-          finishSplash();
-          if (titleScreen) {
-            setTimeout(() => titleScreen.classList.remove('splash-reveal'), 250);
-          }
-        }, 680);
-        this._splashTimers.push(tDone);
-      }, 460);
-      this._splashTimers.push(tScreenFade);
+      const tDone = setTimeout(() => {
+        finishSplash();
+      }, 520);
+      this._splashTimers.push(tDone);
     };
 
     this.skipStartupSplash = () => {
@@ -450,16 +443,14 @@ class StevenUniverseGame {
       window.addEventListener('mousedown', this._onSplashSwallowClick, true);
     }
 
-    // Dark grey full screen -> "Crystal Gems!" fades in -> holds 3 seconds -> fades out -> Main Menu fades in
-    const tIn = setTimeout(() => {
-      if (!this.splashActive || this._splashFadingOut) return;
-      splash.classList.add('phase-in');
-      const tHold = setTimeout(() => {
-        beginFadeOut();
-      }, 3000);
-      this._splashTimers.push(tHold);
-    }, 100);
-    this._splashTimers.push(tIn);
+    // Pre-fit viewport before fade so Main Menu never resizes/jumps during startup
+    if (typeof fitGameToViewport === 'function') fitGameToViewport();
+    // Smooth startup splash: fades in immediately -> holds 1.7s -> fades seamlessly into ready Main Menu
+    splash.classList.add('phase-in');
+    const tHold = setTimeout(() => {
+      beginFadeOut();
+    }, 1700);
+    this._splashTimers.push(tHold);
   }
 
   getHeartPoolSpec(hero) {
@@ -777,7 +768,6 @@ class StevenUniverseGame {
     const pStyle = document.getElementById('paneStylePill');
     const pDesc = document.getElementById('panePassiveDesc');
     const pTip = document.getElementById('panePassiveTip');
-    const balEl = document.getElementById('paneBalanceBars');
     const kLbl = document.getElementById('paneKLabel');
     const jLbl = document.getElementById('paneJLabel');
     const lLbl = document.getElementById('paneLLabel');
@@ -787,44 +777,35 @@ class StevenUniverseGame {
     if (lLbl) lLbl.textContent = `[L] ${data.l.name}:`;
 
     if (passive) {
-      if (roleEl) roleEl.textContent = `${passive.icon} ${passive.role || 'GUARDIAN'}`;
+      if (roleEl) roleEl.textContent = passive.role || 'Guardian';
       if (healEl) {
-        healEl.className = `char-heal-pill ${passive.hasHeal ? 'has-heal' : 'no-heal'}`;
-        healEl.textContent = passive.hasHeal ? '💚 HEALING' : '⚔️ NO HEAL';
+        healEl.className = `char-heal-text ${passive.hasHeal ? 'has-heal' : 'no-heal'}`;
+        healEl.textContent = passive.hasHeal ? 'Healing' : 'No Heal';
       }
-      if (pTitle) pTitle.textContent = `${passive.icon} PASSIVE: ${passive.name}`;
-      if (pStyle) pStyle.textContent = `🥋 ${comboProf ? comboProf.label : '4-Hit Combo'}`;
+      if (pTitle) pTitle.textContent = `PASSIVE — ${passive.name}`;
+      if (pStyle) pStyle.textContent = comboProf ? comboProf.label : 'Combo Chain';
       if (pDesc) pDesc.textContent = passive.desc;
-      if (pTip) pTip.innerHTML = `<b>HOW TO USE:</b> ${passive.howToUse || passive.desc}`;
-      if (balEl && passive.bars) {
-        const b = passive.bars;
-        const barRow = (lbl, val, col) =>
-          `<div class="bal-meter"><div class="bal-meter-lbl"><span>${lbl}</span><span>${val}/5</span></div>` +
-          `<div class="bal-meter-track"><div class="bal-meter-fill" style="width:${val * 20}%;background:${col};"></div></div></div>`;
-        balEl.innerHTML =
-          barRow('OFFENSE', b.offense, '#fb7185') +
-          barRow('DEFENSE', b.defense, '#38bdf8') +
-          barRow('SUPPORT', b.support, '#4ade80') +
-          barRow('SPEED', b.speed, '#facc15');
-      }
+      if (pTip) pTip.textContent = `How to use: ${passive.howToUse || passive.desc}`;
     }
 
     if (paneTypes) {
       paneTypes.innerHTML = (data.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
     }
 
+    // Single unified stat readout (clean bar + exact value, zero duplicate stat rows!)
     const statsEl = document.getElementById('paneStats');
     if (statsEl && typeof getHeroCombatStats === 'function') {
       const s = getHeroCombatStats(charId, null, false);
-      const critPct = `${Math.round(s.critChance * 100)}%`;
-      const critDmgPct = `${Math.round(s.critDamage * 100)}%`;
+      const statCell = (lbl, val, max, col) => {
+        const pct = Math.max(10, Math.min(100, Math.round((val / max) * 100)));
+        return `<div class="clean-stat"><div class="clean-stat-head"><span>${lbl}</span><strong>${val}</strong></div>` +
+          `<div class="clean-stat-track"><div class="clean-stat-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
+      };
       statsEl.innerHTML =
-        `<span class="stat-pill"><b>HP</b> ${s.hp}</span>` +
-        `<span class="stat-pill"><b>DEF</b> ${s.defense}</span>` +
-        `<span class="stat-pill"><b>ATK</b> ${s.attack}</span>` +
-        `<span class="stat-pill"><b>MAG</b> ${s.magic}</span>` +
-        `<span class="stat-pill"><b>CRIT</b> ${critPct}</span>` +
-        `<span class="stat-pill"><b>CRIT DMG</b> ${critDmgPct}</span>`;
+        statCell('HP', s.hp, 185, '#4ade80') +
+        statCell('ATK', s.attack, 60, '#fb7185') +
+        statCell('DEF', s.defense, 60, '#38bdf8') +
+        statCell('MAG', s.magic, 62, '#c084fc');
     }
 
     const fList = document.getElementById('fusionPreviewList');
@@ -842,7 +823,7 @@ class StevenUniverseGame {
       } else {
         const chip = document.createElement('span');
         chip.className = 'fusion-chip none';
-        chip.innerHTML = `⚠️ Independent Gem — No canon show fusion`;
+        chip.textContent = 'Independent Gem — No canon show fusion';
         fList.appendChild(chip);
       }
     }
@@ -1354,7 +1335,7 @@ class StevenUniverseGame {
   // Zero every held input. Called on blur, tab hide, pause and menu changes so a
   // missed keyup can never leave the hero sliding on their own.
   releaseAllInputs() {
-    const blank = { left: false, right: false, jump: false, down: false, shield: false, dodge: false, attack: false, special: false, skill: false, overdrive: false };
+    const blank = { left: false, right: false, jump: false, down: false, shield: false, dodge: false, attack: false, special: false, skill: false, overdrive: false, sprint: false };
     this.keysP1 = Object.assign(this.keysP1 || {}, blank);
     this.keysP2 = Object.assign(this.keysP2 || {}, blank);
     for (const hero of [this.player, this.player2]) {
@@ -1362,6 +1343,7 @@ class StevenUniverseGame {
       hero.vx = 0;
       hero.isShielding = false;
       hero.isDodging = false;
+      hero.isSprinting = false;
     }
     // Release any on-screen touch buttons stuck in the pressed state
     document.querySelectorAll('.touch-btn.pressed, .touch-btn.active').forEach(el => el.classList.remove('pressed', 'active'));
@@ -2450,6 +2432,7 @@ class StevenUniverseGame {
       const sharedKeys = {
         left: this.keysP1.left || this.keysP2.left,
         right: this.keysP1.right || this.keysP2.right,
+        sprint: this.keysP1.sprint || this.keysP2.sprint,
         jump: this.keysP1.jump || this.keysP2.jump,
         down: this.keysP1.down || this.keysP2.down,
         shield: this.keysP1.shield || this.keysP2.shield,
@@ -5294,7 +5277,8 @@ class StevenUniverseGame {
     const barNameP2 = document.getElementById('barNameP2');
 
     if (actionBars) {
-      actionBars.style.display = this.isRealMobile ? 'none' : 'flex';
+      const inCombatState = (this.state === 'playing' || this.state === 'paused' || this.state === 'arcade_wait');
+      actionBars.style.display = (this.isRealMobile || !inCombatState) ? 'none' : 'flex';
     }
 
     if (this.playerMode === '2p' && this.player2) {
@@ -5608,6 +5592,7 @@ class StevenUniverseGame {
       this.keysP1.special = false;
       this.keysP1.skill = false;
       this.keysP1.overdrive = false;
+      this.keysP1.sprint = false;
 
       this.keysP2.left = false;
       this.keysP2.right = false;
@@ -5619,17 +5604,20 @@ class StevenUniverseGame {
       this.keysP2.special = false;
       this.keysP2.skill = false;
       this.keysP2.overdrive = false;
+      this.keysP2.sprint = false;
 
       if (this.player) {
         this.player.vx = 0;
         this.player.isGuarding = false;
         this.player.isSpinDashing = false;
+        this.player.isSprinting = false;
         if (this.player.state === 'running' || this.player.state === 'walk') this.player.state = 'idle';
       }
       if (this.player2) {
         this.player2.vx = 0;
         this.player2.isGuarding = false;
         this.player2.isSpinDashing = false;
+        this.player2.isSprinting = false;
         if (this.player2.state === 'running' || this.player2.state === 'walk') this.player2.state = 'idle';
       }
 
@@ -5844,10 +5832,26 @@ class StevenUniverseGame {
         this.triggerFusion();
       }
 
+      // Double-tap A / D (and ArrowLeft / ArrowRight for 2P) Sprint / Speed-Run detection!
+      const nowTap = performance.now();
+      const handleSprintTap = (keysObj, dirKey, codeStr) => {
+        if (e.repeat) return;
+        const alreadyHeld = !!keysObj[dirKey];
+        if (!alreadyHeld) {
+          if (keysObj._lastTapCode === codeStr && (nowTap - (keysObj._lastTapTime || 0)) < 290) {
+            keysObj.sprint = true;
+          } else {
+            keysObj.sprint = false;
+          }
+          keysObj._lastTapCode = codeStr;
+          keysObj._lastTapTime = nowTap;
+        }
+      };
+
       if (this.playerMode === '2p') {
         // Player 1 Controls (Left Hand side of keyboard)
-        if (e.code === 'KeyA') this.keysP1.left = true;
-        if (e.code === 'KeyD') this.keysP1.right = true;
+        if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
+        if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
         if (e.code === 'KeyW') this.keysP1.jump = true;
         if (e.code === 'KeyS') { this.keysP1.down = true; this.keysP1.shield = true; }
         if (e.code === 'KeyE') { this.keysP1.dodge = true; this.triggerSlotAnimation('slotI'); }
@@ -5857,8 +5861,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyR') { this.activatePinkOverdrive('p1'); }
 
         // Player 2 Controls (Right Hand side / Arrow keys)
-        if (e.code === 'ArrowLeft') this.keysP2.left = true;
-        if (e.code === 'ArrowRight') this.keysP2.right = true;
+        if (e.code === 'ArrowLeft') { handleSprintTap(this.keysP2, 'left', 'ArrowLeft'); this.keysP2.left = true; }
+        if (e.code === 'ArrowRight') { handleSprintTap(this.keysP2, 'right', 'ArrowRight'); this.keysP2.right = true; }
         if (e.code === 'ArrowUp') this.keysP2.jump = true;
         if (e.code === 'ArrowDown') { this.keysP2.down = true; this.keysP2.shield = true; }
         if (e.code === 'KeyI') { this.keysP2.dodge = true; this.triggerSlotAnimation('slotP2_I'); }
@@ -5868,8 +5872,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyO' || e.code === 'KeyP') { this.activatePinkOverdrive('p2'); }
       } else {
         // Solo 1-Player Mode: STRICTLY A, D, W/Space, S, J, K, L, I (Dodge), U/O (Overdrive)
-        if (e.code === 'KeyA') this.keysP1.left = true;
-        if (e.code === 'KeyD') this.keysP1.right = true;
+        if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
+        if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
         if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = true;
         if (e.code === 'KeyS') {
           this.keysP1.down = true;
@@ -5911,8 +5915,8 @@ class StevenUniverseGame {
 
     window.addEventListener('keyup', (e) => {
       if (this.playerMode === '2p') {
-        if (e.code === 'KeyA') this.keysP1.left = false;
-        if (e.code === 'KeyD') this.keysP1.right = false;
+        if (e.code === 'KeyA') { this.keysP1.left = false; if (!this.keysP1.right) this.keysP1.sprint = false; }
+        if (e.code === 'KeyD') { this.keysP1.right = false; if (!this.keysP1.left) this.keysP1.sprint = false; }
         if (e.code === 'KeyW') this.keysP1.jump = false;
         if (e.code === 'KeyS') {
           this.keysP1.down = false;
@@ -5923,8 +5927,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyG') this.keysP1.special = false;
         if (e.code === 'KeyH') this.keysP1.skill = false;
 
-        if (e.code === 'ArrowLeft') this.keysP2.left = false;
-        if (e.code === 'ArrowRight') this.keysP2.right = false;
+        if (e.code === 'ArrowLeft') { this.keysP2.left = false; if (!this.keysP2.right) this.keysP2.sprint = false; }
+        if (e.code === 'ArrowRight') { this.keysP2.right = false; if (!this.keysP2.left) this.keysP2.sprint = false; }
         if (e.code === 'ArrowUp') this.keysP2.jump = false;
         if (e.code === 'ArrowDown') {
           this.keysP2.down = false;
@@ -5935,8 +5939,8 @@ class StevenUniverseGame {
         if (e.code === 'KeyK') this.keysP2.special = false;
         if (e.code === 'KeyL') this.keysP2.skill = false;
       } else {
-        if (e.code === 'KeyA') this.keysP1.left = false;
-        if (e.code === 'KeyD') this.keysP1.right = false;
+        if (e.code === 'KeyA') { this.keysP1.left = false; if (!this.keysP1.right) this.keysP1.sprint = false; }
+        if (e.code === 'KeyD') { this.keysP1.right = false; if (!this.keysP1.left) this.keysP1.sprint = false; }
         if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = false;
         if (e.code === 'KeyS') {
           this.keysP1.down = false;
@@ -6050,6 +6054,12 @@ class StevenUniverseGame {
       const mScreen = document.getElementById('mapSelectScreen');
       if (mScreen) mScreen.style.display = 'none';
       this.openCharacterSelect('arcade');
+    });
+    safeClick('btnMapMainMenu', () => {
+      this.audio.playSfx('menuTap');
+      const mScreen = document.getElementById('mapSelectScreen');
+      if (mScreen) mScreen.style.display = 'none';
+      this.showTitleScreen();
     });
     safeClick('btnPlayArcadeMap', () => {
       this.audio.playSfx('warpPad');
@@ -6359,8 +6369,8 @@ class StevenUniverseGame {
     const lobbySelectBgm = document.getElementById('lobbySelectBgm');
 
     const syncBgmUI = () => {
-      let cur = this.audio.bgmOverrideManual ? (this.audio.selectedBgm || 'auto') : 'auto';
-      if (cur === 'menu') cur = 'auto';
+      let cur = this.audio.bgmOverrideManual ? (this.audio.selectedBgm || 'intro_launch') : (this.audio.currentTrack || 'intro_launch');
+      if (cur === 'auto' || cur === 'menu') cur = 'intro_launch';
       if (selectBgm) selectBgm.value = cur;
       if (pauseSelectBgm) pauseSelectBgm.value = cur;
       if (lobbySelectBgm) lobbySelectBgm.value = cur;
@@ -7057,6 +7067,12 @@ class StevenUniverseGame {
     this.releaseAllInputs();
     if (this.audio) this.audio.stopMusic();
     if (document.body) document.body.classList.remove('in-game');
+    const hudEl = document.getElementById('hud');
+    if (hudEl) hudEl.style.display = 'none';
+    const abEl = document.getElementById('actionBarsContainer') || document.getElementById('actionBar');
+    if (abEl) abEl.style.display = 'none';
+    const bhEl = document.getElementById('bossHud');
+    if (bhEl) bhEl.style.display = 'none';
     const mapInfo = (typeof ARCADE_MAPS !== 'undefined' && ARCADE_MAPS[this.stageIndex - 1])
       ? ARCADE_MAPS[this.stageIndex - 1]
       : { name: `Arena ${this.stageIndex}` };

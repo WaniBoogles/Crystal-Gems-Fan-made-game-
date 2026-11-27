@@ -1723,10 +1723,25 @@ class EnemyManager {
           e.vx = player.facing * 140;
           e.hurtTimer = 0.25;
         }
-        // Heavier chain steps launch further; finishers add extra lift
-        e.vx *= (player.attackKnockMult || 1);
-        if (this.knockbackResist) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
-        if (player.comboStep >= 2 && e.vy) e.vy *= 1.15;
+        // Heavier chain steps launch further; style traits apply pull-in, hydro/vault lift, and armor-break!
+        if (player.attackPullIn) {
+          // Amethyst whip snare pulls enemy slightly inward into sweet-spot range
+          const pullDir = (e.x > player.x) ? -1 : 1;
+          e.vx = pullDir * 240;
+          e.vy = -125;
+        } else {
+          e.vx *= (player.attackKnockMult || 1);
+          if (this.knockbackResist && !player.attackArmorBreak) e.vx *= Math.max(0.35, 1 - this.knockbackResist);
+          if (player.attackLiftY && player.attackLiftY < 0) {
+            e.vy = Math.min(e.vy || 0, player.attackLiftY);
+          } else if (player.comboStep >= 2 && e.vy) {
+            e.vy *= 1.15;
+          }
+        }
+        if (player.attackArmorBreak) {
+          e.hurtTimer = Math.max(e.hurtTimer, 0.56);
+          if (particles) particles.addDamageText(e.x, e.y - e.height - 16, 'ARMOR BREAK!', true, '#fb923c');
+        }
         e.attackTimer = 0;
 
         // Airborne Juggle State: Striking airborne enemies in mid-air suspends both aloft
