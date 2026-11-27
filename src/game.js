@@ -8077,58 +8077,104 @@ class PlayerHero {
     ctx.save();
     if (fid === 'stevonnie') {
       ctx.fillStyle = '#fbcfe8';
-      this.drawMiniStar(ctx, 20, -48 + bob, 5.2 + pulse * 1.6);
-      ctx.fillStyle = 'rgba(244, 114, 182, 0.72)';
-      ctx.beginPath();
-      ctx.ellipse(-18, -32 + bob + Math.sin(t * 4) * 5, 4, 2, t, 0, Math.PI * 2);
-      ctx.fill();
+      this.drawMiniStar(ctx, 22, -52 + bob + Math.sin(t * 3.5) * 3, 5.6 + pulse * 1.8);
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, -20, -64 + bob + Math.cos(t * 3.2) * 3, 4.0 + pulse * 1.2);
+      // Drifting rose petals orbiting Stevonnie
+      for (let i = 0; i < 3; i++) {
+        const a = t * 2.1 + i * 2.1;
+        ctx.fillStyle = i % 2 === 0 ? 'rgba(244, 114, 182, 0.78)' : 'rgba(253, 164, 175, 0.75)';
+        ctx.beginPath();
+        ctx.ellipse(Math.cos(a) * 24, -36 + bob + Math.sin(a * 1.3) * 14, 4.4, 2.1, a + 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (fid === 'smoky') {
-      ctx.strokeStyle = 'rgba(251, 146, 60, 0.65)';
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = 'rgba(251, 146, 60, 0.72)';
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.ellipse(0, -34 + bob, 28 + pulse * 4, 9, -0.15, 0, Math.PI * 2);
+      ctx.ellipse(0, -34 + bob, 30 + pulse * 4, 10, -0.15, 0, Math.PI * 2);
       ctx.stroke();
+      ctx.strokeStyle = 'rgba(192, 132, 252, 0.58)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.ellipse(0, -36 + bob, 24 + pulse * 3, 8, 0.22, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, Math.cos(t * 5) * 28, -34 + bob + Math.sin(t * 5) * 9, 4.4);
     } else if (fid === 'rainbow2' || fid === 'rainbowClassic') {
       const pCols = ['#f472b6', '#facc15', '#38bdf8', '#c084fc'];
+      // Soft iridescent prism arc halo
+      ctx.strokeStyle = `rgba(251, 207, 232, ${0.42 + pulse * 0.25})`;
+      ctx.lineWidth = 2.0;
+      ctx.beginPath();
+      ctx.arc(0, -52 + bob, 29 + pulse * 2.5, -Math.PI * 0.85, -Math.PI * 0.15);
+      ctx.stroke();
       for (let i = 0; i < 4; i++) {
         const a = t * 3.4 + (i * Math.PI) / 2;
         ctx.fillStyle = pCols[i];
-        this.drawMiniStar(ctx, Math.cos(a) * 26, -48 + bob + Math.sin(a) * 16, 4.2);
+        this.drawMiniStar(ctx, Math.cos(a) * 27, -50 + bob + Math.sin(a) * 17, 4.5 + (i % 2) * 0.8);
       }
     } else if (fid === 'sunstone') {
-      ctx.strokeStyle = `rgba(251, 191, 36, ${0.65 + pulse * 0.3})`;
-      ctx.lineWidth = 2.4;
+      ctx.strokeStyle = `rgba(251, 191, 36, ${0.68 + pulse * 0.28})`;
+      ctx.lineWidth = 2.6;
       ctx.beginPath();
-      ctx.arc(0, -48 + bob, 30 + pulse * 5, 0, Math.PI * 2);
+      ctx.arc(0, -52 + bob, 32 + pulse * 5, 0, Math.PI * 2);
       ctx.stroke();
+      // Rising solar spark motes
+      for (let i = 0; i < 3; i++) {
+        const lift = ((t * 1.4 + i * 0.33) % 1);
+        ctx.fillStyle = i % 2 === 0 ? '#fde047' : '#fb923c';
+        this.drawMiniStar(ctx, Math.sin(t * 4 + i * 2.2) * 26, -24 - lift * 62 + bob, 4.2 * (1 - lift * 0.4));
+      }
     } else if (fid === 'sugilite') {
       ctx.strokeStyle = '#c084fc';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.moveTo(-26, -42 + bob); ctx.lineTo(-16, -54 + bob); ctx.lineTo(-8, -40 + bob);
-      ctx.moveTo(14, -44 + bob); ctx.lineTo(24, -56 + bob); ctx.lineTo(30, -42 + bob);
+      ctx.moveTo(-28, -44 + bob); ctx.lineTo(-17, -58 + bob); ctx.lineTo(-10, -42 + bob); ctx.lineTo(-20, -28 + bob);
+      ctx.moveTo(15, -46 + bob); ctx.lineTo(26, -60 + bob); ctx.lineTo(32, -44 + bob); ctx.lineTo(22, -30 + bob);
       ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, -22, -56 + bob + Math.sin(t * 7) * 3, 4.6);
+      this.drawMiniStar(ctx, 27, -52 + bob + Math.cos(t * 7) * 3, 4.4);
     } else if (fid === 'sardonyx') {
       ctx.fillStyle = '#fde047';
-      this.drawMiniStar(ctx, -20, -64 + bob, 5.5 + pulse * 1.8);
-      this.drawMiniStar(ctx, 24, -44 + bob, 4.8 + pulse * 1.4);
+      this.drawMiniStar(ctx, -22, -68 + bob, 6.0 + pulse * 2.0);
+      this.drawMiniStar(ctx, 26, -46 + bob, 5.2 + pulse * 1.6);
+      ctx.fillStyle = '#fb7185';
+      this.drawMiniStar(ctx, 20, -88 + bob, 4.6 + pulse * 1.4);
+      // Theatrical spotlight gleam lines
+      ctx.strokeStyle = `rgba(253, 224, 71, ${0.35 + pulse * 0.3})`;
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-22, -78 + bob); ctx.lineTo(-22, -58 + bob);
+      ctx.moveTo(-32, -68 + bob); ctx.lineTo(-12, -68 + bob);
+      ctx.stroke();
     } else if (fid === 'opal') {
       ctx.strokeStyle = 'rgba(186, 230, 253, 0.85)';
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 2.0;
       ctx.beginPath();
-      ctx.moveTo(18, -68 + bob); ctx.lineTo(18, -28 + bob);
+      ctx.moveTo(20, -74 + bob); ctx.lineTo(20, -24 + bob);
       ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      this.drawMiniStar(ctx, 26, -48 + bob, 5.5 + pulse * 1.5);
+      this.drawMiniStar(ctx, 28, -50 + bob, 5.8 + pulse * 1.8);
+      ctx.fillStyle = '#67e8f9';
+      this.drawMiniStar(ctx, -20, -64 + bob + Math.sin(t * 3) * 4, 4.4);
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 16, -84 + bob, 3.8 + pulse * 1.2);
     } else if (fid === 'malachite') {
-      ctx.strokeStyle = 'rgba(45, 212, 191, 0.72)';
-      ctx.lineWidth = 2.2;
+      ctx.strokeStyle = 'rgba(45, 212, 191, 0.78)';
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
-      ctx.arc(0, -44 + bob, 34 + pulse * 4, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.arc(0, -48 + bob, 36 + pulse * 4, Math.PI * 0.08, Math.PI * 0.92);
       ctx.stroke();
-      ctx.fillStyle = '#99f6e4';
-      this.drawMiniStar(ctx, -22, -52 + bob, 4.2);
-      this.drawMiniStar(ctx, 22, -52 + bob, 4.2);
+      ctx.strokeStyle = 'rgba(186, 230, 253, 0.65)';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(0, -50 + bob, 42 + pulse * 3, Math.PI * 1.12, Math.PI * 1.88);
+      ctx.stroke();
+      ctx.fillStyle = '#a3e635';
+      this.drawMiniStar(ctx, -26, -58 + bob + Math.sin(t * 5) * 4, 4.6);
+      this.drawMiniStar(ctx, 26, -58 + bob + Math.cos(t * 5) * 4, 4.6);
     }
     ctx.restore();
   }
@@ -13577,15 +13623,25 @@ class PlayerHero {
       this.drawArticulatedArm(ctx, -11, -56 + bob, -2, -52 + bob, 13, -47 + bob, '#e11d48', '#d4976a', 6.5, 5.2, '#d4976a', 4.2);
       ctx.save();
       ctx.translate(15, -47 + bob);
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.90)';
+      const sg = ctx.createRadialGradient(-5, -5, 2, 0, 0, 22);
+      sg.addColorStop(0, 'rgba(255, 228, 236, 0.96)');
+      sg.addColorStop(0.45, 'rgba(244, 63, 94, 0.92)');
+      sg.addColorStop(1, 'rgba(190, 24, 93, 0.94)');
+      ctx.fillStyle = sg;
       ctx.beginPath();
       ctx.arc(0, 0, 22, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.6;
+      ctx.lineWidth = 2.8;
       ctx.stroke();
-      ctx.fillStyle = '#fda4af';
-      this.drawMiniStar(ctx, 0, 0, 9);
+      // Rose thorn spiral filigree on shield
+      ctx.strokeStyle = '#fda4af';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, 14, 0.1, Math.PI * 1.55);
+      ctx.stroke();
+      ctx.fillStyle = '#fde047';
+      this.drawMiniStar(ctx, 0, 0, 8.5);
       ctx.restore();
     } else {
       const shHx = -24 - poise;
@@ -13598,18 +13654,24 @@ class PlayerHero {
       ctx.fill();
       ctx.save();
       ctx.translate(shHx, shHy);
-      ctx.fillStyle = 'rgba(255, 96, 151, 0.9)';
+      const sg2 = ctx.createRadialGradient(-4, -4, 2, 0, 0, 16.5);
+      sg2.addColorStop(0, 'rgba(255, 228, 236, 0.95)');
+      sg2.addColorStop(0.5, 'rgba(255, 96, 151, 0.92)');
+      sg2.addColorStop(1, 'rgba(219, 39, 119, 0.92)');
+      ctx.fillStyle = sg2;
       ctx.beginPath();
-      ctx.arc(0, 0, 16, 0, Math.PI * 2);
+      ctx.arc(0, 0, 16.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.stroke();
       ctx.strokeStyle = '#be185d';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.arc(0, 0, 8.5, 0.2, Math.PI * 1.65);
+      ctx.arc(0, 0, 9.5, 0.2, Math.PI * 1.65);
       ctx.stroke();
+      ctx.fillStyle = '#fbcfe8';
+      this.drawMiniStar(ctx, 0, 0, 4.8);
       ctx.restore();
     }
 
@@ -13688,7 +13750,12 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Hair cel specular sheen crescent
+    // Hair cel specular sheen crescent + warm blush on Stevonnie's cheeks
+    ctx.fillStyle = 'rgba(244, 114, 182, 0.30)';
+    ctx.beginPath();
+    ctx.ellipse(-4.5, -72.5 + bob, 2.8, 1.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(8.2, -72.5 + bob, 2.8, 1.5, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#5b3946';
     ctx.beginPath();
     ctx.ellipse(-1.5, -87.5 + bob, 6.8, 2.3, -0.15, 0, Math.PI * 2);
@@ -13722,17 +13789,22 @@ class PlayerHero {
     ctx.roundRect(-2.2, -4, 4.4, 11, 2);
     ctx.fill();
     ctx.stroke();
-    // Curved thorny rose brass crossguard + rose pommel
+    // Curved thorny rose brass crossguard + ruby rose pommel gem
     ctx.fillStyle = '#fbbf24';
     ctx.strokeStyle = '#78350f';
     ctx.beginPath();
-    ctx.moveTo(-9, -4.5);
-    ctx.quadraticCurveTo(0, -8.5, 9, -4.5);
-    ctx.lineTo(7, -2);
-    ctx.quadraticCurveTo(0, -5, -7, -2);
+    ctx.moveTo(-9.5, -4.5);
+    ctx.quadraticCurveTo(0, -9, 9.5, -4.5);
+    ctx.lineTo(7.2, -2);
+    ctx.quadraticCurveTo(0, -5.2, -7.2, -2);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    // Rose gem medallion at hilt center + golden pommel bead
+    ctx.fillStyle = '#f43f5e';
+    ctx.beginPath(); ctx.arc(0, -5.2, 2.3, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(0, 8.2, 2.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fda4af';
     ctx.strokeStyle = '#881337';
     ctx.lineWidth = 1.4;
@@ -13903,42 +13975,58 @@ class PlayerHero {
       ctx.save();
       ctx.translate(yx, yy);
       ctx.rotate(angle);
+      // Spinning kinetic aura ring around each yo-yo
+      ctx.strokeStyle = 'rgba(251, 146, 60, 0.55)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(0, 0, r + 3.2, 0.2, Math.PI * 1.4); ctx.stroke();
       ctx.fillStyle = '#78350f';
       ctx.strokeStyle = '#291c19';
-      ctx.lineWidth = 1.8;
+      ctx.lineWidth = 1.9;
       ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      // Metallic bronze inner rim groove
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.78, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = '#b45309';
-      ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.22, r * 0.45, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-r * 0.22, -r * 0.22, r * 0.44, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#fef3c7';
-      this.drawMiniStar(ctx, 0, 0, r * 0.56);
+      this.drawMiniStar(ctx, 0, 0, r * 0.58);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(-r * 0.25, -r * 0.28, r * 0.14, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     };
 
     const yo1x = -29 - swB;
     const yo1y = -55 + bob + Math.sin(mSmoky.t * 4) * 3;
     this.drawArticulatedArm(ctx, -14, -56 + bob, -22 - swB * 0.4, -63 + bob, yo1x, yo1y, '#18181b', '#8b797d', 7.4, 5.8, '#8b797d', 4.3);
-    drawCelYoyo(yo1x, yo1y, 8.8, spinRot * 1.2);
+    drawCelYoyo(yo1x, yo1y, 9.2, spinRot * 1.2);
 
     const yo2x = -24 + swF * 0.8;
     const yo2y = -31 + bob + Math.cos(mSmoky.t * 4.4) * 3.5;
     this.drawArticulatedArm(ctx, -14, -51 + bob, -20 + swF * 0.4, -43 + bob, yo2x, yo2y, '#18181b', '#8b797d', 7.0, 5.4, '#8b797d', 4.1);
-    drawCelYoyo(yo2x, yo2y, 9.2, -spinRot);
+    drawCelYoyo(yo2x, yo2y, 9.6, -spinRot);
 
-    // Front Primary Brown Star Yo-Yo Whip
+    // Front Primary Brown Star Yo-Yo Whip with glowing braided cord
     const yoyoReach = 34 + strike * 42;
     const yoyoY = -37 + bob - strike * 7;
     const handX = 14 + strike * 15;
     const handY = -45 + bob - strike * 4;
     this.drawArticulatedArm(ctx, 13, -55 + bob, 16 + strike * 8, -49 + bob, handX, handY, '#ef4444', '#8b797d', 7.5, 6.2, '#8b797d', 4.6);
 
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+    ctx.lineWidth = 4.6;
+    ctx.beginPath();
+    ctx.moveTo(handX, handY);
+    ctx.quadraticCurveTo(handX + strike * 16, -45 + bob, yoyoReach, yoyoY);
+    ctx.stroke();
     ctx.strokeStyle = '#d97706';
-    ctx.lineWidth = 2.6;
+    ctx.lineWidth = 2.4;
     ctx.beginPath();
     ctx.moveTo(handX, handY);
     ctx.quadraticCurveTo(handX + strike * 16, -45 + bob, yoyoReach, yoyoY);
     ctx.stroke();
 
-    drawCelYoyo(yoyoReach, yoyoY, 14.0, spinRot * 1.6);
+    drawCelYoyo(yoyoReach, yoyoY, 14.6, spinRot * 1.6);
   }
 
   // --- 3. RAINBOW QUARTZ 2.0 (Steven + Pearl) ---
@@ -14040,7 +14128,7 @@ class PlayerHero {
       ]
     });
 
-    // Sweeping pastel-lavender curly pompadour crest (matches Rainbow Quartz 2.0.png!)
+    // Sweeping pastel-lavender curly pompadour crest with multi-hue pastel sheen
     ctx.fillStyle = '#ddd6fe';
     ctx.strokeStyle = '#6d28d9';
     ctx.lineWidth = 1.5;
@@ -14052,12 +14140,20 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.fillStyle = '#f9a8d4';
+    ctx.beginPath();
+    ctx.ellipse(-4.5, -90.5 + bob, 4.6, 2.0, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#67e8f9';
+    ctx.beginPath();
+    ctx.ellipse(5.5, -91 + bob, 3.8, 1.7, 0.25, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#f5f3ff';
     ctx.beginPath();
-    ctx.ellipse(1, -93 + bob, 5.5, 2.0, -0.2, 0, Math.PI * 2);
+    ctx.ellipse(1, -93.5 + bob, 5.5, 1.9, -0.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // 5. Arms + Rainbow Parasol that Morphs into a Rainbow Star Blaster during Attacks!
+    // 5. Arms + Gold Cufflinks + Rainbow Parasol that Morphs into a Rainbow Star Blaster during Attacks!
     const mR2 = this.getCharacterMotionState();
     const swB2 = mR2.armSwingB * 10;
     const swF2 = mR2.armSwingF * 10;
@@ -14067,20 +14163,25 @@ class PlayerHero {
     const handX = 13 + strike * 17 + swF2 * 0.45;
     const handY = -49 + bob - strike * 5 + swF2 * 0.3;
     this.drawArticulatedArm(ctx, 10.5, -59 + bob, 13.5 + strike * 8 + swF2 * 0.2, -52 + bob, handX, handY, '#2dd4bf', '#fce7f3', 6.2, 5.0, '#fce7f3', 4.0);
+    // Gold blazer cufflink glint
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(handX - 3, handY - 1, 2.1, 0, Math.PI * 2); ctx.fill();
 
     ctx.save();
     ctx.translate(handX, handY);
     const angle = isShooting ? (Math.PI * 0.44 + strike * 0.14) : (0.52 + mR2.armSwingF * 0.14);
     ctx.rotate(angle);
-    // Pearl-white shaft + magenta curved crook handle
+    // Pearl-white shaft + magenta curved crook handle + golden star finial
     ctx.fillStyle = '#f1f5f9';
-    ctx.beginPath(); ctx.roundRect(-2, -48, 4, 60, 2); ctx.fill();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath(); ctx.roundRect(-2, -54, 4, 66, 2); ctx.fill(); ctx.stroke();
     ctx.strokeStyle = '#ec4899'; ctx.lineWidth = 2.6;
     ctx.beginPath(); ctx.arc(-4, 12, 5, 0, Math.PI); ctx.stroke();
 
     const colors = ['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#a855f7'];
     const openSpread = isShooting ? 0.20 : 0.35; // Parasol tightens into cannon cone when firing!
-    const rimR = isShooting ? 27 : 23;
+    const rimR = isShooting ? 28 : 24;
     for (let c = 0; c < colors.length; c++) {
       ctx.fillStyle = colors[c];
       const a0 = -Math.PI * 0.5 - (colors.length * openSpread) * 0.5 + c * openSpread;
@@ -14090,9 +14191,19 @@ class PlayerHero {
       ctx.lineTo(0, -34);
       ctx.closePath();
       ctx.fill();
+      // Crisp white canopy rib line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(0, -34);
+      ctx.lineTo(Math.cos(a0 - Math.PI * 0.5) * rimR, -34 + Math.sin(a0 - Math.PI * 0.5) * rimR);
+      ctx.stroke();
     }
+    // Golden star finial tip on parasol
+    ctx.fillStyle = '#fde047';
+    this.drawMiniStar(ctx, 0, -58, 5.2);
     if (isShooting) {
-      this.drawCelStarBurst(ctx, 0, -64, 15, '#ffffff', '#fde047', 5, strike * 2.5);
+      this.drawCelStarBurst(ctx, 0, -65, 16, '#ffffff', '#fde047', 5, strike * 2.5);
     }
     ctx.restore();
   }
@@ -14161,39 +14272,63 @@ class PlayerHero {
     this.drawArticulatedArm(ctx, -15, -45 + bob, -23 - sSwB * 0.4, -40 + bob, -26 - sSwB, -30 + bob + sSwB * 0.3, '#ea580c', '#881337', 5.2, 4.4, '#881337', 4.6);
     this.drawArticulatedArm(ctx, 15, -45 + bob, 22 + sSwF * 0.3, -40 + bob, 26 + sSwF, -30 + bob - sSwF * 0.3, '#f97316', '#881337', 5.2, 4.4, '#881337', 4.6);
     // Massive Pink Varsity upper punching arms
-    this.drawArticulatedArm(ctx, -16, -61 + bob, -26 - sSwB * 0.3, -68 + bob, -28 - sSwB * 0.7, -80 + bob + Math.abs(sSwB) * 0.3, '#ec4899', '#ec4899', 11.4, 9.2, '#f97316', 7.6);
+    const rearGx = -28 - sSwB * 0.7;
+    const rearGy = -80 + bob + Math.abs(sSwB) * 0.3;
+    this.drawArticulatedArm(ctx, -16, -61 + bob, -26 - sSwB * 0.3, -68 + bob, rearGx, rearGy, '#ec4899', '#ec4899', 11.4, 9.2, '#f97316', 7.6);
+    // Rear Suction-Cup Gauntlet Detail & Solar Rim
+    ctx.save();
+    ctx.translate(rearGx, rearGy);
+    ctx.fillStyle = '#ea580c';
+    ctx.strokeStyle = '#7c2d12';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(0, 0, 12.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(-2, -2.5, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fed7aa';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath(); ctx.arc(0, -8, 6.2, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.restore();
 
     const reach = strike * 42;
     const fx = 24 + reach + sSwF * 0.65;
     const fy = -54 + bob - strike * 7 + sSwF * 0.35;
     this.drawArticulatedArm(ctx, 16, -61 + bob, 20 + reach * 0.45 + sSwF * 0.3, -57 + bob, fx, fy, '#ec4899', '#ec4899', 12, 9.6, '#ea580c', 8.5);
 
-    // Crisp Varsity Striped Cuff
+    // Crisp Double-Striped Varsity Cuff
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(15 + reach * 0.25, -46 + bob, 3.2, 6.2, 0.2, 0, Math.PI * 2);
+    ctx.ellipse(15 + reach * 0.25, -46 + bob, 3.6, 6.4, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.ellipse(16.8 + reach * 0.25, -46 + bob, 1.5, 5.6, 0.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Suction-Cup Gauntlet Head + Cel Impact Flame
+    // Suction-Cup Gauntlet Head + Solar Energy Ring + Cel Impact Flame
     ctx.save();
     ctx.translate(fx, fy);
     ctx.fillStyle = '#ea580c';
-    ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#7c2d12';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.arc(0, 0, 14.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fb923c';
-    ctx.beginPath(); ctx.arc(-2.5, -3.5, 7.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-2.5, -3.5, 7.8, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath(); ctx.arc(-4.5, -5.2, 3.6, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#c2410c';
     ctx.beginPath();
-    ctx.moveTo(8, -10);
-    ctx.quadraticCurveTo(17, -11, 16, 0);
-    ctx.quadraticCurveTo(17, 11, 8, 10);
+    ctx.moveTo(8, -10.5);
+    ctx.quadraticCurveTo(18, -11.5, 17, 0);
+    ctx.quadraticCurveTo(18, 11.5, 8, 10.5);
     ctx.closePath();
     ctx.fill();
+    ctx.stroke();
     if (strike > 0.2) {
-      this.drawCelStarBurst(ctx, 20, 0, 16, '#ffffff', '#fde047', 5, strike * 3);
+      this.drawCelStarBurst(ctx, 21, 0, 17, '#ffffff', '#fde047', 5, strike * 3);
     }
     ctx.restore();
 
-    // 4. BLAZING CEL SUN-FLAME HEAD (Jagged Comic Spikes matching Character style.mp4!)
+    // 4. BLAZING 3-TIER CEL SUN-FLAME HEAD (Jagged Comic Spikes!)
     const t = (typeof performance !== 'undefined' ? performance.now() / 300 : Date.now() / 300);
     ctx.save();
     ctx.translate(0.5, -81 + bob);
@@ -14204,13 +14339,25 @@ class PlayerHero {
     ctx.beginPath();
     for (let s = 0; s < 18; s++) {
       const a = (s * Math.PI / 9) - Math.PI / 2 + Math.sin(t + s * 0.7) * 0.08;
-      const r = (s % 2 === 0) ? (s === 0 ? 31 : 27) : 16;
+      const r = (s % 2 === 0) ? (s === 0 ? 32 : 28) : 16;
       if (s === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
       else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
     }
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+
+    // Mid-layer blazing amber tongues
+    ctx.fillStyle = '#f97316';
+    ctx.beginPath();
+    for (let s = 0; s < 16; s++) {
+      const a = (s * Math.PI / 8) - Math.PI / 2 - Math.sin(t * 1.2 + s) * 0.07;
+      const r = (s % 2 === 0) ? 24.5 : 14.5;
+      if (s === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+      else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
 
     // Inner bright solar gold-yellow face
     ctx.fillStyle = '#fde047';
@@ -14224,7 +14371,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
 
-    // Cool Angular Crimson Shades with Crisp Frame Rim + Specular Gleam + Wide Smile
+    // Cool Angular Crimson Shades with Crisp Frame Rim + Specular Star Gleam + Wide Smile
     ctx.fillStyle = '#be123c';
     ctx.strokeStyle = '#4c0519';
     ctx.lineWidth = 1.5;
@@ -14243,6 +14390,8 @@ class PlayerHero {
     ctx.moveTo(-9, -4.5); ctx.lineTo(-3.5, -4); ctx.lineTo(-7, 1.5); ctx.closePath();
     ctx.moveTo(4.5, -4.5); ctx.lineTo(10, -6); ctx.lineTo(7, 1); ctx.closePath();
     ctx.fill();
+    // Star glint on shades corner
+    this.drawMiniStar(ctx, 13.5, -8.2, 4.2);
     // Wide cheerful open Sunstone grin (contoured tooth arc, no flat box)
     ctx.fillStyle = '#991b1b';
     ctx.beginPath(); ctx.arc(1.5, 5.5, 6.2, 0, Math.PI); ctx.closePath(); ctx.fill();
@@ -14401,35 +14550,50 @@ class PlayerHero {
     ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.arc(0.8, -97.5 + bob, 1.1, 0, Math.PI * 2); ctx.fill();
 
-    // 6. WEAPON: Dark Whip Cord + Garnet's Colossal Spiked Purple-Crimson Gauntlet Wrecking Ball!
+    // 6. WEAPON: Dark Whip Cord w/ Crackling Violet Arcs + Garnet's Colossal Spiked Wrecking Ball!
     ctx.save();
     ctx.translate(handX, handY);
     const flailX = 28 + strike * 36;
     const flailY = 16 - strike * 25;
     ctx.strokeStyle = '#312e81';
-    ctx.lineWidth = 4.2;
+    ctx.lineWidth = 4.6;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.quadraticCurveTo(flailX * 0.5, -14 * strike, flailX, flailY);
     ctx.stroke();
+    // Crackling violet lightning wrapping the chain
+    ctx.strokeStyle = '#e879f9';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(4, -2);
+    ctx.lineTo(flailX * 0.35, flailY * 0.25 - 6);
+    ctx.lineTo(flailX * 0.65, flailY * 0.6 + 5);
+    ctx.lineTo(flailX - 6, flailY - 3);
+    ctx.stroke();
+
+    // Glowing aura rim behind morningstar ball
+    ctx.fillStyle = 'rgba(168, 85, 247, 0.32)';
+    ctx.beginPath(); ctx.arc(flailX, flailY, 22, 0, Math.PI * 2); ctx.fill();
 
     ctx.fillStyle = '#581c87';
     ctx.strokeStyle = '#1e102d';
     ctx.lineWidth = 2.2;
-    ctx.beginPath(); ctx.arc(flailX, flailY, 17.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(flailX, flailY, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#a21caf';
-    ctx.beginPath(); ctx.arc(flailX + 3, flailY - 3, 9.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(flailX + 3, flailY - 3, 10, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#facc15';
-    this.drawMiniStar(ctx, flailX, flailY, 5.2);
+    this.drawMiniStar(ctx, flailX, flailY, 5.8);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(flailX - 4, flailY - 5, 2.5, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#e9d5ff';
     ctx.strokeStyle = '#3b0764';
     ctx.lineWidth = 1.2;
     for (let s = 0; s < 6; s++) {
       const a = s * Math.PI / 3 + strike * 1.5;
       ctx.beginPath();
-      ctx.moveTo(flailX + Math.cos(a) * 16, flailY + Math.sin(a) * 16);
-      ctx.lineTo(flailX + Math.cos(a) * 27, flailY + Math.sin(a) * 27);
-      ctx.lineTo(flailX + Math.cos(a + 0.34) * 16, flailY + Math.sin(a + 0.34) * 16);
+      ctx.moveTo(flailX + Math.cos(a) * 16.5, flailY + Math.sin(a) * 16.5);
+      ctx.lineTo(flailX + Math.cos(a) * 28.5, flailY + Math.sin(a) * 28.5);
+      ctx.lineTo(flailX + Math.cos(a + 0.34) * 16.5, flailY + Math.sin(a + 0.34) * 16.5);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
@@ -14501,10 +14665,16 @@ class PlayerHero {
     ctx.stroke();
     ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.ellipse(0, -37 + bob, 11, 3.2, 0, 0, Math.PI * 2); ctx.fill();
-    // White dress shirt triangle + Ruby bowtie + yellow chest star
+    // White dress shirt triangle + Golden lapel piping + Ruby bowtie + yellow chest star
     ctx.beginPath();
     ctx.moveTo(-6, -76 + bob); ctx.lineTo(6, -76 + bob); ctx.lineTo(0.5, -52 + bob); ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#fde047';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-8.5, -76 + bob); ctx.lineTo(-1, -51 + bob);
+    ctx.moveTo(8.5, -76 + bob); ctx.lineTo(2, -51 + bob);
+    ctx.stroke();
     ctx.fillStyle = '#e11d48';
     ctx.beginPath();
     ctx.moveTo(-5, -73 + bob); ctx.lineTo(0, -70 + bob); ctx.lineTo(5, -73 + bob);
@@ -14512,7 +14682,7 @@ class PlayerHero {
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 1, -59 + bob, 4.2);
+    this.drawMiniStar(ctx, 1, -59 + bob, 4.6);
 
     // 4. Sculpted Neck + Warm Crimson-Burgundy Cel Face (`Sardonyx.png`!) + 4 Eyes + Ruby Shades!
     this.drawCelTaperedLimb(ctx, 0, -75 + bob, 0.5, -80 + bob, 3.8, 3.4, '#be123c', '#881337', 1);
@@ -14565,22 +14735,29 @@ class PlayerHero {
     ctx.translate(handX, handY);
     ctx.rotate(strike * 1.3 + mSar.armSwingF * 0.14);
     this.drawCelTaperedLimb(ctx, 0, 26, 0, -48, 3.0, 2.6, '#f43f5e', '#881337', 1);
-    // Garnet double-gauntlet mallet head + top star crest
+    // Garnet double-gauntlet mallet head + spinning showbiz energy core + top star crest
+    ctx.fillStyle = 'rgba(253, 224, 71, 0.25)';
+    ctx.beginPath(); ctx.ellipse(0, -48, 26, 17, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#9f1239';
     ctx.strokeStyle = '#4c0519';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(-21, -57); ctx.lineTo(-14, -62); ctx.lineTo(14, -62); ctx.lineTo(21, -57);
-    ctx.lineTo(21, -38); ctx.lineTo(14, -34); ctx.lineTo(-14, -34); ctx.lineTo(-21, -38);
+    ctx.moveTo(-22, -57); ctx.lineTo(-14, -63); ctx.lineTo(14, -63); ctx.lineTo(22, -57);
+    ctx.lineTo(22, -37); ctx.lineTo(14, -33); ctx.lineTo(-14, -33); ctx.lineTo(-22, -37);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = '#e11d48';
-    ctx.fillRect(-16, -58, 32, 10);
+    ctx.fillRect(-17, -58, 34, 10);
+    // Gold center rotary band & glowing diamond glints
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-3.5, -62, 7, 28);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(0, -48, 3.2, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#fde047';
-    this.drawMiniStar(ctx, 0, -63, 6.8);
-    this.drawMiniStar(ctx, -12, -47, 4.2);
-    this.drawMiniStar(ctx, 12, -47, 4.2);
+    this.drawMiniStar(ctx, 0, -64, 7.2);
+    this.drawMiniStar(ctx, -13, -47, 4.5);
+    this.drawMiniStar(ctx, 13, -47, 4.5);
     ctx.restore();
   }
 
@@ -14651,7 +14828,18 @@ class PlayerHero {
     ctx.lineTo(-9.5, -42 + bob);
     ctx.closePath();
     ctx.fill();
-    // Long flowing mint tabard skirt down to knees + iconic Yellow 5-Point Star
+    // Long flowing mint tabard skirt down to knees + translucent opalescent side veils + Yellow Star
+    ctx.fillStyle = 'rgba(165, 243, 252, 0.45)';
+    ctx.beginPath();
+    ctx.moveTo(-10, -43 + bob);
+    ctx.quadraticCurveTo(-20 + swX * 0.3, -28 + bob, -17 + swX * 0.45, -14 + bob + swY * 0.2);
+    ctx.lineTo(-9 + swX * 0.2, -16 + bob);
+    ctx.closePath();
+    ctx.moveTo(10, -43 + bob);
+    ctx.quadraticCurveTo(19 + swX * 0.2, -28 + bob, 16 + swX * 0.35, -15 + bob + swY * 0.2);
+    ctx.lineTo(9 + swX * 0.15, -16 + bob);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#5eead4';
     ctx.strokeStyle = '#0f766e';
     ctx.lineWidth = 1.4;
@@ -14736,17 +14924,30 @@ class PlayerHero {
     ctx.strokeStyle = '#a16207';
     ctx.lineWidth = 1.2;
     ctx.beginPath(); ctx.roundRect(-5, -10, 7, 20, 3); ctx.fill(); ctx.stroke();
-    // Drawn luminous bowstring + glowing arrow
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.94)';
+    // Drawn luminous bowstring + glowing opalescent fletched light arrow
+    ctx.strokeStyle = 'rgba(103, 232, 249, 0.45)';
+    ctx.lineWidth = 4.2;
+    ctx.beginPath();
+    ctx.moveTo(10, -49); ctx.lineTo(drawPull, 0); ctx.lineTo(10, 49);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.96)';
     ctx.lineWidth = 1.7;
     ctx.beginPath();
     ctx.moveTo(10, -49); ctx.lineTo(drawPull, 0); ctx.lineTo(10, 49);
     ctx.stroke();
-    this.drawCelTaperedLimb(ctx, drawPull, 0, 36, 0, 1.9, 1.9, '#67e8f9');
+    this.drawCelTaperedLimb(ctx, drawPull, 0, 38, 0, 2.2, 2.0, '#67e8f9');
+    // Glowing feather fletching at nock
+    ctx.fillStyle = '#c084fc';
+    ctx.beginPath();
+    ctx.moveTo(drawPull, 0); ctx.lineTo(drawPull - 7, -5.5); ctx.lineTo(drawPull + 3, 0); ctx.lineTo(drawPull - 7, 5.5);
+    ctx.closePath();
+    ctx.fill();
     ctx.fillStyle = '#fde047';
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.1;
-    ctx.beginPath(); ctx.moveTo(32, -6.5); ctx.lineTo(46, 0); ctx.lineTo(32, 6.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(33, -7); ctx.lineTo(49, 0); ctx.lineTo(33, 7); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    this.drawMiniStar(ctx, 44, 0, 4.8);
     ctx.restore();
   }
 
@@ -14756,16 +14957,44 @@ class PlayerHero {
     const hair = this.getHairSway(animP, actionType);
     const strike = (actionType === 'punch' || actionType === 'throw' || actionType === 'skill') ? this.getStrikeCurve(animP) : 0;
 
-    // 1. BACK LAYER: Translucent Hydro-Ice Wings & Wild Mint-Cream Lion Mane
+    // 1. BACK LAYER: Twin Sweeping Translucent Hydro-Ice Wings (LEFT & RIGHT!) & Wild Mint-Cream Lion Mane
     const swX = hair.swayX * 0.9;
     const swY = hair.swayY * 0.55;
+    const wFlap = Math.sin((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 240) * 6;
     ctx.save();
-    ctx.fillStyle = 'rgba(56, 189, 248, 0.65)';
+    // Rear-left billowing hydro wing
+    const wGradL = ctx.createLinearGradient(-16, -65 + bob, -66, -110 + bob);
+    wGradL.addColorStop(0, 'rgba(14, 165, 233, 0.78)');
+    wGradL.addColorStop(0.6, 'rgba(56, 189, 248, 0.68)');
+    wGradL.addColorStop(1, 'rgba(224, 242, 254, 0.82)');
+    ctx.fillStyle = wGradL;
     ctx.strokeStyle = '#e0f2fe';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.0;
     ctx.beginPath();
     ctx.moveTo(-16, -65 + bob);
-    ctx.bezierCurveTo(-58 + swX * 0.6, -108 + bob, -66 + swX, -38 + bob + swY, -24, -44 + bob);
+    ctx.bezierCurveTo(-62 + swX * 0.6, -114 + bob + wFlap, -72 + swX, -42 + bob + swY - wFlap * 0.5, -24, -44 + bob);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Seafoam inner wing ripple vein (left)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-22, -60 + bob);
+    ctx.quadraticCurveTo(-48 + swX * 0.5, -84 + bob + wFlap * 0.7, -56 + swX * 0.7, -64 + bob);
+    ctx.stroke();
+
+    // Symmetric right billowing hydro wing!
+    const wGradR = ctx.createLinearGradient(16, -65 + bob, 66, -108 + bob);
+    wGradR.addColorStop(0, 'rgba(14, 165, 233, 0.72)');
+    wGradR.addColorStop(0.6, 'rgba(56, 189, 248, 0.62)');
+    wGradR.addColorStop(1, 'rgba(224, 242, 254, 0.78)');
+    ctx.fillStyle = wGradR;
+    ctx.strokeStyle = '#e0f2fe';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(16, -65 + bob);
+    ctx.bezierCurveTo(58 + swX * 0.4, -110 + bob - wFlap, 66 + swX * 0.6, -42 + bob + swY + wFlap * 0.5, 22, -46 + bob);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -14811,6 +15040,11 @@ class PlayerHero {
     drawMalachiteHandFoot(-7.5 + legs.backX, legs.backY, legs.backRot, false);
     drawMalachiteHandFoot(7 + legs.frontX * 0.8, legs.frontY, legs.frontRot, true);
     drawMalachiteHandFoot(21 + legs.frontX, legs.frontY, legs.frontRot, false);
+    // Frothing glacial mist pool swirling beneath Malachite's four gripping hand-feet
+    ctx.fillStyle = 'rgba(186, 230, 253, 0.34)';
+    ctx.beginPath();
+    ctx.ellipse(0, 1, 34, 6.5, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     // 3. Monstrous Neon-Mint Juggernaut Torso w/ Dark-Teal X-Halter, Swirls & Yellow Diamond Belt
     ctx.fillStyle = '#5eead4';
@@ -15012,11 +15246,28 @@ class PlayerHero {
     ctx.ellipse(-1, -95.5 + bob, 5.2, 1.8, -0.15, 0, Math.PI * 2);
     ctx.fill();
 
-    // 4. Articulated Dancer Arms + Gleaming Fencing Spear/Foil
+    // 4. Articulated Dancer Arms + Flowing 80s Neon-Prism Ribbons + Gleaming Fencing Foil
     const mRC = this.getCharacterMotionState();
     const rcB = mRC.armSwingB * 12;
     const rcF = mRC.armSwingF * 12;
-    this.drawArticulatedArm(ctx, -10, -64 + bob, -18 - rcB * 0.4, -72 + bob, -22 - rcB, -84 + bob + rcB * 0.3, '#fed7aa', '#fed7aa', 6, 4.8, '#fed7aa', 3.8);
+    const rearRx = -22 - rcB;
+    const rearRy = -84 + bob + rcB * 0.3;
+    this.drawArticulatedArm(ctx, -10, -64 + bob, -18 - rcB * 0.4, -72 + bob, rearRx, rearRy, '#fed7aa', '#fed7aa', 6, 4.8, '#fed7aa', 3.8);
+    // Flowing translucent 80s neon-prism dancer ribbon streaming from rear wrist
+    ctx.save();
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.72)';
+    ctx.lineWidth = 3.0;
+    ctx.beginPath();
+    ctx.moveTo(rearRx, rearRy);
+    ctx.bezierCurveTo(rearRx - 16 + swX * 0.6, rearRy + 12, rearRx - 8 + swX, rearRy + 30 + swY, rearRx - 22 + swX * 1.1, rearRy + 42 + swY);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(103, 232, 249, 0.78)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(rearRx, rearRy);
+    ctx.bezierCurveTo(rearRx - 12 + swX * 0.5, rearRy + 16, rearRx - 14 + swX * 0.9, rearRy + 28 + swY, rearRx - 20 + swX, rearRy + 40 + swY);
+    ctx.stroke();
+    ctx.restore();
 
     const handX = 14 + strike * 18 + rcF * 0.55;
     const handY = -52 + bob - strike * 4 + rcF * 0.35;
@@ -15025,84 +15276,131 @@ class PlayerHero {
     ctx.save();
     ctx.translate(handX, handY);
     ctx.rotate(mRC.armSwingF * 0.14);
-    this.drawCelTaperedLimb(ctx, 0, 0, 38 + strike * 12, -8 + strike * 6, 2.5, 0.8, '#f8fafc', '#cbd5e1', 1);
+    // Prismatic rainbow aura edge along fencing foil
+    ctx.strokeStyle = 'rgba(244, 114, 182, 0.45)';
+    ctx.lineWidth = 5.5;
+    ctx.beginPath();
+    ctx.moveTo(4, -1); ctx.lineTo(39 + strike * 12, -8 + strike * 6);
+    ctx.stroke();
+    this.drawCelTaperedLimb(ctx, 0, 0, 40 + strike * 12, -8 + strike * 6, 2.5, 0.8, '#f8fafc', '#cbd5e1', 1);
     ctx.fillStyle = '#f43f5e';
     ctx.strokeStyle = '#881337';
     ctx.lineWidth = 1.4;
-    ctx.beginPath(); ctx.arc(0, 0, 5.0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, 5.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#fde047';
-    ctx.beginPath(); ctx.arc(0, 0, 2.0, 0, Math.PI * 2); ctx.fill();
+    this.drawMiniStar(ctx, 0, 0, 3.2);
+    ctx.fillStyle = '#ffffff';
+    this.drawMiniStar(ctx, 40 + strike * 12, -8 + strike * 6, 4.0);
     ctx.restore();
   }
 
-  // --- CANONICAL FUSION COMBAT VFX (Unleash the Light Starbursts & Kinetic Slashes) ---
+  // --- CANONICAL FUSION COMBAT VFX (Combo-Aware Kinetic Slashes, Elemental Bursts & Starbursts) ---
   drawFusionAttackVisuals(ctx, bob, fusion, animP = 0.5) {
     const fid = fusion.id;
     const strike = Math.max(0.2, this.getStrikeCurve(animP));
+    const combo = this.attackCombo || 0;
     const glow = fusion.glowColor || '#ffffff';
     const base = fusion.color || '#f472b6';
     const isSkillL = (this.attackType === 'L');
     const isSpecialK = (this.attackType === 'K');
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
     ctx.save();
 
     if (fid === 'stevonnie') {
-      // Sweeping Rose-sword two-tier crescent blade waves + Unleash Starburst + Rose Petals
-      this.drawCrescentSlash(ctx, 28 + strike * 14, -46 + bob, (isSkillL ? 62 : 48) + strike * 12, -Math.PI * 0.55, Math.PI * 0.42, 'rgba(244, 114, 182, 0.45)', '#f43f5e', '#ffffff', isSkillL ? 20 : 16);
-      this.drawSpeedLines(ctx, 16, -46 + bob, 48 * strike, 24, 4, '#fb7185');
-      this.drawCelStarBurst(ctx, 60 + strike * 14, -46 + bob, isSkillL ? 16 : 11, '#ffffff', '#fde047', 4, animP * 2);
-      ctx.fillStyle = '#fbcfe8';
-      ctx.beginPath();
-      ctx.ellipse(45 + strike * 10, -62 + bob, 4.5, 2.2, 0.5, 0, Math.PI * 2);
-      ctx.fill();
+      // Multi-angle Rose-sword crescent waves + Rose Petal Storm + Shield Resonance Ring
+      const startA = combo % 2 === 1 ? Math.PI * 0.52 : -Math.PI * 0.58;
+      const endA = combo % 2 === 1 ? -Math.PI * 0.52 : Math.PI * 0.46;
+      this.drawCrescentSlash(ctx, 28 + strike * 16, -46 + bob, (isSkillL ? 68 : 50 + (combo % 3) * 6) + strike * 12, startA, endA, 'rgba(244, 114, 182, 0.48)', '#f43f5e', '#ffffff', isSkillL ? 22 : 17);
+      if (isSkillL || isSpecialK || combo >= 2) {
+        this.drawCrescentSlash(ctx, 24 + strike * 12, -46 + bob, (isSkillL ? 54 : 38) + strike * 10, -endA * 0.85, -startA * 0.85, 'rgba(253, 224, 71, 0.35)', '#fb7185', '#fde047', 12);
+      }
+      this.drawSpeedLines(ctx, 16, -46 + bob, 54 * strike, 26, 5, '#fb7185');
+      this.drawCelStarBurst(ctx, 64 + strike * 14, -46 + bob, isSkillL ? 19 : 13, '#ffffff', '#fde047', 5, animP * 2.5);
+      for (let p = 0; p < (isSkillL ? 6 : 3); p++) {
+        const pa = animP * 4 + p * 1.1;
+        ctx.fillStyle = p % 2 === 0 ? '#fbcfe8' : '#f472b6';
+        ctx.beginPath();
+        ctx.ellipse(42 + strike * 20 + Math.cos(pa) * 18, -48 + bob + Math.sin(pa) * 24, 5, 2.4, pa, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (fid === 'smoky') {
-      // Triple spinning yo-yo whirlwind trails & sonic star shockwave
-      const rot = (typeof performance !== 'undefined' ? performance.now() / 28 : Date.now() / 28);
+      // Triple spinning yo-yo whirlwind trails, vacuum cyclone rings & star shockwave
+      const rot = now / 24;
       ctx.save();
-      ctx.translate(34 + strike * 18, -42 + bob);
+      ctx.translate(36 + strike * 20, -42 + bob);
       ctx.rotate(rot);
-      ctx.strokeStyle = 'rgba(168, 85, 247, 0.78)';
-      ctx.lineWidth = isSkillL ? 5.2 : 3.8;
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.82)';
+      ctx.lineWidth = isSkillL ? 5.6 : 4.2;
       ctx.beginPath();
-      ctx.arc(0, 0, (isSkillL ? 48 : 36) + strike * 12, 0, Math.PI * 1.65);
+      ctx.arc(0, 0, (isSkillL ? 54 : 38 + (combo % 3) * 5) + strike * 12, 0, Math.PI * 1.72);
+      ctx.stroke();
+      ctx.strokeStyle = '#fb923c';
+      ctx.lineWidth = 3.0;
+      ctx.beginPath();
+      ctx.arc(0, 0, (isSkillL ? 42 : 28) + strike * 10, 0.8, Math.PI * 2.2);
       ctx.stroke();
       ctx.strokeStyle = '#fde047';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.2;
       ctx.beginPath();
-      ctx.arc(0, 0, (isSkillL ? 36 : 26) + strike * 10, 0.4, Math.PI * 1.45);
+      ctx.arc(0, 0, (isSkillL ? 28 : 19) + strike * 8, 0.3, Math.PI * 1.5);
       ctx.stroke();
       ctx.restore();
-      this.drawSpeedLines(ctx, 16, -42 + bob, 48 * strike, 28, 4, '#c084fc');
-      this.drawCelStarBurst(ctx, 60 + strike * 16, -42 + bob, isSkillL ? 18 : 12, '#ffffff', '#fde047', 5, rot * 0.3);
+      if (isSkillL) {
+        // Funnel cyclone drafts
+        ctx.strokeStyle = 'rgba(233, 213, 255, 0.65)';
+        ctx.lineWidth = 2.6;
+        for (let cy = -10; cy >= -78; cy -= 17) {
+          ctx.beginPath();
+          ctx.ellipse(38 + strike * 14, cy + bob, 22 + (-cy) * 0.45, 7, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+      this.drawSpeedLines(ctx, 16, -42 + bob, 54 * strike, 30, 5, '#c084fc');
+      this.drawCelStarBurst(ctx, 64 + strike * 18, -42 + bob, isSkillL ? 20 : 13, '#ffffff', '#fde047', 5, rot * 0.3);
     } else if (fid === 'rainbow2') {
-      // Prismatic Rainbow Umbrella-Blaster Beam + 5-Band Cel Arcs (Character style.mp4!)
+      // Prismatic 6-Band Rainbow Umbrella-Blaster Beam + Orbiting Pastel Starbursts
       const colors = ['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#a855f7'];
       for (let i = 0; i < colors.length; i++) {
         ctx.strokeStyle = colors[i];
-        ctx.lineWidth = isSkillL ? 3.5 : 2.5;
+        ctx.lineWidth = isSkillL ? 4.2 : 2.8;
         ctx.beginPath();
-        ctx.arc(24 + strike * 14, -48 + bob, (isSkillL ? 44 : 33) + i * 3.8, -Math.PI * 0.42, Math.PI * 0.38);
+        ctx.arc(24 + strike * 14, -48 + bob, (isSkillL ? 46 : 34) + i * 4.2, -Math.PI * 0.46, Math.PI * 0.42);
         ctx.stroke();
       }
-      if (isSkillL || isSpecialK) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+      if (isSkillL || isSpecialK || combo >= 2) {
+        const beamLen = (isSkillL ? 128 : 96) + strike * 22;
+        const beamG = ctx.createLinearGradient(42, -68 + bob, 42, -28 + bob);
+        beamG.addColorStop(0, 'rgba(244, 63, 94, 0.65)');
+        beamG.addColorStop(0.3, 'rgba(250, 204, 21, 0.72)');
+        beamG.addColorStop(0.5, 'rgba(255, 255, 255, 0.92)');
+        beamG.addColorStop(0.75, 'rgba(56, 189, 248, 0.72)');
+        beamG.addColorStop(1, 'rgba(168, 85, 247, 0.65)');
+        ctx.fillStyle = beamG;
         ctx.beginPath();
         ctx.moveTo(42, -52 + bob);
-        ctx.lineTo(106 + strike * 18, -64 + bob);
-        ctx.lineTo(106 + strike * 18, -32 + bob);
+        ctx.lineTo(42 + beamLen, -68 + bob);
+        ctx.lineTo(42 + beamLen, -28 + bob);
         ctx.closePath();
         ctx.fill();
       }
-      this.drawCelStarBurst(ctx, 64 + strike * 14, -48 + bob, isSpecialK || isSkillL ? 17 : 11, '#ffffff', '#fde047', 5, animP * 3);
+      this.drawCelStarBurst(ctx, 68 + strike * 16, -48 + bob, isSpecialK || isSkillL ? 19 : 13, '#ffffff', '#fde047', 5, animP * 3);
+      this.drawCelStarBurst(ctx, 50 + strike * 10, -72 + bob, 9, '#ffffff', '#38bdf8', 4, -animP * 2);
     } else if (fid === 'sunstone') {
-      // Blazing Jagged Cel Fire Crown Shockwave & Radial Impact Sparks (Character style.mp4!)
-      const crX = 48 + strike * 18;
-      const crY = isSkillL ? -8 + bob : -42 + bob;
-      const crR = isSkillL ? 38 : 22;
+      // Blazing Multi-Ring Solar Fire Crown Shockwave & Radial Impact Flames
+      const crX = 50 + strike * 20;
+      const crY = isSkillL ? -8 + bob : -44 + bob;
+      const crR = isSkillL ? 44 : (24 + (combo % 3) * 4);
+      // Outer shockwave ring
+      ctx.strokeStyle = 'rgba(253, 224, 71, 0.85)';
+      ctx.lineWidth = isSkillL ? 4.5 : 3.0;
+      ctx.beginPath();
+      ctx.arc(crX, crY, crR * 1.48, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.fillStyle = '#ea580c';
       ctx.beginPath();
       for (let s = 0; s < 16; s++) {
         const a = (s * Math.PI / 8) + animP;
-        const r = (s % 2 === 0) ? crR * 1.45 : crR * 0.65;
+        const r = (s % 2 === 0) ? crR * 1.5 : crR * 0.65;
         if (s === 0) ctx.moveTo(crX + Math.cos(a) * r, crY + Math.sin(a) * r);
         else ctx.lineTo(crX + Math.cos(a) * r, crY + Math.sin(a) * r);
       }
@@ -15112,44 +15410,102 @@ class PlayerHero {
       ctx.beginPath();
       for (let s = 0; s < 12; s++) {
         const a = (s * Math.PI / 6) - animP;
-        const r = (s % 2 === 0) ? crR * 0.95 : crR * 0.42;
+        const r = (s % 2 === 0) ? crR * 0.98 : crR * 0.44;
         if (s === 0) ctx.moveTo(crX + Math.cos(a) * r, crY + Math.sin(a) * r);
         else ctx.lineTo(crX + Math.cos(a) * r, crY + Math.sin(a) * r);
       }
       ctx.closePath();
       ctx.fill();
-      this.drawCelImpactPuff(ctx, crX, crY, isSkillL ? 24 : 15, '#ffffff');
-      this.drawCelStarBurst(ctx, crX + 16, crY - 6, isSkillL ? 18 : 13, '#ffffff', '#fde047', 4, animP * 2);
+      this.drawSpeedLines(ctx, 18, crY, 54 * strike, 28, 5, '#fb923c');
+      this.drawCelImpactPuff(ctx, crX, crY, isSkillL ? 28 : 17, '#ffffff');
+      this.drawCelStarBurst(ctx, crX + 18, crY - 6, isSkillL ? 21 : 14, '#ffffff', '#fde047', 5, animP * 2);
     } else if (fid === 'sugilite') {
-      // Colossal violet wrecking ball cataclysm impact wave & starburst
-      this.drawCrescentSlash(ctx, 36 + strike * 16, -40 + bob, (isSkillL ? 76 : 64) + strike * 16, -Math.PI * 0.65, Math.PI * 0.45, 'rgba(126, 34, 206, 0.55)', '#7e22ce', '#e9d5ff', 22);
-      this.drawSpeedLines(ctx, 20, -40 + bob, 60 * strike, 36, 5, '#c084fc');
-      this.drawCelStarBurst(ctx, 68 + strike * 16, -40 + bob, isSkillL ? 18 : 12, '#ffffff', '#c084fc', 4, animP);
-    } else if (fid === 'sardonyx') {
-      // Grand theatrical hammer shockwave & diamond glints
-      this.drawCrescentSlash(ctx, 32 + strike * 14, -46 + bob, (isSkillL ? 66 : 52) + strike * 14, -Math.PI * 0.7, Math.PI * 0.35, 'rgba(251, 146, 60, 0.50)', '#fb7185', '#fde047', 18);
-      this.drawCelStarBurst(ctx, 64 + strike * 14, -54 + bob, 14, '#ffffff', '#fde047', 4, animP * 2);
-      this.drawCelStarBurst(ctx, 48 + strike * 10, -74 + bob, 9, '#ffffff', '#fb7185', 4, 0);
-    } else if (fid === 'opal') {
-      // Radiant opalescent light arrows and starlight trails
-      ctx.strokeStyle = 'rgba(129, 140, 248, 0.9)';
-      ctx.lineWidth = isSkillL ? 5 : 3.5;
+      // Colossal violet wrecking-ball cataclysm wave + crackling purple lightning + tectonic ground rings
+      this.drawCrescentSlash(ctx, 36 + strike * 16, -40 + bob, (isSkillL ? 82 : 66) + strike * 16, -Math.PI * 0.68, Math.PI * 0.48, 'rgba(126, 34, 206, 0.58)', '#7e22ce', '#e9d5ff', 24);
+      this.drawCrescentSlash(ctx, 32 + strike * 12, -40 + bob, (isSkillL ? 62 : 48) + strike * 12, -Math.PI * 0.55, Math.PI * 0.32, 'rgba(232, 121, 249, 0.42)', '#d946ef', '#fde047', 12);
+      // Crackling lightning bolts
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 2.8;
       ctx.beginPath();
-      ctx.moveTo(24, -58 + bob);
-      ctx.lineTo(72 + strike * 28, -58 + bob);
+      ctx.moveTo(26, -72 + bob); ctx.lineTo(52 + strike * 12, -46 + bob); ctx.lineTo(44 + strike * 10, -24 + bob); ctx.lineTo(74 + strike * 18, -6 + bob);
       ctx.stroke();
-      this.drawCelStarBurst(ctx, 74 + strike * 28, -58 + bob, 13, '#ffffff', '#67e8f9', 4, animP * 2);
-      this.drawCelStarBurst(ctx, 52 + strike * 20, -58 + bob, 8, '#ffffff', '#818cf8', 4, 0.5);
+      if (isSkillL || combo >= 2) {
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.ellipse(58 + strike * 12, -2, 42 + strike * 14, 11, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      this.drawSpeedLines(ctx, 20, -40 + bob, 66 * strike, 38, 6, '#c084fc');
+      this.drawCelStarBurst(ctx, 72 + strike * 16, -40 + bob, isSkillL ? 22 : 14, '#ffffff', '#c084fc', 5, animP);
+    } else if (fid === 'sardonyx') {
+      // Grand theatrical hammer shockwave, golden spotlight beams & diamond star glints
+      if (isSkillL || isSpecialK) {
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.28)';
+        ctx.beginPath();
+        ctx.moveTo(56 + strike * 10, -120 + bob);
+        ctx.lineTo(14 + strike * 8, 4);
+        ctx.lineTo(96 + strike * 16, 4);
+        ctx.closePath();
+        ctx.fill();
+      }
+      this.drawCrescentSlash(ctx, 32 + strike * 14, -46 + bob, (isSkillL ? 72 : 56) + strike * 14, -Math.PI * 0.72, Math.PI * 0.38, 'rgba(251, 146, 60, 0.54)', '#fb7185', '#fde047', 20);
+      this.drawCrescentSlash(ctx, 28 + strike * 10, -46 + bob, 42 + strike * 10, -Math.PI * 0.55, Math.PI * 0.25, 'rgba(253, 224, 71, 0.42)', '#f59e0b', '#ffffff', 11);
+      this.drawCelStarBurst(ctx, 68 + strike * 14, -54 + bob, isSkillL ? 19 : 14, '#ffffff', '#fde047', 4, animP * 2);
+      this.drawCelStarBurst(ctx, 48 + strike * 10, -78 + bob, 11, '#ffffff', '#fb7185', 4, 0.4);
+      this.drawCelStarBurst(ctx, 78 + strike * 12, -26 + bob, 10, '#ffffff', '#fde047', 4, -0.4);
+    } else if (fid === 'opal') {
+      // Radiant opalescent starlight arrow volleys + bowstring resonance rings
+      const spreadAngles = isSkillL ? [-0.26, -0.13, 0, 0.13, 0.26] : (isSpecialK || combo >= 2 ? [-0.15, 0, 0.15] : [0]);
+      for (const ang of spreadAngles) {
+        const len = (isSkillL ? 88 : 62) + strike * 32;
+        const ex = 24 + Math.cos(ang) * len;
+        const ey = -58 + bob + Math.sin(ang) * len;
+        ctx.strokeStyle = 'rgba(129, 140, 248, 0.55)';
+        ctx.lineWidth = isSkillL ? 7.5 : 5.5;
+        ctx.beginPath(); ctx.moveTo(24, -58 + bob); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.moveTo(24, -58 + bob); ctx.lineTo(ex, ey); ctx.stroke();
+        this.drawCelStarBurst(ctx, ex, ey, isSkillL ? 13 : 10, '#ffffff', '#67e8f9', 4, animP * 2);
+      }
+      ctx.strokeStyle = 'rgba(103, 232, 249, 0.85)';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.ellipse(36 + strike * 8, -58 + bob, 8, 26, 0, 0, Math.PI * 2);
+      ctx.stroke();
     } else if (fid === 'malachite') {
-      // Abyssal surging hydro-frost tidal claws
-      this.drawCrescentSlash(ctx, 34 + strike * 16, -46 + bob, (isSkillL ? 68 : 54) + strike * 16, -Math.PI * 0.55, Math.PI * 0.45, 'rgba(45, 212, 191, 0.55)', '#0d9488', '#ccfbf1', 18);
-      this.drawSpeedLines(ctx, 22, -46 + bob, 56 * strike, 30, 4, '#2dd4bf');
-      this.drawCelStarBurst(ctx, 66 + strike * 16, -46 + bob, 14, '#ffffff', '#2dd4bf', 4, animP);
+      // Abyssal surging hydro-frost tidal claws + jagged erupting ice shards
+      this.drawCrescentSlash(ctx, 34 + strike * 16, -46 + bob, (isSkillL ? 74 : 58) + strike * 16, -Math.PI * 0.58, Math.PI * 0.48, 'rgba(45, 212, 191, 0.58)', '#0d9488', '#ccfbf1', 20);
+      this.drawCrescentSlash(ctx, 28 + strike * 12, -46 + bob, (isSkillL ? 56 : 42) + strike * 12, Math.PI * 0.48, -Math.PI * 0.52, 'rgba(56, 189, 248, 0.48)', '#0284c7', '#ffffff', 13);
+      // Erupting glacial ice spikes ahead of swipe
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.88)';
+      ctx.strokeStyle = '#0f766e';
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < (isSkillL ? 4 : 2); i++) {
+        const ix = 50 + strike * 16 + i * 14;
+        const ih = 26 + (i % 2) * 14;
+        ctx.beginPath();
+        ctx.moveTo(ix - 6, -4); ctx.lineTo(ix, -4 - ih); ctx.lineTo(ix + 6, -4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      this.drawSpeedLines(ctx, 22, -46 + bob, 60 * strike, 32, 5, '#2dd4bf');
+      this.drawCelStarBurst(ctx, 70 + strike * 16, -46 + bob, isSkillL ? 19 : 14, '#ffffff', '#2dd4bf', 4, animP);
     } else {
-      // Rainbow Quartz Classic: Graceful pastel fencing ribbons + starburst
-      this.drawCrescentSlash(ctx, 28 + strike * 12, -48 + bob, 44 + strike * 10, -Math.PI * 0.48, Math.PI * 0.45, 'rgba(251, 207, 232, 0.45)', base, glow, 14);
-      this.drawSpeedLines(ctx, 16, -48 + bob, 46 * strike, 24, 4, glow);
-      this.drawCelStarBurst(ctx, 58 + strike * 12, -48 + bob, 12, '#ffffff', '#f472b6', 5, animP * 2);
+      // Rainbow Quartz Classic: Graceful 80s neon-prism fencing ribbons + rose starburst mandala
+      const pCols = ['#f472b6', '#fde047', '#38bdf8', '#c084fc'];
+      this.drawCrescentSlash(ctx, 28 + strike * 14, -48 + bob, (isSkillL ? 64 : 48) + strike * 12, -Math.PI * 0.52, Math.PI * 0.48, 'rgba(251, 207, 232, 0.48)', base, glow, isSkillL ? 19 : 15);
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = pCols[i];
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.arc(26 + strike * 10, -48 + bob, 32 + i * 8 + strike * 8, -Math.PI * 0.4 + i * 0.12, Math.PI * 0.4 + i * 0.12);
+        ctx.stroke();
+      }
+      this.drawSpeedLines(ctx, 16, -48 + bob, 52 * strike, 26, 5, glow);
+      this.drawCelStarBurst(ctx, 64 + strike * 14, -48 + bob, isSkillL ? 18 : 13, '#ffffff', '#f472b6', 5, animP * 2);
     }
 
     ctx.restore();
@@ -15158,438 +15514,450 @@ class PlayerHero {
   drawAttackVisuals(ctx, bob) {
     ctx.save();
     const frame = this.attackFrame; // 0 to 3
-    const combo = this.attackCombo; // 0, 1, 2
+    const combo = this.attackCombo || 0; // Supports full 3-hit / 4-hit / 5-hit chains!
     const c = this.activeChar;
     const animP = this.actionDuration > 0 ? Math.min(1, Math.max(0, 1 - (this.actionTimer / this.actionDuration))) : 0.5;
     const strike = Math.max(0.2, this.getStrikeCurve(animP));
+    const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
     if (c === 'connie') {
       if (this.attackType === 'J') {
         if (combo === 0) {
           // Hit 1: Swift Fencing Lunge Thrust — tapered pink-white lance cone + speed streaks!
-          const tipX = 56 + strike * 26;
+          const tipX = 58 + strike * 28;
           const tipY = -44 + bob;
-          this.drawSpeedLines(ctx, 18, tipY, 36 + strike * 20, 18, 4, 'rgba(244, 114, 182, 0.85)');
-          ctx.fillStyle = 'rgba(236, 72, 153, 0.42)';
+          this.drawSpeedLines(ctx, 18, tipY, 40 + strike * 22, 18, 5, 'rgba(244, 114, 182, 0.9)');
+          ctx.fillStyle = 'rgba(236, 72, 153, 0.45)';
           ctx.beginPath();
-          ctx.moveTo(22, tipY - 7);
-          ctx.lineTo(tipX, tipY);
-          ctx.lineTo(22, tipY + 7);
-          ctx.closePath();
-          ctx.fill();
+          ctx.moveTo(22, tipY - 8); ctx.lineTo(tipX, tipY); ctx.lineTo(22, tipY + 8);
+          ctx.closePath(); ctx.fill();
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.moveTo(28, tipY - 3);
-          ctx.lineTo(tipX + 4, tipY);
-          ctx.lineTo(28, tipY + 3);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, tipX + 4, tipY, 6.5);
+          ctx.moveTo(28, tipY - 3.5); ctx.lineTo(tipX + 5, tipY); ctx.lineTo(28, tipY + 3.5);
+          ctx.closePath(); ctx.fill();
+          this.drawCelStarBurst(ctx, tipX + 4, tipY, 10, '#ffffff', '#fde047', 4, animP * 2);
         } else if (combo === 1) {
           // Hit 2: Rising Two-Handed Rose-Crystal Crescent Slash + drifting petals!
-          this.drawCrescentSlash(ctx, 24 + strike * 8, -40 + bob, 38 + strike * 8, Math.PI * 0.48, -Math.PI * 0.52, 'rgba(244, 114, 182, 0.38)', '#ec4899', '#ffffff', 13);
+          this.drawCrescentSlash(ctx, 24 + strike * 10, -40 + bob, 40 + strike * 8, Math.PI * 0.48, -Math.PI * 0.54, 'rgba(244, 114, 182, 0.42)', '#ec4899', '#ffffff', 14);
           ctx.fillStyle = '#fbcfe8';
           ctx.beginPath();
-          ctx.ellipse(48 + strike * 8, -22 + bob, 4, 2, -0.5, 0, Math.PI * 2);
-          ctx.ellipse(54 + strike * 8, -56 + bob, 4.5, 2.2, 0.6, 0, Math.PI * 2);
+          ctx.ellipse(48 + strike * 8, -22 + bob, 4.5, 2.2, -0.5, 0, Math.PI * 2);
+          ctx.ellipse(54 + strike * 8, -56 + bob, 5.0, 2.4, 0.6, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = '#fbbf24';
-          this.drawMiniStar(ctx, 56 + strike * 8, -42 + bob, 7.5);
+          this.drawCelStarBurst(ctx, 58 + strike * 8, -42 + bob, 11, '#ffffff', '#fbbf24', 4, animP);
+        } else if (combo === 2) {
+          // Hit 3: Spinning Horizontal Reverse Flash-Cut!
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -38 + bob, 46 + strike * 10, -Math.PI * 0.25, Math.PI * 0.32, 'rgba(56, 189, 248, 0.35)', '#f472b6', '#ffffff', 16);
+          this.drawSpeedLines(ctx, 14, -38 + bob, 56 * strike, 22, 5, '#ffffff');
+          this.drawCelStarBurst(ctx, 64 + strike * 12, -38 + bob, 12, '#ffffff', '#fde047', 4, animP * 3);
+        } else if (combo === 3) {
+          // Hit 4: Rapid Twin Cross-Parry Slash!
+          this.drawCrescentSlash(ctx, 26 + strike * 10, -42 + bob, 44 + strike * 10, -Math.PI * 0.6, Math.PI * 0.22, 'rgba(244, 63, 94, 0.45)', '#f43f5e', '#ffffff', 14);
+          this.drawCrescentSlash(ctx, 26 + strike * 10, -34 + bob, 44 + strike * 10, Math.PI * 0.6, -Math.PI * 0.22, 'rgba(251, 207, 232, 0.42)', '#ec4899', '#fde047', 12);
+          this.drawCelStarBurst(ctx, 62 + strike * 10, -38 + bob, 13, '#ffffff', '#fde047', 4, animP * 2);
         } else {
-          // Hit 3: Aerial Knight's Helm-Splitter Double Crescent Cleave & Star Eruption!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -34 + bob, 48 + strike * 10, -Math.PI * 0.68, Math.PI * 0.40, 'rgba(219, 39, 119, 0.42)', '#f43f5e', '#ffffff', 16);
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -34 + bob, 34 + strike * 6, -Math.PI * 0.55, Math.PI * 0.28, 'rgba(251, 207, 232, 0.35)', '#fbcfe8', '#fde047', 9);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 64 + strike * 10, -24 + bob, 9.5);
-          ctx.fillStyle = '#fbcfe8';
-          this.drawMiniStar(ctx, 48 + strike * 8, -62 + bob, 7);
+          // Hit 5: Aerial Knight's Helm-Splitter Double Crescent Cleave & Star Eruption!
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -34 + bob, 52 + strike * 12, -Math.PI * 0.72, Math.PI * 0.42, 'rgba(219, 39, 119, 0.48)', '#f43f5e', '#ffffff', 18);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -34 + bob, 38 + strike * 8, -Math.PI * 0.58, Math.PI * 0.30, 'rgba(251, 207, 232, 0.40)', '#fbcfe8', '#fde047', 11);
+          this.drawCelStarBurst(ctx, 68 + strike * 12, -24 + bob, 16, '#ffffff', '#fde047', 5, animP * 2);
+          this.drawCelStarBurst(ctx, 48 + strike * 8, -64 + bob, 10, '#ffffff', '#fbcfe8', 4, 0.5);
         }
       } else if (this.attackType === 'K') {
-        // Flying Sword Shockwave Beam Launch
-        this.drawCrescentSlash(ctx, 28 + strike * 8, -38 + bob, 32 + strike * 6, -Math.PI * 0.52, Math.PI * 0.52, 'rgba(244, 114, 182, 0.4)', '#ec4899', '#ffffff', 12);
-        this.drawSpeedLines(ctx, 20, -38 + bob, 38, 20, 3, '#fbcfe8');
-        ctx.fillStyle = '#fbbf24';
-        this.drawMiniStar(ctx, 58 + strike * 8, -38 + bob, 8);
+        // Flying Sword Shockwave Beam Launch + Sonic Rings
+        this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 36 + strike * 8, -Math.PI * 0.56, Math.PI * 0.56, 'rgba(244, 114, 182, 0.45)', '#ec4899', '#ffffff', 14);
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.8)';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.ellipse(42 + strike * 12, -38 + bob, 7, 20, 0, 0, Math.PI * 2); ctx.stroke();
+        this.drawSpeedLines(ctx, 20, -38 + bob, 46, 22, 4, '#fbcfe8');
+        this.drawCelStarBurst(ctx, 62 + strike * 10, -38 + bob, 12, '#ffffff', '#fbbf24', 4, animP * 2);
       } else if (this.attackType === 'L') {
-        // Lion's Shadow-Step Twin X-Cross Tapered Slashes + Starburst!
-        ctx.fillStyle = 'rgba(244, 114, 182, 0.45)';
+        // Lion's Shadow-Step Twin X-Cross Tapered Slashes + Prismatic Flash!
+        ctx.fillStyle = 'rgba(244, 114, 182, 0.52)';
         ctx.beginPath();
-        ctx.moveTo(-28, -64 + bob); ctx.lineTo(62, -12 + bob); ctx.lineTo(56, -6 + bob); ctx.lineTo(-34, -58 + bob); ctx.closePath();
-        ctx.moveTo(-28, -12 + bob); ctx.lineTo(62, -64 + bob); ctx.lineTo(56, -70 + bob); ctx.lineTo(-34, -18 + bob); ctx.closePath();
+        ctx.moveTo(-32, -68 + bob); ctx.lineTo(68, -10 + bob); ctx.lineTo(60, -4 + bob); ctx.lineTo(-38, -60 + bob); ctx.closePath();
+        ctx.moveTo(-32, -10 + bob); ctx.lineTo(68, -68 + bob); ctx.lineTo(60, -74 + bob); ctx.lineTo(-38, -16 + bob); ctx.closePath();
         ctx.fill();
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3.4;
         ctx.beginPath();
-        ctx.moveTo(-28, -62 + bob); ctx.lineTo(60, -14 + bob);
-        ctx.moveTo(-28, -14 + bob); ctx.lineTo(60, -62 + bob);
+        ctx.moveTo(-32, -64 + bob); ctx.lineTo(64, -12 + bob);
+        ctx.moveTo(-32, -12 + bob); ctx.lineTo(64, -64 + bob);
         ctx.stroke();
-        this.drawCelStarBurst(ctx, 56, -38 + bob, 14, '#ffffff', '#fde047', 4, animP * 2);
+        this.drawCelStarBurst(ctx, 62, -38 + bob, 18, '#ffffff', '#fde047', 5, animP * 2.5);
+        this.drawCelStarBurst(ctx, 18, -38 + bob, 12, '#ffffff', '#f472b6', 4, -animP * 2);
       }
     } else if (c === 'jasper') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          const reach = 32 + strike * 22;
-          this.drawSpeedLines(ctx, 14, -40 + bob, reach, 20, 4, '#fb923c');
-          this.drawCrescentSlash(ctx, 24 + strike * 10, -40 + bob, 30 + strike * 6, -Math.PI * 0.38, Math.PI * 0.38, 'rgba(234, 88, 12, 0.42)', '#ea580c', '#fde047', 12);
-          this.drawCelStarBurst(ctx, 52 + strike * 10, -40 + bob, 10, '#ffffff', '#fde047', 4);
+          const reach = 36 + strike * 24;
+          this.drawSpeedLines(ctx, 14, -40 + bob, reach, 22, 5, '#fb923c');
+          this.drawCrescentSlash(ctx, 24 + strike * 12, -40 + bob, 34 + strike * 8, -Math.PI * 0.42, Math.PI * 0.42, 'rgba(234, 88, 12, 0.48)', '#ea580c', '#fde047', 14);
+          this.drawCelStarBurst(ctx, 56 + strike * 12, -40 + bob, 12, '#ffffff', '#fde047', 4);
         } else if (combo === 1) {
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -38 + bob, 42 + strike * 8, -Math.PI * 0.68, Math.PI * 0.25, 'rgba(194, 65, 12, 0.45)', '#ea580c', '#fde047', 15);
-          this.drawCelStarBurst(ctx, 54 + strike * 8, -18 + bob, 12, '#ffffff', '#f97316', 4);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -38 + bob, 46 + strike * 10, -Math.PI * 0.72, Math.PI * 0.28, 'rgba(194, 65, 12, 0.50)', '#ea580c', '#fde047', 17);
+          this.drawCelStarBurst(ctx, 58 + strike * 10, -18 + bob, 14, '#ffffff', '#f97316', 4);
         } else {
-          this.drawCrescentSlash(ctx, 28 + strike * 12, -36 + bob, 48 + strike * 12, -Math.PI * 0.55, Math.PI * 0.45, 'rgba(234, 88, 12, 0.5)', '#dc2626', '#fde047', 18);
-          this.drawCelImpactPuff(ctx, 56, -4 + bob, 18, '#fed7aa');
-          this.drawCelStarBurst(ctx, 64 + strike * 10, -36 + bob, 14, '#ffffff', '#fde047', 4, animP);
+          this.drawCrescentSlash(ctx, 28 + strike * 14, -36 + bob, 54 + strike * 12, -Math.PI * 0.58, Math.PI * 0.48, 'rgba(234, 88, 12, 0.56)', '#dc2626', '#fde047', 20);
+          ctx.strokeStyle = '#fb923c';
+          ctx.lineWidth = 3.2;
+          ctx.beginPath(); ctx.ellipse(58, -3, 30 + strike * 12, 8, 0, 0, Math.PI * 2); ctx.stroke();
+          this.drawCelImpactPuff(ctx, 58, -4 + bob, 22, '#fed7aa');
+          this.drawCelStarBurst(ctx, 68 + strike * 12, -36 + bob, 17, '#ffffff', '#fde047', 5, animP);
         }
       } else if (this.attackType === 'K') {
-        // Crash Helmet Battering-Ram Blazing Comet Cone!
-        this.drawSpeedLines(ctx, -18, -46 + bob, 56, 26, 5, '#fde047');
-        ctx.fillStyle = 'rgba(234, 88, 12, 0.72)';
+        // Crash Helmet Battering-Ram Blazing Comet Cone + Shock Rings!
+        this.drawSpeedLines(ctx, -22, -46 + bob, 64, 28, 6, '#fde047');
+        ctx.fillStyle = 'rgba(234, 88, 12, 0.78)';
         ctx.beginPath();
-        ctx.moveTo(12, -68 + bob);
-        ctx.lineTo(64, -46 + bob);
-        ctx.lineTo(12, -24 + bob);
-        ctx.quadraticCurveTo(28, -46 + bob, 12, -68 + bob);
-        ctx.closePath();
-        ctx.fill();
-        this.drawCelStarBurst(ctx, 64, -46 + bob, 13, '#ffffff', '#fde047', 4);
+        ctx.moveTo(12, -72 + bob); ctx.lineTo(72, -46 + bob); ctx.lineTo(12, -20 + bob);
+        ctx.quadraticCurveTo(30, -46 + bob, 12, -72 + bob);
+        ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.ellipse(34, -46 + bob, 8, 26, 0, 0, Math.PI * 2); ctx.stroke();
+        this.drawCelStarBurst(ctx, 72, -46 + bob, 16, '#ffffff', '#fde047', 5, animP * 2);
       } else if (this.attackType === 'L') {
-        // Fiery Sawblade Spin-Dash Vortex Rings!
-        const spinPulse = Math.sin((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 35) * 6;
-        this.drawCrescentSlash(ctx, 0, -28 + bob, 44 + spinPulse, 0, Math.PI * 1.4, 'rgba(234, 88, 12, 0.45)', '#f97316', '#fde047', 12);
-        this.drawCrescentSlash(ctx, 0, -28 + bob, 44 + spinPulse, Math.PI, Math.PI * 2.4, 'rgba(234, 88, 12, 0.45)', '#ea580c', '#ffffff', 12);
+        // Fiery Sawblade Spin-Dash Vortex Rings + Sparks!
+        const spinPulse = Math.sin(now / 30) * 7;
+        this.drawCrescentSlash(ctx, 0, -28 + bob, 48 + spinPulse, 0, Math.PI * 1.45, 'rgba(234, 88, 12, 0.52)', '#f97316', '#fde047', 14);
+        this.drawCrescentSlash(ctx, 0, -28 + bob, 48 + spinPulse, Math.PI, Math.PI * 2.45, 'rgba(220, 38, 38, 0.48)', '#ea580c', '#ffffff', 14);
+        this.drawCelStarBurst(ctx, 42, -28 + bob, 12, '#ffffff', '#fde047', 4, now / 80);
       }
     } else if (c === 'steven') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          this.drawSpeedLines(ctx, 10, -34 + bob, 32 + strike * 16, 16, 3, '#fda4af');
-          this.drawCrescentSlash(ctx, 18 + strike * 8, -34 + bob, 26 + strike * 6, -Math.PI * 0.42, Math.PI * 0.42, 'rgba(255, 96, 151, 0.38)', '#ff6097', '#ffffff', 11);
-          this.drawCelStarBurst(ctx, 42 + strike * 8, -34 + bob, 9.5, '#ffffff', '#ffd166', 5);
+          this.drawSpeedLines(ctx, 10, -34 + bob, 36 + strike * 18, 16, 4, '#fda4af');
+          this.drawCrescentSlash(ctx, 18 + strike * 10, -34 + bob, 28 + strike * 6, -Math.PI * 0.44, Math.PI * 0.44, 'rgba(255, 96, 151, 0.44)', '#ff6097', '#ffffff', 12);
+          this.drawCelStarBurst(ctx, 46 + strike * 10, -34 + bob, 11, '#ffffff', '#ffd166', 5);
         } else if (combo === 1) {
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -34 + bob, 35 + strike * 8, -Math.PI * 0.52, Math.PI * 0.44, 'rgba(255, 96, 151, 0.42)', '#ec4899', '#ffffff', 14);
-          this.drawCelStarBurst(ctx, 50 + strike * 8, -34 + bob, 11, '#ffffff', '#ff94ba', 5);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -34 + bob, 38 + strike * 8, -Math.PI * 0.54, Math.PI * 0.46, 'rgba(255, 96, 151, 0.48)', '#ec4899', '#ffffff', 15);
+          this.drawCelStarBurst(ctx, 54 + strike * 10, -34 + bob, 13, '#ffffff', '#ff94ba', 5);
         } else {
-          this.drawCrescentSlash(ctx, 24 + strike * 10, -40 + bob, 44 + strike * 8, Math.PI * 0.35, -Math.PI * 0.68, 'rgba(225, 29, 72, 0.42)', '#ff6097', '#ffffff', 16);
-          this.drawCelStarBurst(ctx, 56 + strike * 10, -48 + bob, 14, '#ffffff', '#ffd166', 5, animP * 2);
-          this.drawCelStarBurst(ctx, 38 + strike * 6, -74 + bob, 9, '#ffffff', '#fbcfe8', 4);
+          this.drawCrescentSlash(ctx, 24 + strike * 12, -40 + bob, 48 + strike * 10, Math.PI * 0.36, -Math.PI * 0.70, 'rgba(225, 29, 72, 0.48)', '#ff6097', '#ffffff', 18);
+          this.drawCelStarBurst(ctx, 60 + strike * 12, -48 + bob, 16, '#ffffff', '#ffd166', 5, animP * 2);
+          this.drawCelStarBurst(ctx, 40 + strike * 6, -76 + bob, 10, '#ffffff', '#fbcfe8', 4);
         }
       } else if (this.attackType === 'K') {
-        this.drawSpeedLines(ctx, 14, -36 + bob, 38, 18, 3, '#ff6097');
+        this.drawSpeedLines(ctx, 14, -36 + bob, 44, 20, 4, '#ff6097');
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.8;
-        ctx.beginPath();
-        ctx.ellipse(32 + strike * 10, -36 + bob, 8, 22, 0, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.lineWidth = 3.0;
+        ctx.beginPath(); ctx.ellipse(34 + strike * 12, -36 + bob, 9, 24, 0, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#ffd166';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath(); ctx.ellipse(46 + strike * 16, -36 + bob, 6, 16, 0, 0, Math.PI * 2); ctx.stroke();
       } else if (this.attackType === 'L') {
-        // Hexagonal Pink Diamond / Rose Bubble Shockwave + 5-Point Starburst!
-        const rad = 42 + strike * 10;
-        ctx.fillStyle = 'rgba(255, 96, 151, 0.22)';
+        // Double-Hexagonal Pink Diamond / Rose Bubble Shockwave + 5-Point Starbursts!
+        const rad = 46 + strike * 12;
+        ctx.fillStyle = 'rgba(255, 96, 151, 0.28)';
         ctx.strokeStyle = '#ff94ba';
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = 3.8;
         ctx.beginPath();
         for (let h = 0; h < 6; h++) {
-          const ha = (h * Math.PI) / 3;
+          const ha = (h * Math.PI) / 3 + animP * 0.4;
           const hx = Math.cos(ha) * rad;
           const hy = -32 + bob + Math.sin(ha) * rad;
-          if (h === 0) ctx.moveTo(hx, hy);
-          else ctx.lineTo(hx, hy);
+          if (h === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
         }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-        this.drawCelStarBurst(ctx, rad - 4, -32 + bob, 13, '#ffffff', '#ffd166', 5, animP * 2);
+        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        for (let h = 0; h < 6; h++) {
+          const ha = (h * Math.PI) / 3 - animP * 0.6;
+          const hx = Math.cos(ha) * (rad * 0.72);
+          const hy = -32 + bob + Math.sin(ha) * (rad * 0.72);
+          if (h === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+        }
+        ctx.closePath(); ctx.stroke();
+        this.drawCelStarBurst(ctx, rad - 2, -32 + bob, 15, '#ffffff', '#ffd166', 5, animP * 2);
+        this.drawCelStarBurst(ctx, -(rad - 6), -32 + bob, 11, '#ffffff', '#ff94ba', 5, -animP * 2);
       }
     } else if (c === 'garnet') {
       if (this.attackType === 'J') {
-        const punchX = 28 + strike * 26;
+        const punchX = 30 + strike * 28;
         if (combo === 0) {
-          this.drawSpeedLines(ctx, 12, -50 + bob, punchX - 6, 16, 4, '#f87171');
-          this.drawCrescentSlash(ctx, punchX - 10, -50 + bob, 22, -Math.PI * 0.4, Math.PI * 0.4, 'rgba(239, 68, 68, 0.45)', '#ef4444', '#fde047', 11);
-          this.drawCelStarBurst(ctx, punchX + 12, -50 + bob, 10, '#ffffff', '#fde047', 4);
+          // Hit 1: Ruby Fire Jab
+          this.drawSpeedLines(ctx, 12, -50 + bob, punchX - 4, 18, 5, '#f87171');
+          this.drawCrescentSlash(ctx, punchX - 10, -50 + bob, 24, -Math.PI * 0.42, Math.PI * 0.42, 'rgba(239, 68, 68, 0.48)', '#ef4444', '#fde047', 12);
+          this.drawCelStarBurst(ctx, punchX + 14, -50 + bob, 12, '#ffffff', '#fde047', 4);
         } else if (combo === 1) {
-          this.drawCrescentSlash(ctx, punchX - 8, -46 + bob, 32, Math.PI * 0.42, -Math.PI * 0.48, 'rgba(56, 189, 248, 0.42)', '#0284c7', '#ffffff', 13);
-          this.drawCelStarBurst(ctx, punchX + 16, -54 + bob, 11, '#ffffff', '#38bdf8', 4);
+          // Hit 2: Sapphire Frost Hook
+          this.drawCrescentSlash(ctx, punchX - 8, -46 + bob, 34, Math.PI * 0.44, -Math.PI * 0.50, 'rgba(56, 189, 248, 0.48)', '#0284c7', '#ffffff', 14);
+          this.drawCelStarBurst(ctx, punchX + 18, -54 + bob, 13, '#ffffff', '#38bdf8', 4);
+        } else if (combo === 2) {
+          // Hit 3: Rising Thermal-Shock Uppercut!
+          this.drawCrescentSlash(ctx, 26 + strike * 10, -52 + bob, 42 + strike * 8, Math.PI * 0.42, -Math.PI * 0.65, 'rgba(244, 63, 94, 0.48)', '#f97316', '#fde047', 15);
+          this.drawCelStarBurst(ctx, 56 + strike * 10, -72 + bob, 14, '#ffffff', '#fde047', 4, animP * 2);
         } else {
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -42 + bob, 46 + strike * 8, -Math.PI * 0.65, Math.PI * 0.38, 'rgba(225, 29, 72, 0.45)', '#e11d48', '#fde047', 17);
-          this.drawCrescentSlash(ctx, 24 + strike * 8, -42 + bob, 34 + strike * 6, -Math.PI * 0.55, Math.PI * 0.28, 'rgba(56, 189, 248, 0.4)', '#38bdf8', '#ffffff', 10);
-          this.drawCelImpactPuff(ctx, punchX + 16, -24 + bob, 16, '#fde047');
-          this.drawCelStarBurst(ctx, punchX + 22, -32 + bob, 15, '#ffffff', '#fde047', 4, animP * 2);
+          // Hit 4: Twin-Gauntlet Fire + Ice Meteoric Finisher!
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -42 + bob, 52 + strike * 10, -Math.PI * 0.68, Math.PI * 0.42, 'rgba(225, 29, 72, 0.52)', '#e11d48', '#fde047', 19);
+          this.drawCrescentSlash(ctx, 24 + strike * 10, -42 + bob, 38 + strike * 8, -Math.PI * 0.58, Math.PI * 0.30, 'rgba(56, 189, 248, 0.48)', '#38bdf8', '#ffffff', 12);
+          this.drawCelImpactPuff(ctx, punchX + 18, -24 + bob, 19, '#fde047');
+          this.drawCelStarBurst(ctx, punchX + 24, -32 + bob, 18, '#ffffff', '#fde047', 5, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Rocket Gauntlet Launch Sonic Ring & Flame Jet!
-        this.drawSpeedLines(ctx, 14, -48 + bob, 44, 18, 4, '#fbbf24');
+        // Rocket Gauntlet Launch Sonic Rings & Twin Flame Jet!
+        this.drawSpeedLines(ctx, 14, -48 + bob, 50, 20, 5, '#fbbf24');
         ctx.strokeStyle = '#ef4444';
-        ctx.lineWidth = 3.2;
-        ctx.beginPath();
-        ctx.ellipse(34 + strike * 10, -48 + bob, 9, 22, 0, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (this.attackType === 'L') {
-        // High-Voltage Electro-Seismic Ground Shock!
+        ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.ellipse(34 + strike * 10, -48 + bob, 10, 24, 0, 0, Math.PI * 2); ctx.stroke();
         ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 3.8;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.ellipse(48 + strike * 14, -48 + bob, 7, 16, 0, 0, Math.PI * 2); ctx.stroke();
+      } else if (this.attackType === 'L') {
+        // High-Voltage Electro-Seismic Ground Shock + Dual Lightning Pillars!
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 4.2;
         ctx.beginPath();
-        ctx.moveTo(12, -74 + bob); ctx.lineTo(26, -42 + bob); ctx.lineTo(18, -20 + bob); ctx.lineTo(42, 0);
-        ctx.moveTo(-12, -68 + bob); ctx.lineTo(-24, -36 + bob); ctx.lineTo(-16, -18 + bob); ctx.lineTo(-36, 0);
+        ctx.moveTo(14, -82 + bob); ctx.lineTo(30, -48 + bob); ctx.lineTo(20, -22 + bob); ctx.lineTo(48, 0);
+        ctx.moveTo(-14, -76 + bob); ctx.lineTo(-28, -42 + bob); ctx.lineTo(-18, -20 + bob); ctx.lineTo(-42, 0);
         ctx.stroke();
         ctx.strokeStyle = '#38bdf8';
-        ctx.lineWidth = 2.4;
+        ctx.lineWidth = 2.8;
         ctx.beginPath();
-        ctx.ellipse(0, -2, 46 + strike * 12, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, -2, 54 + strike * 14, 12, 0, 0, Math.PI * 2);
+        ctx.ellipse(0, -2, 34 + strike * 8, 7, 0, 0, Math.PI * 2);
         ctx.stroke();
+        this.drawCelStarBurst(ctx, 48, -6, 13, '#ffffff', '#fde047', 4, animP * 3);
       }
     } else if (c === 'amethyst') {
       if (this.attackType === 'J') {
         if (combo === 0) {
           // Hit 1: S-Curve Whip Crack + Sonic Tip Ring!
-          this.drawCrescentSlash(ctx, 24 + strike * 10, -36 + bob, 38 + strike * 10, -Math.PI * 0.48, Math.PI * 0.38, 'rgba(192, 132, 252, 0.4)', '#a855f7', '#ffffff', 13);
+          this.drawCrescentSlash(ctx, 24 + strike * 12, -36 + bob, 40 + strike * 10, -Math.PI * 0.48, Math.PI * 0.38, 'rgba(192, 132, 252, 0.45)', '#a855f7', '#ffffff', 14);
           ctx.strokeStyle = '#f3e8ff';
-          ctx.lineWidth = 2.2;
-          ctx.beginPath();
-          ctx.arc(54 + strike * 12, -26 + bob, 8 + strike * 4, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 56 + strike * 12, -26 + bob, 6.5);
+          ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.arc(56 + strike * 12, -26 + bob, 9 + strike * 4, 0, Math.PI * 2); ctx.stroke();
+          this.drawCelStarBurst(ctx, 58 + strike * 12, -26 + bob, 10, '#ffffff', '#fde047', 4);
         } else if (combo === 1) {
           // Hit 2: Low-Sweeping Rising Whip Lash!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -24 + bob, 44 + strike * 10, Math.PI * 0.55, -Math.PI * 0.35, 'rgba(168, 85, 247, 0.42)', '#9333ea', '#fde047', 15);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 60 + strike * 10, -20 + bob, 8);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -24 + bob, 46 + strike * 10, Math.PI * 0.55, -Math.PI * 0.35, 'rgba(168, 85, 247, 0.48)', '#9333ea', '#fde047', 16);
+          this.drawCelStarBurst(ctx, 62 + strike * 10, -20 + bob, 11, '#ffffff', '#fde047', 4);
+        } else if (combo === 2) {
+          // Hit 3: Overhead Whip Slam Arc!
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -46 + bob, 44 + strike * 10, -Math.PI * 0.72, Math.PI * 0.25, 'rgba(217, 70, 239, 0.48)', '#d946ef', '#ffffff', 15);
+          this.drawCelStarBurst(ctx, 62 + strike * 12, -16 + bob, 12, '#ffffff', '#e879f9', 4);
+        } else if (combo === 3) {
+          // Hit 4: Whip-Tornado Spin Flurry!
+          const rot = now / 30;
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath(); ctx.arc(36 + strike * 10, -34 + bob, 36 + strike * 8, rot, rot + Math.PI * 1.5); ctx.stroke();
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 2.0;
+          ctx.beginPath(); ctx.arc(36 + strike * 10, -34 + bob, 24 + strike * 6, -rot, -rot + Math.PI * 1.3); ctx.stroke();
+          this.drawCelStarBurst(ctx, 64 + strike * 12, -34 + bob, 13, '#ffffff', '#fde047', 5, rot * 0.2);
         } else {
-          // Hit 3: Dual-Whip Twin X-Cleave!
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 48 + strike * 10, -Math.PI * 0.58, Math.PI * 0.35, 'rgba(147, 51, 234, 0.45)', '#a855f7', '#ffffff', 15);
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 44 + strike * 8, Math.PI * 0.58, -Math.PI * 0.35, 'rgba(232, 121, 249, 0.4)', '#d946ef', '#fde047', 13);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 64 + strike * 12, -38 + bob, 10.5);
+          // Hit 5: Dual-Whip Twin X-Cleave Finisher!
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -38 + bob, 54 + strike * 12, -Math.PI * 0.62, Math.PI * 0.38, 'rgba(147, 51, 234, 0.52)', '#a855f7', '#ffffff', 17);
+          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 48 + strike * 10, Math.PI * 0.62, -Math.PI * 0.38, 'rgba(232, 121, 249, 0.46)', '#d946ef', '#fde047', 14);
+          this.drawCelStarBurst(ctx, 68 + strike * 14, -38 + bob, 17, '#ffffff', '#fde047', 5, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Purple Whirlwind Spin-Dash Launch!
-        this.drawCrescentSlash(ctx, 4, -26 + bob, 36 + strike * 8, -Math.PI * 0.7, Math.PI * 0.8, 'rgba(192, 132, 252, 0.42)', '#a855f7', '#ffffff', 12);
+        // Purple Whirlwind Spin-Dash Buzzsaw Rings!
+        this.drawCrescentSlash(ctx, 4, -26 + bob, 40 + strike * 10, -Math.PI * 0.75, Math.PI * 0.85, 'rgba(192, 132, 252, 0.48)', '#a855f7', '#ffffff', 14);
+        this.drawCrescentSlash(ctx, 4, -26 + bob, 28 + strike * 6, Math.PI * 0.2, Math.PI * 1.6, 'rgba(232, 121, 249, 0.45)', '#e879f9', '#fde047', 9);
       } else if (this.attackType === 'L') {
         // Violet Whip Geyser Ground Shockwave & Crystal Burst!
-        this.drawCrescentSlash(ctx, 36 + strike * 8, -20 + bob, 38 + strike * 8, -Math.PI * 0.48, Math.PI * 0.48, 'rgba(192, 132, 252, 0.45)', '#9333ea', '#fde047', 15);
-        ctx.fillStyle = '#fde047';
-        this.drawMiniStar(ctx, 62 + strike * 8, -20 + bob, 10);
+        this.drawCrescentSlash(ctx, 36 + strike * 10, -20 + bob, 44 + strike * 10, -Math.PI * 0.52, Math.PI * 0.52, 'rgba(192, 132, 252, 0.52)', '#9333ea', '#fde047', 17);
+        ctx.strokeStyle = '#c084fc';
+        ctx.lineWidth = 3.0;
+        ctx.beginPath(); ctx.ellipse(54 + strike * 8, -4, 34 + strike * 10, 9, 0, 0, Math.PI * 2); ctx.stroke();
+        this.drawCelStarBurst(ctx, 66 + strike * 10, -20 + bob, 15, '#ffffff', '#fde047', 5, animP * 2);
       }
     } else if (c === 'pearl') {
       if (this.attackType === 'J') {
         if (combo === 0) {
           // Hit 1: Multi-Jab Holographic Fencing Flurry (3 rapid cyan-white needle cones)!
-          const baseReach = 50 + strike * 24;
+          const baseReach = 54 + strike * 26;
           const offsets = [
-            { dy: 0, dx: 8, w: 5.5, col: '#ffffff' },
-            { dy: -11, dx: -4, w: 4, col: '#67e8f9' },
-            { dy: 10, dx: -2, w: 4, col: '#bae6fd' }
+            { dy: 0, dx: 8, w: 6, col: '#ffffff' },
+            { dy: -12, dx: -4, w: 4.4, col: '#67e8f9' },
+            { dy: 11, dx: -2, w: 4.4, col: '#bae6fd' }
           ];
-          this.drawSpeedLines(ctx, 18, -50 + bob, baseReach - 14, 22, 4, '#67e8f9');
+          this.drawSpeedLines(ctx, 18, -50 + bob, baseReach - 12, 24, 5, '#67e8f9');
           for (let j = 0; j < offsets.length; j++) {
             const o = offsets[j];
             const tx = baseReach + o.dx;
             const ty = -50 + bob + o.dy;
-            ctx.fillStyle = 'rgba(56, 189, 248, 0.45)';
-            ctx.beginPath();
-            ctx.moveTo(22, ty - o.w);
-            ctx.lineTo(tx, ty);
-            ctx.lineTo(22, ty + o.w);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = o.col;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(24, ty);
-            ctx.lineTo(tx + 3, ty);
-            ctx.stroke();
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.48)';
+            ctx.beginPath(); ctx.moveTo(22, ty - o.w); ctx.lineTo(tx, ty); ctx.lineTo(22, ty + o.w); ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = o.col; ctx.lineWidth = 2.2;
+            ctx.beginPath(); ctx.moveTo(24, ty); ctx.lineTo(tx + 4, ty); ctx.stroke();
           }
-          ctx.fillStyle = '#ffffff';
-          this.drawMiniStar(ctx, baseReach + 10, -50 + bob, 6.5);
+          this.drawCelStarBurst(ctx, baseReach + 12, -50 + bob, 11, '#ffffff', '#67e8f9', 4);
         } else if (combo === 1) {
           // Hit 2: Graceful Two-Handed Halberd Crescent Sweep!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -46 + bob, 40 + strike * 10, -Math.PI * 0.55, Math.PI * 0.45, 'rgba(56, 189, 248, 0.4)', '#06b6d4', '#ffffff', 14);
-          ctx.fillStyle = '#a5f3fc';
-          this.drawMiniStar(ctx, 58 + strike * 10, -46 + bob, 7.5);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -46 + bob, 44 + strike * 10, -Math.PI * 0.55, Math.PI * 0.45, 'rgba(56, 189, 248, 0.45)', '#06b6d4', '#ffffff', 15);
+          this.drawCelStarBurst(ctx, 62 + strike * 10, -46 + bob, 12, '#ffffff', '#a5f3fc', 4);
+        } else if (combo === 2) {
+          // Hit 3: Sweeping Ascending Spear Lance!
+          this.drawCrescentSlash(ctx, 24 + strike * 10, -52 + bob, 46 + strike * 10, Math.PI * 0.46, -Math.PI * 0.58, 'rgba(103, 232, 249, 0.46)', '#38bdf8', '#ffffff', 14);
+          this.drawCelStarBurst(ctx, 60 + strike * 12, -62 + bob, 13, '#ffffff', '#fde047', 4);
         } else {
-          // Hit 3: 360-Degree Ballet Pirouette Spear Halo Ribbon!
-          this.drawCrescentSlash(ctx, 14 + strike * 8, -48 + bob, 46 + strike * 8, -Math.PI * 0.85, Math.PI * 0.55, 'rgba(56, 189, 248, 0.42)', '#38bdf8', '#ffffff', 14);
-          this.drawCrescentSlash(ctx, 14 + strike * 8, -48 + bob, 42 + strike * 6, Math.PI * 0.25, Math.PI * 1.55, 'rgba(253, 186, 116, 0.35)', '#fb923c', '#ffffff', 10);
-          ctx.fillStyle = '#ffffff';
-          this.drawMiniStar(ctx, 58 + strike * 10, -48 + bob, 9.5);
+          // Hit 4: 360-Degree Ballet Pirouette Dual-Ribbon Halo Finisher!
+          this.drawCrescentSlash(ctx, 14 + strike * 10, -48 + bob, 50 + strike * 10, -Math.PI * 0.88, Math.PI * 0.58, 'rgba(56, 189, 248, 0.48)', '#38bdf8', '#ffffff', 16);
+          this.drawCrescentSlash(ctx, 14 + strike * 8, -48 + bob, 44 + strike * 8, Math.PI * 0.25, Math.PI * 1.60, 'rgba(253, 186, 116, 0.42)', '#fb923c', '#ffffff', 11);
+          this.drawCelStarBurst(ctx, 62 + strike * 12, -48 + bob, 15, '#ffffff', '#67e8f9', 5, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Spear Plasma Laser Muzzle Burst!
-        this.drawSpeedLines(ctx, 22, -50 + bob, 44, 16, 3, '#67e8f9');
-        ctx.fillStyle = '#ffffff';
-        this.drawMiniStar(ctx, 52 + strike * 8, -50 + bob, 8);
+        // Spear Plasma Laser Muzzle Burst + Concentric Focus Rings!
+        this.drawSpeedLines(ctx, 22, -50 + bob, 50, 18, 4, '#67e8f9');
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath(); ctx.ellipse(42 + strike * 8, -50 + bob, 6, 16, 0, 0, Math.PI * 2); ctx.stroke();
+        this.drawCelStarBurst(ctx, 56 + strike * 10, -50 + bob, 14, '#ffffff', '#67e8f9', 4, animP * 3);
       } else if (this.attackType === 'L') {
         // Holo-Pearl Summoning Diamond Projection Grid!
         ctx.strokeStyle = '#67e8f9';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.arc(38, -42 + bob, 28 + strike * 6, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.lineWidth = 3.2;
+        ctx.beginPath(); ctx.arc(38, -42 + bob, 32 + strike * 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath(); ctx.arc(38, -42 + bob, 20 + strike * 4, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = '#bae6fd';
-        this.drawDiamondInsignia(ctx, 38, -42 + bob, 11);
+        this.drawDiamondInsignia(ctx, 38, -42 + bob, 13);
       }
     } else if (c === 'bismuth') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          // Hit 1: Spiked War-Hammer Heavy Forge Swing!
-          this.drawCrescentSlash(ctx, 24 + strike * 8, -36 + bob, 38 + strike * 8, -Math.PI * 0.55, Math.PI * 0.30, 'rgba(249, 115, 22, 0.45)', '#f97316', '#fde047', 15);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 54 + strike * 8, -22 + bob, 7.5);
+          this.drawCrescentSlash(ctx, 24 + strike * 10, -36 + bob, 42 + strike * 8, -Math.PI * 0.58, Math.PI * 0.34, 'rgba(249, 115, 22, 0.50)', '#f97316', '#fde047', 16);
+          this.drawCelStarBurst(ctx, 58 + strike * 10, -22 + bob, 12, '#ffffff', '#fde047', 4);
         } else if (combo === 1) {
-          // Hit 2: Double Crescent Battle-Axe Cleave!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -38 + bob, 44 + strike * 10, -Math.PI * 0.60, Math.PI * 0.42, 'rgba(234, 88, 12, 0.48)', '#ea580c', '#ffffff', 17);
-          ctx.fillStyle = '#fbbf24';
-          this.drawMiniStar(ctx, 60 + strike * 10, -34 + bob, 8.5);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -38 + bob, 48 + strike * 10, -Math.PI * 0.62, Math.PI * 0.45, 'rgba(234, 88, 12, 0.54)', '#ea580c', '#ffffff', 18);
+          this.drawCelStarBurst(ctx, 64 + strike * 12, -34 + bob, 14, '#ffffff', '#fbbf24', 4);
         } else {
-          // Hit 3: Overhead Molten Anvil-Maul Tectonic Smash!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -34 + bob, 50 + strike * 10, -Math.PI * 0.72, Math.PI * 0.28, 'rgba(194, 65, 12, 0.52)', '#dc2626', '#fde047', 19);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -34 + bob, 56 + strike * 12, -Math.PI * 0.74, Math.PI * 0.32, 'rgba(194, 65, 12, 0.58)', '#dc2626', '#fde047', 21);
           ctx.strokeStyle = '#fbbf24';
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.ellipse(54 + strike * 8, -3, 24 + strike * 8, 6, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 58 + strike * 10, -8 + bob, 11.5);
+          ctx.lineWidth = 3.6;
+          ctx.beginPath(); ctx.ellipse(56 + strike * 10, -3, 30 + strike * 10, 8, 0, 0, Math.PI * 2); ctx.stroke();
+          this.drawCelImpactPuff(ctx, 58 + strike * 10, -6, 18, '#fed7aa');
+          this.drawCelStarBurst(ctx, 62 + strike * 12, -8 + bob, 17, '#ffffff', '#fde047', 5, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Forge Ingot Hurl Burst!
-        this.drawSpeedLines(ctx, 16, -44 + bob, 42, 20, 4, '#fb923c');
-        ctx.fillStyle = '#fde047';
-        this.drawMiniStar(ctx, 48 + strike * 8, -44 + bob, 8);
+        this.drawSpeedLines(ctx, 16, -44 + bob, 48, 22, 5, '#fb923c');
+        this.drawCelStarBurst(ctx, 52 + strike * 10, -44 + bob, 13, '#ffffff', '#fde047', 4);
       } else if (this.attackType === 'L') {
-        // Breaking Point Armor-Piercing Pneumatic Shock-Cone!
-        this.drawSpeedLines(ctx, 14, -42 + bob, 54, 24, 5, '#ef4444');
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.52)';
-        ctx.beginPath();
-        ctx.moveTo(22, -62 + bob);
-        ctx.lineTo(72 + strike * 12, -42 + bob);
-        ctx.lineTo(22, -22 + bob);
-        ctx.closePath();
-        ctx.fill();
-        ctx.fillStyle = '#fde047';
-        this.drawMiniStar(ctx, 68 + strike * 12, -42 + bob, 11);
+        // Breaking Point Armor-Piercing Pneumatic Shock-Cone + Pressure Rings!
+        this.drawSpeedLines(ctx, 14, -42 + bob, 60, 26, 6, '#ef4444');
+        ctx.fillStyle = 'rgba(239, 68, 68, 0.58)';
+        ctx.beginPath(); ctx.moveTo(22, -66 + bob); ctx.lineTo(78 + strike * 14, -42 + bob); ctx.lineTo(22, -18 + bob); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath(); ctx.ellipse(42 + strike * 6, -42 + bob, 8, 24, 0, 0, Math.PI * 2); ctx.stroke();
+        this.drawCelStarBurst(ctx, 74 + strike * 14, -42 + bob, 16, '#ffffff', '#fde047', 5, animP * 2);
       }
     } else if (c === 'peridot') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          // Hit 1: Triple Ferrokinetic Claw Rake (3 parallel lime-green tapered arcs)!
           for (let r = -1; r <= 1; r++) {
-            this.drawCrescentSlash(ctx, 20 + strike * 8, -38 + bob + r * 9, 30 + strike * 6, -Math.PI * 0.42, Math.PI * 0.35, 'rgba(132, 204, 22, 0.35)', '#84cc16', '#ecfccb', 7);
+            this.drawCrescentSlash(ctx, 20 + strike * 10, -38 + bob + r * 9, 32 + strike * 8, -Math.PI * 0.44, Math.PI * 0.36, 'rgba(132, 204, 22, 0.42)', '#84cc16', '#ecfccb', 8);
           }
-          ctx.fillStyle = '#bef264';
-          this.drawMiniStar(ctx, 50 + strike * 8, -38 + bob, 6.5);
+          this.drawCelStarBurst(ctx, 54 + strike * 10, -38 + bob, 10, '#ffffff', '#bef264', 4);
         } else if (combo === 1) {
-          // Hit 2: Levitating Steel I-Beam Wide Magnetic Sweep!
-          this.drawCrescentSlash(ctx, 24 + strike * 10, -38 + bob, 40 + strike * 8, Math.PI * 0.45, -Math.PI * 0.50, 'rgba(101, 163, 13, 0.42)', '#84cc16', '#ffffff', 14);
+          this.drawCrescentSlash(ctx, 24 + strike * 12, -38 + bob, 44 + strike * 10, Math.PI * 0.46, -Math.PI * 0.52, 'rgba(101, 163, 13, 0.48)', '#84cc16', '#ffffff', 16);
           ctx.fillStyle = '#fde047';
-          this.drawDiamondInsignia(ctx, 56 + strike * 10, -48 + bob, 7.5);
+          this.drawDiamondInsignia(ctx, 60 + strike * 10, -48 + bob, 9);
         } else {
-          // Hit 3: Magnetic Crusher Jaws Converging Pincer Arcs!
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 40 + strike * 8, -Math.PI * 0.62, Math.PI * 0.12, 'rgba(132, 204, 22, 0.45)', '#65a30d', '#fde047', 13);
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 40 + strike * 8, Math.PI * 0.62, -Math.PI * 0.12, 'rgba(132, 204, 22, 0.45)', '#84cc16', '#ffffff', 13);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 62 + strike * 10, -38 + bob, 9.5);
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -38 + bob, 44 + strike * 10, -Math.PI * 0.65, Math.PI * 0.14, 'rgba(132, 204, 22, 0.50)', '#65a30d', '#fde047', 15);
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -38 + bob, 44 + strike * 10, Math.PI * 0.65, -Math.PI * 0.14, 'rgba(132, 204, 22, 0.50)', '#84cc16', '#ffffff', 15);
+          this.drawCelStarBurst(ctx, 66 + strike * 12, -38 + bob, 15, '#ffffff', '#fde047', 4, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Magnetic Tractor Rings!
         ctx.strokeStyle = '#a3e635';
-        ctx.lineWidth = 2.6;
+        ctx.lineWidth = 3.0;
         ctx.beginPath();
-        ctx.ellipse(32 + strike * 10, -38 + bob, 7, 18, 0, 0, Math.PI * 2);
-        ctx.ellipse(46 + strike * 14, -38 + bob, 5, 13, 0, 0, Math.PI * 2);
+        ctx.ellipse(32 + strike * 10, -38 + bob, 8, 20, 0, 0, Math.PI * 2);
+        ctx.ellipse(48 + strike * 14, -38 + bob, 6, 14, 0, 0, Math.PI * 2);
         ctx.stroke();
+        this.drawCelStarBurst(ctx, 56 + strike * 14, -38 + bob, 9, '#ffffff', '#a3e635', 4);
       } else if (this.attackType === 'L') {
-        // EMP Magnetic Vortex Concentric Rings!
+        // EMP Magnetic Vortex Concentric Rings + Electric Arcs!
+        const rot = now / 90;
         ctx.strokeStyle = '#84cc16';
-        ctx.lineWidth = 3.5;
-        ctx.beginPath();
-        ctx.arc(32, -36 + bob, 26 + strike * 8, 0, Math.PI * 2);
-        ctx.stroke();
+        ctx.lineWidth = 4.0;
+        ctx.beginPath(); ctx.arc(32, -36 + bob, 32 + strike * 10, rot, rot + Math.PI * 1.7); ctx.stroke();
         ctx.strokeStyle = '#ecfccb';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(32, -36 + bob, 16 + strike * 5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#fde047';
-        this.drawMiniStar(ctx, 32, -36 + bob, 8.5);
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(32, -36 + bob, 20 + strike * 6, -rot, -rot + Math.PI * 1.5); ctx.stroke();
+        this.drawCelStarBurst(ctx, 32, -36 + bob, 13, '#ffffff', '#fde047', 4, rot * 0.5);
       }
     } else if (c === 'lapis') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          // Hit 1: Crescent Hydro-Scythe Slash + Seafoam Spray!
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -40 + bob, 36 + strike * 8, -Math.PI * 0.48, Math.PI * 0.45, 'rgba(56, 189, 248, 0.45)', '#0284c7', '#e0f2fe', 14);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -40 + bob, 38 + strike * 8, -Math.PI * 0.48, Math.PI * 0.45, 'rgba(56, 189, 248, 0.48)', '#0284c7', '#e0f2fe', 15);
           ctx.fillStyle = '#e0f2fe';
           ctx.beginPath();
-          ctx.arc(54 + strike * 10, -24 + bob, 3.2, 0, Math.PI * 2);
-          ctx.arc(58 + strike * 10, -52 + bob, 2.6, 0, Math.PI * 2);
+          ctx.arc(56 + strike * 10, -24 + bob, 3.6, 0, Math.PI * 2);
+          ctx.arc(60 + strike * 10, -54 + bob, 3.0, 0, Math.PI * 2);
           ctx.fill();
         } else if (combo === 1) {
-          // Hit 2: Surging Giant Water Fist Rising Crest!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -44 + bob, 42 + strike * 8, Math.PI * 0.38, -Math.PI * 0.62, 'rgba(2, 132, 199, 0.48)', '#0ea5e9', '#ffffff', 16);
-          ctx.fillStyle = '#ffffff';
-          this.drawMiniStar(ctx, 58 + strike * 10, -56 + bob, 7.5);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -44 + bob, 44 + strike * 10, Math.PI * 0.38, -Math.PI * 0.64, 'rgba(2, 132, 199, 0.52)', '#0ea5e9', '#ffffff', 17);
+          this.drawCelStarBurst(ctx, 60 + strike * 10, -58 + bob, 12, '#ffffff', '#67e8f9', 4);
+        } else if (combo === 2) {
+          // Hit 3: Spinning Hydro-Vortex Whip Lash!
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -40 + bob, 46 + strike * 10, -Math.PI * 0.72, Math.PI * 0.52, 'rgba(56, 189, 248, 0.52)', '#38bdf8', '#ffffff', 16);
+          ctx.strokeStyle = '#e0f2fe';
+          ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.ellipse(54 + strike * 10, -40 + bob, 18, 8, -0.3, 0, Math.PI * 2); ctx.stroke();
         } else {
-          // Hit 3: Coiling Dual Ocean Dragon Tendrils Smash!
-          this.drawCrescentSlash(ctx, 30 + strike * 12, -36 + bob, 50 + strike * 10, -Math.PI * 0.58, Math.PI * 0.44, 'rgba(14, 165, 233, 0.5)', '#0369a1', '#e0f2fe', 18);
-          this.drawCrescentSlash(ctx, 24 + strike * 8, -36 + bob, 36 + strike * 6, -Math.PI * 0.45, Math.PI * 0.35, 'rgba(125, 211, 252, 0.42)', '#38bdf8', '#ffffff', 11);
-          ctx.fillStyle = '#e0f2fe';
-          this.drawMiniStar(ctx, 68 + strike * 12, -36 + bob, 9.5);
+          // Hit 4: Coiling Dual Ocean Dragon Tendrils Finisher!
+          this.drawCrescentSlash(ctx, 30 + strike * 14, -36 + bob, 54 + strike * 12, -Math.PI * 0.60, Math.PI * 0.46, 'rgba(14, 165, 233, 0.56)', '#0369a1', '#e0f2fe', 20);
+          this.drawCrescentSlash(ctx, 24 + strike * 10, -36 + bob, 40 + strike * 8, -Math.PI * 0.48, Math.PI * 0.38, 'rgba(125, 211, 252, 0.48)', '#38bdf8', '#ffffff', 13);
+          this.drawCelStarBurst(ctx, 72 + strike * 14, -36 + bob, 16, '#ffffff', '#67e8f9', 4, animP * 2);
         }
       } else if (this.attackType === 'K') {
-        // Pressurized Hydro Jet Stream Lance!
-        this.drawSpeedLines(ctx, 18, -42 + bob, 48, 16, 4, '#38bdf8');
+        this.drawSpeedLines(ctx, 18, -42 + bob, 54, 18, 5, '#38bdf8');
         ctx.strokeStyle = '#e0f2fe';
-        ctx.lineWidth = 2.8;
+        ctx.lineWidth = 3.0;
         ctx.beginPath();
-        ctx.ellipse(36 + strike * 10, -42 + bob, 7, 18, 0, 0, Math.PI * 2);
+        ctx.ellipse(36 + strike * 10, -42 + bob, 8, 20, 0, 0, Math.PI * 2);
+        ctx.ellipse(52 + strike * 14, -42 + bob, 5, 14, 0, 0, Math.PI * 2);
         ctx.stroke();
       } else if (this.attackType === 'L') {
-        // Roaring Tsunami Wave Crest with Whitecap Foam!
-        this.drawCrescentSlash(ctx, 34 + strike * 10, -36 + bob, 42 + strike * 8, -Math.PI * 0.48, Math.PI * 0.62, 'rgba(2, 132, 199, 0.52)', '#0284c7', '#ffffff', 18);
+        // Roaring Tsunami Wave Crest with Whitecap Foam & Spray!
+        this.drawCrescentSlash(ctx, 34 + strike * 12, -36 + bob, 48 + strike * 10, -Math.PI * 0.52, Math.PI * 0.65, 'rgba(2, 132, 199, 0.58)', '#0284c7', '#ffffff', 20);
+        this.drawCelStarBurst(ctx, 68 + strike * 12, -52 + bob, 14, '#ffffff', '#67e8f9', 4);
       }
     } else if (c === 'rose') {
       if (this.attackType === 'J') {
         if (combo === 0) {
-          // Hit 1: Graceful Rose Broadsword Cleave + Drifting Petals!
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -42 + bob, 38 + strike * 8, -Math.PI * 0.52, Math.PI * 0.38, 'rgba(244, 63, 94, 0.4)', '#f43f5e', '#ffffff', 14);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -42 + bob, 42 + strike * 8, -Math.PI * 0.54, Math.PI * 0.40, 'rgba(244, 63, 94, 0.45)', '#f43f5e', '#ffffff', 15);
           ctx.fillStyle = '#fbcfe8';
           ctx.beginPath();
-          ctx.ellipse(52 + strike * 8, -28 + bob, 4.2, 2.2, 0.5, 0, Math.PI * 2);
-          ctx.ellipse(46 + strike * 8, -58 + bob, 3.8, 2.0, -0.4, 0, Math.PI * 2);
+          ctx.ellipse(54 + strike * 8, -28 + bob, 4.6, 2.3, 0.5, 0, Math.PI * 2);
+          ctx.ellipse(48 + strike * 8, -58 + bob, 4.2, 2.1, -0.4, 0, Math.PI * 2);
           ctx.fill();
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 54 + strike * 8, -38 + bob, 6.5);
+          this.drawCelStarBurst(ctx, 56 + strike * 10, -38 + bob, 11, '#ffffff', '#fde047', 4);
         } else if (combo === 1) {
-          // Hit 2: Valkyrie Thorny Shield Bash Shockwave!
-          this.drawCrescentSlash(ctx, 26 + strike * 10, -40 + bob, 44 + strike * 8, -Math.PI * 0.45, Math.PI * 0.45, 'rgba(225, 29, 72, 0.45)', '#ec4899', '#ffffff', 16);
-          ctx.fillStyle = '#fbcfe8';
-          this.drawMiniStar(ctx, 60 + strike * 10, -40 + bob, 8);
+          this.drawCrescentSlash(ctx, 26 + strike * 12, -40 + bob, 48 + strike * 10, -Math.PI * 0.48, Math.PI * 0.48, 'rgba(225, 29, 72, 0.50)', '#ec4899', '#ffffff', 17);
+          this.drawCelStarBurst(ctx, 64 + strike * 12, -40 + bob, 13, '#ffffff', '#fbcfe8', 4);
         } else {
-          // Hit 3: Celestial Rising Rose Vortex Cleave!
-          this.drawCrescentSlash(ctx, 28 + strike * 10, -38 + bob, 50 + strike * 10, -Math.PI * 0.68, Math.PI * 0.38, 'rgba(219, 39, 119, 0.48)', '#f43f5e', '#ffffff', 18);
-          this.drawCrescentSlash(ctx, 22 + strike * 8, -38 + bob, 36 + strike * 6, Math.PI * 0.42, -Math.PI * 0.55, 'rgba(251, 207, 232, 0.42)', '#f9a8d4', '#fde047', 11);
-          ctx.fillStyle = '#ffffff';
-          this.drawMiniStar(ctx, 66 + strike * 10, -32 + bob, 10);
-          ctx.fillStyle = '#fde047';
-          this.drawMiniStar(ctx, 48 + strike * 8, -68 + bob, 7.5);
+          this.drawCrescentSlash(ctx, 28 + strike * 12, -38 + bob, 56 + strike * 12, -Math.PI * 0.70, Math.PI * 0.42, 'rgba(219, 39, 119, 0.54)', '#f43f5e', '#ffffff', 20);
+          this.drawCrescentSlash(ctx, 22 + strike * 10, -38 + bob, 40 + strike * 8, Math.PI * 0.44, -Math.PI * 0.58, 'rgba(251, 207, 232, 0.48)', '#f9a8d4', '#fde047', 12);
+          this.drawCelStarBurst(ctx, 70 + strike * 12, -32 + bob, 16, '#ffffff', '#fde047', 5, animP * 2);
+          this.drawCelStarBurst(ctx, 50 + strike * 8, -70 + bob, 11, '#ffffff', '#fbcfe8', 4);
         }
       } else if (this.attackType === 'K') {
-        // Spiraling Rose Petal Wave Release!
-        this.drawCrescentSlash(ctx, 26 + strike * 8, -42 + bob, 34 + strike * 6, -Math.PI * 0.5, Math.PI * 0.5, 'rgba(244, 114, 182, 0.4)', '#f43f5e', '#ffffff', 12);
+        this.drawCrescentSlash(ctx, 26 + strike * 10, -42 + bob, 38 + strike * 8, -Math.PI * 0.54, Math.PI * 0.54, 'rgba(244, 114, 182, 0.46)', '#f43f5e', '#ffffff', 14);
+        this.drawCelStarBurst(ctx, 58 + strike * 10, -42 + bob, 12, '#ffffff', '#fbcfe8', 4);
       } else if (this.attackType === 'L') {
-        // Sacred Healing Tears Divine Light Halo & Blooming Petals!
-        ctx.strokeStyle = 'rgba(244, 63, 94, 0.92)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.arc(0, -42 + bob, 44 + strike * 8, 0, Math.PI * 2);
-        ctx.stroke();
+        // Sacred Healing Tears Blooming Rose Mandala!
+        const rad = 48 + strike * 10;
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.94)';
+        ctx.lineWidth = 4.2;
+        ctx.beginPath(); ctx.arc(0, -42 + bob, rad, 0, Math.PI * 2); ctx.stroke();
         ctx.strokeStyle = '#fbcfe8';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, -42 + bob, 32 + strike * 5, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.fillStyle = '#fde047';
-        this.drawMiniStar(ctx, 0, -42 + bob, 9.5);
+        ctx.lineWidth = 2.4;
+        ctx.beginPath(); ctx.arc(0, -42 + bob, rad * 0.72, 0, Math.PI * 2); ctx.stroke();
+        for (let i = 0; i < 6; i++) {
+          const a = (i * Math.PI) / 3 + animP * 1.4;
+          ctx.fillStyle = 'rgba(251, 207, 232, 0.85)';
+          ctx.beginPath();
+          ctx.ellipse(Math.cos(a) * rad * 0.85, -42 + bob + Math.sin(a) * rad * 0.85, 6, 3, a, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        this.drawCelStarBurst(ctx, 0, -42 + bob, 15, '#ffffff', '#fde047', 5, animP * 2);
       }
     }
 
@@ -16159,6 +16527,58 @@ class EnemyManager {
       enemy.gemColor = '#38bdf8';
       enemy.gemShape = 'ice_prism';
       enemy.name = 'Glacial Ice Gargoyle';
+    } else if (type === 'snow_monster') {
+      enemy.hp = Math.round(92 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(115 * this.speedMult);
+      enemy.width = 86;
+      enemy.height = 88;
+      enemy.visualScale = 1.44;
+      enemy.gemColor = '#bae6fd';
+      enemy.gemShape = 'ice_prism';
+      enemy.name = 'Tundra Snow Beast';
+    } else if (type === 'carnelian_enforcer') {
+      enemy.hp = Math.round(98 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(125 * this.speedMult);
+      enemy.width = 86;
+      enemy.height = 88;
+      enemy.visualScale = 1.44;
+      enemy.gemColor = '#fb923c';
+      enemy.gemShape = 'teardrop';
+      enemy.name = 'Carnelian Enforcer';
+    } else if (type === 'obsidian') {
+      enemy.hp = Math.round(110 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(100 * this.speedMult);
+      enemy.width = 88;
+      enemy.height = 92;
+      enemy.visualScale = 1.45;
+      enemy.gemColor = '#f43f5e';
+      enemy.gemShape = 'teardrop';
+      enemy.name = 'Obsidian Forge Brute';
+    } else if (type === 'boss_centipeetle') {
+      enemy.hp = Math.round(420 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(100 * this.speedMult);
+      enemy.width = 140;
+      enemy.height = 132;
+      enemy.visualScale = 1.38;
+      enemy.gemColor = '#22c55e';
+      enemy.gemShape = 'centipeetle_mother';
+      enemy.name = 'Mother Centipeetle Queen';
+      this.isBossAlive = true;
+    } else if (type === 'boss_giant_bird') {
+      enemy.hp = Math.round(620 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(125 * this.speedMult);
+      enemy.width = 165;
+      enemy.height = 148;
+      enemy.visualScale = 1.38;
+      enemy.gemColor = '#38bdf8';
+      enemy.gemShape = 'ice_prism';
+      enemy.name = 'Ancient Spire Giant Bird';
+      this.isBossAlive = true;
     }
 
     // --- Freebuff AI profile: combat role, telegraph length, elite & stage scaling ---
@@ -16694,6 +17114,9 @@ class EnemyManager {
       if (e.breakoutBurstTimer > 0) {
         e.breakoutBurstTimer -= dt;
       }
+      if (e.attackVisualTimer > 0) {
+        e.attackVisualTimer = Math.max(0, e.attackVisualTimer - dt);
+      }
 
       this.checkPlayerAttackCollisions(e, player, projectiles, particles, audioEngine, onPoofed, i);
       if (!e.isPoofed && player2) {
@@ -16723,6 +17146,10 @@ class EnemyManager {
   }
 
   executeEnemyAttack(e, player, projectiles, audioEngine, particles) {
+    // Trigger dynamic attack lunge & elemental skill VFX on the monster/boss itself
+    e.attackVisualMax = e.isBoss ? 0.42 : 0.30;
+    e.attackVisualTimer = e.attackVisualMax;
+
     if (e.type === 'centipeetle' || e.type === 'acid_centipeetle') {
       audioEngine.playSfx('laser');
       projectiles.push({
@@ -16736,9 +17163,10 @@ class EnemyManager {
         color: '#22c55e',
         life: 1.5
       });
-      particles.addSparkle(e.x + e.facing * 24, e.y - 28, '#4ade80', 6, 2);
-    } else if (e.type === 'blade_quartz') {
+      particles.addSparkle(e.x + e.facing * 24, e.y - 28, '#4ade80', 8, 3);
+    } else if (e.type === 'blade_quartz' || e.type === 'carnelian_enforcer') {
       audioEngine.playSfx('hit');
+      e.vx = e.facing * 260;
       projectiles.push({
         x: e.x + e.facing * 30,
         y: e.y - 30,
@@ -16747,13 +17175,15 @@ class EnemyManager {
         radius: 12,
         damage: 1,
         type: 'enemyShard',
-        color: '#f43f5e',
+        color: e.type === 'carnelian_enforcer' ? '#fb923c' : '#f43f5e',
         life: 1.4
       });
+      particles.addSparkle(e.x + e.facing * 30, e.y - 30, e.type === 'carnelian_enforcer' ? '#fb923c' : '#f43f5e', 8, 3);
     } else if (e.type === 'cluster') {
       audioEngine.playSfx('hit');
       e.vx = e.facing * 360;
-    } else if (e.type === 'ice_monster') {
+      particles.addSparkle(e.x + e.facing * 22, e.y - 32, '#c084fc', 10, 4);
+    } else if (e.type === 'ice_monster' || e.type === 'snow_monster') {
       audioEngine.playSfx('laser');
       projectiles.push({
         x: e.x + e.facing * 28,
@@ -16766,6 +17196,7 @@ class EnemyManager {
         color: '#38bdf8',
         life: 1.5
       });
+      particles.addSparkle(e.x + e.facing * 28, e.y - 32, '#bae6fd', 8, 3);
     } else if (e.type === 'winged_centipeetle') {
       // Aerial spitter: diving acid glob
       audioEngine.playSfx('laser');
@@ -16780,7 +17211,7 @@ class EnemyManager {
         color: '#4ade80',
         life: 1.4
       });
-      particles.addSparkle(e.x + e.facing * 20, e.y - 18, '#4ade80', 6, 2);
+      particles.addSparkle(e.x + e.facing * 20, e.y - 18, '#4ade80', 8, 3);
     } else if (e.type === 'spire_harpy') {
       // Spire Harpy: paired feather shards
       audioEngine.playSfx('whoosh');
@@ -16797,6 +17228,7 @@ class EnemyManager {
           life: 1.4
         });
       }
+      particles.addSparkle(e.x + e.facing * 22, e.y - 24, '#67e8f9', 8, 3);
     } else if (e.type === 'volcanic_firebird') {
       // Volcanic Firebird: molten cinder lob
       audioEngine.playSfx('rocket');
@@ -16811,7 +17243,7 @@ class EnemyManager {
         color: '#f97316',
         life: 1.5
       });
-      particles.addSparkle(e.x + e.facing * 22, e.y - 20, '#fb923c', 8, 3);
+      particles.addSparkle(e.x + e.facing * 22, e.y - 20, '#fb923c', 10, 4);
     } else if (e.type === 'ice_gargoyle') {
       // Glacial Gargoyle: frost lance
       audioEngine.playSfx('laser');
@@ -16826,7 +17258,25 @@ class EnemyManager {
         color: '#38bdf8',
         life: 1.4
       });
-    } else if (e.type === 'boss_spitter') {
+      particles.addSparkle(e.x + e.facing * 24, e.y - 26, '#e0f2fe', 8, 3);
+    } else if (e.type === 'boss_giant_bird') {
+      // Giant Bird: Sweeping Gale Dive + Triple Razor Sky-Feather Barrage!
+      audioEngine.playSfx('whoosh');
+      particles.addSparkle(e.x + e.facing * 40, e.y - 60, '#bae6fd', 18, 5);
+      for (let k = -1; k <= 1; k++) {
+        projectiles.push({
+          x: e.x + e.facing * 42,
+          y: e.y - 52 + k * 14,
+          vx: e.facing * 390,
+          vy: k * 65 + 45,
+          radius: 13,
+          damage: 1,
+          type: 'enemyShard',
+          color: '#38bdf8',
+          life: 1.5
+        });
+      }
+    } else if (e.type === 'boss_spitter' || e.type === 'boss_centipeetle') {
       audioEngine.playSfx('laser');
       for (let k = -1; k <= 1; k++) {
         projectiles.push({
@@ -16837,10 +17287,11 @@ class EnemyManager {
           radius: 12,
           damage: 1,
           type: 'enemyAcid',
-          color: '#15803d',
+          color: '#22c55e',
           life: 1.6
         });
       }
+      particles.addSparkle(e.x + e.facing * 35, e.y - 35, '#4ade80', 14, 4);
     } else if (e.type === 'boss_quartz_beast') {
       audioEngine.playSfx('hit');
       particles.addSparkle(e.x, this.groundY, '#38bdf8', 20, 6);
@@ -17014,9 +17465,21 @@ class EnemyManager {
         color: '#84cc16',
         life: 1.4
       });
-    } else if (e.type === 'forge_automaton') {
+    } else if (e.type === 'forge_automaton' || e.type === 'obsidian') {
       audioEngine.playSfx('hammer');
-      e.vx = e.facing * 320;
+      e.vx = e.facing * 340;
+      projectiles.push({
+        x: e.x + e.facing * 30,
+        y: this.groundY - 22,
+        vx: e.facing * 320,
+        width: 85,
+        height: 28,
+        damage: 1,
+        type: 'enemyShockwave',
+        color: '#f97316',
+        life: 0.55
+      });
+      particles.addSparkle(e.x + e.facing * 24, e.y - 20, '#fb923c', 10, 4);
     } else if (e.type === 'destabilizer_soldier') {
       audioEngine.playSfx('laser');
       projectiles.push({
@@ -17783,6 +18246,197 @@ class EnemyManager {
     if (onPoofed) onPoofed(e);
   }
 
+  // --- UPGRADED ELEMENTAL SKILL WINDUP TELEGRAPHS & ACTIVE ATTACK VFX (ALL MONSTERS & BOSSES) ---
+  drawEnemySkillVFX(ctx, e) {
+    const t = e.type || '';
+    const animT = e.animTime || ((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000);
+    const h = e.height || (e.isBoss ? 120 : 54);
+    const w = e.width || (e.isBoss ? 105 : 46);
+    const muzzleX = w * 0.56 + (e.isBoss ? 14 : 6);
+    const muzzleY = -h * 0.52;
+
+    // Classify elemental skill theme for each monster & boss
+    const isWhite = (t === 'boss_white_diamond');
+    const isAcid = (t.includes('centipeetle') || t === 'boss_spitter');
+    const isIce = (t.includes('ice') || t.includes('snow'));
+    const isFire = (t.includes('firebird') || t.includes('forge') || t === 'obsidian' || t === 'boss_jasper' || t === 'carnelian_enforcer');
+    const isCluster = (t.includes('cluster'));
+    const isTech = (t.includes('robonoid') || t.includes('destabilizer') || t === 'boss_agate_warden' || t === 'boss_topaz_fusion');
+    const isWind = (t === 'spire_harpy' || t === 'boss_giant_bird');
+
+    const primary = isWhite ? '#ffffff'
+      : isAcid ? '#4ade80'
+      : isIce ? '#38bdf8'
+      : isFire ? '#f97316'
+      : isCluster ? '#c084fc'
+      : isTech ? (t === 'boss_topaz_fusion' ? '#fbbf24' : '#22d3ee')
+      : isWind ? '#67e8f9'
+      : '#f43f5e';
+    const core = isWhite ? '#e2e8f0'
+      : isAcid ? '#dcfce7'
+      : isIce ? '#e0f2fe'
+      : isFire ? '#fde047'
+      : isCluster ? '#f5d0fe'
+      : '#ffffff';
+
+    ctx.save();
+
+    // 1. WINDUP TELEGRAPH ANIMATION (Elemental Charging Energy before strike!)
+    if (e.windup && e.windup > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(animT * 26);
+      const chargeR = (e.isBoss ? 22 : 13) + pulse * (e.isBoss ? 9 : 5);
+
+      if (isWhite) {
+        // White Diamond: Iconic blinding monochrome lock-on eye-beams & rotating 4-point Diamond mandala!
+        ctx.save();
+        ctx.translate(0, -h * 0.68);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.65 + pulse * 0.35})`;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 48 + pulse * 14, 0, Math.PI * 2);
+        ctx.stroke();
+        // Rotating 4-point Diamond Judgement Cross
+        ctx.rotate(animT * 2.8);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          const r = (i % 2 === 0) ? (56 + pulse * 14) : 12;
+          if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        // Targeting beam previews
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 120, muzzleY - 40);
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 130, muzzleY - 12);
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 120, muzzleY + 16);
+        ctx.stroke();
+      } else {
+        // Converging elemental charge orb + rotating danger glyph at weapon/mouth
+        const orbG = ctx.createRadialGradient(muzzleX, muzzleY, 2, muzzleX, muzzleY, chargeR * 1.4);
+        orbG.addColorStop(0, '#ffffff');
+        orbG.addColorStop(0.45, primary);
+        orbG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = orbG;
+        ctx.beginPath();
+        ctx.arc(muzzleX, muzzleY, chargeR * 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spinning elemental charge ring
+        ctx.save();
+        ctx.translate(muzzleX, muzzleY);
+        ctx.rotate(animT * 7);
+        ctx.strokeStyle = core;
+        ctx.lineWidth = e.isBoss ? 3.0 : 2.0;
+        ctx.beginPath();
+        ctx.arc(0, 0, chargeR, 0, Math.PI * 1.35);
+        ctx.stroke();
+        // Converging energy sparks drawn inward
+        ctx.fillStyle = primary;
+        for (let s = 0; s < 4; s++) {
+          const sa = (s * Math.PI) / 2 + animT * 4;
+          const sr = chargeR * (1.5 - pulse * 0.6);
+          ctx.beginPath();
+          ctx.arc(Math.cos(sa) * sr, Math.sin(sa) * sr, e.isBoss ? 3.5 : 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // 2. ACTIVE ATTACK BURST VFX (Right as the monster/boss strikes or fires!)
+    if (e.attackVisualTimer && e.attackVisualTimer > 0) {
+      const p = Math.max(0, Math.min(1, e.attackVisualTimer / (e.attackVisualMax || 0.34)));
+      const burst = Math.sin(p * Math.PI);
+      ctx.globalAlpha = Math.min(1, p * 1.35);
+
+      if (isWhite) {
+        // White Diamond: Blinding Prismatic Judgement Flare & Concentric Radiance Rings
+        const flareR = 54 + (1 - p) * 58;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5 * p;
+        ctx.beginPath();
+        ctx.arc(muzzleX, muzzleY, flareR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4 + p * 0.8;
+          const r = (i % 2 === 0) ? (flareR * 1.15) : (flareR * 0.28);
+          if (i === 0) ctx.moveTo(muzzleX + Math.cos(a) * r, muzzleY + Math.sin(a) * r);
+          else ctx.lineTo(muzzleX + Math.cos(a) * r, muzzleY + Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (isAcid) {
+        // Toxic Acid Splash Cone + Bubbling Droplets
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.55)';
+        ctx.beginPath();
+        ctx.moveTo(muzzleX - 6, muzzleY);
+        ctx.lineTo(muzzleX + (e.isBoss ? 72 : 44) * burst, muzzleY - (e.isBoss ? 26 : 15));
+        ctx.lineTo(muzzleX + (e.isBoss ? 72 : 44) * burst, muzzleY + (e.isBoss ? 26 : 15));
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#dcfce7';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 14 * burst, muzzleY, 7, (e.isBoss ? 24 : 14) * burst, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (isIce) {
+        // Crystalline Frost Nova & Shattering Icicle Fan
+        const rad = (e.isBoss ? 52 : 30) * burst;
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.72)';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0;
+        for (let k = -1; k <= 1; k++) {
+          const ang = k * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(muzzleX, muzzleY - 5);
+          ctx.lineTo(muzzleX + Math.cos(ang) * rad * 1.4, muzzleY + Math.sin(ang) * rad * 1.4);
+          ctx.lineTo(muzzleX, muzzleY + 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (isFire || t === 'boss_quartz_beast' || t === 'boss_topaz_fusion' || t === 'blade_quartz') {
+        // Blazing / Kinetic Sweeping Crescent Slash + Impact Shock-Ring!
+        const slashR = (e.isBoss ? 68 : 38) + (1 - p) * 18;
+        ctx.strokeStyle = primary;
+        ctx.lineWidth = (e.isBoss ? 12 : 7) * p;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(muzzleX - 10, muzzleY, slashR, -Math.PI * 0.48, Math.PI * 0.48);
+        ctx.stroke();
+        ctx.strokeStyle = core;
+        ctx.lineWidth = (e.isBoss ? 5 : 3) * p;
+        ctx.beginPath();
+        ctx.arc(muzzleX - 10, muzzleY, slashR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+      } else {
+        // High-Tech / Wind / Psychic Muzzle Shockwave & Star Flash!
+        const rx = (e.isBoss ? 14 : 9) * burst;
+        const ry = (e.isBoss ? 36 : 22) * burst;
+        ctx.strokeStyle = primary;
+        ctx.lineWidth = (e.isBoss ? 4.5 : 3.0) * p;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 10 * burst, muzzleY, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0 * p;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 24 * burst, muzzleY, rx * 0.65, ry * 0.65, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
   drawEnemyModel(ctx, e) {
     if (e.type === 'winged_centipeetle') {
       this.drawWingedCentipeetle(ctx, e);
@@ -17987,11 +18641,34 @@ class EnemyManager {
 
       const vScale = e.visualScale || (e.isBoss ? 1.35 : 1.48);
 
+      // Dynamic Attack Anticipation (coil back during windup) & Snappy Strike Lunge during active attack!
+      let atkShiftX = 0;
+      let atkScaleX = 1;
+      let atkScaleY = 1;
+      if (e.windup && e.windup > 0) {
+        const wPulse = 0.5 + 0.5 * Math.sin((e.animTime || 0) * 32);
+        atkShiftX = -5 - wPulse * 3;
+        atkScaleX = 0.94;
+        atkScaleY = 1.05;
+      } else if (e.attackVisualTimer && e.attackVisualTimer > 0) {
+        const atkP = Math.max(0, Math.min(1, e.attackVisualTimer / (e.attackVisualMax || 0.34)));
+        const snap = Math.sin(atkP * Math.PI);
+        atkShiftX = snap * (e.isBoss ? 16 : 11);
+        atkScaleX = 1 + snap * 0.14;
+        atkScaleY = 1 - snap * 0.08;
+      }
+
       // Draw base enemy scaled to menacing real-enemy height next to players
       ctx.save();
-      ctx.scale(vScale, vScale);
+      ctx.translate(atkShiftX, 0);
+      ctx.scale(vScale * atkScaleX, vScale * atkScaleY);
       this.drawEnemyModel(ctx, e);
       ctx.restore();
+
+      // Upgraded Elemental Skill Windup Telegraphs & Active Attack Bursts for ALL Monsters & Bosses!
+      if (!e.isImmortalDummy && ((e.windup && e.windup > 0) || (e.attackVisualTimer && e.attackVisualTimer > 0))) {
+        this.drawEnemySkillVFX(ctx, e);
+      }
 
       // Terrifying Hard-Light Corruption Fractures, Ground Fissures & Orbiting Boss Shards
       if (!e.isImmortalDummy) {
@@ -22327,6 +23004,17 @@ if (typeof PORTRAIT_IMAGES !== 'undefined') {
   });
 }
 
+// Dedicated HD fighting-style Overdrive cut-in renders (from Character reference/*2.*)
+const _overdrivePortraitImages = {};
+if (typeof OVERDRIVE_PORTRAIT_IMAGES !== 'undefined') {
+  Object.keys(OVERDRIVE_PORTRAIT_IMAGES).forEach(id => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = OVERDRIVE_PORTRAIT_IMAGES[id];
+    _overdrivePortraitImages[id] = img;
+  });
+}
+
 // Official reference fusion sprites (full-body canon artwork)
 const _fusionSprites = {};
 if (typeof FUSION_SPRITES !== 'undefined') {
@@ -22338,9 +23026,10 @@ if (typeof FUSION_SPRITES !== 'undefined') {
   });
 }
 
-function drawPortraitCard(ctx, id, size = 512) {
+function drawPortraitCard(ctx, id, size = 512, useOverdrive = false) {
   ctx.clearRect(0, 0, size, size);
-  const img = _portraitImages[id];
+  const odImg = useOverdrive ? _overdrivePortraitImages[id] : null;
+  const img = (odImg && odImg.complete && odImg.naturalWidth > 0) ? odImg : _portraitImages[id];
   if (img && img.complete && img.naturalWidth > 0) {
     const theme = (typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[id]) ? OVERDRIVE_THEMES[id].color :
                   (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS[id]) ? CANON_FUSIONS[id].color : '#f472b6';
@@ -23946,7 +24635,7 @@ class StevenUniverseGame {
       if (!el) return;
       const cv = el.querySelector('canvas[data-portrait]');
       if (!cv) return;
-      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, cv.width); } catch (e) {}
+      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, cv.width, !!o.useOverdriveArt); } catch (e) {}
     });
 
     // Restart the entrance animation on every activation
@@ -25372,6 +26061,7 @@ class StevenUniverseGame {
         centerPortraitId: f.id,
         portraitId: (f.gems && f.gems[0]) || hero.activeChar,
         secondPortraitId: (f.gems && f.gems[1]) || null,
+        useOverdriveArt: true,
         name: `${(f.name || theme.name).toUpperCase()} SURGE`,
         quote: otherActive ? 'DUAL GEM SURGE · 2.5× POWER · OVERCLOCKED FUSION' : 'FUSION GEM SURGE · 2× POWER · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
@@ -25384,6 +26074,7 @@ class StevenUniverseGame {
         kicker: 'GEM SURGE',
         kickerColor: theme.color,
         charId: hero.activeChar,
+        useOverdriveArt: true,
         name: theme.name,
         quote: 'GEM SURGE · 2× POWER · +85% SPEED · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
@@ -26068,28 +26759,54 @@ class StevenUniverseGame {
       this.ctx.closePath();
       this.ctx.fill();
     } else if (p.type === 'fusionHammerDrill') {
-      // Sardonyx: Spinning Hammer Drill!
+      // Sardonyx: High-Speed Rotating Showbiz Hammer Drill + Golden Starburst Aura!
       this.ctx.translate(p.x, p.y);
-      const rot = (typeof performance !== 'undefined' ? performance.now() / 40 : Date.now() / 40);
-      this.ctx.rotate(rot);
-      this.ctx.fillStyle = '#fb7185';
-      this.ctx.strokeStyle = '#fdba74';
-      this.ctx.lineWidth = 3;
-      this.ctx.fillRect(-20, -14, 40, 28);
-      this.ctx.strokeRect(-20, -14, 40, 28);
-    } else if (p.type === 'fusionShowstopper') {
-      // Sardonyx: Showstopper Finale Spotlights!
-      this.ctx.translate(p.x, p.y);
-      this.ctx.fillStyle = 'rgba(253, 186, 116, 0.45)';
-      this.ctx.strokeStyle = '#fde047';
-      this.ctx.lineWidth = 2.5;
+      const rot = (typeof performance !== 'undefined' ? performance.now() / 32 : Date.now() / 32);
+      this.ctx.fillStyle = 'rgba(253, 224, 71, 0.35)';
       this.ctx.beginPath();
-      this.ctx.moveTo(0, -90);
-      this.ctx.lineTo(-80, 70);
-      this.ctx.lineTo(80, 70);
-      this.ctx.closePath();
+      this.ctx.arc(0, 0, (p.radius || 28) * 1.15, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.rotate(rot);
+      this.ctx.fillStyle = '#e11d48';
+      this.ctx.strokeStyle = '#fde047';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-24, -15, 48, 30, 6);
+      else this.ctx.rect(-24, -15, 48, 30);
       this.ctx.fill();
       this.ctx.stroke();
+      this.ctx.fillStyle = '#fde047';
+      this.ctx.fillRect(-4, -15, 8, 30);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath(); this.ctx.arc(0, 0, 5, 0, Math.PI * 2); this.ctx.fill();
+    } else if (p.type === 'fusionShowstopper') {
+      // Sardonyx: Grand Theatrical Showstopper Dual Spotlights + Golden Starbursts!
+      this.ctx.translate(p.x, p.y);
+      const grad = this.ctx.createLinearGradient(0, -110, 0, 80);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      grad.addColorStop(0.5, 'rgba(253, 224, 71, 0.52)');
+      grad.addColorStop(1, 'rgba(251, 113, 133, 0.12)');
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.moveTo(-14, -110); this.ctx.lineTo(-92, 76); this.ctx.lineTo(92, 76); this.ctx.lineTo(14, -110);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#fde047';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 72, 92, 16, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      // Twinkling stage stars
+      this.ctx.fillStyle = '#ffffff';
+      for (const [sx, sy, sr] of [[-46, -10, 7], [48, -22, 8], [0, 32, 10]]) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(sx, sy - sr); this.ctx.lineTo(sx + sr * 0.35, sy - sr * 0.35);
+        this.ctx.lineTo(sx + sr, sy); this.ctx.lineTo(sx + sr * 0.35, sy + sr * 0.35);
+        this.ctx.lineTo(sx, sy + sr); this.ctx.lineTo(sx - sr * 0.35, sy + sr * 0.35);
+        this.ctx.lineTo(sx - sr, sy); this.ctx.lineTo(sx - sr * 0.35, sy - sr * 0.35);
+        this.ctx.closePath();
+        this.ctx.fill();
+      }
     } else if (p.type === 'fusionOpalArrow' || p.type === 'fusionCelestialRain') {
       // Opal: Luminous Crystal Arrow with Fletching & Spear Tip
       this.ctx.translate(p.x, p.y);
@@ -26203,17 +26920,27 @@ class StevenUniverseGame {
         this.ctx.stroke();
       }
     } else if (p.type === 'fusionPrismRose') {
-      // Rainbow Quartz Classic: Prismatic Tears Vortex!
+      // Rainbow Quartz Classic: Swirling 80s Neon-Prism Rose Vortex!
       this.ctx.translate(p.x, p.y);
-      const rot = (typeof performance !== 'undefined' ? performance.now() / 50 : Date.now() / 50);
+      const rot = (typeof performance !== 'undefined' ? performance.now() / 45 : Date.now() / 45);
       this.ctx.rotate(rot);
-      this.ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
-      this.ctx.strokeStyle = '#fbcfe8';
-      this.ctx.lineWidth = 3;
+      const vGrad = this.ctx.createRadialGradient(0, 0, 8, 0, 0, 82);
+      vGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      vGrad.addColorStop(0.35, 'rgba(244, 114, 182, 0.68)');
+      vGrad.addColorStop(0.7, 'rgba(103, 232, 249, 0.48)');
+      vGrad.addColorStop(1, 'rgba(168, 85, 247, 0.05)');
+      this.ctx.fillStyle = vGrad;
       this.ctx.beginPath();
-      this.ctx.arc(0, 0, 75, 0, Math.PI * 2);
+      this.ctx.arc(0, 0, 82, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.stroke();
+      const ringCols = ['#f472b6', '#fde047', '#38bdf8', '#c084fc'];
+      for (let i = 0; i < 4; i++) {
+        this.ctx.strokeStyle = ringCols[i];
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 26 + i * 14, i * 1.1, i * 1.1 + Math.PI * 1.35);
+        this.ctx.stroke();
+      }
     } else if (p.type === 'connieSwordBeam') {
       this.ctx.translate(p.x, p.y);
       this.ctx.scale(p.vx < 0 ? -1 : 1, 1);
@@ -26830,12 +27557,19 @@ class StevenUniverseGame {
       const radius = (p.width || 220) / 2;
       this.ctx.save();
       this.ctx.translate(p.x, p.y);
-      const rot = Date.now() / 120;
-      this.ctx.strokeStyle = 'rgba(132, 204, 22, 0.75)';
-      this.ctx.lineWidth = 3;
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, radius * 0.85, rot, rot + Math.PI * 1.8);
-      this.ctx.stroke();
+      const rot = Date.now() / 95;
+      const g = this.ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
+      g.addColorStop(0, 'rgba(217, 249, 157, 0.55)');
+      g.addColorStop(0.55, 'rgba(132, 204, 22, 0.28)');
+      g.addColorStop(1, 'rgba(132, 204, 22, 0)');
+      this.ctx.fillStyle = g;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius, 0, Math.PI * 2); this.ctx.fill();
+      this.ctx.strokeStyle = '#84cc16';
+      this.ctx.lineWidth = 3.5;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius * 0.85, rot, rot + Math.PI * 1.65); this.ctx.stroke();
+      this.ctx.strokeStyle = '#ecfccb';
+      this.ctx.lineWidth = 2.4;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius * 0.52, -rot * 1.4, -rot * 1.4 + Math.PI * 1.45); this.ctx.stroke();
       this.ctx.restore();
     } else if (p.type === 'seismicShockwave' || p.type === 'giantGauntletSlam') {
       const w = p.width || 220;
@@ -26867,25 +27601,192 @@ class StevenUniverseGame {
       const w = p.width || 140;
       this.ctx.save();
       this.ctx.translate(p.x, p.y);
-      this.ctx.strokeStyle = '#ff94ba';
-      this.ctx.lineWidth = 3;
+      const bg = this.ctx.createRadialGradient(0, 0, 6, 0, 0, w * 0.55);
+      bg.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+      bg.addColorStop(0.55, 'rgba(255, 96, 151, 0.34)');
+      bg.addColorStop(1, 'rgba(244, 63, 94, 0.05)');
+      this.ctx.fillStyle = bg;
       this.ctx.beginPath();
-      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w / 2, 30, 0, 0, Math.PI * 2);
-      else this.ctx.arc(0, 0, 40, 0, Math.PI * 2);
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w / 2, 34, 0, 0, Math.PI * 2);
+      else this.ctx.arc(0, 0, 42, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#ff94ba';
+      this.ctx.lineWidth = 3.4;
       this.ctx.stroke();
-      this.ctx.fillStyle = 'rgba(255, 96, 151, 0.28)';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w * 0.34, 22, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyAcid') {
+      // Upgraded Corrupted Acid Glob: Glowing Toxic Comet + Bubbling Neon Core!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 10;
+      this.ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -r * 0.85);
+      this.ctx.lineTo(-r * 2.8, 0);
+      this.ctx.lineTo(0, r * 0.85);
+      this.ctx.closePath();
+      this.ctx.fill();
+      const ag = this.ctx.createRadialGradient(r * 0.2, -r * 0.2, 1, 0, 0, r * 1.15);
+      ag.addColorStop(0, '#dcfce7');
+      ag.addColorStop(0.5, '#4ade80');
+      ag.addColorStop(1, p.color || '#15803d');
+      this.ctx.fillStyle = ag;
+      this.ctx.strokeStyle = '#bbf7d0';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      this.ctx.ellipse(0, 0, r * 1.15, r * 0.9, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.fillStyle = '#dcfce7';
+      this.ctx.beginPath();
+      this.ctx.arc(-r * 1.4, -r * 0.4, r * 0.25, 0, Math.PI * 2);
+      this.ctx.arc(-r * 1.9, r * 0.35, r * 0.2, 0, Math.PI * 2);
       this.ctx.fill();
       this.ctx.restore();
-    } else {
-      this.ctx.fillStyle = p.color || '#ffcf33';
+    } else if (p.type === 'enemyIce') {
+      // Upgraded Glacial Lance: Faceted Crystalline Icicle Spear + Frost Mist Trail!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 11;
+      this.ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
       this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius || 12, 0, Math.PI * 2);
+      this.ctx.moveTo(r * 1.6, 0);
+      this.ctx.lineTo(-r * 2.2, -r * 0.75);
+      this.ctx.lineTo(-r * 1.6, 0);
+      this.ctx.lineTo(-r * 2.2, r * 0.75);
+      this.ctx.closePath();
       this.ctx.fill();
-
+      const ig = this.ctx.createLinearGradient(-r * 1.4, 0, r * 1.8, 0);
+      ig.addColorStop(0, '#0284c7');
+      ig.addColorStop(0.55, '#7dd3fc');
+      ig.addColorStop(1, '#ffffff');
+      this.ctx.fillStyle = ig;
+      this.ctx.strokeStyle = '#e0f2fe';
+      this.ctx.lineWidth = 1.8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(r * 1.9, 0);
+      this.ctx.lineTo(0, -r * 0.72);
+      this.ctx.lineTo(-r * 1.4, 0);
+      this.ctx.lineTo(0, r * 0.72);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyShard') {
+      // Upgraded Razor Crystal / Feather / Molten Cinder Shard with Spinning Facets & Motion Trail!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 11;
+      const col = p.color || '#f43f5e';
+      this.ctx.fillStyle = col;
+      this.ctx.globalAlpha = 0.38;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -r * 0.7);
+      this.ctx.lineTo(-r * 2.8, 0);
+      this.ctx.lineTo(0, r * 0.7);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = col;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(r * 1.65, 0);
+      this.ctx.lineTo(r * 0.15, -r * 0.8);
+      this.ctx.lineTo(-r * 1.1, 0);
+      this.ctx.lineTo(r * 0.15, r * 0.8);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
       this.ctx.fillStyle = '#ffffff';
       this.ctx.beginPath();
-      this.ctx.arc(p.x - 2, p.y - 2, (p.radius || 12) * 0.4, 0, Math.PI * 2);
+      this.ctx.moveTo(r * 1.2, 0);
+      this.ctx.lineTo(0, -r * 0.3);
+      this.ctx.lineTo(-r * 0.4, 0);
+      this.ctx.lineTo(0, r * 0.3);
+      this.ctx.closePath();
       this.ctx.fill();
+      this.ctx.restore();
+    } else if (p.type === 'enemyLaser') {
+      // Upgraded Homeworld / White Diamond High-Intensity Plasma Judgement Beam!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 12;
+      const col = p.color || '#38bdf8';
+      const isWhite = (col === '#ffffff' || col === '#f8fafc');
+      const len = r * 3.4;
+      this.ctx.fillStyle = isWhite ? 'rgba(226, 232, 240, 0.55)' : col;
+      this.ctx.globalAlpha = isWhite ? 0.8 : 0.45;
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-len * 0.6, -r * 0.9, len * 1.2, r * 1.8, r * 0.9);
+      else this.ctx.rect(-len * 0.6, -r * 0.9, len * 1.2, r * 1.8);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-len * 0.48, -r * 0.42, len * 1.04, r * 0.84, r * 0.42);
+      else this.ctx.rect(-len * 0.48, -r * 0.42, len * 1.04, r * 0.84);
+      this.ctx.fill();
+      this.ctx.strokeStyle = isWhite ? '#ffffff' : col;
+      this.ctx.lineWidth = 2.2;
+      this.ctx.beginPath();
+      this.ctx.ellipse(len * 0.25, 0, r * 0.38, r * 1.15, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyShockwave') {
+      // Upgraded Boss Seismic / Elemental Ground Shockwave Surge!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      const dir = (p.vx < 0 ? -1 : 1);
+      this.ctx.scale(dir, 1);
+      const col = p.color || '#f97316';
+      const w = p.width || ((p.radius || 28) * 2.8);
+      const h = p.height || ((p.radius || 28) * 1.4);
+      this.ctx.fillStyle = col;
+      this.ctx.globalAlpha = 0.42;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, h * 0.25, w * 0.52, h * 0.32, 0, 0, Math.PI * 2);
+      else this.ctx.arc(0, 0, w * 0.4, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = col;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 2.4;
+      this.ctx.beginPath();
+      this.ctx.moveTo(-w * 0.48, h * 0.35);
+      this.ctx.lineTo(-w * 0.22, -h * 0.35);
+      this.ctx.lineTo(-w * 0.04, h * 0.02);
+      this.ctx.lineTo(w * 0.16, -h * 0.65);
+      this.ctx.lineTo(w * 0.32, -h * 0.18);
+      this.ctx.lineTo(w * 0.48, h * 0.35);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else {
+      const r = p.radius || 12;
+      const g = this.ctx.createRadialGradient(p.x - r * 0.25, p.y - r * 0.25, 1, p.x, p.y, r * 1.2);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.45, p.color || '#ffcf33');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      this.ctx.fillStyle = g;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, r * 1.2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, r * 0.72, 0, Math.PI * 2);
+      this.ctx.stroke();
     }
     this.ctx.restore();
   }

@@ -2,50 +2,50 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Crystal Gems! — Complete Characters, Fusions, Corrupted Gems &amp; Bosses Roster</title>
+<title>Crystal Gems! — Complete Fighting Styles, Status, Characters, Fusions, Monsters &amp; Bosses Reference</title>
 <style>
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     padding: 0;
-    background: #0d0a1a;
+    background: #0b0817;
     color: #f8fafc;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   }
   .header {
     text-align: center;
-    padding: 18px 24px 12px;
-    background: linear-gradient(180deg, rgba(244,114,182,0.18) 0%, rgba(13,10,26,0) 100%);
-    border-bottom: 1px solid rgba(244,114,182,0.3);
+    padding: 20px 24px 14px;
+    background: linear-gradient(180deg, rgba(244,114,182,0.20) 0%, rgba(11,8,23,0) 100%);
+    border-bottom: 1px solid rgba(244,114,182,0.32);
   }
   .header h1 {
     margin: 0;
-    font-size: 26px;
-    letter-spacing: 1.5px;
+    font-size: 27px;
+    letter-spacing: 1.6px;
     color: #f472b6;
-    text-shadow: 0 2px 12px rgba(244,114,182,0.45);
+    text-shadow: 0 2px 14px rgba(244,114,182,0.45);
   }
   .header p {
-    margin: 6px 0 0;
-    font-size: 13px;
+    margin: 7px 0 0;
+    font-size: 13.5px;
     color: #cbd5e1;
   }
   #fightingCanvas {
     display: block;
-    margin: 12px auto 20px;
+    margin: 14px auto 24px;
     border-radius: 14px;
-    border: 1px solid rgba(148,163,184,0.24);
-    box-shadow: 0 12px 38px rgba(0,0,0,0.65);
-    background: #110d22;
+    border: 1px solid rgba(148,163,184,0.26);
+    box-shadow: 0 14px 42px rgba(0,0,0,0.68);
+    background: #0f0b1e;
   }
 </style>
 </head>
 <body>
   <div class="header">
-    <h1>💎 CRYSTAL GEMS! — COMPLETE HEROES, FUSIONS, CORRUPTED GEMS &amp; BOSSES ROSTER</h1>
-    <p>All 10 Playable Guardians • All 9 Canon Fusions • Corrupted Gem Minions &amp; Terrifying Phase-2 Bosses • Elemental Move Types &amp; Lore RPG Stats</p>
+    <h1>💎 CRYSTAL GEMS! — COMPLETE FIGHTING STYLES, CHARACTER STATUS &amp; BESTIARY SHEET</h1>
+    <p>All 10 Playable Guardians • All 9 Playable Canon Fusions • All 15 Corrupted Monsters • All 13 Campaign Bosses + Training Dummy • Live Combat Stats &amp; Elemental Typings</p>
   </div>
-  <canvas id="fightingCanvas" width="1560" height="1980"></canvas>
+  <canvas id="fightingCanvas" width="1600" height="3290"></canvas>
 
   <script>window.__suGameInitialized = true;</script>
   <script src="../src/game.js"></script>
@@ -56,50 +56,76 @@
     const hero = new PlayerHero(600, 'p1', 2600);
     const mgr = new EnemyManager(1280, 600);
 
-    const ROSTER = [
-      { id: 'steven',   title: 'STEVEN UNIVERSE',       weapon: 'Rose Shield & Bubble',     pose: 'attack', fn: 'drawSteven',   color: '#f472b6' },
-      { id: 'garnet',   title: 'GARNET',                weapon: 'Electro Gauntlets',        pose: 'attack', fn: 'drawGarnet',   color: '#e11d48' },
-      { id: 'amethyst', title: 'AMETHYST',              weapon: 'Dual Quartz Whips',        pose: 'attack', fn: 'drawAmethyst', color: '#a855f7' },
-      { id: 'pearl',    title: 'PEARL',                 weapon: 'Precision Spear & Holo',   pose: 'attack', fn: 'drawPearl',    color: '#38bdf8' },
-      { id: 'bismuth',  title: 'BISMUTH',               weapon: 'Forge Hammer Slam',        pose: 'attack', fn: 'drawBismuth',  color: '#7dd3fc' },
-      { id: 'peridot',  title: 'PERIDOT',               weapon: 'Ferrokinesis & EMP',       pose: 'attack', fn: 'drawPeridot',  color: '#4ade80' },
-      { id: 'lapis',    title: 'LAPIS LAZULI',          weapon: 'Hydrokinesis Wings',       pose: 'attack', fn: 'drawLapis',    color: '#2563eb' },
-      { id: 'rose',     title: 'ROSE QUARTZ',           weapon: 'Rose Broadsword & Heal',   pose: 'attack', fn: 'drawRose',     color: '#fb7185' },
-      { id: 'connie',   title: 'CONNIE (PINK REVIVED)', weapon: 'Rose Sword & Pink Form',   pose: 'pink',   fn: 'drawConnie',   color: '#f9a8d4' },
-      { id: 'jasper',   title: 'JASPER',                weapon: 'Crash Helmet Charge',      pose: 'attack', fn: 'drawJasper',   color: '#f59e0b' }
+    const GUARDIANS = [
+      { id: 'steven',   title: 'STEVEN UNIVERSE',       role: 'GUARDIAN TANK • HEALER',   pose: 'idle', fn: 'drawSteven',   color: '#f472b6' },
+      { id: 'garnet',   title: 'GARNET',                role: 'HEAVY BRAWLER • STUN',     pose: 'idle', fn: 'drawGarnet',   color: '#e11d48' },
+      { id: 'amethyst', title: 'AMETHYST',              role: 'RUSHDOWN • WHIP FRENZY',   pose: 'idle', fn: 'drawAmethyst', color: '#a855f7' },
+      { id: 'pearl',    title: 'PEARL',                 role: 'PRECISION • HOLO-CLONE',   pose: 'idle', fn: 'drawPearl',    color: '#38bdf8' },
+      { id: 'bismuth',  title: 'BISMUTH',               role: 'FORGE BRUISER • ARMOR BRK',pose: 'idle', fn: 'drawBismuth',  color: '#7dd3fc' },
+      { id: 'peridot',  title: 'PERIDOT',               role: 'TECH CONTROL • MAGNETIC',  pose: 'idle', fn: 'drawPeridot',  color: '#4ade80' },
+      { id: 'lapis',    title: 'LAPIS LAZULI',          role: 'AERIAL CASTER • HYDRO',    pose: 'idle', fn: 'drawLapis',    color: '#3b82f6' },
+      { id: 'rose',     title: 'ROSE QUARTZ',           role: 'VALKYRIE • TEAM HEALER',   pose: 'idle', fn: 'drawRose',     color: '#fb7185' },
+      { id: 'connie',   title: 'CONNIE (PINK REVIVED)', role: 'IAIDO BLADE • PINK FORM',  pose: 'pink', fn: 'drawConnie',   color: '#f9a8d4' },
+      { id: 'jasper',   title: 'JASPER',                role: 'ALPHA JUGGERNAUT • RAM',   pose: 'idle', fn: 'drawJasper',   color: '#f59e0b' }
     ];
 
     const FUSIONS = [
-      { id: 'stevonnie',      title: 'STEVONNIE',          pair: 'Steven + Connie',   fn: 'drawStevonnie',            color: '#f472b6', types: ['normal', 'fight', 'fairy'] },
-      { id: 'smoky',          title: 'SMOKY QUARTZ',       pair: 'Steven + Amethyst', fn: 'drawSmokyQuartz',          color: '#fb923c', types: ['fight', 'dark', 'flying'] },
-      { id: 'rainbow2',       title: 'RAINBOW QUARTZ 2.0', pair: 'Steven + Pearl',    fn: 'drawRainbowQuartz2',       color: '#38bdf8', types: ['fairy', 'psychic', 'flying'] },
-      { id: 'sunstone',       title: 'SUNSTONE',           pair: 'Steven + Garnet',   fn: 'drawSunstone',             color: '#facc15', types: ['fire', 'fight', 'fairy'] },
-      { id: 'sugilite',       title: 'SUGILITE',           pair: 'Garnet + Amethyst', fn: 'drawSugilite',             color: '#a855f7', types: ['dark', 'fight', 'dragon'] },
-      { id: 'sardonyx',       title: 'SARDONYX',           pair: 'Garnet + Pearl',    fn: 'drawSardonyx',             color: '#fb7185', types: ['psychic', 'electr', 'fire'] },
-      { id: 'opal',           title: 'OPAL',               pair: 'Amethyst + Pearl',  fn: 'drawOpal',                 color: '#818cf8', types: ['psychic', 'flying', 'fairy'] },
-      { id: 'malachite',      title: 'MALACHITE',          pair: 'Lapis + Jasper',    fn: 'drawMalachite',            color: '#2dd4bf', types: ['water', 'dragon', 'dark'] },
-      { id: 'rainbowClassic', title: 'RAINBOW (CLASSIC)',  pair: 'Rose + Pearl',      fn: 'drawRainbowQuartzClassic', color: '#e879f9', types: ['fairy', 'psychic', 'fight'] },
-      { id: 'connie_normal',  title: 'CONNIE MAHESWARAN',  pair: 'Human Swordfighter',fn: 'drawConnie',               color: '#38bdf8', types: ['normal', 'fight', 'normal'], isHeroConnie: true }
+      { id: 'stevonnie',      title: 'STEVONNIE',          pair: 'Steven + Connie',   role: 'DUELIST • Rose Sword & Shield',   fn: 'drawStevonnie',            color: '#f472b6' },
+      { id: 'smoky',          title: 'SMOKY QUARTZ',       pair: 'Steven + Amethyst', role: 'VORTEX • Triple Star Yo-Yos',     fn: 'drawSmokyQuartz',          color: '#fb923c' },
+      { id: 'rainbow2',       title: 'RAINBOW QUARTZ 2.0', pair: 'Steven + Pearl',    role: 'PRISM CASTER • Parasol Cannon',   fn: 'drawRainbowQuartz2',       color: '#38bdf8' },
+      { id: 'sunstone',       title: 'SUNSTONE',           pair: 'Steven + Garnet',   role: 'SOLAR TITAN • Suction Gauntlets', fn: 'drawSunstone',             color: '#facc15' },
+      { id: 'sugilite',       title: 'SUGILITE',           pair: 'Garnet + Amethyst', role: 'CATACLYSM • Spiked Wrecking Ball',fn: 'drawSugilite',             color: '#a855f7' },
+      { id: 'sardonyx',       title: 'SARDONYX',           pair: 'Garnet + Pearl',    role: 'SHOWBIZ • Rotary War Hammer',     fn: 'drawSardonyx',             color: '#fb7185' },
+      { id: 'opal',           title: 'OPAL',               pair: 'Amethyst + Pearl',  role: 'MARKSMAN • Starlight Greatbow',   fn: 'drawOpal',                 color: '#818cf8' },
+      { id: 'malachite',      title: 'MALACHITE',          pair: 'Lapis + Jasper',    role: 'ABYSSAL TITAN • Hydro-Ice Wings', fn: 'drawMalachite',            color: '#2dd4bf' },
+      { id: 'rainbowClassic', title: 'RAINBOW (CLASSIC)',  pair: 'Rose + Pearl',      role: 'NEON DANCER • Prism Fencing Foil',fn: 'drawRainbowQuartzClassic', color: '#e879f9' },
+      { id: 'connie_normal',  title: 'CONNIE MAHESWARAN',  pair: 'Human Swordfighter',role: 'BASE FORM • Rose Broadsword',     fn: 'drawConnie',               color: '#38bdf8', isHeroConnie: true }
     ];
 
-    const ENEMIES_AND_BOSSES = [
-      { title: 'CENTIPEETLE & FLYER',     sub: 'Corrupted Acid Spitter Pack',      type: 'centipeetle',       type2: 'winged_centipeetle', col: '#22c55e', elem: 'DARK / FLYING',   hp: 'HP: 75–95' },
-      { title: 'BLADE QUARTZ & HARPY',    sub: 'Corrupted Warrior & Sky Hunter',   type: 'blade_quartz',      type2: 'spire_harpy',        col: '#f43f5e', elem: 'FIGHT / FLYING',  hp: 'HP: 110–130' },
-      { title: 'ICE MONSTER & FIREBIRD',  sub: 'Glacial & Volcanic Corruptions',   type: 'ice_monster',       type2: 'volcanic_firebird',  col: '#38bdf8', elem: 'WATER / FIRE',    hp: 'HP: 120–145' },
-      { title: 'CLUSTER & ROBONOID',      sub: 'Forced-Fusion & Homeworld Tech',   type: 'cluster',           type2: 'robonoid_scout',     col: '#a855f7', elem: 'DARK / STEEL',    hp: 'HP: 105–150' },
-      { title: 'MOTHER CENTIPEETLE',      sub: 'Episode 1 Boss • Acid Brood Queen',type: 'boss_centipeetle',  isBoss: true, scale: 0.92,   col: '#4ade80', elem: 'BOSS • DARK',     hp: 'HP: 1,500+' },
-      { title: 'CORRUPTED QUARTZ BEAST',  sub: 'Episode 2/3 Boss • Horned Behemoth',type: 'boss_quartz_beast',isBoss: true, scale: 0.98,   col: '#38bdf8', elem: 'BOSS • FIGHT',    hp: 'HP: 1,850+' },
-      { title: 'CLUSTER TITAN & CORE',    sub: 'Episode 4 Boss • Amalgamation',    type: 'boss_cluster_titan',isBoss: true, scale: 0.92,   col: '#c084fc', elem: 'BOSS • DARK/PSY', hp: 'HP: 2,200+' },
-      { title: 'FORGE & ICE GUARDIANS',   sub: 'Episode 5/6 Boss • Elemental Titans',type: 'boss_forge_guardian',type2: 'boss_ice_guardian', isBoss: true, scale: 0.85, col: '#f97316', elem: 'BOSS • FIRE/STEEL', hp: 'HP: 2,400+' },
-      { title: 'CORRUPTED JASPER BOSS',   sub: 'Episode 6 Climax • Alpha Quartz',  type: 'boss_jasper',       isBoss: true, scale: 1.05,   col: '#fb923c', elem: 'BOSS • FIGHT/DRG',hp: 'HP: 2,750+' },
-      { title: 'WHITE DIAMOND (ERA 3)',   sub: 'Episode 10 Final Boss • Homeworld',type: 'boss_white_diamond',isBoss: true, scale: 0.86,   col: '#e2e8f0', elem: 'FINAL • PSY/STL', hp: 'HP: 3,600+' }
+    const MONSTERS = [
+      { type: 'centipeetle',          title: 'CENTIPEETLE HATCHLING', skill: 'Acid Glob Spit',       col: '#22c55e', scale: 1.25 },
+      { type: 'acid_centipeetle',     title: 'ACID CENTIPEETLE',      skill: 'Leaping Acid Volley',  col: '#4ade80', scale: 1.25 },
+      { type: 'winged_centipeetle',   title: 'WINGED CENTIPEETLE',    skill: 'Aerial Acid Dive',     col: '#10b981', scale: 1.25 },
+      { type: 'blade_quartz',         title: 'BLADE QUARTZ BEAST',    skill: 'Crimson Shard Slash',  col: '#f43f5e', scale: 1.18 },
+      { type: 'carnelian_enforcer',   title: 'CARNELIAN ENFORCER',    skill: 'Quartz Charge Slash',  col: '#fb923c', scale: 1.18 },
+      { type: 'cluster',              title: 'CLUSTER FUSION MUTANT', skill: 'Psychic Glitch Lunge', col: '#c084fc', scale: 1.25 },
+      { type: 'ice_monster',          title: 'ICE SPIRE PUFFER',      skill: 'Glacial Icicle Shot',  col: '#38bdf8', scale: 1.18 },
+      { type: 'snow_monster',         title: 'TUNDRA SNOW BEAST',     skill: 'Frost Leap & Lance',   col: '#bae6fd', scale: 1.18 },
+      { type: 'ice_gargoyle',         title: 'GLACIAL ICE GARGOYLE',  skill: 'Aerial Frost Lance',   col: '#7dd3fc', scale: 1.22 },
+      { type: 'spire_harpy',          title: 'SPIRE HARPY',           skill: 'Twin Feather Shards',  col: '#06b6d4', scale: 1.22 },
+      { type: 'volcanic_firebird',    title: 'VOLCANIC FIREBIRD',     skill: 'Molten Cinder Lob',    col: '#f97316', scale: 1.22 },
+      { type: 'forge_automaton',      title: 'FORGE AUTOMATON',       skill: 'Molten Hammer Wave',   col: '#ea580c', scale: 1.16 },
+      { type: 'obsidian',             title: 'OBSIDIAN FORGE BRUTE',  skill: 'Volcanic Slam Surge',  col: '#e11d48', scale: 1.16 },
+      { type: 'robonoid_scout',       title: 'FLASK ROBONOID SCOUT',  skill: 'Emerald Plasma Beam',  col: '#84cc16', scale: 1.26 },
+      { type: 'destabilizer_soldier', title: 'DESTABILIZER GUARD',    skill: 'Disruptor Laser Shot', col: '#38bdf8', scale: 1.16 }
     ];
 
-    function drawStatsCard(x, y, w, h, item, stats, moveTypes, drawEntityFn) {
+    const BOSSES = [
+      { type: 'boss_spitter',        title: 'ALPHA CENTIPEETLE',      ep: 'EPISODE 1 BOSS',   skill: 'Tri-Acid Spray & Brood Surge',  col: '#22c55e', scale: 0.90, offX: -14 },
+      { type: 'boss_centipeetle',    title: 'MOTHER CENTIPEETLE',     ep: 'BROOD QUEEN BOSS', skill: 'Venom Barrage & Acid Rain',     col: '#4ade80', scale: 0.90, offX: -14 },
+      { type: 'boss_giant_bird',     title: 'ANCIENT GIANT BIRD',     ep: 'SKY SOVEREIGN',    skill: 'Gale Dive & Razor Feathers',    col: '#38bdf8', scale: 0.88, offX: 0 },
+      { type: 'boss_ice_guardian',   title: 'ANCIENT SPIRE COLOSSUS', ep: 'EPISODE 2 BOSS',   skill: 'Twin Glacial Lances & Nova',    col: '#0ea5e9', scale: 0.88, offX: 0 },
+      { type: 'boss_quartz_beast',   title: 'CORRUPTED QUARTZ TITAN', ep: 'ALPHA CORRUPTED',  skill: 'Horned Charge & Tremor Wave',   col: '#06b6d4', scale: 0.94, offX: 0 },
+      { type: 'boss_cluster_titan',  title: 'KINDERGARTEN TITAN',     ep: 'EPISODE 3 BOSS',   skill: 'Forced-Fusion Slam & Surge',    col: '#a855f7', scale: 0.90, offX: 0 },
+      { type: 'boss_cluster_core',   title: 'GEO-WEAPON CLUSTER CORE',ep: 'EPISODE 4 BOSS',   skill: 'Psychic Shard Storm & Pulse',   col: '#c084fc', scale: 0.92, offX: 0 },
+      { type: 'boss_forge_guardian', title: 'ANCIENT FORGE SENTINEL', ep: 'EPISODE 5 BOSS',   skill: 'Molten Hammer & Lava Fissure',  col: '#f97316', scale: 0.88, offX: 0 },
+      { type: 'boss_jasper',         title: 'CORRUPTED JASPER BOSS',  ep: 'EPISODE 6 BOSS',   skill: 'Battering Ram & Acid Burst',    col: '#ea580c', scale: 1.00, offX: 0 },
+      { type: 'boss_agate_warden',   title: 'HOLY BLUE AGATE WARDEN', ep: 'EPISODE 7 BOSS',   skill: 'Electric Whip & Shockwave',     col: '#38bdf8', scale: 0.96, offX: 0 },
+      { type: 'boss_topaz_fusion',   title: 'FUSED TOPAZ ENFORCER',   ep: 'EPISODE 8 BOSS',   skill: 'Double Mace Crush & Quake',     col: '#fbbf24', scale: 0.92, offX: 0 },
+      { type: 'boss_robonoid_titan', title: 'ROBONOID COLOSSUS',      ep: 'EPISODE 9 BOSS',   skill: 'Dual Plasma Cannons & Volley',  col: '#10b981', scale: 0.92, offX: 0 },
+      { type: 'boss_white_diamond',  title: 'WHITE DIAMOND (ERA 3)',  ep: 'FINAL BOSS • EP 10',skill: 'Blinding Judgement Tri-Beam',  col: '#f8fafc', scale: 0.70, offX: 0, offY: 12 },
+      { type: 'boss_jasper_dummy',   title: 'HOLO-JASPER DUMMY',      ep: 'TRAINING MODE',    skill: 'Immortal Combo & Parry Target', col: '#fb923c', scale: 0.96, offX: 0, isDummy: true }
+    ];
+
+    function getMoveTypeMeta(mType) {
+      return (typeof TYPE_META !== 'undefined' && TYPE_META[mType]) || { label: String(mType || 'FIGHT').toUpperCase(), color: '#38bdf8' };
+    }
+
+    function drawHeroOrFusionCard(x, y, w, h, item, stats, moveTypes, sub1, sub2, drawEntityFn) {
       ctx.save();
       const grad = ctx.createLinearGradient(x, y, x, y + h);
       grad.addColorStop(0, 'rgba(30, 23, 56, 0.96)');
-      grad.addColorStop(1, 'rgba(17, 13, 34, 0.99)');
+      grad.addColorStop(1, 'rgba(15, 11, 30, 0.99)');
       ctx.fillStyle = grad;
       ctx.strokeStyle = item.color;
       ctx.lineWidth = 1.6;
@@ -109,89 +135,268 @@
       ctx.stroke();
       ctx.clip();
 
-      const rad = ctx.createRadialGradient(x + w / 2, y + 120, 8, x + w / 2, y + 120, 84);
+      // Radial character backdrop glow
+      const rad = ctx.createRadialGradient(x + w / 2, y + 132, 10, x + w / 2, y + 132, 86);
       rad.addColorStop(0, item.color + '44');
       rad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = rad;
-      ctx.fillRect(x + 8, y + 28, w - 16, 165);
+      ctx.fillRect(x + 8, y + 48, w - 16, 152);
 
-      drawEntityFn(x + w / 2, y + 178);
+      // Draw live character/fusion cel model
+      drawEntityFn(x + w / 2, y + 196);
 
+      // Header: Name, Role Status, Fighting Style / Passive
       ctx.fillStyle = item.color;
       ctx.font = 'bold 13.5px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(item.title, x + w / 2, y + 20);
-      const comboMeta = (typeof HERO_COMBO_PROFILES !== 'undefined' && HERO_COMBO_PROFILES[item.id]) || null;
-      const passiveMeta = (typeof HERO_PASSIVES !== 'undefined' && HERO_PASSIVES[item.id]) || null;
+      ctx.fillText(item.title, x + w / 2, y + 19);
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 9.8px monospace';
+      ctx.fillText(item.role || '', x + w / 2, y + 33);
+
       ctx.fillStyle = '#cbd5e1';
-      ctx.font = '10.5px sans-serif';
-      const subLine = comboMeta ? comboMeta.label : (item.weapon || item.pair || '');
-      ctx.fillText(subLine, x + w / 2, y + 34);
-      if (passiveMeta) {
+      ctx.font = '10.2px sans-serif';
+      ctx.fillText(sub1, x + w / 2, y + 47);
+
+      if (sub2) {
         ctx.fillStyle = '#fde047';
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillText(`${passiveMeta.icon} Passive: ${passiveMeta.name}`, x + w / 2, y + 48);
+        ctx.font = 'bold 9.8px sans-serif';
+        ctx.fillText(sub2, x + w / 2, y + 60);
       }
 
+      // [J] / [K] / [L] Elemental Move Type Badges
       ['j', 'k', 'l'].forEach((slot, sIdx) => {
         const mType = moveTypes[slot] || 'fight';
-        const meta = (typeof TYPE_META !== 'undefined' && TYPE_META[mType]) || { label: mType.toUpperCase(), color: '#38bdf8' };
-        const bx = x + 16 + sIdx * 90;
-        const by = y + 194;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        const meta = getMoveTypeMeta(mType);
+        const bx = x + 14 + sIdx * 94;
+        const by = y + 214;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
         ctx.strokeStyle = meta.color;
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.25;
         ctx.beginPath();
-        ctx.roundRect(bx, by, 84, 21, 5);
+        ctx.roundRect(bx, by, 88, 21, 5);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = meta.color;
         ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(`[${slot.toUpperCase()}] ${meta.label}`, bx + 42, by + 14);
+        ctx.fillText(`[${slot.toUpperCase()}] ${meta.label}`, bx + 44, by + 14);
       });
 
+      // Full 6-Stat RPG Status Grid
       const statList = [
         [`HP: ${stats.hp}`, '#f43f5e'],
         [`ATK: ${stats.attack}`, '#fb923c'],
         [`MAG: ${stats.magic}`, '#38bdf8'],
         [`DEF: ${stats.defense}`, '#4ade80'],
-        [`CRIT: ${Math.round(stats.critChance * 100)}%`, '#facc15'],
-        [`CDMG: ${Math.round(stats.critDamage * 100)}%`, '#c084fc']
+        [`CRIT: ${Math.round((stats.critChance || 0.15) * 100)}%`, '#facc15'],
+        [`CDMG: ${Math.round((stats.critDamage || 1.6) * 100)}%`, '#c084fc']
       ];
       statList.forEach(([label, colHex], stIdx) => {
-        const sx = x + 16 + (stIdx % 3) * 90;
-        const sy = y + 223 + Math.floor(stIdx / 3) * 31;
+        const sx = x + 14 + (stIdx % 3) * 94;
+        const sy = y + 242 + Math.floor(stIdx / 3) * 30;
         ctx.fillStyle = 'rgba(255,255,255,0.06)';
         ctx.beginPath();
-        ctx.roundRect(sx, sy, 84, 24, 5);
+        ctx.roundRect(sx, sy, 88, 24, 5);
         ctx.fill();
         ctx.fillStyle = colHex;
         ctx.font = 'bold 10.5px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText(label, sx + 42, sy + 16);
+        ctx.fillText(label, sx + 44, sy + 15.5);
       });
+
       ctx.restore();
     }
 
+    function drawMonsterOrBossCard(x, y, w, h, item, isBossCard) {
+      // Spawn live entity via EnemyManager to read exact live game HP, speed, movement & types!
+      mgr.enemies = [];
+      let live = null;
+      if (item.isDummy) {
+        mgr.spawnDummy(1000);
+        live = mgr.enemies[0];
+      } else {
+        mgr.spawnEnemy(item.type, 1000);
+        live = mgr.enemies[0];
+      }
+      const types = (typeof ENEMY_TYPES !== 'undefined' && ENEMY_TYPES[item.type]) || (live && live.types) || ['dark'];
+      const moveLabel = live ? (live.movementType === 'fly' ? 'AERIAL' : live.movementType === 'jump' ? 'LEAPER' : 'GROUND') : 'GROUND';
+      const roleLabel = live && live.hasRanged ? `${moveLabel} • RANGED` : `${moveLabel} • BRAWLER`;
+      const hpStr = item.isDummy ? '∞ IMMORTAL' : `${live ? live.hp : 100}`;
+      const spdStr = item.isDummy ? '0' : `${live ? live.speed : 110}`;
+
+      ctx.save();
+      const bgGrad = ctx.createLinearGradient(x, y, x, y + h);
+      if (isBossCard) {
+        bgGrad.addColorStop(0, item.type === 'boss_white_diamond' ? 'rgba(38, 42, 62, 0.98)' : 'rgba(36, 14, 42, 0.98)');
+        bgGrad.addColorStop(1, 'rgba(14, 9, 26, 0.99)');
+      } else {
+        bgGrad.addColorStop(0, 'rgba(23, 18, 46, 0.96)');
+        bgGrad.addColorStop(1, 'rgba(13, 10, 28, 0.99)');
+      }
+      ctx.fillStyle = bgGrad;
+      ctx.strokeStyle = isBossCard ? (item.isDummy ? '#fb923c' : '#ef4444') : item.col;
+      ctx.lineWidth = isBossCard ? 1.85 : 1.5;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 12);
+      ctx.fill();
+      ctx.stroke();
+      ctx.clip();
+
+      const cx = x + w / 2;
+      const modelY = isBossCard ? (y + 210) : (y + 174);
+      const auraCy = isBossCard ? (y + 138) : (y + 116);
+      const rad = ctx.createRadialGradient(cx, auraCy, 8, cx, auraCy, isBossCard ? 105 : 72);
+      rad.addColorStop(0, isBossCard ? (item.col + '46') : (item.col + '38'));
+      rad.addColorStop(0.6, isBossCard ? 'rgba(239, 68, 68, 0.16)' : (item.col + '18'));
+      rad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = rad;
+      ctx.beginPath();
+      ctx.arc(cx, auraCy, isBossCard ? 105 : 72, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (isBossCard && !item.isDummy) {
+        // Boss Phase-2 corruption rays behind boss
+        ctx.strokeStyle = item.type === 'boss_white_diamond' ? 'rgba(255,255,255,0.45)' : 'rgba(248, 113, 113, 0.45)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        for (let sp = 0; sp < 10; sp++) {
+          const ang = (Math.PI * 2 * sp) / 10;
+          ctx.moveTo(cx + Math.cos(ang) * 34, auraCy + Math.sin(ang) * 34);
+          ctx.lineTo(cx + Math.cos(ang) * 76, auraCy + Math.sin(ang) * 76);
+        }
+        ctx.stroke();
+      }
+
+      // Render live modified enemy/boss model
+      const renderEntity = {
+        type: item.type,
+        x: 0, y: 0, facing: 1,
+        width: live ? live.width : 90,
+        height: live ? live.height : 95,
+        hp: live ? live.hp : 100,
+        maxHp: live ? live.maxHp : 100,
+        animTime: 1.35,
+        hurtTimer: 0,
+        gemColor: item.col,
+        movementType: live ? live.movementType : 'walk',
+        isBoss: !!isBossCard,
+        isElite: false,
+        windup: 0,
+        attackVisualTimer: 0,
+        attackCooldown: 1.4,
+        attackTimer: 0.4,
+        name: item.title,
+        vx: 0, vy: 0,
+        phase2: isBossCard && !item.isDummy
+      };
+      ctx.save();
+      ctx.translate(cx + (item.offX || 0), modelY + (item.offY || 0));
+      ctx.scale(item.scale || 1.15, item.scale || 1.15);
+      try { mgr.drawEnemyModel(ctx, renderEntity); } catch (err) {}
+      ctx.restore();
+
+      // Header text
+      ctx.fillStyle = isBossCard ? (item.type === 'boss_white_diamond' ? '#ffffff' : '#fca5a5') : item.col;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(item.title, cx, y + 19);
+
+      ctx.fillStyle = isBossCard ? '#fde047' : '#94a3b8';
+      ctx.font = 'bold 9.6px monospace';
+      ctx.fillText(isBossCard ? `${item.ep} • ${roleLabel}` : roleLabel, cx, y + 33);
+
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '10.2px sans-serif';
+      ctx.fillText(`Skill: ${item.skill}`, cx, y + 47);
+
+      // Elemental Typing Badges Row
+      const typeRowY = h - 66;
+      const badgeW = types.length === 1 ? 136 : 132;
+      const totalTW = types.length * badgeW + (types.length - 1) * 10;
+      let tx = cx - totalTW / 2;
+      types.forEach((tKey) => {
+        const meta = getMoveTypeMeta(tKey);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+        ctx.strokeStyle = meta.color;
+        ctx.lineWidth = 1.25;
+        ctx.beginPath();
+        ctx.roundRect(tx, y + typeRowY, badgeW, 22, 5);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = meta.color;
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(meta.label, tx + badgeW / 2, y + typeRowY + 14.5);
+        tx += badgeW + 10;
+      });
+
+      // Live Status Stat Pills Row (HP / SPD / Status)
+      const statY = y + h - 36;
+      const pills = isBossCard
+        ? [
+            [`HP: ${hpStr}`, '#f43f5e'],
+            [`SPD: ${spdStr}`, '#38bdf8'],
+            [item.isDummy ? 'TRAINING' : 'PHASE 2 <50%', item.isDummy ? '#4ade80' : '#facc15']
+          ]
+        : [
+            [`HP: ${hpStr}`, '#f43f5e'],
+            [`SPD: ${spdStr}`, '#38bdf8'],
+            [live && live.hasRanged ? 'RANGED' : 'MELEE', '#fb923c']
+          ];
+      pills.forEach(([lbl, cHex], pIdx) => {
+        const px = x + 14 + pIdx * 94;
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        ctx.beginPath();
+        ctx.roundRect(px, statY, 88, 24, 5);
+        ctx.fill();
+        ctx.fillStyle = cHex;
+        ctx.font = 'bold 9.8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(lbl, px + 44, statY + 15.5);
+      });
+
+      ctx.restore();
+    }
+
+    // Background fill
     ctx.fillStyle = '#0f0b1e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const COLS = 5, CARD_W = 296, CARD_H = 292, START_X = 24;
+    const COLS = 5, CARD_W = 304, GAP = 8, START_X = 24;
 
-    // 1. ALL 10 PLAYABLE GUARDIANS
-    ctx.fillStyle = '#fbcfe8';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('1. ALL 10 PLAYABLE GUARDIANS (SHOW-ACCURATE CEL MODELS, ELEMENTAL MOVES & LORE RPG STATS)', 26, 28);
+    function drawSectionHeader(title, y, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.font = 'bold 16.5px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(title, START_X, y);
+      ctx.strokeStyle = color + '55';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(START_X, y + 7);
+      ctx.lineTo(canvas.width - START_X, y + 7);
+      ctx.stroke();
+      ctx.restore();
+    }
 
-    ROSTER.forEach((item, idx) => {
+    // =========================================================================
+    // SECTION 1: ALL 10 PLAYABLE GUARDIANS
+    // =========================================================================
+    drawSectionHeader('1. ALL 10 PLAYABLE GUARDIANS — FIGHTING STYLES, PASSIVES, ELEMENTAL MOVES & LIVE RPG STATUS', 28, '#fbcfe8');
+    const HERO_H = 310;
+    GUARDIANS.forEach((item, idx) => {
       const col = idx % COLS, row = Math.floor(idx / COLS);
-      const x = START_X + col * (CARD_W + 8);
-      const y = 40 + row * (CARD_H + 8);
+      const x = START_X + col * (CARD_W + GAP);
+      const y = 44 + row * (HERO_H + 10);
       const moves = (typeof HERO_MOVE_TYPES !== 'undefined' && HERO_MOVE_TYPES[item.id]) || { j: 'fight', k: 'fight', l: 'fairy' };
       const st = (typeof CHARACTER_STATS !== 'undefined' && CHARACTER_STATS[item.id]) || { hp: 120, attack: 35, magic: 35, defense: 30, critChance: 0.15, critDamage: 1.6 };
-      drawStatsCard(x, y, CARD_W, CARD_H, item, st, moves, (cx, cy) => {
+      const comboMeta = (typeof HERO_COMBO_PROFILES !== 'undefined' && HERO_COMBO_PROFILES[item.id]) || null;
+      const passiveMeta = (typeof HERO_PASSIVES !== 'undefined' && HERO_PASSIVES[item.id]) || null;
+      const sub1 = comboMeta ? `[J] ${comboMeta.label}` : '';
+      const sub2 = passiveMeta ? `${passiveMeta.icon} Passive: ${passiveMeta.name}` : '';
+      drawHeroOrFusionCard(x, y, CARD_W, HERO_H, item, st, moves, sub1, sub2, (cx, cy) => {
         hero.switchCharacter(item.id);
         hero.isFusion = false;
         hero.isPinkRevived = (item.pose === 'pink');
@@ -199,8 +404,9 @@
         hero.attackType = null;
         hero.attackCombo = 0;
         ctx.save();
-        ctx.translate(cx, cy + 10);
-        ctx.scale(1.24, 1.24);
+        ctx.translate(cx, cy + 4);
+        const hScale = (item.id === 'jasper' || item.id === 'garnet') ? 1.06 : 1.14;
+        ctx.scale(hScale, hScale);
         try {
           hero[item.fn](ctx, 0, 0, 'idle');
           if (typeof hero.drawHeroSignatureFlourish === 'function') hero.drawHeroSignatureFlourish(ctx, item.id, 0, 0.5);
@@ -210,25 +416,28 @@
       });
     });
 
-    // 2. ALL 9 PLAYABLE CANON FUSIONS (+ NORMAL CONNIE)
-    const SEC2_Y = 662;
-    ctx.fillStyle = '#f0abfc';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('2. ALL 9 PLAYABLE CANON FUSIONS (2-PLAYER TAG-TEAM HARMONY FUSIONS & AMPLIFIED LORE STATS)', 26, SEC2_Y);
-
+    // =========================================================================
+    // SECTION 2: ALL 9 PLAYABLE CANON FUSIONS (+ NORMAL CONNIE)
+    // =========================================================================
+    const SEC2_Y = 710;
+    drawSectionHeader('2. ALL 9 PLAYABLE CANON FUSIONS (+ NORMAL CONNIE) — UPGRADED MODELS, PARTNERS & AMPLIFIED STATUS', SEC2_Y, '#f0abfc');
     FUSIONS.forEach((f, idx) => {
       const col = idx % COLS, row = Math.floor(idx / COLS);
-      const x = START_X + col * (CARD_W + 8);
-      const y = SEC2_Y + 12 + row * (CARD_H + 8);
-      const moves = { j: f.types[0], k: f.types[1], l: f.types[2] };
+      const x = START_X + col * (CARD_W + GAP);
+      const y = SEC2_Y + 16 + row * (HERO_H + 10);
+      const moves = f.isHeroConnie
+        ? ((typeof HERO_MOVE_TYPES !== 'undefined' && HERO_MOVE_TYPES.connie) || { j: 'normal', k: 'fight', l: 'normal' })
+        : ((typeof FUSION_MOVE_TYPES !== 'undefined' && FUSION_MOVE_TYPES[f.id]) || { j: 'fight', k: 'fairy', l: 'psychic' });
       const st = f.isHeroConnie
         ? ((typeof CHARACTER_STATS !== 'undefined' && CHARACTER_STATS.connie) || { hp: 105, attack: 38, magic: 18, defense: 24, critChance: 0.36, critDamage: 2.05 })
         : ((typeof FUSION_STATS !== 'undefined' && FUSION_STATS[f.id]) || { hp: 245, attack: 60, magic: 60, defense: 55, critChance: 0.25, critDamage: 1.9 });
-      drawStatsCard(x, y, CARD_W, CARD_H, f, st, moves, (cx, cy) => {
+      const sub1 = `Pair: ${f.pair}`;
+      const sub2 = f.isHeroConnie ? '★ Sword Training Stance' : '★ 2-Player Tag-Team Harmony Fusion';
+      drawHeroOrFusionCard(x, y, CARD_W, HERO_H, f, st, moves, sub1, sub2, (cx, cy) => {
         ctx.save();
-        ctx.translate(cx, cy + 10);
-        ctx.scale(1.18, 1.18);
+        ctx.translate(cx, cy + 5);
+        const fScale = (f.id === 'sardonyx' || f.id === 'sugilite' || f.id === 'malachite') ? 0.96 : 1.08;
+        ctx.scale(fScale, fScale);
         try {
           if (f.isHeroConnie) {
             hero.switchCharacter('connie');
@@ -247,105 +456,36 @@
       });
     });
 
-    // 3. CORRUPTED GEMS & TERRIFYING BOSSES BESTIARY
-    const SEC3_Y = 1286;
-    ctx.fillStyle = '#fca5a5';
-    ctx.font = 'bold 16px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('3. CORRUPTED GEM MINIONS & TERRIFYING PHASE-2 BOSSES (FRACTURED AURAS, ELEMENTAL TYPINGS & HP)', 26, SEC3_Y);
-
-    ENEMIES_AND_BOSSES.forEach((eb, idx) => {
+    // =========================================================================
+    // SECTION 3: ALL 15 CORRUPTED MONSTERS & HOMEWORLD SOLDIERS
+    // =========================================================================
+    const SEC3_Y = 1392;
+    drawSectionHeader('3. ALL 15 CORRUPTED GEMS, MONSTERS & HOMEWORLD SOLDIERS — ELEMENTAL TYPINGS, SKILLS & LIVE STATUS', SEC3_Y, '#86efac');
+    const MON_H = 266;
+    MONSTERS.forEach((m, idx) => {
       const col = idx % COLS, row = Math.floor(idx / COLS);
-      const x = START_X + col * (CARD_W + 8);
-      const y = SEC3_Y + 12 + row * (322 + 10);
-      const h = 322;
+      const x = START_X + col * (CARD_W + GAP);
+      const y = SEC3_Y + 16 + row * (MON_H + 10);
+      drawMonsterOrBossCard(x, y, CARD_W, MON_H, m, false);
+    });
 
-      ctx.save();
-      ctx.fillStyle = eb.isBoss ? 'rgba(28, 12, 34, 0.98)' : 'rgba(20, 16, 40, 0.96)';
-      ctx.strokeStyle = eb.isBoss ? '#ef4444' : eb.col;
-      ctx.lineWidth = eb.isBoss ? 1.9 : 1.5;
-      ctx.beginPath();
-      ctx.roundRect(x, y, CARD_W, h, 12);
-      ctx.fill();
-      ctx.stroke();
-      ctx.clip();
-
-      const cx = x + CARD_W / 2, cy = y + 165;
-      const rad = ctx.createRadialGradient(cx, cy, 10, cx, cy, eb.isBoss ? 115 : 80);
-      rad.addColorStop(0, eb.isBoss ? 'rgba(239, 68, 68, 0.44)' : (eb.col + '38'));
-      rad.addColorStop(0.6, eb.col + '22');
-      rad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = rad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, eb.isBoss ? 115 : 80, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (eb.isBoss) {
-        // Jagged Phase-2 corruption spikes behind boss
-        ctx.strokeStyle = 'rgba(248, 113, 113, 0.55)';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        for (let sp = 0; sp < 10; sp++) {
-          const ang = (Math.PI * 2 * sp) / 10;
-          ctx.moveTo(cx + Math.cos(ang) * 42, cy + Math.sin(ang) * 42);
-          ctx.lineTo(cx + Math.cos(ang) * 86, cy + Math.sin(ang) * 86);
-        }
-        ctx.stroke();
-      }
-
-      const makeE = (tName) => ({
-        type: tName, x: 0, y: 0, facing: 1, width: 95, height: 110, hp: 500, maxHp: 1500,
-        animTime: 1.35, hurtTimer: 0, gemColor: eb.col, movementType: 'walk',
-        isBoss: !!eb.isBoss, isElite: !!eb.isBoss, windup: 0.15, attackCooldown: 1.25, attackTimer: 0.4,
-        name: eb.title, vx: 0, vy: 0, phase2: !!eb.isBoss
-      });
-
-      if (eb.type2) {
-        ctx.save();
-        ctx.translate(cx - 58, y + 235);
-        ctx.scale(eb.scale || 1.15, eb.scale || 1.15);
-        try { mgr.drawEnemyModel(ctx, makeE(eb.type)); } catch (err) {}
-        ctx.restore();
-
-        ctx.save();
-        ctx.translate(cx + 58, y + 235);
-        ctx.scale(eb.scale || 1.15, eb.scale || 1.15);
-        try { mgr.drawEnemyModel(ctx, makeE(eb.type2)); } catch (err) {}
-        ctx.restore();
-      } else {
-        ctx.save();
-        ctx.translate(cx - (eb.type === 'boss_centipeetle' ? 18 : 0), y + 244);
-        const s = eb.scale || 1.1;
-        ctx.scale(s, s);
-        try { mgr.drawEnemyModel(ctx, makeE(eb.type)); } catch (err) {}
-        ctx.restore();
-      }
-
-      ctx.fillStyle = eb.isBoss ? '#f87171' : eb.col;
-      ctx.font = 'bold 13.5px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(eb.title, cx, y + 22);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.font = '11px sans-serif';
-      ctx.fillText(eb.sub, cx, y + 38);
-
-      // Footer type & HP pills
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-      ctx.strokeStyle = eb.col;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.roundRect(x + 16, y + 278, 148, 28, 6);
-      ctx.roundRect(x + 172, y + 278, 108, 28, 6);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = eb.col;
-      ctx.font = 'bold 10.5px monospace';
-      ctx.fillText(eb.elem, x + 90, y + 296);
-      ctx.fillStyle = '#facc15';
-      ctx.fillText(eb.hp, x + 226, y + 296);
-
-      ctx.restore();
+    // =========================================================================
+    // SECTION 4: ALL 13 CAMPAIGN BOSSES + HOLO-JASPER TRAINING DUMMY
+    // =========================================================================
+    const SEC4_Y = 2262;
+    drawSectionHeader('4. ALL 13 CAMPAIGN BOSSES & TRAINING DUMMY — PHASE-2 ENRAGE, ELEMENTAL TYPINGS & BOSS STATUS', SEC4_Y, '#fca5a5');
+    const BOSS_H = 316;
+    BOSSES.forEach((b, idx) => {
+      const row = Math.floor(idx / COLS);
+      const col = idx % COLS;
+      // Center the last row (4 cards) neatly across the 1600px width
+      const isLastRow = (row === 2);
+      const rowCount = isLastRow ? 4 : COLS;
+      const rowTotalW = rowCount * CARD_W + (rowCount - 1) * GAP;
+      const rowStartX = isLastRow ? (canvas.width - rowTotalW) / 2 : START_X;
+      const x = rowStartX + col * (CARD_W + GAP);
+      const y = SEC4_Y + 16 + row * (BOSS_H + 10);
+      drawMonsterOrBossCard(x, y, CARD_W, BOSS_H, b, true);
     });
   };
   window.__renderSheet();

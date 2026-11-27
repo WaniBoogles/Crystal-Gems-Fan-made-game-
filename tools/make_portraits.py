@@ -12,8 +12,10 @@ Features:
 from __future__ import annotations
 
 import base64
+from collections import deque
 import json
 from pathlib import Path
+import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +115,20 @@ FILES = {
     "opal": "Opal.webp",
     "malachite": "Malachite.png",
     "rainbowClassic": "Rainbow Quartz.webp",
+}
+
+# Dedicated Action / Fighting-Style Overdrive Cut-In Art (*2.* in Character reference/)
+OVERDRIVE_FILES = {
+    "steven": "Steven2.jpg",
+    "garnet": "Garnet2.jpeg",
+    "amethyst": "Amethyst2.webp",
+    "pearl": "Pearl2.jpg",
+    "bismuth": "Bismuth2.webp",
+    "peridot": "Peridot2.png",
+    "lapis": "Lapis2.jpeg",
+    "rose": "RoseQuartz2.jpg",
+    "connie": "Connie2.webp",
+    "jasper": "Jasper2.png",
 }
 
 
@@ -300,10 +316,267 @@ def build_portrait(cid: str, src_path: Path) -> Image.Image:
     return canvas
 
 
+def _bfs_bg(bg_cand: np.ndarray, extra_seeds=None, skip_bottom_x=None) -> np.ndarray:
+    h, w = bg_cand.shape
+    vis = np.zeros((h, w), dtype=bool)
+    q = deque()
+    for x in range(w):
+        if bg_cand[0, x] and not vis[0, x]:
+            vis[0, x] = True; q.append((0, x))
+        if not (skip_bottom_x and skip_bottom_x[0] <= x <= skip_bottom_x[1]):
+            if bg_cand[h - 1, x] and not vis[h - 1, x]:
+                vis[h - 1, x] = True; q.append((h - 1, x))
+    for y in range(h):
+        if bg_cand[y, 0] and not vis[y, 0]:
+            vis[y, 0] = True; q.append((y, 0))
+        if bg_cand[y, w - 1] and not vis[y, w - 1]:
+            vis[y, w - 1] = True; q.append((y, w - 1))
+    if extra_seeds:
+        for sx, sy in extra_seeds:
+            if 0 <= sy < h and 0 <= sx < w and bg_cand[sy, sx] and not vis[sy, sx]:
+                vis[sy, sx] = True; q.append((sy, sx))
+    while q:
+        y, x = q.popleft()
+        if y > 0 and bg_cand[y - 1, x] and not vis[y - 1, x]:
+            vis[y - 1, x] = True; q.append((y - 1, x))
+        if y + 1 < h and bg_cand[y + 1, x] and not vis[y + 1, x]:
+            vis[y + 1, x] = True; q.append((y + 1, x))
+        if x > 0 and bg_cand[y, x - 1] and not vis[y, x - 1]:
+            vis[y, x - 1] = True; q.append((y, x - 1))
+        if x + 1 < w and bg_cand[y, x + 1] and not vis[y, x + 1]:
+            vis[y, x + 1] = True; q.append((y, x + 1))
+    return vis
+
+
+def _keep_largest_components(fg_mask: np.ndarray, min_ratio: float = 0.08) -> np.ndarray:
+    h, w = fg_mask.shape
+    vis = np.zeros((h, w), dtype=bool)
+    comps = []
+    for y0 in range(0, h, 2):
+        for x0 in range(0, w, 2):
+            if fg_mask[y0, x0] and not vis[y0, x0]:
+                q = deque([(y0, x0)])
+                vis[y0, x0] = True
+                pts = []
+                while q:
+                    y, x = q.popleft()
+                    pts.append((y, x))
+                    if y > 0 and fg_mask[y - 1, x] and not vis[y - 1, x]:
+                        vis[y - 1, x] = True; q.append((y - 1, x))
+                    if y + 1 < h and fg_mask[y + 1, x] and not vis[y + 1, x]:
+                        vis[y + 1, x] = True; q.append((y + 1, x))
+                    if x > 0 and fg_mask[y, x - 1] and not vis[y, x - 1]:
+                        vis[y, x - 1] = True; q.append((y, x - 1))
+                    if x + 1 < w and fg_mask[y, x + 1] and not vis[y, x + 1]:
+                        vis[y, x + 1] = True; q.append((y, x + 1))
+                comps.append(pts)
+    if not comps:
+        return fg_mask
+    comps.sort(key=len, reverse=True)
+    thresh = max(150, int(len(comps[0]) * min_ratio))
+    out = np.zeros((h, w), dtype=bool)
+    for c in comps:
+        if len(c) >= thresh:
+            ys, xs = zip(*c)
+            out[ys, xs] = True
+    return out
+
+
+def _dilate_mask(mask: np.ndarray, size: int = 3) -> np.ndarray:
+    im = Image.fromarray((mask.astype(np.uint8) * 255), mode='L').filter(ImageFilter.MaxFilter(size))
+    return np.array(im) > 128
+
+
+def _feather_cutout(rgba: np.ndarray, bg_mask: np.ndarray) -> Image.Image:
+    out = rgba.copy()
+    alpha = np.where(bg_mask, 0, rgba[:, :, 3]).astype(np.uint8)
+    a_img = Image.fromarray(alpha, mode='L')
+    eroded = a_img.filter(ImageFilter.MinFilter(3))
+    a_arr = np.array(a_img, dtype=np.float32)
+    e_arr = np.array(eroded, dtype=np.float32)
+    edge = (a_arr > 0) & (e_arr == 0)
+    a_arr[edge] = a_arr[edge] * 0.55
+    out[:, :, 3] = np.clip(a_arr, 0, 255).astype(np.uint8)
+    return Image.fromarray(out, mode='RGBA')
+
+
+def extract_overdrive_cutout(cid: str, src_path: Path) -> Image.Image:
+    """Extract HD background-free fighting-pose character cutout from *2.* reference art."""
+    raw = Image.open(src_path).convert("RGBA")
+    # Upscale low-resolution source images (e.g. Lapis2 495x620) with crisp HD sharpening
+    if max(raw.size) < 960:
+        scale = 1024 / max(raw.size)
+        raw = raw.resize((int(raw.width * scale), int(raw.height * scale)), Image.LANCZOS)
+        raw = raw.filter(ImageFilter.UnsharpMask(radius=1.5, percent=155, threshold=2))
+    elif max(raw.size) > 960:
+        scale = 960 / max(raw.size)
+        raw = raw.resize((int(raw.width * scale), int(raw.height * scale)), Image.LANCZOS)
+
+    arr = np.array(raw)
+    r = arr[:, :, 0].astype(np.int16)
+    g = arr[:, :, 1].astype(np.int16)
+    b = arr[:, :, 2].astype(np.int16)
+    a = arr[:, :, 3]
+    h, w = r.shape
+
+    # Native transparent renders (Amethyst2, Jasper2)
+    if a.min() < 20:
+        return raw
+
+    chroma = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
+    luma = 0.299 * r + 0.587 * g + 0.114 * b
+    yy, xx = np.ogrid[:h, :w]
+
+    if cid == "garnet":
+        bg_cand = (chroma < 24) & (np.minimum(np.minimum(r, g), b) > 190)
+        bg = _bfs_bg(bg_cand, [(int(w * 0.45), int(h * 0.72)), (int(w * 0.50), int(h * 0.85))])
+        return _feather_cutout(arr, bg)
+
+    if cid == "peridot":
+        is_white = (r > 230) & (g > 230) & (b > 230)
+        is_yellow = (r > 215) & (g > 215) & (b < 45)
+        is_cyan = (r < 45) & (g > 215) & (b > 215)
+        is_pure_green = (r < 45) & (g > 215) & (b < 45)
+        is_magenta = (r > 215) & (g < 45) & (b > 195)
+        is_blue_bar = (r < 45) & (g < 55) & (b > 200)
+        is_red_bar = (r > 210) & (g < 45) & (b < 45)
+        is_bot_dark = (yy > int(h * 0.86)) & (luma < 60)
+        dark_ink = (luma < 45) & (yy <= int(h * 0.87))
+        bg_cand = _dilate_mask(is_white | is_yellow | is_cyan | is_pure_green | is_magenta | is_blue_bar | is_red_bar | is_bot_dark, 3) & (~dark_ink)
+        bg = _bfs_bg(bg_cand, [(int(w * 0.25), int(h * 0.10)), (int(w * 0.65), int(h * 0.10)), (int(w * 0.10), int(h * 0.85))])
+        fg = _keep_largest_components(~bg, min_ratio=0.15)
+        return _feather_cutout(arr, ~fg)
+
+    if cid == "connie":
+        is_dark_forest = (g >= r - 4) & (g >= b - 4) & (r < 125) & (g < 155) & (b < 120) & (luma < 130)
+        bg = _bfs_bg(is_dark_forest, [(int(w * 0.10), int(h * 0.15)), (int(w * 0.88), int(h * 0.15)), (int(w * 0.15), int(h * 0.85)), (int(w * 0.88), int(h * 0.85))])
+        fg = _keep_largest_components(~bg, min_ratio=0.10)
+        return _feather_cutout(arr, ~fg)
+
+    if cid == "steven":
+        is_steven_magenta = (b - g >= 34) & (r >= 135)
+        in_shield_box = (xx > int(w * 0.10)) & (xx < int(w * 0.62)) & (yy < int(h * 0.42))
+        is_shield_rim = in_shield_box & (b - g >= 24) & (r >= 175)
+        fg_raw = _dilate_mask(is_steven_magenta | is_shield_rim, 5)
+        fg = _keep_largest_components(fg_raw, min_ratio=0.18)
+        fg = ~_bfs_bg(~fg)
+        fg = np.array(Image.fromarray((fg * 255).astype(np.uint8), 'L').filter(ImageFilter.MinFilter(3))) > 128
+        return _feather_cutout(arr, ~fg)
+
+    if cid == "bismuth":
+        # Protect dark navy apron (g < 72); remove green/teal painted sky & grass + bottom-left teal diagonal
+        is_green_sky = (g > r + 10) & (g >= b - 4) & (g > 72) & (r < 165)
+        is_mint_spark = (g > r + 14) & (g > 170) & (r > 120) & (b > 165)
+        is_bl_teal = (xx < int(w * 0.28)) & (yy > int(h * 0.62)) & (g > r + 16) & (g > 72) & (r < 115)
+        bg_cand = is_green_sky | is_mint_spark | is_bl_teal
+        seeds = [(5, 5), (w - 5, 5), (5, h - 5), (w - 5, h - 5), (int(w * 0.16), int(h * 0.90)), (int(w * 0.72), int(h * 0.72))]
+        bg = _bfs_bg(bg_cand, seeds, skip_bottom_x=(int(w * 0.28), int(w * 0.72)))
+        fg = _keep_largest_components(~bg, min_ratio=0.12)
+        return _feather_cutout(arr, ~fg)
+
+    if cid == "pearl":
+        true_ink = (luma < 56) & (b - r < 14) & (g - r < 14)
+        in_spear = (g > 175) & (b > 160) & (r < 210) & (yy > int(h * 0.34)) & (yy < int(h * 0.68)) & (xx > int(w * 0.14)) & (xx < int(w * 0.78))
+        in_body_guard = (xx > int(w * 0.43)) & (xx < int(w * 0.85)) & (yy > int(h * 0.50)) & (yy < int(h * 0.98)) & ~((b > r + 16) & (r < 95))
+        barrier = _dilate_mask(true_ink, 3) | in_spear | in_body_guard
+        bg = _bfs_bg(~barrier, [(5, 5), (w - 5, 5), (5, h - 5), (w - 5, h - 5), (int(w * 0.50), int(h * 0.08)), (int(w * 0.14), int(h * 0.86)), (int(w * 0.92), int(h * 0.86))], skip_bottom_x=(int(w * 0.38), int(w * 0.76)))
+        fg = _keep_largest_components(~bg, min_ratio=0.15)
+        fg = ~_bfs_bg(~fg)
+        out = _feather_cutout(arr, ~fg)
+        oarr = np.array(out)
+        fade_start = int(h * 0.91)
+        for y in range(fade_start, h):
+            fac = max(0.0, 1.0 - (y - fade_start) / max(1, h - fade_start))
+            oarr[y, :, 3] = (oarr[y, :, 3] * fac).astype(np.uint8)
+        return Image.fromarray(oarr, mode='RGBA')
+
+    if cid == "lapis":
+        # Remove dark starfield night sky (r<40, g<44, b<88) cleanly even around Lapis's wings & waist;
+        # Lapis's royal-blue hair & dress are much brighter/bluer (b >= 92 or luma >= 75)!
+        is_dark_sky = (r < 40) & (g < 46) & (b < 88) & (b >= r)
+        sky_closed = np.array(Image.fromarray((is_dark_sky * 255).astype(np.uint8), 'L').filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))) > 128
+        seeds = [(5, 5), (w - 5, 5), (5, int(h * 0.45)), (w - 5, int(h * 0.45)), (int(w * 0.56), int(h * 0.62)), (int(w * 0.28), int(h * 0.41))]
+        bg = _bfs_bg(sky_closed, seeds, skip_bottom_x=(0, w))
+        fg = _keep_largest_components(~bg, min_ratio=0.10)
+        out = _feather_cutout(arr, ~fg)
+        oarr = np.array(out)
+        fade_start = int(h * 0.87)
+        for y in range(fade_start, h):
+            fac = max(0.0, 1.0 - (y - fade_start) / max(1, h - fade_start))
+            oarr[y, :, 3] = (oarr[y, :, 3] * fac).astype(np.uint8)
+        return Image.fromarray(oarr, mode='RGBA')
+
+    if cid == "rose":
+        outer_card = (xx < int(w * 0.14)) | (xx > int(w * 0.86)) | (yy < int(h * 0.15)) | (yy > int(h * 0.965))
+        # Only darker/mid sepia tan (luma < 218) so Rose's bright ivory-white dress (luma >= 220) stays 100% intact!
+        is_beige_bg = (g > b + 7) & (r > b + 14) & (chroma < 62) & (luma < 218)
+        is_top_halo = (yy < int(h * 0.36)) & (g >= b + 2) & (r > 185) & (g > 180)
+        is_side_arch = ((xx < int(w * 0.25)) | (xx > int(w * 0.75))) & (luma < 155)
+        is_low_brown_bg = (yy > int(h * 0.72)) & ((xx < int(w * 0.28)) | (xx > int(w * 0.72))) & (luma < 175)
+        bg_cand = outer_card | is_beige_bg | is_top_halo | is_side_arch | is_low_brown_bg
+        seeds = [(5, 5), (w - 5, 5), (5, h - 5), (w - 5, h - 5), (int(w * 0.50), int(h * 0.19)), (int(w * 0.20), int(h * 0.65)), (int(w * 0.80), int(h * 0.65))]
+        bg = _bfs_bg(bg_cand, seeds, skip_bottom_x=(int(w * 0.26), int(w * 0.74)))
+        fg = _keep_largest_components(~bg, min_ratio=0.15)
+        fg = ~_bfs_bg(~fg)
+        out = _feather_cutout(arr, ~fg)
+        # Soft fade at very bottom hem of dress
+        oarr = np.array(out)
+        fade_start = int(h * 0.91)
+        for y in range(fade_start, h):
+            fac = max(0.0, 1.0 - (y - fade_start) / max(1, h - fade_start))
+            oarr[y, :, 3] = (oarr[y, :, 3] * fac).astype(np.uint8)
+        return Image.fromarray(oarr, mode='RGBA')
+
+    return raw
+
+
+def build_overdrive_portrait(cid: str, src_path: Path) -> Image.Image:
+    """Build HD 640x640 transparent Overdrive cut-in portrait with signature gem aura & crisp sharpening."""
+    im = extract_overdrive_cutout(cid, src_path)
+    alpha = im.getchannel('A').point(lambda v: 255 if v > 20 else 0)
+    bbox = alpha.getbbox()
+    if bbox:
+        im = im.crop(bbox)
+
+    # HD enhancement: crisp contrast, vibrant color pop, clean unsharp pass
+    im = ImageEnhance.Color(im).enhance(1.12)
+    im = ImageEnhance.Contrast(im).enhance(1.07)
+    im = im.filter(ImageFilter.UnsharpMask(radius=1.3, percent=135, threshold=2))
+
+    cw, ch = im.size
+    max_target = int(SIZE * 0.94)
+    scale = min(max_target / max(1, cw), max_target / max(1, ch))
+    nw = max(1, int(cw * scale))
+    nh = max(1, int(ch * scale))
+    im_scaled = im.resize((nw, nh), Image.LANCZOS)
+
+    canvas = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    pos_x = (SIZE - nw) // 2
+    pos_y = (SIZE - nh) // 2
+
+    theme = THEME_COLORS.get(cid, (255, 114, 182))
+    aura = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    aura_mask = Image.new('L', (SIZE, SIZE), 0)
+    aura_mask.paste(im_scaled.getchannel('A'), (pos_x, pos_y))
+
+    bloom = aura_mask.filter(ImageFilter.GaussianBlur(20))
+    bloom_img = Image.new('RGBA', (SIZE, SIZE), (theme[0], theme[1], theme[2], 165))
+    aura.paste(bloom_img, (0, 0), bloom)
+
+    rim = aura_mask.filter(ImageFilter.GaussianBlur(6))
+    rim_img = Image.new('RGBA', (SIZE, SIZE), (255, 255, 255, 195))
+    aura.paste(rim_img, (0, 0), rim)
+
+    canvas = Image.alpha_composite(aura, canvas)
+    canvas.paste(im_scaled, (pos_x, pos_y), im_scaled)
+    return canvas
+
+
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     SPRITE_DIR.mkdir(parents=True, exist_ok=True)
     data = {}
+    overdrive_data = {}
     sprite_data = {}
     missing = []
     for cid, filename in FILES.items():
@@ -335,13 +608,27 @@ def main() -> int:
 
         print(f"  {cid:15s} ← {filename} (portrait + 2D sprite)")
 
+    for cid, filename in OVERDRIVE_FILES.items():
+        src = REF / filename
+        if not src.exists():
+            missing.append(filename)
+            continue
+        od = build_overdrive_portrait(cid, src)
+        od_png = OUT_DIR / f"{cid}_overdrive.png"
+        od_webp = OUT_DIR / f"{cid}_overdrive.webp"
+        od.save(od_png, "PNG", optimize=True)
+        od.save(od_webp, "WEBP", quality=92, method=6)
+        overdrive_data[cid] = "data:image/webp;base64," + base64.b64encode(od_webp.read_bytes()).decode("ascii")
+        print(f"  {cid:15s} ← {filename} (HD Overdrive cut-in)")
+
     payload = "// Generated by tools/make_portraits.py — do not edit by hand.\n"
     payload += "const PORTRAIT_IMAGES = " + json.dumps(data, separators=(",", ":")) + ";\n"
+    payload += "const OVERDRIVE_PORTRAIT_IMAGES = " + json.dumps(overdrive_data, separators=(",", ":")) + ";\n"
     payload += "const SPRITE_IMAGES = " + json.dumps(sprite_data, separators=(",", ":")) + ";\n"
     JS_OUT.write_text(payload, encoding="utf-8")
 
     size_kb = JS_OUT.stat().st_size / 1024
-    print(f"\n{len(data)} HD portraits + {len(sprite_data)} 2D sprites written · {JS_OUT.relative_to(ROOT)} ({size_kb:.0f} KB)")
+    print(f"\n{len(data)} HD portraits + {len(overdrive_data)} Overdrive cut-ins + {len(sprite_data)} 2D sprites written · {JS_OUT.relative_to(ROOT)} ({size_kb:.0f} KB)")
     if missing:
         print("missing references:", ", ".join(missing))
     return 0 if not missing else 1

@@ -560,6 +560,58 @@ class EnemyManager {
       enemy.gemColor = '#38bdf8';
       enemy.gemShape = 'ice_prism';
       enemy.name = 'Glacial Ice Gargoyle';
+    } else if (type === 'snow_monster') {
+      enemy.hp = Math.round(92 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(115 * this.speedMult);
+      enemy.width = 86;
+      enemy.height = 88;
+      enemy.visualScale = 1.44;
+      enemy.gemColor = '#bae6fd';
+      enemy.gemShape = 'ice_prism';
+      enemy.name = 'Tundra Snow Beast';
+    } else if (type === 'carnelian_enforcer') {
+      enemy.hp = Math.round(98 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(125 * this.speedMult);
+      enemy.width = 86;
+      enemy.height = 88;
+      enemy.visualScale = 1.44;
+      enemy.gemColor = '#fb923c';
+      enemy.gemShape = 'teardrop';
+      enemy.name = 'Carnelian Enforcer';
+    } else if (type === 'obsidian') {
+      enemy.hp = Math.round(110 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(100 * this.speedMult);
+      enemy.width = 88;
+      enemy.height = 92;
+      enemy.visualScale = 1.45;
+      enemy.gemColor = '#f43f5e';
+      enemy.gemShape = 'teardrop';
+      enemy.name = 'Obsidian Forge Brute';
+    } else if (type === 'boss_centipeetle') {
+      enemy.hp = Math.round(420 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(100 * this.speedMult);
+      enemy.width = 140;
+      enemy.height = 132;
+      enemy.visualScale = 1.38;
+      enemy.gemColor = '#22c55e';
+      enemy.gemShape = 'centipeetle_mother';
+      enemy.name = 'Mother Centipeetle Queen';
+      this.isBossAlive = true;
+    } else if (type === 'boss_giant_bird') {
+      enemy.hp = Math.round(620 * this.hpMult);
+      enemy.maxHp = enemy.hp;
+      enemy.speed = Math.round(125 * this.speedMult);
+      enemy.width = 165;
+      enemy.height = 148;
+      enemy.visualScale = 1.38;
+      enemy.gemColor = '#38bdf8';
+      enemy.gemShape = 'ice_prism';
+      enemy.name = 'Ancient Spire Giant Bird';
+      this.isBossAlive = true;
     }
 
     // --- Freebuff AI profile: combat role, telegraph length, elite & stage scaling ---
@@ -1095,6 +1147,9 @@ class EnemyManager {
       if (e.breakoutBurstTimer > 0) {
         e.breakoutBurstTimer -= dt;
       }
+      if (e.attackVisualTimer > 0) {
+        e.attackVisualTimer = Math.max(0, e.attackVisualTimer - dt);
+      }
 
       this.checkPlayerAttackCollisions(e, player, projectiles, particles, audioEngine, onPoofed, i);
       if (!e.isPoofed && player2) {
@@ -1124,6 +1179,10 @@ class EnemyManager {
   }
 
   executeEnemyAttack(e, player, projectiles, audioEngine, particles) {
+    // Trigger dynamic attack lunge & elemental skill VFX on the monster/boss itself
+    e.attackVisualMax = e.isBoss ? 0.42 : 0.30;
+    e.attackVisualTimer = e.attackVisualMax;
+
     if (e.type === 'centipeetle' || e.type === 'acid_centipeetle') {
       audioEngine.playSfx('laser');
       projectiles.push({
@@ -1137,9 +1196,10 @@ class EnemyManager {
         color: '#22c55e',
         life: 1.5
       });
-      particles.addSparkle(e.x + e.facing * 24, e.y - 28, '#4ade80', 6, 2);
-    } else if (e.type === 'blade_quartz') {
+      particles.addSparkle(e.x + e.facing * 24, e.y - 28, '#4ade80', 8, 3);
+    } else if (e.type === 'blade_quartz' || e.type === 'carnelian_enforcer') {
       audioEngine.playSfx('hit');
+      e.vx = e.facing * 260;
       projectiles.push({
         x: e.x + e.facing * 30,
         y: e.y - 30,
@@ -1148,13 +1208,15 @@ class EnemyManager {
         radius: 12,
         damage: 1,
         type: 'enemyShard',
-        color: '#f43f5e',
+        color: e.type === 'carnelian_enforcer' ? '#fb923c' : '#f43f5e',
         life: 1.4
       });
+      particles.addSparkle(e.x + e.facing * 30, e.y - 30, e.type === 'carnelian_enforcer' ? '#fb923c' : '#f43f5e', 8, 3);
     } else if (e.type === 'cluster') {
       audioEngine.playSfx('hit');
       e.vx = e.facing * 360;
-    } else if (e.type === 'ice_monster') {
+      particles.addSparkle(e.x + e.facing * 22, e.y - 32, '#c084fc', 10, 4);
+    } else if (e.type === 'ice_monster' || e.type === 'snow_monster') {
       audioEngine.playSfx('laser');
       projectiles.push({
         x: e.x + e.facing * 28,
@@ -1167,6 +1229,7 @@ class EnemyManager {
         color: '#38bdf8',
         life: 1.5
       });
+      particles.addSparkle(e.x + e.facing * 28, e.y - 32, '#bae6fd', 8, 3);
     } else if (e.type === 'winged_centipeetle') {
       // Aerial spitter: diving acid glob
       audioEngine.playSfx('laser');
@@ -1181,7 +1244,7 @@ class EnemyManager {
         color: '#4ade80',
         life: 1.4
       });
-      particles.addSparkle(e.x + e.facing * 20, e.y - 18, '#4ade80', 6, 2);
+      particles.addSparkle(e.x + e.facing * 20, e.y - 18, '#4ade80', 8, 3);
     } else if (e.type === 'spire_harpy') {
       // Spire Harpy: paired feather shards
       audioEngine.playSfx('whoosh');
@@ -1198,6 +1261,7 @@ class EnemyManager {
           life: 1.4
         });
       }
+      particles.addSparkle(e.x + e.facing * 22, e.y - 24, '#67e8f9', 8, 3);
     } else if (e.type === 'volcanic_firebird') {
       // Volcanic Firebird: molten cinder lob
       audioEngine.playSfx('rocket');
@@ -1212,7 +1276,7 @@ class EnemyManager {
         color: '#f97316',
         life: 1.5
       });
-      particles.addSparkle(e.x + e.facing * 22, e.y - 20, '#fb923c', 8, 3);
+      particles.addSparkle(e.x + e.facing * 22, e.y - 20, '#fb923c', 10, 4);
     } else if (e.type === 'ice_gargoyle') {
       // Glacial Gargoyle: frost lance
       audioEngine.playSfx('laser');
@@ -1227,7 +1291,25 @@ class EnemyManager {
         color: '#38bdf8',
         life: 1.4
       });
-    } else if (e.type === 'boss_spitter') {
+      particles.addSparkle(e.x + e.facing * 24, e.y - 26, '#e0f2fe', 8, 3);
+    } else if (e.type === 'boss_giant_bird') {
+      // Giant Bird: Sweeping Gale Dive + Triple Razor Sky-Feather Barrage!
+      audioEngine.playSfx('whoosh');
+      particles.addSparkle(e.x + e.facing * 40, e.y - 60, '#bae6fd', 18, 5);
+      for (let k = -1; k <= 1; k++) {
+        projectiles.push({
+          x: e.x + e.facing * 42,
+          y: e.y - 52 + k * 14,
+          vx: e.facing * 390,
+          vy: k * 65 + 45,
+          radius: 13,
+          damage: 1,
+          type: 'enemyShard',
+          color: '#38bdf8',
+          life: 1.5
+        });
+      }
+    } else if (e.type === 'boss_spitter' || e.type === 'boss_centipeetle') {
       audioEngine.playSfx('laser');
       for (let k = -1; k <= 1; k++) {
         projectiles.push({
@@ -1238,10 +1320,11 @@ class EnemyManager {
           radius: 12,
           damage: 1,
           type: 'enemyAcid',
-          color: '#15803d',
+          color: '#22c55e',
           life: 1.6
         });
       }
+      particles.addSparkle(e.x + e.facing * 35, e.y - 35, '#4ade80', 14, 4);
     } else if (e.type === 'boss_quartz_beast') {
       audioEngine.playSfx('hit');
       particles.addSparkle(e.x, this.groundY, '#38bdf8', 20, 6);
@@ -1415,9 +1498,21 @@ class EnemyManager {
         color: '#84cc16',
         life: 1.4
       });
-    } else if (e.type === 'forge_automaton') {
+    } else if (e.type === 'forge_automaton' || e.type === 'obsidian') {
       audioEngine.playSfx('hammer');
-      e.vx = e.facing * 320;
+      e.vx = e.facing * 340;
+      projectiles.push({
+        x: e.x + e.facing * 30,
+        y: this.groundY - 22,
+        vx: e.facing * 320,
+        width: 85,
+        height: 28,
+        damage: 1,
+        type: 'enemyShockwave',
+        color: '#f97316',
+        life: 0.55
+      });
+      particles.addSparkle(e.x + e.facing * 24, e.y - 20, '#fb923c', 10, 4);
     } else if (e.type === 'destabilizer_soldier') {
       audioEngine.playSfx('laser');
       projectiles.push({
@@ -2184,6 +2279,197 @@ class EnemyManager {
     if (onPoofed) onPoofed(e);
   }
 
+  // --- UPGRADED ELEMENTAL SKILL WINDUP TELEGRAPHS & ACTIVE ATTACK VFX (ALL MONSTERS & BOSSES) ---
+  drawEnemySkillVFX(ctx, e) {
+    const t = e.type || '';
+    const animT = e.animTime || ((typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000);
+    const h = e.height || (e.isBoss ? 120 : 54);
+    const w = e.width || (e.isBoss ? 105 : 46);
+    const muzzleX = w * 0.56 + (e.isBoss ? 14 : 6);
+    const muzzleY = -h * 0.52;
+
+    // Classify elemental skill theme for each monster & boss
+    const isWhite = (t === 'boss_white_diamond');
+    const isAcid = (t.includes('centipeetle') || t === 'boss_spitter');
+    const isIce = (t.includes('ice') || t.includes('snow'));
+    const isFire = (t.includes('firebird') || t.includes('forge') || t === 'obsidian' || t === 'boss_jasper' || t === 'carnelian_enforcer');
+    const isCluster = (t.includes('cluster'));
+    const isTech = (t.includes('robonoid') || t.includes('destabilizer') || t === 'boss_agate_warden' || t === 'boss_topaz_fusion');
+    const isWind = (t === 'spire_harpy' || t === 'boss_giant_bird');
+
+    const primary = isWhite ? '#ffffff'
+      : isAcid ? '#4ade80'
+      : isIce ? '#38bdf8'
+      : isFire ? '#f97316'
+      : isCluster ? '#c084fc'
+      : isTech ? (t === 'boss_topaz_fusion' ? '#fbbf24' : '#22d3ee')
+      : isWind ? '#67e8f9'
+      : '#f43f5e';
+    const core = isWhite ? '#e2e8f0'
+      : isAcid ? '#dcfce7'
+      : isIce ? '#e0f2fe'
+      : isFire ? '#fde047'
+      : isCluster ? '#f5d0fe'
+      : '#ffffff';
+
+    ctx.save();
+
+    // 1. WINDUP TELEGRAPH ANIMATION (Elemental Charging Energy before strike!)
+    if (e.windup && e.windup > 0) {
+      const pulse = 0.5 + 0.5 * Math.sin(animT * 26);
+      const chargeR = (e.isBoss ? 22 : 13) + pulse * (e.isBoss ? 9 : 5);
+
+      if (isWhite) {
+        // White Diamond: Iconic blinding monochrome lock-on eye-beams & rotating 4-point Diamond mandala!
+        ctx.save();
+        ctx.translate(0, -h * 0.68);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${0.65 + pulse * 0.35})`;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 48 + pulse * 14, 0, Math.PI * 2);
+        ctx.stroke();
+        // Rotating 4-point Diamond Judgement Cross
+        ctx.rotate(animT * 2.8);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          const r = (i % 2 === 0) ? (56 + pulse * 14) : 12;
+          if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+          else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        // Targeting beam previews
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 120, muzzleY - 40);
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 130, muzzleY - 12);
+        ctx.moveTo(muzzleX, muzzleY - 12); ctx.lineTo(muzzleX + 120, muzzleY + 16);
+        ctx.stroke();
+      } else {
+        // Converging elemental charge orb + rotating danger glyph at weapon/mouth
+        const orbG = ctx.createRadialGradient(muzzleX, muzzleY, 2, muzzleX, muzzleY, chargeR * 1.4);
+        orbG.addColorStop(0, '#ffffff');
+        orbG.addColorStop(0.45, primary);
+        orbG.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = orbG;
+        ctx.beginPath();
+        ctx.arc(muzzleX, muzzleY, chargeR * 1.4, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Spinning elemental charge ring
+        ctx.save();
+        ctx.translate(muzzleX, muzzleY);
+        ctx.rotate(animT * 7);
+        ctx.strokeStyle = core;
+        ctx.lineWidth = e.isBoss ? 3.0 : 2.0;
+        ctx.beginPath();
+        ctx.arc(0, 0, chargeR, 0, Math.PI * 1.35);
+        ctx.stroke();
+        // Converging energy sparks drawn inward
+        ctx.fillStyle = primary;
+        for (let s = 0; s < 4; s++) {
+          const sa = (s * Math.PI) / 2 + animT * 4;
+          const sr = chargeR * (1.5 - pulse * 0.6);
+          ctx.beginPath();
+          ctx.arc(Math.cos(sa) * sr, Math.sin(sa) * sr, e.isBoss ? 3.5 : 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    // 2. ACTIVE ATTACK BURST VFX (Right as the monster/boss strikes or fires!)
+    if (e.attackVisualTimer && e.attackVisualTimer > 0) {
+      const p = Math.max(0, Math.min(1, e.attackVisualTimer / (e.attackVisualMax || 0.34)));
+      const burst = Math.sin(p * Math.PI);
+      ctx.globalAlpha = Math.min(1, p * 1.35);
+
+      if (isWhite) {
+        // White Diamond: Blinding Prismatic Judgement Flare & Concentric Radiance Rings
+        const flareR = 54 + (1 - p) * 58;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5 * p;
+        ctx.beginPath();
+        ctx.arc(muzzleX, muzzleY, flareR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4 + p * 0.8;
+          const r = (i % 2 === 0) ? (flareR * 1.15) : (flareR * 0.28);
+          if (i === 0) ctx.moveTo(muzzleX + Math.cos(a) * r, muzzleY + Math.sin(a) * r);
+          else ctx.lineTo(muzzleX + Math.cos(a) * r, muzzleY + Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+      } else if (isAcid) {
+        // Toxic Acid Splash Cone + Bubbling Droplets
+        ctx.fillStyle = 'rgba(74, 222, 128, 0.55)';
+        ctx.beginPath();
+        ctx.moveTo(muzzleX - 6, muzzleY);
+        ctx.lineTo(muzzleX + (e.isBoss ? 72 : 44) * burst, muzzleY - (e.isBoss ? 26 : 15));
+        ctx.lineTo(muzzleX + (e.isBoss ? 72 : 44) * burst, muzzleY + (e.isBoss ? 26 : 15));
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#dcfce7';
+        ctx.lineWidth = 2.4;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 14 * burst, muzzleY, 7, (e.isBoss ? 24 : 14) * burst, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (isIce) {
+        // Crystalline Frost Nova & Shattering Icicle Fan
+        const rad = (e.isBoss ? 52 : 30) * burst;
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.72)';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0;
+        for (let k = -1; k <= 1; k++) {
+          const ang = k * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(muzzleX, muzzleY - 5);
+          ctx.lineTo(muzzleX + Math.cos(ang) * rad * 1.4, muzzleY + Math.sin(ang) * rad * 1.4);
+          ctx.lineTo(muzzleX, muzzleY + 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+      } else if (isFire || t === 'boss_quartz_beast' || t === 'boss_topaz_fusion' || t === 'blade_quartz') {
+        // Blazing / Kinetic Sweeping Crescent Slash + Impact Shock-Ring!
+        const slashR = (e.isBoss ? 68 : 38) + (1 - p) * 18;
+        ctx.strokeStyle = primary;
+        ctx.lineWidth = (e.isBoss ? 12 : 7) * p;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(muzzleX - 10, muzzleY, slashR, -Math.PI * 0.48, Math.PI * 0.48);
+        ctx.stroke();
+        ctx.strokeStyle = core;
+        ctx.lineWidth = (e.isBoss ? 5 : 3) * p;
+        ctx.beginPath();
+        ctx.arc(muzzleX - 10, muzzleY, slashR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+      } else {
+        // High-Tech / Wind / Psychic Muzzle Shockwave & Star Flash!
+        const rx = (e.isBoss ? 14 : 9) * burst;
+        const ry = (e.isBoss ? 36 : 22) * burst;
+        ctx.strokeStyle = primary;
+        ctx.lineWidth = (e.isBoss ? 4.5 : 3.0) * p;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 10 * burst, muzzleY, rx, ry, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.0 * p;
+        ctx.beginPath();
+        ctx.ellipse(muzzleX + 24 * burst, muzzleY, rx * 0.65, ry * 0.65, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.restore();
+  }
+
   drawEnemyModel(ctx, e) {
     if (e.type === 'winged_centipeetle') {
       this.drawWingedCentipeetle(ctx, e);
@@ -2388,11 +2674,34 @@ class EnemyManager {
 
       const vScale = e.visualScale || (e.isBoss ? 1.35 : 1.48);
 
+      // Dynamic Attack Anticipation (coil back during windup) & Snappy Strike Lunge during active attack!
+      let atkShiftX = 0;
+      let atkScaleX = 1;
+      let atkScaleY = 1;
+      if (e.windup && e.windup > 0) {
+        const wPulse = 0.5 + 0.5 * Math.sin((e.animTime || 0) * 32);
+        atkShiftX = -5 - wPulse * 3;
+        atkScaleX = 0.94;
+        atkScaleY = 1.05;
+      } else if (e.attackVisualTimer && e.attackVisualTimer > 0) {
+        const atkP = Math.max(0, Math.min(1, e.attackVisualTimer / (e.attackVisualMax || 0.34)));
+        const snap = Math.sin(atkP * Math.PI);
+        atkShiftX = snap * (e.isBoss ? 16 : 11);
+        atkScaleX = 1 + snap * 0.14;
+        atkScaleY = 1 - snap * 0.08;
+      }
+
       // Draw base enemy scaled to menacing real-enemy height next to players
       ctx.save();
-      ctx.scale(vScale, vScale);
+      ctx.translate(atkShiftX, 0);
+      ctx.scale(vScale * atkScaleX, vScale * atkScaleY);
       this.drawEnemyModel(ctx, e);
       ctx.restore();
+
+      // Upgraded Elemental Skill Windup Telegraphs & Active Attack Bursts for ALL Monsters & Bosses!
+      if (!e.isImmortalDummy && ((e.windup && e.windup > 0) || (e.attackVisualTimer && e.attackVisualTimer > 0))) {
+        this.drawEnemySkillVFX(ctx, e);
+      }
 
       // Terrifying Hard-Light Corruption Fractures, Ground Fissures & Orbiting Boss Shards
       if (!e.isImmortalDummy) {

@@ -1510,7 +1510,7 @@ class StevenUniverseGame {
       if (!el) return;
       const cv = el.querySelector('canvas[data-portrait]');
       if (!cv) return;
-      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, cv.width); } catch (e) {}
+      try { drawPortraitCard(cv.getContext('2d'), cv.dataset.portrait, cv.width, !!o.useOverdriveArt); } catch (e) {}
     });
 
     // Restart the entrance animation on every activation
@@ -2936,6 +2936,7 @@ class StevenUniverseGame {
         centerPortraitId: f.id,
         portraitId: (f.gems && f.gems[0]) || hero.activeChar,
         secondPortraitId: (f.gems && f.gems[1]) || null,
+        useOverdriveArt: true,
         name: `${(f.name || theme.name).toUpperCase()} SURGE`,
         quote: otherActive ? 'DUAL GEM SURGE · 2.5× POWER · OVERCLOCKED FUSION' : 'FUSION GEM SURGE · 2× POWER · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
@@ -2948,6 +2949,7 @@ class StevenUniverseGame {
         kicker: 'GEM SURGE',
         kickerColor: theme.color,
         charId: hero.activeChar,
+        useOverdriveArt: true,
         name: theme.name,
         quote: 'GEM SURGE · 2× POWER · +85% SPEED · 12 SECONDS',
         side: playerId === 'p2' ? 'right' : 'left',
@@ -3632,28 +3634,54 @@ class StevenUniverseGame {
       this.ctx.closePath();
       this.ctx.fill();
     } else if (p.type === 'fusionHammerDrill') {
-      // Sardonyx: Spinning Hammer Drill!
+      // Sardonyx: High-Speed Rotating Showbiz Hammer Drill + Golden Starburst Aura!
       this.ctx.translate(p.x, p.y);
-      const rot = (typeof performance !== 'undefined' ? performance.now() / 40 : Date.now() / 40);
-      this.ctx.rotate(rot);
-      this.ctx.fillStyle = '#fb7185';
-      this.ctx.strokeStyle = '#fdba74';
-      this.ctx.lineWidth = 3;
-      this.ctx.fillRect(-20, -14, 40, 28);
-      this.ctx.strokeRect(-20, -14, 40, 28);
-    } else if (p.type === 'fusionShowstopper') {
-      // Sardonyx: Showstopper Finale Spotlights!
-      this.ctx.translate(p.x, p.y);
-      this.ctx.fillStyle = 'rgba(253, 186, 116, 0.45)';
-      this.ctx.strokeStyle = '#fde047';
-      this.ctx.lineWidth = 2.5;
+      const rot = (typeof performance !== 'undefined' ? performance.now() / 32 : Date.now() / 32);
+      this.ctx.fillStyle = 'rgba(253, 224, 71, 0.35)';
       this.ctx.beginPath();
-      this.ctx.moveTo(0, -90);
-      this.ctx.lineTo(-80, 70);
-      this.ctx.lineTo(80, 70);
-      this.ctx.closePath();
+      this.ctx.arc(0, 0, (p.radius || 28) * 1.15, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.rotate(rot);
+      this.ctx.fillStyle = '#e11d48';
+      this.ctx.strokeStyle = '#fde047';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-24, -15, 48, 30, 6);
+      else this.ctx.rect(-24, -15, 48, 30);
       this.ctx.fill();
       this.ctx.stroke();
+      this.ctx.fillStyle = '#fde047';
+      this.ctx.fillRect(-4, -15, 8, 30);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath(); this.ctx.arc(0, 0, 5, 0, Math.PI * 2); this.ctx.fill();
+    } else if (p.type === 'fusionShowstopper') {
+      // Sardonyx: Grand Theatrical Showstopper Dual Spotlights + Golden Starbursts!
+      this.ctx.translate(p.x, p.y);
+      const grad = this.ctx.createLinearGradient(0, -110, 0, 80);
+      grad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      grad.addColorStop(0.5, 'rgba(253, 224, 71, 0.52)');
+      grad.addColorStop(1, 'rgba(251, 113, 133, 0.12)');
+      this.ctx.fillStyle = grad;
+      this.ctx.beginPath();
+      this.ctx.moveTo(-14, -110); this.ctx.lineTo(-92, 76); this.ctx.lineTo(92, 76); this.ctx.lineTo(14, -110);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#fde047';
+      this.ctx.lineWidth = 3;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 72, 92, 16, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      // Twinkling stage stars
+      this.ctx.fillStyle = '#ffffff';
+      for (const [sx, sy, sr] of [[-46, -10, 7], [48, -22, 8], [0, 32, 10]]) {
+        this.ctx.beginPath();
+        this.ctx.moveTo(sx, sy - sr); this.ctx.lineTo(sx + sr * 0.35, sy - sr * 0.35);
+        this.ctx.lineTo(sx + sr, sy); this.ctx.lineTo(sx + sr * 0.35, sy + sr * 0.35);
+        this.ctx.lineTo(sx, sy + sr); this.ctx.lineTo(sx - sr * 0.35, sy + sr * 0.35);
+        this.ctx.lineTo(sx - sr, sy); this.ctx.lineTo(sx - sr * 0.35, sy - sr * 0.35);
+        this.ctx.closePath();
+        this.ctx.fill();
+      }
     } else if (p.type === 'fusionOpalArrow' || p.type === 'fusionCelestialRain') {
       // Opal: Luminous Crystal Arrow with Fletching & Spear Tip
       this.ctx.translate(p.x, p.y);
@@ -3767,17 +3795,27 @@ class StevenUniverseGame {
         this.ctx.stroke();
       }
     } else if (p.type === 'fusionPrismRose') {
-      // Rainbow Quartz Classic: Prismatic Tears Vortex!
+      // Rainbow Quartz Classic: Swirling 80s Neon-Prism Rose Vortex!
       this.ctx.translate(p.x, p.y);
-      const rot = (typeof performance !== 'undefined' ? performance.now() / 50 : Date.now() / 50);
+      const rot = (typeof performance !== 'undefined' ? performance.now() / 45 : Date.now() / 45);
       this.ctx.rotate(rot);
-      this.ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
-      this.ctx.strokeStyle = '#fbcfe8';
-      this.ctx.lineWidth = 3;
+      const vGrad = this.ctx.createRadialGradient(0, 0, 8, 0, 0, 82);
+      vGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+      vGrad.addColorStop(0.35, 'rgba(244, 114, 182, 0.68)');
+      vGrad.addColorStop(0.7, 'rgba(103, 232, 249, 0.48)');
+      vGrad.addColorStop(1, 'rgba(168, 85, 247, 0.05)');
+      this.ctx.fillStyle = vGrad;
       this.ctx.beginPath();
-      this.ctx.arc(0, 0, 75, 0, Math.PI * 2);
+      this.ctx.arc(0, 0, 82, 0, Math.PI * 2);
       this.ctx.fill();
-      this.ctx.stroke();
+      const ringCols = ['#f472b6', '#fde047', '#38bdf8', '#c084fc'];
+      for (let i = 0; i < 4; i++) {
+        this.ctx.strokeStyle = ringCols[i];
+        this.ctx.lineWidth = 3;
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, 26 + i * 14, i * 1.1, i * 1.1 + Math.PI * 1.35);
+        this.ctx.stroke();
+      }
     } else if (p.type === 'connieSwordBeam') {
       this.ctx.translate(p.x, p.y);
       this.ctx.scale(p.vx < 0 ? -1 : 1, 1);
@@ -4394,12 +4432,19 @@ class StevenUniverseGame {
       const radius = (p.width || 220) / 2;
       this.ctx.save();
       this.ctx.translate(p.x, p.y);
-      const rot = Date.now() / 120;
-      this.ctx.strokeStyle = 'rgba(132, 204, 22, 0.75)';
-      this.ctx.lineWidth = 3;
-      this.ctx.beginPath();
-      this.ctx.arc(0, 0, radius * 0.85, rot, rot + Math.PI * 1.8);
-      this.ctx.stroke();
+      const rot = Date.now() / 95;
+      const g = this.ctx.createRadialGradient(0, 0, 6, 0, 0, radius);
+      g.addColorStop(0, 'rgba(217, 249, 157, 0.55)');
+      g.addColorStop(0.55, 'rgba(132, 204, 22, 0.28)');
+      g.addColorStop(1, 'rgba(132, 204, 22, 0)');
+      this.ctx.fillStyle = g;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius, 0, Math.PI * 2); this.ctx.fill();
+      this.ctx.strokeStyle = '#84cc16';
+      this.ctx.lineWidth = 3.5;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius * 0.85, rot, rot + Math.PI * 1.65); this.ctx.stroke();
+      this.ctx.strokeStyle = '#ecfccb';
+      this.ctx.lineWidth = 2.4;
+      this.ctx.beginPath(); this.ctx.arc(0, 0, radius * 0.52, -rot * 1.4, -rot * 1.4 + Math.PI * 1.45); this.ctx.stroke();
       this.ctx.restore();
     } else if (p.type === 'seismicShockwave' || p.type === 'giantGauntletSlam') {
       const w = p.width || 220;
@@ -4431,25 +4476,192 @@ class StevenUniverseGame {
       const w = p.width || 140;
       this.ctx.save();
       this.ctx.translate(p.x, p.y);
-      this.ctx.strokeStyle = '#ff94ba';
-      this.ctx.lineWidth = 3;
+      const bg = this.ctx.createRadialGradient(0, 0, 6, 0, 0, w * 0.55);
+      bg.addColorStop(0, 'rgba(255, 255, 255, 0.5)');
+      bg.addColorStop(0.55, 'rgba(255, 96, 151, 0.34)');
+      bg.addColorStop(1, 'rgba(244, 63, 94, 0.05)');
+      this.ctx.fillStyle = bg;
       this.ctx.beginPath();
-      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w / 2, 30, 0, 0, Math.PI * 2);
-      else this.ctx.arc(0, 0, 40, 0, Math.PI * 2);
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w / 2, 34, 0, 0, Math.PI * 2);
+      else this.ctx.arc(0, 0, 42, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#ff94ba';
+      this.ctx.lineWidth = 3.4;
       this.ctx.stroke();
-      this.ctx.fillStyle = 'rgba(255, 96, 151, 0.28)';
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, 0, w * 0.34, 22, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyAcid') {
+      // Upgraded Corrupted Acid Glob: Glowing Toxic Comet + Bubbling Neon Core!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 10;
+      this.ctx.fillStyle = 'rgba(34, 197, 94, 0.45)';
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -r * 0.85);
+      this.ctx.lineTo(-r * 2.8, 0);
+      this.ctx.lineTo(0, r * 0.85);
+      this.ctx.closePath();
+      this.ctx.fill();
+      const ag = this.ctx.createRadialGradient(r * 0.2, -r * 0.2, 1, 0, 0, r * 1.15);
+      ag.addColorStop(0, '#dcfce7');
+      ag.addColorStop(0.5, '#4ade80');
+      ag.addColorStop(1, p.color || '#15803d');
+      this.ctx.fillStyle = ag;
+      this.ctx.strokeStyle = '#bbf7d0';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      this.ctx.ellipse(0, 0, r * 1.15, r * 0.9, 0, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.fillStyle = '#dcfce7';
+      this.ctx.beginPath();
+      this.ctx.arc(-r * 1.4, -r * 0.4, r * 0.25, 0, Math.PI * 2);
+      this.ctx.arc(-r * 1.9, r * 0.35, r * 0.2, 0, Math.PI * 2);
       this.ctx.fill();
       this.ctx.restore();
-    } else {
-      this.ctx.fillStyle = p.color || '#ffcf33';
+    } else if (p.type === 'enemyIce') {
+      // Upgraded Glacial Lance: Faceted Crystalline Icicle Spear + Frost Mist Trail!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 11;
+      this.ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
       this.ctx.beginPath();
-      this.ctx.arc(p.x, p.y, p.radius || 12, 0, Math.PI * 2);
+      this.ctx.moveTo(r * 1.6, 0);
+      this.ctx.lineTo(-r * 2.2, -r * 0.75);
+      this.ctx.lineTo(-r * 1.6, 0);
+      this.ctx.lineTo(-r * 2.2, r * 0.75);
+      this.ctx.closePath();
       this.ctx.fill();
-
+      const ig = this.ctx.createLinearGradient(-r * 1.4, 0, r * 1.8, 0);
+      ig.addColorStop(0, '#0284c7');
+      ig.addColorStop(0.55, '#7dd3fc');
+      ig.addColorStop(1, '#ffffff');
+      this.ctx.fillStyle = ig;
+      this.ctx.strokeStyle = '#e0f2fe';
+      this.ctx.lineWidth = 1.8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(r * 1.9, 0);
+      this.ctx.lineTo(0, -r * 0.72);
+      this.ctx.lineTo(-r * 1.4, 0);
+      this.ctx.lineTo(0, r * 0.72);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyShard') {
+      // Upgraded Razor Crystal / Feather / Molten Cinder Shard with Spinning Facets & Motion Trail!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 11;
+      const col = p.color || '#f43f5e';
+      this.ctx.fillStyle = col;
+      this.ctx.globalAlpha = 0.38;
+      this.ctx.beginPath();
+      this.ctx.moveTo(0, -r * 0.7);
+      this.ctx.lineTo(-r * 2.8, 0);
+      this.ctx.lineTo(0, r * 0.7);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = col;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.8;
+      this.ctx.beginPath();
+      this.ctx.moveTo(r * 1.65, 0);
+      this.ctx.lineTo(r * 0.15, -r * 0.8);
+      this.ctx.lineTo(-r * 1.1, 0);
+      this.ctx.lineTo(r * 0.15, r * 0.8);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
       this.ctx.fillStyle = '#ffffff';
       this.ctx.beginPath();
-      this.ctx.arc(p.x - 2, p.y - 2, (p.radius || 12) * 0.4, 0, Math.PI * 2);
+      this.ctx.moveTo(r * 1.2, 0);
+      this.ctx.lineTo(0, -r * 0.3);
+      this.ctx.lineTo(-r * 0.4, 0);
+      this.ctx.lineTo(0, r * 0.3);
+      this.ctx.closePath();
       this.ctx.fill();
+      this.ctx.restore();
+    } else if (p.type === 'enemyLaser') {
+      // Upgraded Homeworld / White Diamond High-Intensity Plasma Judgement Beam!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(Math.atan2(p.vy || 0, p.vx || 1));
+      const r = p.radius || 12;
+      const col = p.color || '#38bdf8';
+      const isWhite = (col === '#ffffff' || col === '#f8fafc');
+      const len = r * 3.4;
+      this.ctx.fillStyle = isWhite ? 'rgba(226, 232, 240, 0.55)' : col;
+      this.ctx.globalAlpha = isWhite ? 0.8 : 0.45;
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-len * 0.6, -r * 0.9, len * 1.2, r * 1.8, r * 0.9);
+      else this.ctx.rect(-len * 0.6, -r * 0.9, len * 1.2, r * 1.8);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.beginPath();
+      if (this.ctx.roundRect) this.ctx.roundRect(-len * 0.48, -r * 0.42, len * 1.04, r * 0.84, r * 0.42);
+      else this.ctx.rect(-len * 0.48, -r * 0.42, len * 1.04, r * 0.84);
+      this.ctx.fill();
+      this.ctx.strokeStyle = isWhite ? '#ffffff' : col;
+      this.ctx.lineWidth = 2.2;
+      this.ctx.beginPath();
+      this.ctx.ellipse(len * 0.25, 0, r * 0.38, r * 1.15, 0, 0, Math.PI * 2);
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else if (p.type === 'enemyShockwave') {
+      // Upgraded Boss Seismic / Elemental Ground Shockwave Surge!
+      this.ctx.save();
+      this.ctx.translate(p.x, p.y);
+      const dir = (p.vx < 0 ? -1 : 1);
+      this.ctx.scale(dir, 1);
+      const col = p.color || '#f97316';
+      const w = p.width || ((p.radius || 28) * 2.8);
+      const h = p.height || ((p.radius || 28) * 1.4);
+      this.ctx.fillStyle = col;
+      this.ctx.globalAlpha = 0.42;
+      this.ctx.beginPath();
+      if (this.ctx.ellipse) this.ctx.ellipse(0, h * 0.25, w * 0.52, h * 0.32, 0, 0, Math.PI * 2);
+      else this.ctx.arc(0, 0, w * 0.4, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.globalAlpha = 1;
+      this.ctx.fillStyle = col;
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 2.4;
+      this.ctx.beginPath();
+      this.ctx.moveTo(-w * 0.48, h * 0.35);
+      this.ctx.lineTo(-w * 0.22, -h * 0.35);
+      this.ctx.lineTo(-w * 0.04, h * 0.02);
+      this.ctx.lineTo(w * 0.16, -h * 0.65);
+      this.ctx.lineTo(w * 0.32, -h * 0.18);
+      this.ctx.lineTo(w * 0.48, h * 0.35);
+      this.ctx.closePath();
+      this.ctx.fill();
+      this.ctx.stroke();
+      this.ctx.restore();
+    } else {
+      const r = p.radius || 12;
+      const g = this.ctx.createRadialGradient(p.x - r * 0.25, p.y - r * 0.25, 1, p.x, p.y, r * 1.2);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.45, p.color || '#ffcf33');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      this.ctx.fillStyle = g;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, r * 1.2, 0, Math.PI * 2);
+      this.ctx.fill();
+      this.ctx.strokeStyle = '#ffffff';
+      this.ctx.lineWidth = 1.6;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, r * 0.72, 0, Math.PI * 2);
+      this.ctx.stroke();
     }
     this.ctx.restore();
   }

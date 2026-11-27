@@ -1776,6 +1776,17 @@ if (typeof PORTRAIT_IMAGES !== 'undefined') {
   });
 }
 
+// Dedicated HD fighting-style Overdrive cut-in renders (from Character reference/*2.*)
+const _overdrivePortraitImages = {};
+if (typeof OVERDRIVE_PORTRAIT_IMAGES !== 'undefined') {
+  Object.keys(OVERDRIVE_PORTRAIT_IMAGES).forEach(id => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = OVERDRIVE_PORTRAIT_IMAGES[id];
+    _overdrivePortraitImages[id] = img;
+  });
+}
+
 // Official reference fusion sprites (full-body canon artwork)
 const _fusionSprites = {};
 if (typeof FUSION_SPRITES !== 'undefined') {
@@ -1787,9 +1798,10 @@ if (typeof FUSION_SPRITES !== 'undefined') {
   });
 }
 
-function drawPortraitCard(ctx, id, size = 512) {
+function drawPortraitCard(ctx, id, size = 512, useOverdrive = false) {
   ctx.clearRect(0, 0, size, size);
-  const img = _portraitImages[id];
+  const odImg = useOverdrive ? _overdrivePortraitImages[id] : null;
+  const img = (odImg && odImg.complete && odImg.naturalWidth > 0) ? odImg : _portraitImages[id];
   if (img && img.complete && img.naturalWidth > 0) {
     const theme = (typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[id]) ? OVERDRIVE_THEMES[id].color :
                   (typeof CANON_FUSIONS !== 'undefined' && CANON_FUSIONS[id]) ? CANON_FUSIONS[id].color : '#f472b6';
