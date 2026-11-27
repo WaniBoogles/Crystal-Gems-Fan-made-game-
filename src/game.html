@@ -527,18 +527,32 @@
           <div class="char-preview-pane" id="charPreviewPane">
             <div class="char-pane-header">
               <div class="char-pane-icon" id="paneIcon"></div>
-              <div>
-                <h3 class="char-pane-name" id="paneName">Steven Universe</h3>
+              <div style="flex: 1; min-width: 0;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <h3 class="char-pane-name" id="paneName">Steven Universe</h3>
+                  <span class="char-role-pill" id="paneRoleBadge">🛡️ TANK / HEALER</span>
+                  <span class="char-heal-pill has-heal" id="paneHealBadge">💚 HEALING</span>
+                </div>
                 <span class="char-pane-title" id="paneTitle">The Heart of the Crystal Gems</span>
                 <div class="char-types-row" id="paneTypes" style="justify-content: flex-start; margin-top: 4px;"></div>
               </div>
             </div>
             <p class="char-pane-lore" id="paneLore">Half-human, half-gem hero. Uses Rose Quartz's magical shield and soothing Cookie Cat healing powers to defend Earth!</p>
+            <!-- Visible Passive Ability & How-To-Use Card -->
+            <div class="char-passive-card" id="panePassiveCard">
+              <div class="char-passive-top">
+                <span class="char-passive-title" id="panePassiveTitle">🛡️ PASSIVE: Spiked Pink Bubble</span>
+                <span class="char-style-pill" id="paneStylePill">🥋 Shield-Brawler (4-Hit)</span>
+              </div>
+              <div class="char-passive-desc" id="panePassiveDesc">Holding [S] deploys a Spiked Rose Bubble that damages &amp; knocks back enemies on contact!</div>
+              <div class="char-passive-tip" id="panePassiveTip"><b>HOW TO USE:</b> Hold [S] when enemies close in to spike-counter them; press [L] for Healing Saliva.</div>
+            </div>
+            <div class="char-balance-bars" id="paneBalanceBars"></div>
             <div class="char-pane-stats" id="paneStats"></div>
             <div class="char-pane-powers">
-              <div class="power-tag"><b>[J] Attack:</b> <span id="paneJ">Shield Strike & Rose Punch combo</span></div>
-              <div class="power-tag"><b>[K] Special:</b> <span id="paneK">Bouncing Rose Shield Throw</span></div>
-              <div class="power-tag"><b>[L] Skill:</b> <span id="paneL">Bubble Shield & Cookie Cat heal (+1 Heart)</span></div>
+              <div class="power-tag"><b id="paneJLabel">[J] Fighting Style:</b> <span id="paneJ">Shield Strike & Rose Punch combo</span></div>
+              <div class="power-tag"><b id="paneKLabel">[K] Signature:</b> <span id="paneK">Bouncing Rose Shield Throw</span></div>
+              <div class="power-tag"><b id="paneLLabel">[L] Gem Skill:</b> <span id="paneL">Bubble Shield & Cookie Cat heal (+1 Heart)</span></div>
             </div>
 
             <!-- Canonical Fusion Compatibility Dossier -->

@@ -769,6 +769,46 @@ class StevenUniverseGame {
     if (kEl) kEl.textContent = data.k.desc;
     if (lEl) lEl.textContent = data.l.desc;
 
+    const passive = (typeof HERO_PASSIVES !== 'undefined' && HERO_PASSIVES[charId]) || null;
+    const comboProf = (typeof HERO_COMBO_PROFILES !== 'undefined' && HERO_COMBO_PROFILES[charId]) || null;
+    const roleEl = document.getElementById('paneRoleBadge');
+    const healEl = document.getElementById('paneHealBadge');
+    const pTitle = document.getElementById('panePassiveTitle');
+    const pStyle = document.getElementById('paneStylePill');
+    const pDesc = document.getElementById('panePassiveDesc');
+    const pTip = document.getElementById('panePassiveTip');
+    const balEl = document.getElementById('paneBalanceBars');
+    const kLbl = document.getElementById('paneKLabel');
+    const jLbl = document.getElementById('paneJLabel');
+    const lLbl = document.getElementById('paneLLabel');
+
+    if (jLbl) jLbl.textContent = `[J] ${data.j.name}:`;
+    if (kLbl) kLbl.textContent = `[K] ${data.k.name}${passive && passive.kTag ? ` (${passive.kTag})` : ''}:`;
+    if (lLbl) lLbl.textContent = `[L] ${data.l.name}:`;
+
+    if (passive) {
+      if (roleEl) roleEl.textContent = `${passive.icon} ${passive.role || 'GUARDIAN'}`;
+      if (healEl) {
+        healEl.className = `char-heal-pill ${passive.hasHeal ? 'has-heal' : 'no-heal'}`;
+        healEl.textContent = passive.hasHeal ? '💚 HEALING' : '⚔️ NO HEAL';
+      }
+      if (pTitle) pTitle.textContent = `${passive.icon} PASSIVE: ${passive.name}`;
+      if (pStyle) pStyle.textContent = `🥋 ${comboProf ? comboProf.label : '4-Hit Combo'}`;
+      if (pDesc) pDesc.textContent = passive.desc;
+      if (pTip) pTip.innerHTML = `<b>HOW TO USE:</b> ${passive.howToUse || passive.desc}`;
+      if (balEl && passive.bars) {
+        const b = passive.bars;
+        const barRow = (lbl, val, col) =>
+          `<div class="bal-meter"><div class="bal-meter-lbl"><span>${lbl}</span><span>${val}/5</span></div>` +
+          `<div class="bal-meter-track"><div class="bal-meter-fill" style="width:${val * 20}%;background:${col};"></div></div></div>`;
+        balEl.innerHTML =
+          barRow('OFFENSE', b.offense, '#fb7185') +
+          barRow('DEFENSE', b.defense, '#38bdf8') +
+          barRow('SUPPORT', b.support, '#4ade80') +
+          barRow('SPEED', b.speed, '#facc15');
+      }
+    }
+
     if (paneTypes) {
       paneTypes.innerHTML = (data.types || []).map(t => `<span class="gem-type-badge type-${t.toLowerCase()}">${t}</span>`).join('');
     }
@@ -2562,11 +2602,27 @@ class StevenUniverseGame {
           p.vy = (p.vy || 0) + ((ty / d) * spd - (p.vy || 0)) * steer;
         }
       }
-      if (p.gravity) {
-        p.vy = (p.vy || 0) + p.gravity * dt;
+      if (p.followOwner && !p.followOwner.isFallen) {
+        p.x = p.followOwner.x + (p.followOwner.facing || 1) * (p.offsetX || 32);
+        p.y = p.followOwner.y + (p.offsetY || -36);
+        if (p.deflectEnemyShots) {
+          for (const ep of this.projectiles) {
+            if (ep !== p && ep.type && ep.type.startsWith('enemy') && Math.hypot(ep.x - p.x, ep.y - p.y) < 86) {
+              ep.life = 0;
+              if (this.particles) {
+                this.particles.addHitSpark(ep.x, ep.y, '#f472b6', 18, 0);
+                this.particles.addDamageText(ep.x, ep.y - 24, '⚔️ DEFLECT!', false, '#fbcfe8');
+              }
+            }
+          }
+        }
+      } else {
+        if (p.gravity) {
+          p.vy = (p.vy || 0) + p.gravity * dt;
+        }
+        p.x += (p.vx || 0) * dt;
+        p.y += (p.vy || 0) * dt;
       }
-      p.x += (p.vx || 0) * dt;
-      p.y += (p.vy || 0) * dt;
       // Arcing Molten Hammer ground slam shockwave (Bismuth [K])
       if (p.gravity && p.y >= this.groundY - 12 && p.type === 'bismuthAnvil') {
         p.y = this.groundY - 12;
@@ -6115,6 +6171,7 @@ class StevenUniverseGame {
       });
     };
     syncCharGridIcons();
+    this.updateCharPreview(this.selectedCharP1 || 'steven');
 
     const openCharModal = () => {
       this.charSelectActiveTab = 'p1';
@@ -6126,6 +6183,7 @@ class StevenUniverseGame {
       }
 
       syncCharGridIcons();
+    this.updateCharPreview(this.selectedCharP1 || 'steven');
 
       document.querySelectorAll('.char-grid-item[data-char]').forEach(item => {
         if (item.dataset.char === this.tempSelectedChar) item.classList.add('active');

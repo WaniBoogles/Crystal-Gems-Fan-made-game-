@@ -2623,21 +2623,21 @@ body.mobile-device .touch-controls.active {
    CHARACTER SELECTION MODAL (8 GEMS)
    ========================================================== */
 .char-select-modal {
-  width: 820px;
-  max-width: 92vw;
-  max-height: min(580px, 88vh);
+  width: 940px;
+  max-width: 95vw;
+  max-height: min(740px, 94vh);
   display: flex;
   flex-direction: column;
-  padding: 14px 20px;
+  padding: 12px 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 24px rgba(255, 96, 151, 0.28);
 }
 
 .char-select-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 7px;
   overflow-y: auto;
-  padding: 4px 2px;
+  padding: 2px 2px;
 }
 
 .connie-bg {
@@ -2651,7 +2651,7 @@ body.mobile-device .touch-controls.active {
 .char-grid-8 {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 @media (max-width: 900px) {
@@ -2672,8 +2672,8 @@ body.mobile-device .touch-controls.active {
   align-items: center;
   background: rgba(30, 12, 52, 0.88);
   border: 2px solid #4a196e;
-  border-radius: 12px;
-  padding: 6px 4px;
+  border-radius: 10px;
+  padding: 4px 4px;
   cursor: pointer;
   transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.14s ease, box-shadow 0.14s ease;
   text-align: center;
@@ -2695,13 +2695,13 @@ body.mobile-device .touch-controls.active {
 }
 
 .char-item-bubble {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.42);
   overflow: hidden;
   border: 1.5px solid rgba(255, 255, 255, 0.18);
@@ -2846,6 +2846,122 @@ body.mobile-device .touch-controls.active {
 
 .power-tag b {
   color: #ff6097;
+}
+
+.char-role-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(56, 189, 248, 0.22);
+  border: 1px solid rgba(56, 189, 248, 0.55);
+  color: #7dd3fc;
+}
+
+.char-heal-pill {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.char-heal-pill.has-heal {
+  background: rgba(34, 197, 94, 0.22);
+  border: 1px solid rgba(74, 222, 128, 0.65);
+  color: #86efac;
+}
+
+.char-heal-pill.no-heal {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+}
+
+.char-passive-card {
+  background: linear-gradient(135deg, rgba(244, 114, 182, 0.16), rgba(56, 189, 248, 0.12));
+  border: 1.5px solid rgba(244, 114, 182, 0.48);
+  border-radius: 9px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.char-passive-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.char-passive-title {
+  font-family: var(--su-font-display);
+  font-size: 11.5px;
+  color: #fde047;
+  letter-spacing: 0.4px;
+}
+
+.char-style-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #e0f2fe;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(125, 211, 252, 0.4);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.char-passive-desc {
+  font-size: 10.5px;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+
+.char-passive-tip {
+  font-size: 10px;
+  color: #a5f3fc;
+  line-height: 1.28;
+}
+
+.char-passive-tip b {
+  color: #fde047;
+}
+
+.char-balance-bars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.bal-meter {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 3px 6px;
+}
+
+.bal-meter-lbl {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 800;
+  color: #cbd5e1;
+  margin-bottom: 2px;
+}
+
+.bal-meter-track {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bal-meter-fill {
+  height: 100%;
+  border-radius: 999px;
 }
 
 /* ==========================================================

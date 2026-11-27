@@ -127,16 +127,66 @@ function typeEffectLabel(mult) {
 }
 
 const HERO_PASSIVES = {
-  steven:   { name: 'Spiked Pink Bubble', icon: '🛡️', desc: 'Holding [S] deploys a Spiked Rose Bubble that damages & knocks back enemies on contact!' },
-  garnet:   { name: 'Future Vision',      icon: '👁️', desc: 'Every 7s automatically foresees & parries the next incoming hit (+35% counter DMG)!' },
-  amethyst: { name: 'Wild Momentum',      icon: '⚡', desc: 'Consecutive hits stack up to +30% attack speed & +25% whip/spin damage!' },
-  pearl:    { name: 'Flawless Technique', icon: '💎', desc: 'Every 3rd hit is a guaranteed 1.6x Precision Crit & cuts [K]/[L] cooldowns!' },
-  bismuth:  { name: 'Forge Temper',       icon: '🔥', desc: '-20% incoming damage armor & every 3rd hit triggers an explosive Molten Burn!' },
-  peridot:  { name: 'Ferrokinetic Orbit', icon: '🧲', desc: '2 levitating steel shards orbit Peridot & automatically zap nearby enemies!' },
-  lapis:    { name: 'Hydro-Wing Glide',   icon: '🌊', desc: 'Hold Jump midair to glide on water wings & deal +25% bonus airborne damage!' },
-  rose:     { name: 'Maternal Sanctuary', icon: '🌹', desc: 'Periodically releases healing rose petals for herself & 2P ally (+combo finisher heal)!' },
-  connie:   { name: "Knight's Riposte",   icon: '⚔️', desc: 'Dodging or finishing a combo grants +35% Crit Chance & +25% speed for 2.8s!' },
-  jasper:   { name: 'Apex Quartz',        icon: '☄️', desc: 'Super Armor during attacks & up to +35% Berserker damage as HP drops!' }
+  steven: {
+    name: 'Spiked Pink Bubble', icon: '🛡️', role: 'TANK / HEALER', hasHeal: true, kTag: 'RANGED SHIELD',
+    desc: 'Holding [S] deploys a Spiked Rose Bubble that blocks hits, reflects 18 thorn DMG, & knocks attackers back!',
+    howToUse: 'Hold [S] when enemies close in to spike-counter them; press [L] for Healing Saliva (+1 Heart).',
+    bars: { offense: 2, defense: 5, support: 5, speed: 3 }
+  },
+  garnet: {
+    name: 'Future Vision', icon: '👁️', role: 'POWER STRIKER', hasHeal: false, kTag: 'ROCKET FIST',
+    desc: 'Every 7s automatically foresees & parries the next incoming hit, granting +35% Counter DMG for 3s!',
+    howToUse: 'Stay aggressive — when Future Vision flashes gold, immediately counter-punch with [J] or [L]!',
+    bars: { offense: 5, defense: 4, support: 1, speed: 3 }
+  },
+  amethyst: {
+    name: 'Wild Momentum', icon: '⚡', role: 'COMBO BRAWLER', hasHeal: false, kTag: 'SPIN RUSH',
+    desc: 'Consecutive hits stack up to 5x (+30% attack speed & +25% whip/spin damage) while staying on offense!',
+    howToUse: 'Keep landing [J] whips & [K] Spin Dash within 4.5s to maintain max Wild Momentum speed!',
+    bars: { offense: 4, defense: 3, support: 1, speed: 4 }
+  },
+  pearl: {
+    name: 'Flawless Technique', icon: '💎', role: 'PRECISION DUELIST', hasHeal: false, kTag: 'SPEAR BEAM',
+    desc: 'Every 3rd [J] strike is a guaranteed 1.6x Precision Crit that cuts [K]/[L] cooldowns by 0.6s!',
+    howToUse: 'Weave fast 3-hit [J] spear pokes to trigger Precision Crits and reset your Holo-Pearl [L] faster.',
+    bars: { offense: 4, defense: 2, support: 2, speed: 5 }
+  },
+  bismuth: {
+    name: 'Forge Temper', icon: '🔥', role: 'ARMORED BREAKER', hasHeal: false, kTag: 'LEAP SLAM',
+    desc: 'Permanent -20% incoming damage forge armor & every 3rd [J] strike triggers an explosive Molten Burn!',
+    howToUse: 'Trade blows with your armored swings and crash into groups with [K] Molten Hammer Leap!',
+    bars: { offense: 5, defense: 5, support: 1, speed: 2 }
+  },
+  peridot: {
+    name: 'Ferrokinetic Orbit', icon: '🧲', role: 'TECH CONTROLLER', hasHeal: false, kTag: 'METAL SALVO',
+    desc: '2 levitating steel shards constantly orbit Peridot and automatically zap any enemies that get close!',
+    howToUse: 'Zone foes with [K] Homing Scrap & [L] Robonoid while orbiting shards shred rushers automatically.',
+    bars: { offense: 3, defense: 4, support: 3, speed: 3 }
+  },
+  lapis: {
+    name: 'Hydro-Wing Glide', icon: '🌊', role: 'AERIAL ZONER', hasHeal: false, kTag: 'HYDRO CHAIN',
+    desc: 'Hold Jump midair to glide smoothly on water wings and deal +25% bonus airborne damage!',
+    howToUse: 'Jump + hold [W]/[Space] to hover over ground attacks and rain boosted aerial slashes & [K] Hydro Chains.',
+    bars: { offense: 4, defense: 2, support: 2, speed: 5 }
+  },
+  rose: {
+    name: 'Maternal Sanctuary', icon: '🌹', role: 'PALADIN / HEALER', hasHeal: true, kTag: 'SHIELD & HEAL',
+    desc: 'Periodically drifts healing petals to herself & 2P ally, plus finishing a 4-hit [J] combo heals +1 Heart!',
+    howToUse: 'Complete full 4-hit [J] Paladin combos to heal, and press [L] Sacred Tears (+2 Hearts) in emergencies.',
+    bars: { offense: 2, defense: 5, support: 5, speed: 3 }
+  },
+  connie: {
+    name: "Knight's Riposte", icon: '⚔️', role: 'SPEED SWORDMASTER', hasHeal: false, kTag: 'IAI DASH CUT',
+    desc: 'Dodging [Shift] or finishing a [J] combo triggers +35% Riposte DMG & +25% movement speed for 2.8s!',
+    howToUse: 'Dodge through enemy swings, then blitz back in with [K] Sword Iai-Lunge and rapid [J] slashes!',
+    bars: { offense: 4, defense: 2, support: 1, speed: 5 }
+  },
+  jasper: {
+    name: 'Apex Quartz', icon: '☄️', role: 'APEX JUGGERNAUT', hasHeal: false, kTag: 'HELMET RUSH',
+    desc: 'Unflinching Super Armor during attacks & up to +35% Berserker damage as her HP gets lower!',
+    howToUse: 'Plow straight through attacks with [J] Haymakers and [K] Crash Helmet Bull-Rush — never back down!',
+    bars: { offense: 5, defense: 4, support: 1, speed: 3 }
+  }
 };
 
 const HERO_COMBO_PROFILES = {

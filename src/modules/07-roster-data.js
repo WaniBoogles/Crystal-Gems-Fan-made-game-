@@ -506,16 +506,22 @@ function getGuardianSvg(charId, size = 44) {
 }
 
 const CHARACTER_STATS = {
-  steven:   { hp: 145, attack: 28, magic: 42, defense: 44, critChance: 0.14, critDamage: 1.55 },
-  garnet:   { hp: 150, attack: 48, magic: 36, defense: 42, critChance: 0.20, critDamage: 1.75 },
-  amethyst: { hp: 135, attack: 38, magic: 32, defense: 34, critChance: 0.22, critDamage: 1.70 },
-  pearl:    { hp: 118, attack: 34, magic: 45, defense: 30, critChance: 0.28, critDamage: 1.85 },
-  bismuth:  { hp: 165, attack: 52, magic: 34, defense: 50, critChance: 0.16, critDamage: 1.75 },
-  peridot:  { hp: 160, attack: 24, magic: 44, defense: 52, critChance: 0.15, critDamage: 1.55 },
-  lapis:    { hp: 122, attack: 26, magic: 58, defense: 28, critChance: 0.18, critDamage: 1.75 },
-  rose:     { hp: 175, attack: 42, magic: 54, defense: 48, critChance: 0.18, critDamage: 1.75 },
-  connie:   { hp: 105, attack: 38, magic: 18, defense: 24, critChance: 0.36, critDamage: 2.05 },
-  jasper:   { hp: 170, attack: 54, magic: 26, defense: 48, critChance: 0.19, critDamage: 1.80 }
+  // Balanced Roles:
+  // Defenders/Healers (Steven, Rose): High HP & DEF + strong healing, modest raw Attack
+  // Power Strikers/Juggernauts (Garnet, Jasper, Bismuth): High ATK & solid DEF, NO healing
+  // Speed/Precision Duelists (Pearl, Connie): High Speed & Crit, lower HP/DEF
+  // Elemental/Tech Controllers (Lapis, Peridot): High Magic/Zoning, lower melee ATK
+  // Wild Rushdown (Amethyst): Balanced momentum bruiser
+  steven:   { hp: 165, attack: 25, magic: 40, defense: 56, critChance: 0.14, critDamage: 1.55 },
+  garnet:   { hp: 155, attack: 52, magic: 34, defense: 44, critChance: 0.20, critDamage: 1.75 },
+  amethyst: { hp: 140, attack: 42, magic: 32, defense: 36, critChance: 0.22, critDamage: 1.70 },
+  pearl:    { hp: 115, attack: 38, magic: 46, defense: 28, critChance: 0.32, critDamage: 1.95 },
+  bismuth:  { hp: 170, attack: 54, magic: 30, defense: 52, critChance: 0.16, critDamage: 1.75 },
+  peridot:  { hp: 145, attack: 25, magic: 48, defense: 46, critChance: 0.16, critDamage: 1.55 },
+  lapis:    { hp: 120, attack: 26, magic: 60, defense: 26, critChance: 0.18, critDamage: 1.75 },
+  rose:     { hp: 180, attack: 28, magic: 46, defense: 58, critChance: 0.16, critDamage: 1.60 },
+  connie:   { hp: 108, attack: 44, magic: 20, defense: 24, critChance: 0.38, critDamage: 2.10 },
+  jasper:   { hp: 175, attack: 58, magic: 22, defense: 46, critChance: 0.18, critDamage: 1.85 }
 };
 
 const FUSION_STATS = {
@@ -615,8 +621,8 @@ const GUARDIAN_DATA = {
     title: 'Master Blacksmith & Weapon Forger',
     desc: 'Heavy Knockback Hammers • Forged Anvil Toss • Breaking Point Molten Fissure',
     lore: 'Legendary Crystal Gem blacksmith with a 98-facet rainbow crystal. Her brutal hammer swings and anvil launches send enemies flying backward, while the Breaking Point ruptures molten fissures!',
-    j: { name: 'Heavy Hammer', icon: '🔨', desc: 'Crushing shapeshifted hammer strike that sends monsters flying backward' },
-    k: { name: 'Forged Anvil', icon: '🔩', desc: 'Hurls an incandescent forged anvil projectile dealing heavy impact and knockback (50 DMG)' },
+    j: { name: 'Heavy Hammer Combo', icon: '🔨', desc: 'Shapeshifting 4-hit blacksmith chain: Hammer Swing → Battle-Axe Cleave → Forge Upper → Molten Anvil Slam' },
+    k: { name: 'Molten Hammer Leap', icon: '⚒️', desc: '[MELEE LEAP] Vaults forward with a titanic shapeshifted Forge Hammer, crashing down in a close-range molten shockwave!' },
     l: { name: 'Breaking Point', icon: '🌋', desc: 'Shatters the ground with the Breaking Point, catapulting enemies into the air with lava plumes (70 DMG)' }
   },
   peridot: {
@@ -663,8 +669,8 @@ const GUARDIAN_DATA = {
     title: 'Swordmaster & Knight of the Crystal Gems',
     desc: 'Knight Fencing Flurry • Pink Sword Flying Arc • Shadow Step Blade Dash',
     lore: 'Human sword prodigy trained in classical fencing and combat choreography by Pearl. Armed with the custom Pink Sword forged by Bismuth, Connie dashes swiftly across battlefields, parrying corruptions and executing high-velocity sword flurries!',
-    j: { name: 'Knight\'s Flurry', icon: '⚔️', desc: 'Rapid 3-hit fencing thrust and crescent slash combo (En Garde!)' },
-    k: { name: 'Sword Dash Slash', icon: '💫', desc: "Rose's sword carves a crescent of air as Connie lunges through the enemy line (42 DMG)" },
+    j: { name: 'Iaido Sword Flurry', icon: '⚔️', desc: 'Lightning 4-hit swordmaster chain: Quick Draw → Diagonal Cross → Vaulting Crescent → Helm-Splitter!' },
+    k: { name: 'Sworn Iai-Lunge', icon: '💨', desc: "[MELEE DASH] Pure human swordcraft — dashes straight through enemies with a razor-close crescent cut & deflects shots!" },
     l: { name: 'Tactical Parry', icon: '⚡', desc: 'The guard stance Pearl drilled into her — slips through every strike, then answers it (60 DMG)' }
   },
   jasper: {
@@ -673,10 +679,10 @@ const GUARDIAN_DATA = {
     icon: '💥',
     types: ['FIGHT', 'DRAGON'],
     title: 'Supreme Beta Quartz Juggernaut',
-    desc: 'Beta Brawler Flurry • Crash Helmet Ram • Quartz Tornado Spin Dash',
-    lore: 'The ultimate Quartz soldier born from the Beta Kindergarten. Unrivaled physical strength, unstoppable inertia, and master of the Comet Crash Helmet and flaming Quartz Spin Dash. When enraged, she enters a hyper-armored juggernaut frenzy that shatters the earth!',
-    j: { name: 'Beta Brawler', icon: '👊', desc: 'Brutal gut punch and seismic hammer fist flurry with heavy knockback' },
-    k: { name: 'Crash Helmet Ram', icon: '🪖', desc: 'Summons spiky bronze Crash Helmet, rocketing forward like a battering ram (52 DMG)' },
+    desc: 'Beta Brawler Flurry • Crash Helmet Bull-Rush • Quartz Tornado Spin Dash',
+    lore: 'The ultimate Quartz soldier born from the Beta Kindergarten. Pure physical brutality with zero ranged gimmicks — overwhelms enemies with armored Crash Helmet bull-rushes, seismic haymakers, and unstoppable Quartz Spin Dashes!',
+    j: { name: 'Beta Juggernaut', icon: '👊', desc: 'Brutal 4-hit brawler chain: Crushing Haymaker → Shoulder Ram → Horned Uppercut → Seismic Helmet Crash!' },
+    k: { name: 'Crash Helmet Bull-Rush', icon: '🪖', desc: '[MELEE CHARGE] Summons her spiked Crash Helmet and physically rockets forward as an armored battering ram (no ranged shot!)' },
     l: { name: 'Quartz Tornado', icon: '🔥', desc: 'Curls into a flaming spiked Beta Spin Dash ball erupting seismic shockwaves (65 DMG)' }
   }
 };
