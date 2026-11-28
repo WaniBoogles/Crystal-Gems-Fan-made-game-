@@ -153,15 +153,16 @@ html, body {
 }
 
 .hud-avatar-icon {
-  width: 44px;
-  height: 44px;
+  width: 46px;
+  height: 46px;
   border-radius: 12px;
-  background: transparent;
-  border: none;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: none;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -2469,15 +2470,16 @@ body.mobile-device .touch-controls.active {
 }
 
 .lobby-guardian-avatar {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
   border-radius: 12px;
-  background: transparent;
-  border: none;
+  background: rgba(15, 23, 42, 0.78);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: none;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   flex-shrink: 0;
 }
 
@@ -2722,17 +2724,17 @@ body.mobile-device .touch-controls.active {
 }
 
 .char-item-bubble {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.40);
   overflow: hidden;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(15, 23, 42, 0.88);
 }
 
 .guardian-avatar-frame {
@@ -2746,10 +2748,12 @@ body.mobile-device .touch-controls.active {
 }
 
 .guardian-avatar-frame img {
-  width: 108%;
-  height: 108%;
-  object-fit: cover;
-  object-position: 50% 22%;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 30%;
+  padding: 2px;
+  box-sizing: border-box;
   display: block;
   pointer-events: none;
 }
@@ -2824,15 +2828,15 @@ body.mobile-device .touch-controls.active {
 }
 
 .char-pane-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+  background: rgba(15, 23, 42, 0.84);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -6304,10 +6308,31 @@ class GemAudioEngine {
             this.ctx.onstatechange = handleStateChange;
           }
           
-          // SFX Master Gain: Set directly to sfxVolume so SFX is always crisp and audible
+          // SFX Master Bus: Warm low-pass anti-harshness filter + DynamicsCompressor limiter for punchy fighting-game audio
           this.sfxGainNode = this.ctx.createGain();
           this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
-          this.sfxGainNode.connect(this.ctx.destination);
+          let sfxOut = this.ctx.destination;
+          try {
+            if (typeof this.ctx.createDynamicsCompressor === 'function') {
+              this.sfxCompressor = this.ctx.createDynamicsCompressor();
+              this.sfxCompressor.threshold.setValueAtTime(-16, this.ctx.currentTime);
+              this.sfxCompressor.knee.setValueAtTime(14, this.ctx.currentTime);
+              this.sfxCompressor.ratio.setValueAtTime(6, this.ctx.currentTime);
+              this.sfxCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+              this.sfxCompressor.release.setValueAtTime(0.12, this.ctx.currentTime);
+              this.sfxCompressor.connect(this.ctx.destination);
+              sfxOut = this.sfxCompressor;
+            }
+            if (typeof this.ctx.createBiquadFilter === 'function') {
+              this.sfxWarmFilter = this.ctx.createBiquadFilter();
+              this.sfxWarmFilter.type = 'lowpass';
+              this.sfxWarmFilter.frequency.setValueAtTime(5800, this.ctx.currentTime);
+              this.sfxWarmFilter.Q.setValueAtTime(0.7, this.ctx.currentTime);
+              this.sfxWarmFilter.connect(sfxOut);
+              sfxOut = this.sfxWarmFilter;
+            }
+          } catch (sfe) {}
+          this.sfxGainNode.connect(sfxOut);
 
           // Music Master Gain + Warm Spatial Echo Bus (Aivi & Surasshu lush atmosphere)
           this.musicGainNode = this.ctx.createGain();
@@ -6626,6 +6651,24 @@ class GemAudioEngine {
     src.stop(t + duration);
   }
 
+  // Warm sub-bass body punch drop (visceral Tekken/arcade fighting-game impact weight)
+  _playSubDrop(t, f0 = 115, f1 = 36, duration = 0.16, vol = 0.34, wave = 'sine') {
+    if (!this.ctx) return;
+    try {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = wave;
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(24, f1), t + duration);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      o.connect(g);
+      g.connect(this.getSfxDestination());
+      o.start(t);
+      o.stop(t + duration + 0.01);
+    } catch (e) {}
+  }
+
   playSfx(type) {
     if (!this.soundEnabled) return;
     this.init();
@@ -6732,18 +6775,19 @@ class GemAudioEngine {
           break;
 
         case 'parry':
-          // Crystalline resonant clash & ringing harmonics
-          [1046.50, 1567.98, 2093.00, 3135.96].forEach((freq, idx) => {
+          // Tight sub-bass deflect thump + warm crystalline bell chord (non-piercing)
+          this._playSubDrop(t, 125, 48, 0.14, 0.28, 'sine');
+          [783.99, 1174.66, 1567.98].forEach((freq, idx) => {
             const pOsc = this.ctx.createOscillator();
             const pGain = this.ctx.createGain();
             pOsc.type = idx === 0 ? 'triangle' : 'sine';
             pOsc.frequency.setValueAtTime(freq, t);
-            pGain.gain.setValueAtTime(0.28 / (idx + 1), t);
-            pGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45 + idx * 0.05);
+            pGain.gain.setValueAtTime(0.22 / (idx + 1), t);
+            pGain.gain.exponentialRampToValueAtTime(0.001, t + 0.36 + idx * 0.05);
             pOsc.connect(pGain);
             pGain.connect(this.getSfxDestination());
             pOsc.start(t);
-            pOsc.stop(t + 0.55);
+            pOsc.stop(t + 0.45);
           });
           return;
 
@@ -6889,80 +6933,137 @@ class GemAudioEngine {
           osc.stop(t + 0.35);
           break;
 
+        case 'hitLight':
+          // Crisp light martial-arts jab/slap (zero harsh beep!)
+          this._playSubDrop(t, 155, 54, 0.09, 0.24, 'sine');
+          this._playNoiseBurst(t, 0.045, 1180, 1.4, 0.16, 'bandpass');
+          return;
+
+        case 'hitHeavy':
+          // Visceral Tekken-grade heavy punch/finisher impact (sub-drop + crack + body resonance)
+          this._playSubDrop(t, 120, 34, 0.20, 0.44, 'sine');
+          this._playSubDrop(t, 250, 72, 0.11, 0.20, 'triangle');
+          this._playNoiseBurst(t, 0.095, 920, 1.0, 0.28, 'bandpass');
+          this._playNoiseBurst(t, 0.055, 2400, 1.6, 0.14, 'bandpass');
+          return;
+
+        case 'hitCrit':
+          // Dopamine Critical / Finisher Smash: heavy impact + warm crystalline harmonic chime!
+          this._playSubDrop(t, 130, 32, 0.24, 0.48, 'sine');
+          this._playNoiseBurst(t, 0.10, 1150, 1.1, 0.30, 'bandpass');
+          [880, 1318.5, 1760].forEach((freq, idx) => {
+            const co = this.ctx.createOscillator();
+            const cg = this.ctx.createGain();
+            co.type = 'sine';
+            co.frequency.setValueAtTime(freq, t + idx * 0.018);
+            cg.gain.setValueAtTime(0.14 / (idx + 1), t + idx * 0.018);
+            cg.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.018 + 0.24);
+            co.connect(cg);
+            cg.connect(this.getSfxDestination());
+            co.start(t + idx * 0.018);
+            co.stop(t + idx * 0.018 + 0.25);
+          });
+          return;
+
+        case 'shieldBlock':
+          // Muffled energy-barrier block thud
+          this._playSubDrop(t, 280, 110, 0.10, 0.22, 'triangle');
+          this._playNoiseBurst(t, 0.05, 1600, 3.2, 0.10, 'bandpass');
+          return;
+
+        case 'shieldBreak':
+          // Dramatic Guard Shatter: deep impact drop + shimmering crystal glass scatter!
+          this._playSubDrop(t, 140, 30, 0.28, 0.46, 'sine');
+          this._playNoiseBurst(t, 0.16, 2200, 1.2, 0.28, 'bandpass');
+          [1174.66, 1567.98, 2093.00, 1396.91].forEach((freq, idx) => {
+            const so = this.ctx.createOscillator();
+            const sg = this.ctx.createGain();
+            so.type = 'triangle';
+            so.frequency.setValueAtTime(freq, t + idx * 0.025);
+            so.frequency.exponentialRampToValueAtTime(freq * 0.72, t + idx * 0.025 + 0.22);
+            sg.gain.setValueAtTime(0.14, t + idx * 0.025);
+            sg.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.025 + 0.24);
+            so.connect(sg);
+            sg.connect(this.getSfxDestination());
+            so.start(t + idx * 0.025);
+            so.stop(t + idx * 0.025 + 0.26);
+          });
+          return;
+
+        case 'armorClang':
+          // Heavy armored metallic clank (warns player enemy has super-armor!)
+          this._playSubDrop(t, 190, 82, 0.12, 0.24, 'triangle');
+          [440, 675].forEach((freq, idx) => {
+            const ao = this.ctx.createOscillator();
+            const ag = this.ctx.createGain();
+            ao.type = 'triangle';
+            ao.frequency.setValueAtTime(freq, t);
+            ag.gain.setValueAtTime(0.12 / (idx + 1), t);
+            ag.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+            ao.connect(ag);
+            ag.connect(this.getSfxDestination());
+            ao.start(t);
+            ao.stop(t + 0.15);
+          });
+          return;
+
         case 'spindash':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, t);
-          osc.frequency.exponentialRampToValueAtTime(880, t + 0.3);
-          gain.gain.setValueAtTime(0.2, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
-          osc.start(t);
-          osc.stop(t + 0.35);
-          break;
+          // Smooth turbine whoosh sweep (warm triangle + filtered air rush, no harsh saw)
+          this._playSubDrop(t, 180, 520, 0.24, 0.22, 'triangle');
+          this._playNoiseBurst(t, 0.22, 950, 1.4, 0.18, 'bandpass');
+          return;
 
         case 'lightning':
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(600, t);
-          osc.frequency.exponentialRampToValueAtTime(80, t + 0.25);
-          gain.gain.setValueAtTime(0.25, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          // Electric crackle burst (filtered noise snap + deep thunder drop, no square beep)
+          this._playSubDrop(t, 160, 42, 0.22, 0.30, 'sine');
+          this._playNoiseBurst(t, 0.14, 2100, 1.8, 0.22, 'bandpass');
+          this._playNoiseBurst(t + 0.04, 0.12, 1300, 2.2, 0.16, 'bandpass');
+          return;
 
         case 'hammer':
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(140, t);
-          osc.frequency.exponentialRampToValueAtTime(45, t + 0.2);
-          gain.gain.setValueAtTime(0.35, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          // Heavy forge anvil/hammer impact (deep sub-drop + warm metallic body)
+          this._playSubDrop(t, 130, 36, 0.24, 0.42, 'sine');
+          this._playSubDrop(t, 280, 95, 0.14, 0.18, 'triangle');
+          this._playNoiseBurst(t, 0.11, 680, 1.1, 0.24, 'lowpass');
+          return;
 
         case 'water':
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(480, t);
-          osc.frequency.exponentialRampToValueAtTime(160, t + 0.22);
-          gain.gain.setValueAtTime(0.3, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          this._playSubDrop(t, 360, 120, 0.20, 0.22, 'sine');
+          this._playNoiseBurst(t, 0.20, 820, 1.2, 0.18, 'bandpass');
+          return;
 
         case 'metal':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(660, t);
+          osc.frequency.setValueAtTime(620, t);
           osc.frequency.exponentialRampToValueAtTime(240, t + 0.14);
-          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.setValueAtTime(0.15, t);
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
           osc.start(t);
           osc.stop(t + 0.16);
           break;
 
         case 'sword':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(850, t);
-          osc.frequency.exponentialRampToValueAtTime(280, t + 0.12);
-          gain.gain.setValueAtTime(0.28, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-          osc.start(t);
-          osc.stop(t + 0.15);
-          break;
+          // Clean steel air-slice (filtered noise whoosh + crisp metallic sheen)
+          this._playNoiseBurst(t, 0.10, 1900, 1.8, 0.20, 'bandpass');
+          this._playSubDrop(t, 680, 240, 0.10, 0.14, 'triangle');
+          return;
 
         case 'overdrive':
-          // Pink Diamond Power-Up Surge Sound
-          [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          // Lush Pink Diamond Power-Up Surge (warm harmonic shimmer chord + deep bass swell, zero harsh sawtooth!)
+          this._playSubDrop(t, 95, 38, 0.45, 0.42, 'sine');
+          this._playNoiseBurst(t, 0.28, 1200, 1.2, 0.16, 'bandpass');
+          [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, idx) => {
             const o = this.ctx.createOscillator();
             const g = this.ctx.createGain();
-            o.type = 'sawtooth';
-            o.frequency.setValueAtTime(freq, t + idx * 0.05);
-            o.frequency.exponentialRampToValueAtTime(freq * 1.5, t + idx * 0.05 + 0.4);
-            g.gain.setValueAtTime(0.22, t + idx * 0.05);
-            g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.05 + 0.55);
+            o.type = idx % 2 === 0 ? 'triangle' : 'sine';
+            o.frequency.setValueAtTime(freq, t + idx * 0.045);
+            o.frequency.exponentialRampToValueAtTime(freq * 1.25, t + idx * 0.045 + 0.36);
+            g.gain.setValueAtTime(0.13, t + idx * 0.045);
+            g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.045 + 0.50);
             o.connect(g);
             g.connect(this.getSfxDestination());
-            o.start(t + idx * 0.05);
-            o.stop(t + idx * 0.05 + 0.55);
+            o.start(t + idx * 0.045);
+            o.stop(t + idx * 0.045 + 0.52);
           });
           return;
 
@@ -6972,7 +7073,7 @@ class GemAudioEngine {
             const toneGain = this.ctx.createGain();
             toneOsc.type = 'triangle';
             toneOsc.frequency.setValueAtTime(freq, t + idx * 0.08);
-            toneGain.gain.setValueAtTime(0.2, t + idx * 0.08);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.08);
             toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.35);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
@@ -6982,35 +7083,37 @@ class GemAudioEngine {
           return;
 
         case 'waveWarning':
-          // Plants vs Zombies Style Huge Wave Alert Sound (Dramatic Brass Swell)
+          // Warm dramatic brass horn swell (triangle + sub, no buzzy sawtooth)
+          this._playSubDrop(t, 110, 62, 0.55, 0.32, 'sine');
           [130.81, 164.81, 196.00].forEach((freq, idx) => {
             const toneOsc = this.ctx.createOscillator();
             const toneGain = this.ctx.createGain();
-            toneOsc.type = 'sawtooth';
-            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.12);
-            toneOsc.frequency.exponentialRampToValueAtTime(freq * 0.82, t + idx * 0.12 + 0.65);
-            toneGain.gain.setValueAtTime(0.26, t + idx * 0.12);
-            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.12 + 0.7);
+            toneOsc.type = 'triangle';
+            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.11);
+            toneOsc.frequency.exponentialRampToValueAtTime(freq * 0.88, t + idx * 0.11 + 0.55);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.11);
+            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.11 + 0.62);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
-            toneOsc.start(t + idx * 0.12);
-            toneOsc.stop(t + idx * 0.12 + 0.7);
+            toneOsc.start(t + idx * 0.11);
+            toneOsc.stop(t + idx * 0.11 + 0.64);
           });
           return;
 
         case 'bossIntro':
-          // Dramatic Corrupted Boss Fanfare
-          [220.00, 277.18, 329.63, 440.00].forEach((freq, idx) => {
+          // Dramatic Corrupted Boss Fanfare (deep cinematic sub + warm brass triangle chord)
+          this._playSubDrop(t, 100, 36, 0.60, 0.40, 'sine');
+          [220.00, 261.63, 329.63, 440.00].forEach((freq, idx) => {
             const toneOsc = this.ctx.createOscillator();
             const toneGain = this.ctx.createGain();
-            toneOsc.type = 'square';
-            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.14);
-            toneGain.gain.setValueAtTime(0.24, t + idx * 0.14);
-            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.14 + 0.55);
+            toneOsc.type = 'triangle';
+            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.13);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.13);
+            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.13 + 0.55);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
-            toneOsc.start(t + idx * 0.14);
-            toneOsc.stop(t + idx * 0.14 + 0.55);
+            toneOsc.start(t + idx * 0.13);
+            toneOsc.stop(t + idx * 0.13 + 0.56);
           });
           return;
 
@@ -8100,6 +8203,122 @@ class ParticleSystem {
     });
   }
 
+  // Tekken / Genshin Dopamine Hit Burst: differentiated light vs heavy vs crit impact choreography
+  addTekkenHitBurst(x, y, dirX = 1, color = '#fde047', tier = 'light') {
+    const scale = this.particleScale || 1;
+    const facing = dirX >= 0 ? 1 : -1;
+    const baseAngle = facing >= 0 ? 0 : Math.PI;
+    const isCrit = tier === 'crit';
+    const isHeavy = tier === 'heavy' || isCrit;
+
+    // 1. Crisp core cross-flare (small snappy flash for light; huge blazing star for heavy/crit)
+    this.addHitSpark(x, y, isCrit ? '#fde047' : color, isCrit ? 34 : (isHeavy ? 26 : 16), (Math.random() - 0.5) * 0.6);
+    if (isHeavy) {
+      this.addHitSpark(x, y, '#ffffff', isCrit ? 24 : 18, Math.PI / 4 + (Math.random() - 0.5) * 0.35);
+    }
+
+    // 2. Expanding shockwave ring(s)
+    if (isCrit) {
+      this.addShockwaveRing(x, y, 138, '#fde047', 4.6);
+      this.addShockwaveRing(x, y, 92, '#ffffff', 3.2);
+      this.addShockwaveRing(x, y, 112, color, 2.8);
+      this.addImpactFrame(x, y, color, 165);
+    } else if (isHeavy) {
+      this.addShockwaveRing(x, y, 102, color, 3.6);
+      this.addShockwaveRing(x, y, 64, '#ffffff', 2.4);
+    } else {
+      this.addShockwaveRing(x, y, 44, color, 2.0);
+    }
+
+    // 3. Directional high-velocity Tekken impact streaks
+    const streakCount = Math.max(3, Math.round((isCrit ? 14 : (isHeavy ? 10 : 6)) * scale));
+    for (let i = 0; i < streakCount; i++) {
+      const spread = isHeavy ? 1.85 : 1.15;
+      const ang = baseAngle + (Math.random() - 0.5) * spread;
+      const spd = (isCrit ? 11 : (isHeavy ? 8.5 : 5.5)) + Math.random() * 5.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - (Math.random() * 1.4),
+        angle: ang,
+        length: (isCrit ? 34 : (isHeavy ? 24 : 14)) + Math.random() * 12,
+        width: isCrit ? 3.4 : (isHeavy ? 2.6 : 1.8),
+        color: (i % 3 === 0) ? '#ffffff' : (isCrit && i % 3 === 1 ? '#fde047' : color),
+        life: isHeavy ? 0.52 : 0.38,
+        decay: isHeavy ? 0.048 : 0.058,
+        isTekkenStreak: true
+      });
+    }
+
+    // 4. Floating embers / sparks for heavy/crit dopamine tail
+    if (isHeavy) {
+      const emberCount = Math.max(3, Math.round((isCrit ? 12 : 7) * scale));
+      for (let i = 0; i < emberCount; i++) {
+        const ang = baseAngle + (Math.random() - 0.5) * 2.1;
+        const spd = 2.8 + Math.random() * 5.2;
+        this.particles.push({
+          x, y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1.5,
+          size: (isCrit ? 4.8 : 3.6) + Math.random() * 2.2,
+          color: i % 2 === 0 ? '#ffffff' : (isCrit ? '#fde047' : color),
+          life: 0.85,
+          decay: 0.032,
+          isStar: true
+        });
+      }
+    }
+  }
+
+  // Front-Guard Shield Shatter VFX: flying cyan energy shards + expanding shatter ring
+  addGuardShatterVFX(x, y, color = '#38bdf8') {
+    const scale = this.particleScale || 1;
+    this.addShockwaveRing(x, y, 130, color, 4.2);
+    this.addShockwaveRing(x, y, 85, '#ffffff', 2.8);
+    this.addHitSpark(x, y, '#ffffff', 30, 0);
+    const shardCount = Math.max(5, Math.round(14 * scale));
+    for (let i = 0; i < shardCount; i++) {
+      const ang = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+      const spd = 4.5 + Math.random() * 6.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 2.2,
+        gravity: 0.28,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.42,
+        size: 5 + Math.random() * 5,
+        color: i % 3 === 0 ? '#ffffff' : color,
+        life: 0.95,
+        decay: 0.028,
+        isDebris: true
+      });
+    }
+  }
+
+  // Hyper-Armor Clang VFX: crisp metallic cross sparks + amber ring
+  addArmorClangVFX(x, y, color = '#fbbf24') {
+    this.addHitSpark(x, y, color, 20, Math.PI / 4);
+    this.addShockwaveRing(x, y, 56, color, 2.5);
+    const count = Math.max(3, Math.round(6 * (this.particleScale || 1)));
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 3.5 + Math.random() * 4.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 1.2,
+        angle: ang,
+        length: 14 + Math.random() * 8,
+        width: 2.2,
+        color: i % 2 === 0 ? '#ffffff' : color,
+        life: 0.42,
+        decay: 0.055,
+        isTekkenStreak: true
+      });
+    }
+  }
+
   addPerfectParryVFX(x, y) {
     this.addParryClash(x, y, '#fde047');
   }
@@ -8626,6 +8845,10 @@ class ParticleSystem {
         p.vy += p.gravity;
         p.rot += p.rotSpeed;
       }
+      if (p.isTekkenStreak) {
+        p.vx *= 0.90;
+        p.vy *= 0.90;
+      }
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
@@ -8737,6 +8960,22 @@ class ParticleSystem {
         ctx.fill();
         ctx.restore();
         p.angle += p.rotSpeed * 0.016;
+      } else if (p.isTekkenStreak) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life * 1.8);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        const len = p.length * (0.55 + p.life);
+        const w = Math.max(1, (p.width || 2.4) * p.life * 1.6);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.moveTo(len * 0.65, 0);
+        ctx.lineTo(-len * 0.55, -w);
+        ctx.lineTo(-len * 0.25, 0);
+        ctx.lineTo(-len * 0.55, w);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       } else if (p.isSpeedStreak) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.life) * 0.75;
@@ -11406,7 +11645,14 @@ class PlayerHero {
     // Acrobatics & Jump Enhancements (Reach platforms effortlessly!)
     this.canDoubleJump = true;
     this.jumpDebounce = false;
-    this.inputBuffer = null; // 5-frame input buffer ({ action, timer })
+    this.inputBuffer = null; // 6-frame (105ms) rising-edge & hitstop-safe input buffer ({ action, timer })
+    this.prevInputs = { attack: false, special: false, skill: false, dodge: false, jump: false };
+    this.hitConfirmTimer = 0;      // Active cancel window after landing a hit
+    this.hitConfirmSwingId = -1;
+    this.isFinisherSwing = false;
+    this.lastPerfectLink = false;
+    this.lastCancelTag = '';
+    this.lastCancelTimer = 0;
 
     // Canonical Gem Fusion Attributes
     this.isFusion = false;
@@ -11582,6 +11828,18 @@ class PlayerHero {
     }
   }
 
+  // Queue an action into the 6-frame (105ms) buffer — safe to call from keydown even during hitstop!
+  bufferInput(action, windowSec = 0.105) {
+    if (!action || this.isFallen) return;
+    this.inputBuffer = { action, timer: Math.max(0.06, windowSec) };
+  }
+
+  // Open a responsive Hit-Confirm Cancel window (allows dash/jump cancel out of recovery frames)
+  markHitConfirm(isHeavy = false) {
+    this.hitConfirmTimer = isHeavy ? 0.28 : 0.22;
+    this.hitConfirmSwingId = this._swingId || 0;
+  }
+
   update(dt, input, audioEngine, particles, projectiles, pickups, platforms = []) {
     this.animTime = (this.animTime || 0) + dt;
     // Lore-Accurate Knockout / Poofed state freeze: Skip inputs and actions
@@ -11736,22 +11994,41 @@ class PlayerHero {
       }
     }
 
-    // 5-Frame Input Buffering (~85ms window) to prevent dropped inputs during recovery
-    if (input.attack) this.inputBuffer = { action: 'attack', timer: 0.085 };
-    else if (input.special) this.inputBuffer = { action: 'special', timer: 0.085 };
-    else if (input.skill) this.inputBuffer = { action: 'skill', timer: 0.085 };
-    else if (input.dodge) this.inputBuffer = { action: 'dodge', timer: 0.085 };
-    else if (input.jump && !this.jumpDebounce) this.inputBuffer = { action: 'jump', timer: 0.085 };
+    // 6-Frame (~105ms) Rising-Edge Input Buffering (works seamlessly with keydown hitstop buffering)
+    if (this.hitConfirmTimer > 0) this.hitConfirmTimer = Math.max(0, this.hitConfirmTimer - dt);
+    if (this.lastCancelTimer > 0) this.lastCancelTimer = Math.max(0, this.lastCancelTimer - dt);
+    const prev = this.prevInputs || { attack: false, special: false, skill: false, dodge: false, jump: false };
+    if (input.attack && !prev.attack) this.bufferInput('attack', 0.105);
+    else if (input.special && !prev.special) this.bufferInput('special', 0.105);
+    else if (input.skill && !prev.skill) this.bufferInput('skill', 0.105);
+    else if (input.dodge && !prev.dodge) this.bufferInput('dodge', 0.105);
+    else if (input.jump && !prev.jump && !this.jumpDebounce) this.bufferInput('jump', 0.105);
+    this.prevInputs = {
+      attack: !!input.attack,
+      special: !!input.special,
+      skill: !!input.skill,
+      dodge: !!input.dodge,
+      jump: !!input.jump
+    };
 
     if (this.inputBuffer) {
       this.inputBuffer.timer -= dt;
       if (this.inputBuffer.timer <= 0) this.inputBuffer = null;
     }
 
-    // Dodge Action Execution Check
-    const tryDodgeDirect = input.dodge || (this.inputBuffer?.action === 'dodge' && this.actionTimer <= 0);
-    if (tryDodgeDirect && this.dodgeCooldown <= 0 && !this.isDodging && !this.isSpinDashing) {
+    // Dodge Action Execution Check (with Hit-Confirm Dash Cancel!)
+    const canDashCancel = this.hitConfirmTimer > 0 && this.isAttacking;
+    const tryDodgeDirect = input.dodge || (this.inputBuffer?.action === 'dodge' && (this.actionTimer <= 0 || canDashCancel));
+    if (tryDodgeDirect && (this.dodgeCooldown <= 0 || (canDashCancel && this.dodgeCooldown <= 0.18)) && !this.isDodging && !this.isSpinDashing) {
       if (this.inputBuffer?.action === 'dodge') this.inputBuffer = null;
+      if (canDashCancel) {
+        this.actionTimer = 0;
+        this.attackCooldown = 0;
+        this.dodgeCooldown = 0;
+        this.hitConfirmTimer = 0;
+        this.lastCancelTag = 'DASH CANCEL';
+        this.lastCancelTimer = 0.85;
+      }
       this.executeDodge(audioEngine, particles, input);
     }
 
@@ -11944,10 +12221,19 @@ class PlayerHero {
       this.currentPlatform = null;
     }
 
-    // Enhanced Jump & Double Jump System with 5-Frame Input Buffer
-    const tryJump = (input.jump && !this.jumpDebounce && !input.down) || (this.isGrounded && this.inputBuffer?.action === 'jump');
+    // Enhanced Jump & Double Jump System with 6-Frame Input Buffer & Hit-Confirm Jump Cancel
+    const canJumpCancel = this.hitConfirmTimer > 0 && this.isAttacking;
+    const tryJump = (input.jump && !this.jumpDebounce && !input.down) || ((this.isGrounded || canJumpCancel) && this.inputBuffer?.action === 'jump');
     if (tryJump) {
       if (this.inputBuffer?.action === 'jump') this.inputBuffer = null;
+      if (canJumpCancel) {
+        this.actionTimer = 0;
+        this.isAttacking = false;
+        this.attackCooldown = Math.min(this.attackCooldown, 0.05);
+        this.hitConfirmTimer = 0;
+        this.lastCancelTag = 'JUMP CANCEL';
+        this.lastCancelTimer = 0.85;
+      }
       if (this.isGrounded) {
         this.vy = -680; // Powerful crisp leap: reaches 192px apex
         this.isGrounded = false;
@@ -12257,6 +12543,8 @@ class PlayerHero {
     this.comboStep = (this.comboStepTimer > 0) ? (this.comboStep + 1) % chainLen : 0;
     const isFinisher = (this.comboStep === chainLen - 1);
     const perfectLink = (this.comboStepTimer > 0.12 && this.comboStep > 0);
+    this.isFinisherSwing = isFinisher;
+    this.lastPerfectLink = perfectLink;
     this.comboLinkBonus = perfectLink ? 0.12 : 0;
     this.attackCombo = this.comboStep;
     this.attackStyle = profile.style || 'boxer';
@@ -13690,7 +13978,13 @@ class PlayerHero {
         particles.addDamageText(this.x, this.y - 65, '★ PERFECT PARRY!', true, '#fde047');
       }
       if (this.gameRef) {
-        this.gameRef.triggerHitstop(0.08, 4.0);
+        this.gameRef.triggerHitstop(0.082, 5.5, -this.facing * 7, -1.5);
+        if (this.gameRef.triggerCameraZoom) {
+          this.gameRef.triggerCameraZoom(0.085, 0.32, this.x, this.y - 48);
+        }
+        if (this.gameRef.showCombatBadge) {
+          this.gameRef.showCombatBadge('PERFECT PARRY!', '#4ade80');
+        }
         if (this.playerId === 'p2') {
           this.gameRef.starPowerMeterP2 = Math.min(100, (this.gameRef.starPowerMeterP2 || 0) + 15);
         } else {
@@ -22524,7 +22818,14 @@ class EnemyManager {
       diveTimer: 0,
       isFrenzied: false,
       name: 'Corrupted Gem',
-      animTime: Math.random() * 10
+      animTime: Math.random() * 10,
+      hitRecoilX: 0,
+      shieldActive: (type === 'destabilizer_soldier' || type === 'boss_agate_warden'),
+      shieldMaxHp: (type === 'boss_agate_warden') ? 140 : (type === 'destabilizer_soldier' ? 45 : 0),
+      shieldHp: (type === 'boss_agate_warden') ? 140 : (type === 'destabilizer_soldier' ? 45 : 0),
+      shieldCooldown: 0,
+      shieldFlashTimer: 0,
+      hyperArmorTimer: 0
     };
 
     if (type === 'centipeetle') {
@@ -22976,6 +23277,20 @@ class EnemyManager {
         continue;
       }
       if (e.hurtTimer > 0) e.hurtTimer -= dt;
+      if (e.hitRecoilX) {
+        e.hitRecoilX *= Math.pow(0.0015, dt);
+        if (Math.abs(e.hitRecoilX) < 0.25) e.hitRecoilX = 0;
+      }
+      if (e.shieldFlashTimer > 0) e.shieldFlashTimer = Math.max(0, e.shieldFlashTimer - dt);
+      if (e.hyperArmorTimer > 0) e.hyperArmorTimer = Math.max(0, e.hyperArmorTimer - dt);
+      if (e.shieldMaxHp > 0 && !e.shieldActive) {
+        e.shieldCooldown = Math.max(0, (e.shieldCooldown || 0) - dt);
+        if (e.shieldCooldown <= 0 && e.stunTimer <= 0 && e.hurtTimer <= 0) {
+          e.shieldActive = true;
+          e.shieldHp = e.shieldMaxHp;
+          if (particles) particles.addShockwaveRing(e.x, e.y - e.height * 0.5, 48, '#38bdf8', 2.4);
+        }
+      }
 
       // --- GEM COMBAT TYPE STATUSES ----------------------------------------
       if (e.vulnTimer > 0) { e.vulnTimer -= dt; if (e.vulnTimer <= 0) e.vulnMult = 1; }
@@ -23008,8 +23323,8 @@ class EnemyManager {
         }
       }
 
-      // Freebuff: clean hits interrupt a wind-up, rewarding aggressive play
-      if (e.hurtTimer > 0 && e.windup > 0) {
+      // Freebuff: clean hits interrupt a wind-up, rewarding aggressive play (unless Hyper-Armor is active)
+      if (e.hurtTimer > 0 && e.windup > 0 && !(e.hyperArmorTimer > 0)) {
         e.windup = 0;
         e.aiState = 'staggered';
       }
@@ -23296,6 +23611,10 @@ class EnemyManager {
           e.windup = this.getEnemyTelegraph(e);
           e.windupMax = e.windup;
           e.aiState = 'windup';
+          // Heavy brute enemies gain brief Hyper-Armor during windup charge (broken by Armor Break, [L], Fusion, or 2x weakness)
+          if (e.type === 'cluster' || e.type === 'obsidian' || e.type === 'forge_automaton') {
+            e.hyperArmorTimer = Math.min(0.55, e.windup + 0.08);
+          }
           if (audioEngine) audioEngine.playSfx('windup');
           if (particles) {
             particles.addDamageText(e.x, e.y - e.height - 26, '!', true, '#ef4444');
@@ -23957,18 +24276,33 @@ class EnemyManager {
           dmg = Math.round(dmg * 1.25);
         }
 
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType), pStats);
+        const isFinisherHit = !!(player.isFinisherSwing || player.comboStep >= 2 || player.attackType === 'L' || player.isFusion);
+        const isHeavyHit = !!(isFinisherHit || player.attackType === 'K' || player.attackArmorBreak || player.isPinkOverdrive);
+        const meleeOpts = {
+          ...pStats,
+          isHeavy: isHeavyHit,
+          isFinisher: isFinisherHit,
+          armorBreak: !!player.attackArmorBreak,
+          attackerX: player.x,
+          attackerFacing: player.facing,
+          attackSlot: player.attackType || 'J',
+          isFusion: !!player.isFusion,
+          player
+        };
+        const hitRes = this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType), meleeOpts);
+        if (hitRes && (hitRes.blocked || hitRes.hyperArmored)) {
+          return;
+        }
+        if (typeof player.markHitConfirm === 'function') {
+          player.markHitConfirm(isHeavyHit || !!(hitRes && hitRes.isCrit));
+        }
         const sparkColor = player.isPinkOverdrive ? '#f43f5e' : ((typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[player.activeChar]?.color) || '#fde047');
         particles.addImpactSparks(e.x, e.y - e.height / 2, player.facing, sparkColor, 12);
-        if (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion) {
+        if (isFinisherHit) {
           particles.addImpactFrame(e.x, e.y - e.height / 2, sparkColor, player.isFusion ? 200 : 155);
           if (['connie', 'rose', 'pearl'].includes(player.activeChar) || (player.isFusion && ['stevonnie', 'rainbow2', 'rainbowClassic'].includes(player.fusionData?.id))) {
             particles.addDoubleSlashX(e.x - player.facing * 12, e.y - e.height / 2, player.facing, sparkColor);
           }
-        }
-        if (this.gameRef && this.gameRef.triggerHitstop) {
-          const isFinisherHit = (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion);
-          this.gameRef.triggerHitstop(isFinisherHit ? 0.062 : 0.036, isFinisherHit ? 5.0 : 2.6);
         }
 
         // ENEMY STAGGER & KNOCKBACK FOR CLOSE-RANGE / MELEE ATTACKS
@@ -24334,60 +24668,149 @@ class EnemyManager {
   }
 
   damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, attackType = null, stabMult = 1, combatOpts = null) {
-    if (e.isPoofed) return;
+    if (e.isPoofed) return { ignored: true };
 
     const moveType = attackType ? String(attackType).toLowerCase() : null;
     const typeMeta = getTypeMeta(moveType || 'normal');
     const typeMult = typeMultiplier(moveType, e.types);
     const vulnMult = (e.vulnTimer > 0 ? (e.vulnMult || 1) : 1);
+    const opts = combatOpts || {};
+    const attackerX = (typeof opts.attackerX === 'number') ? opts.attackerX : (this.gameRef && this.gameRef.player ? this.gameRef.player.x : e.x - (e.facing || 1) * 60);
+    const hitDirX = (typeof opts.attackerFacing === 'number' && opts.attackerFacing !== 0) ? opts.attackerFacing : (e.x >= attackerX ? 1 : -1);
+    const attackSlot = String(opts.attackSlot || '').toUpperCase();
+    const isHeavyMove = !!(opts.isHeavy || opts.isFinisher || opts.isFusion || attackSlot === 'K' || attackSlot === 'L');
+    const isShieldBreaker = !!(opts.armorBreak || opts.isFinisher || opts.isFusion || attackSlot === 'K' || attackSlot === 'L');
 
     // Critical Chance & Critical Damage roll from active guardian's lore stats
     const fallbackStats = (this.gameRef && this.gameRef.player && typeof this.gameRef.player.getCombatStats === 'function')
       ? this.gameRef.player.getCombatStats()
       : null;
-    const critChance = (combatOpts && typeof combatOpts.critChance === 'number')
-      ? combatOpts.critChance
+    const critChance = (typeof opts.critChance === 'number')
+      ? opts.critChance
       : (fallbackStats ? fallbackStats.critChance : 0.12);
-    const critDamage = (combatOpts && typeof combatOpts.critDamage === 'number')
-      ? combatOpts.critDamage
+    const critDamage = (typeof opts.critDamage === 'number')
+      ? opts.critDamage
       : (fallbackStats ? fallbackStats.critDamage : 1.6);
-    const isCrit = (!combatOpts || combatOpts.allowCrit !== false) && (Math.random() < critChance);
+    const isCrit = (opts.allowCrit !== false) && (Math.random() < critChance);
     const critMult = isCrit ? critDamage : 1.0;
 
-    const finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult * critMult));
+    let finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult * critMult));
+    const impactY = e.y - e.height * 0.5;
+
+    // --- DEFENSIVE COUNTERPLAY 1: FRONT-GUARD ENERGY SHIELD (Destabilizer Guard & Agate Warden) ---
+    const attackerInFront = ((attackerX - e.x) * (e.facing || -1)) > 0;
+    if (e.shieldActive && attackerInFront && (e.windup || 0) <= 0 && (e.hurtTimer || 0) <= 0 && (e.stunTimer || 0) <= 0) {
+      e.shieldHp = Math.max(0, (e.shieldHp || 0) - finalDmg);
+      if (isShieldBreaker || e.shieldHp <= 0) {
+        // GUARD SHATTER! Opens enemy to full stun & combo punish!
+        e.shieldActive = false;
+        e.shieldHp = 0;
+        e.shieldCooldown = 6.5;
+        e.stunTimer = Math.max(e.stunTimer || 0, 1.15);
+        e.hitRecoilX = hitDirX * 14;
+        if (particles && particles.addGuardShatterVFX) particles.addGuardShatterVFX(e.x + e.facing * 26, impactY, '#38bdf8');
+        if (audioEngine) audioEngine.playSfx('shieldBreak');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.072, 6.8, hitDirX * 10, -2);
+        if (this.gameRef && this.gameRef.triggerCameraZoom) this.gameRef.triggerCameraZoom(0.068, 0.28, e.x, impactY);
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('GUARD SHATTER!', '#38bdf8');
+      } else {
+        // FRONTAL LIGHT HIT BLOCKED: 25% chip damage, metallic cyan ripple, encourages flanking or heavy break
+        const chipDmg = Math.max(1, Math.round(finalDmg * 0.25));
+        e.shieldFlashTimer = 0.18;
+        e.hitRecoilX = hitDirX * 4;
+        if (!e.isImmortalDummy) e.hp = Math.max(1, e.hp - chipDmg);
+        if (particles) {
+          if (particles.addShieldBlockRipple) particles.addShieldBlockRipple(e.x + e.facing * 24, impactY, e.facing, '#38bdf8', 36);
+          particles.addDamageText(e.x, e.y - e.height - 10, `${chipDmg}`, false, '#67e8f9');
+        }
+        if (audioEngine) audioEngine.playSfx('shieldBlock');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.018, 1.6, hitDirX * 2.5, 0);
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('GUARDED — FLANK OR BREAK!', '#67e8f9');
+        return { blocked: true, isCrit: false, isHeavy: false };
+      }
+    }
+
+    // --- DEFENSIVE COUNTERPLAY 2: BRUTE HYPER-ARMOR CHARGE (Cluster, Obsidian, Forge Automaton) ---
+    let absorbedByHyperArmor = false;
+    if ((e.hyperArmorTimer || 0) > 0) {
+      const breaksArmor = !!(opts.armorBreak || attackSlot === 'L' || opts.isFusion || typeMult >= 2);
+      if (breaksArmor) {
+        e.hyperArmorTimer = 0;
+        if (particles && particles.addArmorClangVFX) particles.addArmorClangVFX(e.x, impactY, '#fde047');
+        if (audioEngine) audioEngine.playSfx('shieldBreak');
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('ARMOR BREAK!', '#fbbf24');
+      } else {
+        absorbedByHyperArmor = true;
+        finalDmg = Math.max(1, Math.round(finalDmg * 0.75));
+        e.hitRecoilX = hitDirX * 3.5;
+        if (particles && particles.addArmorClangVFX) particles.addArmorClangVFX(e.x, impactY, '#fbbf24');
+        if (audioEngine) audioEngine.playSfx('armorClang');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.022, 2.2, hitDirX * 3, 0);
+      }
+    }
 
     if (this.onComboHit) {
       this.onComboHit(finalDmg);
     }
 
     const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-    const canShowFeedback = nowMs - (e._lastFeedbackAt || 0) >= 85;
+    const canShowFeedback = nowMs - (e._lastFeedbackAt || 0) >= 70;
     if (canShowFeedback) {
       e._lastFeedbackAt = nowMs;
     }
 
+    const isBigImpact = !!(isCrit || isHeavyMove || typeMult >= 2 || finalDmg >= 42);
+    const impactTier = (isCrit || opts.isFinisher || opts.isFusion) ? 'crit' : (isBigImpact ? 'heavy' : 'light');
+    const burstColor = isCrit ? '#fde047' : (typeMeta.color || '#ffd700');
+
     // Tekken Practice Dojo: Training dummy takes zero permanent damage!
     if (e.isImmortalDummy) {
       e.hp = e.maxHp;
-      e.hurtTimer = 0.28;
+      if (!absorbedByHyperArmor) e.hurtTimer = 0.28;
+      e.hitRecoilX = hitDirX * (isBigImpact ? 12 : 6);
       if (canShowFeedback) {
-        if (particles) particles.addDamageText(e.x, e.y - e.height - 14, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35, isCrit ? '#fde047' : typeMeta.color);
-        if (audioEngine) audioEngine.playSfx('hitfeedback');
-        if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+        if (particles) {
+          particles.addDamageText(e.x, e.y - e.height - 14, isCrit ? `${finalDmg}!` : `${finalDmg}`, isBigImpact, burstColor);
+          if (particles.addTekkenHitBurst) particles.addTekkenHitBurst(e.x, impactY, hitDirX, burstColor, impactTier);
+        }
+        if (audioEngine) audioEngine.playSfx(impactTier === 'crit' ? 'hitCrit' : (impactTier === 'heavy' ? 'hitHeavy' : 'hitLight'));
+      }
+      if (this.gameRef && this.gameRef.triggerHitstop) {
+        this.gameRef.triggerHitstop(impactTier === 'crit' ? 0.064 : (impactTier === 'heavy' ? 0.044 : 0.022), impactTier === 'crit' ? 6.2 : (impactTier === 'heavy' ? 4.2 : 2.0), hitDirX * (isBigImpact ? 8 : 3.5), isBigImpact ? -2 : -0.8);
+      }
+      if (isBigImpact && this.gameRef && this.gameRef.triggerCameraZoom) {
+        this.gameRef.triggerCameraZoom(impactTier === 'crit' ? 0.06 : 0.038, 0.22, e.x, impactY);
       }
       this.applyTypeStatus(e, moveType, particles);
-      return;
+      return { blocked: false, hyperArmored: absorbedByHyperArmor, isCrit, isHeavy: isBigImpact };
     }
 
     e.hp -= finalDmg;
-    e.hurtTimer = 0.35;
+    if (!absorbedByHyperArmor) {
+      e.hurtTimer = 0.35;
+      e.hitRecoilX = hitDirX * (isBigImpact ? 13 : 6);
+    }
     this.applyTypeStatus(e, moveType, particles);
     if (canShowFeedback) {
       if (particles) {
-        particles.addDamageText(e.x, e.y - e.height - 12, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35 || typeMult >= 2, isCrit ? '#fde047' : typeMeta.color);
-        particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+        particles.addDamageText(e.x, e.y - e.height - 12, isCrit ? `${finalDmg}!` : `${finalDmg}`, isBigImpact, burstColor);
+        if (particles.addTekkenHitBurst) particles.addTekkenHitBurst(e.x, impactY, hitDirX, burstColor, impactTier);
+        else particles.addHitSparks(e.x, impactY, burstColor);
       }
-      if (audioEngine) audioEngine.playSfx('hitfeedback');
+      if (audioEngine && !absorbedByHyperArmor) {
+        audioEngine.playSfx(impactTier === 'crit' ? 'hitCrit' : (impactTier === 'heavy' ? 'hitHeavy' : 'hitLight'));
+      }
+    }
+    if (!absorbedByHyperArmor && this.gameRef && this.gameRef.triggerHitstop) {
+      this.gameRef.triggerHitstop(
+        impactTier === 'crit' ? 0.068 : (impactTier === 'heavy' ? 0.046 : 0.022),
+        impactTier === 'crit' ? 6.5 : (impactTier === 'heavy' ? 4.5 : 2.0),
+        hitDirX * (isBigImpact ? 9 : 3.5),
+        isBigImpact ? -2.2 : -0.8
+      );
+    }
+    if (!absorbedByHyperArmor && isBigImpact && this.gameRef && this.gameRef.triggerCameraZoom) {
+      this.gameRef.triggerCameraZoom(impactTier === 'crit' ? 0.062 : 0.038, 0.22, e.x, impactY);
     }
 
     e.comboHitCount = (e.comboHitCount || 0) + 1;
@@ -24404,10 +24827,13 @@ class EnemyManager {
         e.poofTimer = 0.16;
         e.maxPoofTime = 0.16;
         if (this.gameRef && this.gameRef.triggerHitstop) {
-          this.gameRef.triggerHitstop(0.065, 5.0);
+          this.gameRef.triggerHitstop(e.isBoss ? 0.088 : 0.062, e.isBoss ? 8.2 : 5.2, hitDirX * 10, -2.5);
+        }
+        if (e.isBoss && this.gameRef && this.gameRef.triggerCameraZoom) {
+          this.gameRef.triggerCameraZoom(0.11, 0.45, e.x, impactY);
         }
       }
-      return;
+      return { blocked: false, hyperArmored: false, isCrit, isHeavy: isBigImpact, defeated: true };
     }
 
     // Loophole 1 Fix: Boss Super-Armor Breakout Burst (only while boss still has HP > 0)
@@ -24425,14 +24851,18 @@ class EnemyManager {
         particles.addExplosion(e.x, e.y - e.height / 2, '#fbbf24', 28);
         particles.addHitSpark(e.x, e.y - e.height / 2, '#ef4444', 30, 0);
       }
+      if (this.gameRef && this.gameRef.triggerCameraZoom) {
+        this.gameRef.triggerCameraZoom(0.075, 0.30, e.x, impactY);
+      }
       if (this.gameRef && this.gameRef.player) {
         const p = this.gameRef.player;
         const pDir = p.x < e.x ? -1 : 1;
         p.vx = pDir * 380;
         p.vy = -180;
       }
-      return;
+      return { blocked: false, hyperArmored: false, isCrit, isHeavy: isBigImpact, breakout: true };
     }
+    return { blocked: false, hyperArmored: absorbedByHyperArmor, isCrit, isHeavy: isBigImpact };
   }
 
   poofEnemy(e, enemyIndex, particles, audioEngine, onPoofed) {
@@ -24761,7 +25191,7 @@ class EnemyManager {
       ctx.restore();
 
       ctx.save();
-      ctx.translate(e.x, e.y);
+      ctx.translate(e.x + (e.hitRecoilX || 0), e.y);
 
       // Dramatic Warp-In / Corruption Materialize Spawn Animation
       let spawnScaleY = 1;
@@ -24792,6 +25222,50 @@ class EnemyManager {
 
       ctx.scale(e.facing * spawnScaleX, spawnScaleY);
       ctx.globalAlpha *= spawnAlpha;
+
+      // Visual Telegraph: Brute Hyper-Armor Aura (golden-amber armored glint during unstoppable windup)
+      if ((e.hyperArmorTimer || 0) > 0) {
+        const haPulse = 0.55 + 0.45 * Math.sin((e.animTime || 0) * 18);
+        const haR = Math.max(e.width, e.height) * 0.68;
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.fillStyle = `rgba(251, 191, 36, ${0.14 + haPulse * 0.14})`;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.ellipse(0, -e.height * 0.48, haR * 0.82, haR, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Visual Telegraph: Front-Guard Energy Shield (blocks frontal light hits; flank or shatter!)
+      if (e.shieldActive && (e.windup || 0) <= 0 && (e.stunTimer || 0) <= 0) {
+        const shFlash = (e.shieldFlashTimer || 0) > 0;
+        const shR = e.height * 0.56;
+        const shX = (e.width * 0.38) + 8;
+        const shY = -e.height * 0.48;
+        ctx.save();
+        ctx.fillStyle = shFlash ? 'rgba(255, 255, 255, 0.48)' : 'rgba(56, 189, 248, 0.22)';
+        ctx.strokeStyle = shFlash ? '#ffffff' : '#38bdf8';
+        ctx.lineWidth = shFlash ? 4.2 : 3.0;
+        ctx.beginPath();
+        ctx.arc(shX, shY, shR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(shX, shY, shR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.lineTo(shX - 8, shY + shR * 0.72);
+        ctx.lineTo(shX - 8, shY - shR * 0.72);
+        ctx.closePath();
+        ctx.fill();
+        // Shield durability bar tick
+        const shPct = Math.max(0, Math.min(1, (e.shieldHp || 0) / Math.max(1, e.shieldMaxHp || 1)));
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(shX - 3, shY, shR * 0.86, -Math.PI * 0.36 * shPct, Math.PI * 0.36 * shPct);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       if (e.isPoofing) {
         const poofProgress = Math.max(0, Math.min(1, 1 - (e.poofTimer / (e.maxPoofTime || 0.16))));
@@ -29381,6 +29855,17 @@ class StevenUniverseGame {
     this.stageWidth = 2600; // Wide stage arena!
     this.cameraX = 0;
     this.cameraZoom = 1.0;
+    this.zoomImpulse = 0;
+    this.zoomImpulseTimer = 0;
+    this.camFocusX = cw / 2;
+    this.camFocusY = this.groundY - 70;
+    this.zoomFocusX = null;
+    this.zoomFocusY = null;
+    this.shakeDirX = 0;
+    this.shakeDirY = 0;
+    this.combatBadgeText = '';
+    this.combatBadgeColor = '#fde047';
+    this.combatBadgeTimer = 0;
     this.environment = new EnvironmentRenderer(cw, ch, this.stageWidth);
 
     this.playerMode = SafeStorage.getItem('su_playerMode') || '1p';
@@ -30310,11 +30795,34 @@ class StevenUniverseGame {
     }
   }
 
-  triggerHitstop(duration = 0.045, shake = 3.5) {
-    // Only trigger if not already active to prevent chain-freezing on continuous attacks
-    if (this.hitstopTimer > 0) return;
-    this.hitstopTimer = Math.min(0.05, duration);
-    this.hitShake = Math.max(this.hitShake, Math.min(4.5, shake));
+  triggerHitstop(duration = 0.045, shake = 3.5, dirX = 0, dirY = 0) {
+    // Allow heavier finishers/crits to upgrade a shorter active hitstop without chain-locking
+    const clampedDur = Math.min(0.095, Math.max(0.012, duration));
+    if (clampedDur > this.hitstopTimer) {
+      this.hitstopTimer = clampedDur;
+    }
+    this.hitShake = Math.max(this.hitShake, Math.min(8.5, shake));
+    if (dirX || dirY) {
+      this.shakeDirX = Math.max(-14, Math.min(14, (this.shakeDirX || 0) * 0.4 + dirX));
+      this.shakeDirY = Math.max(-10, Math.min(10, (this.shakeDirY || 0) * 0.4 + dirY));
+    }
+  }
+
+  triggerCameraZoom(delta = 0.06, duration = 0.26, focusX = null, focusY = null) {
+    const clamped = Math.max(-0.08, Math.min(0.14, delta));
+    if (Math.abs(clamped) >= Math.abs(this.zoomImpulse || 0) || (this.zoomImpulseTimer || 0) <= 0.05) {
+      this.zoomImpulse = clamped;
+      this.zoomImpulseTimer = Math.max(this.zoomImpulseTimer || 0, Math.min(0.85, duration));
+      if (typeof focusX === 'number' && !isNaN(focusX)) this.zoomFocusX = focusX;
+      if (typeof focusY === 'number' && !isNaN(focusY)) this.zoomFocusY = focusY;
+    }
+  }
+
+  showCombatBadge(text, color = '#fde047', duration = 1.05) {
+    if (!text) return;
+    this.combatBadgeText = String(text);
+    this.combatBadgeColor = color || '#fde047';
+    this.combatBadgeTimer = duration;
   }
 
   // Freebuff: finishing a 3-hit chain feeds the fusion meter — teamwork pays off
@@ -31492,13 +32000,25 @@ class StevenUniverseGame {
 
       if (this.hitstopTimer > 0) {
         this.hitstopTimer -= dt;
-        if (this.hitShake > 0) this.hitShake = Math.max(0, this.hitShake - dt * 25);
+        if (this.hitShake > 0) this.hitShake = Math.max(0, this.hitShake - dt * 26);
+        this.shakeDirX *= Math.pow(0.001, dt);
+        this.shakeDirY *= Math.pow(0.001, dt);
         this.render();
         requestAnimationFrame((t) => this.gameLoop(t));
         return;
       }
       if (this.hitShake > 0) {
-        this.hitShake = Math.max(0, this.hitShake - dt * 25);
+        this.hitShake = Math.max(0, this.hitShake - dt * 26);
+      }
+      if (Math.abs(this.shakeDirX) > 0.1 || Math.abs(this.shakeDirY) > 0.1) {
+        this.shakeDirX *= Math.pow(0.0008, dt);
+        this.shakeDirY *= Math.pow(0.0008, dt);
+      } else {
+        this.shakeDirX = 0;
+        this.shakeDirY = 0;
+      }
+      if (this.combatBadgeTimer > 0) {
+        this.combatBadgeTimer = Math.max(0, this.combatBadgeTimer - dt);
       }
 
       if (this.state === 'playing') {
@@ -31618,30 +32138,60 @@ class StevenUniverseGame {
     this.cameraX += (targetCamX - this.cameraX) * Math.min(1, dt * 6.5);
     this.cameraX = Math.max(0, Math.min(this.stageWidth - this.canvas.width, this.cameraX));
 
-    // Dynamic Camera Zooming: Close-quarters combat & skills vs roaming & wide separation
+    // Dynamic Camera Zooming (Genshin / Tekken spicy zoom-in & smooth zoom-out)
+    if (this.zoomImpulseTimer > 0) {
+      this.zoomImpulseTimer = Math.max(0, this.zoomImpulseTimer - dt);
+      if (this.zoomImpulseTimer <= 0) {
+        this.zoomImpulse = 0;
+        this.zoomFocusX = null;
+        this.zoomFocusY = null;
+      }
+    }
+
     let targetZoom = 1.0;
+    const anyOverdrive = !!(this.isOverdriveActive || this.isOverdriveActiveP2 || (this.player && this.player.isPinkOverdrive));
     if (this.playerMode === '2p' && this.player2) {
       const pDist = Math.abs(this.player.x - this.player2.x);
       if (pDist > 450) {
         targetZoom = Math.max(0.85, 1.0 - (pDist - 450) * 0.00035);
+      } else if (anyOverdrive || this.isFused) {
+        targetZoom = 1.07;
       }
     } else {
       if (!this.player.isGrounded && this.player.y < 340) {
         targetZoom = 0.93; // Leaping / high aerial view
-      } else if (this.isPinkOverdrive || this.isOverdriveActive || this.isFused || (this.player.isAttacking && this.player.actionType === 'skill')) {
-        targetZoom = 1.12; // Visceral close-up during intense combat & ultimate skills!
+      } else if (anyOverdrive || this.isFused || (this.player.isAttacking && this.player.actionType === 'skill')) {
+        targetZoom = 1.11; // Visceral close-up during intense combat & ultimate skills!
       } else {
-        const boss = this.enemyManager.enemies.find(e => e.isBoss && !e.isDead);
-        if (boss && Math.hypot(boss.x - this.player.x, boss.y - this.player.y) < 240) {
-          targetZoom = 1.08; // Boss close quarters duel
-        } else if (this.combo >= 6) {
-          targetZoom = 1.05; // Subtle focus pulse during high combo flow
+        const boss = this.enemyManager.enemies.find(e => e.isBoss && !e.isPoofed && !e.isImmortalDummy);
+        if (boss && Math.hypot(boss.x - this.player.x, boss.y - this.player.y) < 250) {
+          targetZoom = 1.07; // Boss close quarters duel
+        } else if ((this.comboHits || 0) >= 6) {
+          targetZoom = 1.04; // Subtle focus pulse during high combo flow
         }
       }
     }
+    const desiredZoom = targetZoom + (this.zoomImpulseTimer > 0 ? (this.zoomImpulse || 0) : 0);
     const minZoom = (this.playerMode === '2p' && this.player2) ? 0.85 : 0.92;
-    this.cameraZoom = (this.cameraZoom || 1.0) + (targetZoom - (this.cameraZoom || 1.0)) * Math.min(1, dt * 4.2);
-    this.cameraZoom = Math.max(minZoom, Math.min(1.14, this.cameraZoom));
+    const zoomRate = desiredZoom > (this.cameraZoom || 1.0) ? 7.8 : 4.4;
+    this.cameraZoom = (this.cameraZoom || 1.0) + (desiredZoom - (this.cameraZoom || 1.0)) * Math.min(1, dt * zoomRate);
+    this.cameraZoom = Math.max(minZoom, Math.min(1.18, this.cameraZoom));
+
+    // Smooth camera focus point (shifts toward impact/boss/hero during zoom-in)
+    const defaultFocusX = (this.playerMode === '2p' && this.player2)
+      ? ((this.player.x + this.player2.x) / 2)
+      : this.player.x;
+    const defaultFocusY = (this.playerMode === '2p' && this.player2)
+      ? ((this.player.y + this.player2.y) / 2) - 65
+      : this.player.y - 68;
+    const targetFocusX = (this.zoomImpulseTimer > 0 && typeof this.zoomFocusX === 'number')
+      ? (defaultFocusX * 0.45 + this.zoomFocusX * 0.55)
+      : defaultFocusX;
+    const targetFocusY = (this.zoomImpulseTimer > 0 && typeof this.zoomFocusY === 'number')
+      ? (defaultFocusY * 0.45 + this.zoomFocusY * 0.55)
+      : defaultFocusY;
+    this.camFocusX += (targetFocusX - this.camFocusX) * Math.min(1, dt * 7.5);
+    this.camFocusY += (targetFocusY - this.camFocusY) * Math.min(1, dt * 6.5);
 
     // Update Plants vs Zombies style wave progression bar
     this.updateWaveLine();
@@ -32346,6 +32896,7 @@ class StevenUniverseGame {
       this.player.activatePinkOverdrive(this.overdriveDuration);
 
       this.audio.playSfx('overdrive');
+      this.triggerCameraZoom(0.10, 0.50, this.player.x, this.player.y - 64);
       const theme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
       const dualNow = isFusedBody && this.isOverdriveActiveP2;
       if (isFusedBody) {
@@ -32374,6 +32925,8 @@ class StevenUniverseGame {
       this.player2.activatePinkOverdrive(this.overdriveDuration);
 
       this.audio.playSfx('overdrive');
+      const odTarget = isFusedBody ? this.player : this.player2;
+      if (odTarget) this.triggerCameraZoom(0.10, 0.50, odTarget.x, odTarget.y - 64);
       const theme = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
       const dualNow = isFusedBody && this.isOverdriveActive;
       if (isFusedBody && this.player) {
@@ -32621,16 +33174,23 @@ class StevenUniverseGame {
     const boss = this.enemyManager.enemies.find(en => en.isBoss && !en.isPoofed && !en.isImmortalDummy);
     let shakeX = 0;
     let shakeY = 0;
-    if (this.hitShake && this.hitShake > 0) {
-      shakeX += (Math.random() - 0.5) * this.hitShake * 2.2;
-      shakeY += (Math.random() - 0.5) * this.hitShake * 2.2;
-    }
-    if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
-      const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
-      const amp = 1.4 + 4.2 * frac;
-      const t = Date.now() / 42;
-      shakeX = Math.sin(t) * amp;
-      shakeY = Math.cos(t * 1.7) * amp * 0.7;
+    const shakeAllowed = (this.screenShakeEnabled !== false);
+    if (shakeAllowed) {
+      if (this.hitShake && this.hitShake > 0) {
+        shakeX += (Math.random() - 0.5) * this.hitShake * 2.1;
+        shakeY += (Math.random() - 0.5) * this.hitShake * 2.1;
+      }
+      if (this.shakeDirX || this.shakeDirY) {
+        shakeX += (this.shakeDirX || 0);
+        shakeY += (this.shakeDirY || 0);
+      }
+      if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
+        const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
+        const amp = 1.4 + 4.2 * frac;
+        const t = Date.now() / 42;
+        shakeX += Math.sin(t) * amp;
+        shakeY += Math.cos(t * 1.7) * amp * 0.7;
+      }
     }
     this.ctx.save();
     this.ctx.translate(shakeX, shakeY);
@@ -32638,14 +33198,19 @@ class StevenUniverseGame {
     // 1. Far Parallax Background (Screen Space)
     this.environment.drawBackground(this.ctx, this.stageIndex, this.cameraX, this.gameMode === 'practice');
 
-    // 2. World Space Elements (Shifted by camera offset -cameraX and scaled by cameraZoom)
+    // 2. World Space Elements (Safe Clamped Zoom-In / Zoom-Out without edge bleed or ground drift)
     this.ctx.save();
-    const viewCenterX = this.canvas.width / 2;
-    const viewCenterY = this.canvas.height * 0.58;
-    this.ctx.translate(viewCenterX, viewCenterY);
-    this.ctx.scale(this.cameraZoom, this.cameraZoom);
-    this.ctx.translate(-viewCenterX, -viewCenterY);
-    this.ctx.translate(-Math.round(this.cameraX), 0);
+    const z = Math.max(0.84, Math.min(1.18, this.cameraZoom || 1.0));
+    const cw = this.canvas.width;
+    const ch = this.canvas.height;
+    const visW = cw / z;
+    const visH = ch / z;
+    const focusX = (typeof this.camFocusX === 'number' && !isNaN(this.camFocusX)) ? this.camFocusX : (this.cameraX + cw / 2);
+    const focusY = (typeof this.camFocusY === 'number' && !isNaN(this.camFocusY)) ? this.camFocusY : (this.groundY - 68);
+    const camLeft = Math.max(0, Math.min(Math.max(0, this.stageWidth - visW), focusX - visW / 2));
+    const camTop = z < 1 ? (ch - visH) : Math.max(0, Math.min(ch - visH, focusY - visH * 0.58));
+    this.ctx.scale(z, z);
+    this.ctx.translate(-Math.round(camLeft), -Math.round(camTop));
 
     // Foreground Terrain & Platforms across full 2600px
     this.environment.drawForeground(this.ctx, this.stageIndex, this.gameMode === 'practice');
@@ -32672,11 +33237,102 @@ class StevenUniverseGame {
       this.player2.draw(this.ctx);
     }
 
-    // Particle System & Hit Numbers (culled to camera viewport for smooth FPS)
-    this.particles.draw(this.ctx, this.cameraX - 240, this.cameraX + this.canvas.width + 240);
+    // Particle System & Hit Numbers (culled to zoomed camera viewport for smooth FPS)
+    this.particles.draw(this.ctx, camLeft - 240, camLeft + visW + 240);
 
     this.ctx.restore();
     this.ctx.restore(); // screen-shake transform
+
+    // 3. Screen-Space Combat Clarity HUD (Boss Breakout Meter, Combat Badges, Practice Dojo Guide)
+    if (this.state === 'playing') {
+      this.drawCombatClarityOverlay(boss);
+    }
+  }
+
+  drawCombatClarityOverlay(boss) {
+    const ctx = this.ctx;
+    const cw = this.canvas.width;
+    ctx.save();
+
+    // A. Boss 20% Combo-Breakout Warning Meter (surfaces hidden anti-stunlock mechanic clearly)
+    if (boss && boss.maxHp > 0 && (boss.comboDamageTaken || 0) > 0) {
+      const pct = Math.min(1, (boss.comboDamageTaken || 0) / (boss.maxHp * 0.20));
+      const bw = 220;
+      const bh = 8;
+      const bx = Math.round((cw - bw) / 2);
+      const by = 82;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+      ctx.fillStyle = pct >= 0.75 ? '#ef4444' : (pct >= 0.45 ? '#f59e0b' : '#38bdf8');
+      ctx.fillRect(bx, by, Math.round(bw * pct), bh);
+      ctx.font = "800 10px 'Nunito', sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillStyle = pct >= 0.75 ? '#fecaca' : '#e2e8f0';
+      ctx.fillText(pct >= 0.75 ? 'BOSS BREAKOUT IMMINENT!' : 'BOSS BREAKOUT GAUGE', cw / 2, by - 5);
+    }
+
+    // B. Crisp Tactical Combat Badge (GUARD SHATTER, ARMOR BREAK, DASH CANCEL, JUMP CANCEL)
+    const activeBadge = (this.combatBadgeTimer > 0 && this.combatBadgeText)
+      ? { text: this.combatBadgeText, color: this.combatBadgeColor, alpha: Math.min(1, this.combatBadgeTimer * 2.5) }
+      : (this.player && this.player.lastCancelTimer > 0 && this.player.lastCancelTag)
+        ? { text: this.player.lastCancelTag, color: '#38bdf8', alpha: Math.min(1, this.player.lastCancelTimer * 2.5) }
+        : null;
+    if (activeBadge) {
+      ctx.globalAlpha = activeBadge.alpha;
+      ctx.font = "900 13px 'Fredoka One', 'Nunito', sans-serif";
+      const tw = ctx.measureText(activeBadge.text).width + 26;
+      const bx = Math.round((cw - tw) / 2);
+      const by = 104;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
+      ctx.strokeStyle = activeBadge.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, tw, 24, 12);
+      else ctx.rect(bx, by, tw, 24);
+      ctx.fill();
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = activeBadge.color;
+      ctx.fillText(activeBadge.text, cw / 2, by + 16);
+      ctx.globalAlpha = 1;
+    }
+
+    // C. Practice Dojo Hidden-Mechanics Clarity Strip (live indicators when training)
+    if (this.gameMode === 'practice' && this.player) {
+      const p = this.player;
+      const pills = [
+        { label: 'PERFECT LINK +12%', active: !!p.lastPerfectLink && p.comboStepTimer > 0, color: '#fde047' },
+        { label: 'CANCEL WINDOW', active: (p.hitConfirmTimer || 0) > 0, color: '#38bdf8' },
+        { label: 'PARRY 140ms [I]', active: (p.parryWindow || 0) > 0, color: '#4ade80' },
+        { label: 'GUARD BREAK: FINISHER / [K] / [L]', active: !!p.isFinisherSwing && p.isAttacking, color: '#f472b6' }
+      ];
+      ctx.font = "800 11px 'Nunito', sans-serif";
+      let totalW = 0;
+      const widths = pills.map(pl => {
+        const w = ctx.measureText(pl.label).width + 18;
+        totalW += w + 8;
+        return w;
+      });
+      let px = Math.round((cw - totalW) / 2);
+      const py = 136;
+      pills.forEach((pl, idx) => {
+        const w = widths[idx];
+        ctx.fillStyle = pl.active ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.58)';
+        ctx.strokeStyle = pl.active ? pl.color : 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = pl.active ? 2 : 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(px, py, w, 22, 11);
+        else ctx.rect(px, py, w, 22);
+        ctx.fill();
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = pl.active ? pl.color : '#cbd5e1';
+        ctx.fillText(pl.label, px + w / 2, py + 15);
+        px += w + 8;
+      });
+    }
+
+    ctx.restore();
   }
 
   drawPickup(p) {
@@ -34290,6 +34946,7 @@ class StevenUniverseGame {
     this.player.actionTimer = 1.3;
 
     const targetX = (this.playerMode === '2p' && this.player2) ? (this.player.x + this.player2.x) / 2 : this.player.x;
+    this.triggerCameraZoom(0.12, 0.60, targetX, this.groundY - 75);
     this.player.x = targetX;
     this.player.y = this.groundY;
     this.player.vx = 0;
@@ -35431,33 +36088,36 @@ class StevenUniverseGame {
         }
       };
 
+      const bufP1 = (act) => { if (!e.repeat && this.player && typeof this.player.bufferInput === 'function') this.player.bufferInput(act, 0.11); };
+      const bufP2 = (act) => { if (!e.repeat && this.player2 && typeof this.player2.bufferInput === 'function') this.player2.bufferInput(act, 0.11); };
+
       if (this.playerMode === '2p') {
         // Player 1 Controls (Left Hand side of keyboard)
         if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
         if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
-        if (e.code === 'KeyW') this.keysP1.jump = true;
+        if (e.code === 'KeyW') { this.keysP1.jump = true; bufP1('jump'); }
         if (e.code === 'KeyS') { this.keysP1.down = true; this.keysP1.shield = true; }
-        if (e.code === 'KeyE') { this.keysP1.dodge = true; this.triggerSlotAnimation('slotI'); }
-        if (e.code === 'KeyF') { this.keysP1.attack = true; this.triggerSlotAnimation('slotJ'); }
-        if (e.code === 'KeyG') { this.keysP1.special = true; this.triggerSlotAnimation('slotK'); }
-        if (e.code === 'KeyH') { this.keysP1.skill = true; this.triggerSlotAnimation('slotL'); }
+        if (e.code === 'KeyE') { this.keysP1.dodge = true; bufP1('dodge'); this.triggerSlotAnimation('slotI'); }
+        if (e.code === 'KeyF') { this.keysP1.attack = true; bufP1('attack'); this.triggerSlotAnimation('slotJ'); }
+        if (e.code === 'KeyG') { this.keysP1.special = true; bufP1('special'); this.triggerSlotAnimation('slotK'); }
+        if (e.code === 'KeyH') { this.keysP1.skill = true; bufP1('skill'); this.triggerSlotAnimation('slotL'); }
         if (e.code === 'KeyR') { this.activatePinkOverdrive('p1'); }
 
         // Player 2 Controls (Right Hand side / Arrow keys)
         if (e.code === 'ArrowLeft') { handleSprintTap(this.keysP2, 'left', 'ArrowLeft'); this.keysP2.left = true; }
         if (e.code === 'ArrowRight') { handleSprintTap(this.keysP2, 'right', 'ArrowRight'); this.keysP2.right = true; }
-        if (e.code === 'ArrowUp') this.keysP2.jump = true;
+        if (e.code === 'ArrowUp') { this.keysP2.jump = true; bufP2('jump'); }
         if (e.code === 'ArrowDown') { this.keysP2.down = true; this.keysP2.shield = true; }
-        if (e.code === 'KeyI') { this.keysP2.dodge = true; this.triggerSlotAnimation('slotP2_I'); }
-        if (e.code === 'KeyJ') { this.keysP2.attack = true; this.triggerSlotAnimation('slotP2_J'); }
-        if (e.code === 'KeyK') { this.keysP2.special = true; this.triggerSlotAnimation('slotP2_K'); }
-        if (e.code === 'KeyL') { this.keysP2.skill = true; this.triggerSlotAnimation('slotP2_L'); }
+        if (e.code === 'KeyI') { this.keysP2.dodge = true; bufP2('dodge'); this.triggerSlotAnimation('slotP2_I'); }
+        if (e.code === 'KeyJ') { this.keysP2.attack = true; bufP2('attack'); this.triggerSlotAnimation('slotP2_J'); }
+        if (e.code === 'KeyK') { this.keysP2.special = true; bufP2('special'); this.triggerSlotAnimation('slotP2_K'); }
+        if (e.code === 'KeyL') { this.keysP2.skill = true; bufP2('skill'); this.triggerSlotAnimation('slotP2_L'); }
         if (e.code === 'KeyO' || e.code === 'KeyP') { this.activatePinkOverdrive('p2'); }
       } else {
         // Solo 1-Player Mode: STRICTLY A, D, W/Space, S, J, K, L, I (Dodge), U/O (Overdrive)
         if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
         if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
-        if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = true;
+        if (e.code === 'KeyW' || e.code === 'Space') { this.keysP1.jump = true; bufP1('jump'); }
         if (e.code === 'KeyS') {
           this.keysP1.down = true;
           this.keysP1.shield = true;
@@ -35465,18 +36125,22 @@ class StevenUniverseGame {
 
         if (e.code === 'KeyJ') {
           this.keysP1.attack = true;
+          bufP1('attack');
           this.triggerSlotAnimation('slotJ');
         }
         if (e.code === 'KeyK') {
           this.keysP1.special = true;
+          bufP1('special');
           this.triggerSlotAnimation('slotK');
         }
         if (e.code === 'KeyL') {
           this.keysP1.skill = true;
+          bufP1('skill');
           this.triggerSlotAnimation('slotL');
         }
         if (e.code === 'KeyI') {
           this.keysP1.dodge = true;
+          bufP1('dodge');
           this.triggerSlotAnimation('slotI');
         }
         if (e.code === 'KeyU' || e.code === 'KeyO') {

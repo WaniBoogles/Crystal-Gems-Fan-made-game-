@@ -58,10 +58,31 @@ class GemAudioEngine {
             this.ctx.onstatechange = handleStateChange;
           }
           
-          // SFX Master Gain: Set directly to sfxVolume so SFX is always crisp and audible
+          // SFX Master Bus: Warm low-pass anti-harshness filter + DynamicsCompressor limiter for punchy fighting-game audio
           this.sfxGainNode = this.ctx.createGain();
           this.sfxGainNode.gain.setValueAtTime(this.soundEnabled ? this.sfxVolume : 0, this.ctx.currentTime);
-          this.sfxGainNode.connect(this.ctx.destination);
+          let sfxOut = this.ctx.destination;
+          try {
+            if (typeof this.ctx.createDynamicsCompressor === 'function') {
+              this.sfxCompressor = this.ctx.createDynamicsCompressor();
+              this.sfxCompressor.threshold.setValueAtTime(-16, this.ctx.currentTime);
+              this.sfxCompressor.knee.setValueAtTime(14, this.ctx.currentTime);
+              this.sfxCompressor.ratio.setValueAtTime(6, this.ctx.currentTime);
+              this.sfxCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+              this.sfxCompressor.release.setValueAtTime(0.12, this.ctx.currentTime);
+              this.sfxCompressor.connect(this.ctx.destination);
+              sfxOut = this.sfxCompressor;
+            }
+            if (typeof this.ctx.createBiquadFilter === 'function') {
+              this.sfxWarmFilter = this.ctx.createBiquadFilter();
+              this.sfxWarmFilter.type = 'lowpass';
+              this.sfxWarmFilter.frequency.setValueAtTime(5800, this.ctx.currentTime);
+              this.sfxWarmFilter.Q.setValueAtTime(0.7, this.ctx.currentTime);
+              this.sfxWarmFilter.connect(sfxOut);
+              sfxOut = this.sfxWarmFilter;
+            }
+          } catch (sfe) {}
+          this.sfxGainNode.connect(sfxOut);
 
           // Music Master Gain + Warm Spatial Echo Bus (Aivi & Surasshu lush atmosphere)
           this.musicGainNode = this.ctx.createGain();
@@ -380,6 +401,24 @@ class GemAudioEngine {
     src.stop(t + duration);
   }
 
+  // Warm sub-bass body punch drop (visceral Tekken/arcade fighting-game impact weight)
+  _playSubDrop(t, f0 = 115, f1 = 36, duration = 0.16, vol = 0.34, wave = 'sine') {
+    if (!this.ctx) return;
+    try {
+      const o = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      o.type = wave;
+      o.frequency.setValueAtTime(f0, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(24, f1), t + duration);
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      o.connect(g);
+      g.connect(this.getSfxDestination());
+      o.start(t);
+      o.stop(t + duration + 0.01);
+    } catch (e) {}
+  }
+
   playSfx(type) {
     if (!this.soundEnabled) return;
     this.init();
@@ -486,18 +525,19 @@ class GemAudioEngine {
           break;
 
         case 'parry':
-          // Crystalline resonant clash & ringing harmonics
-          [1046.50, 1567.98, 2093.00, 3135.96].forEach((freq, idx) => {
+          // Tight sub-bass deflect thump + warm crystalline bell chord (non-piercing)
+          this._playSubDrop(t, 125, 48, 0.14, 0.28, 'sine');
+          [783.99, 1174.66, 1567.98].forEach((freq, idx) => {
             const pOsc = this.ctx.createOscillator();
             const pGain = this.ctx.createGain();
             pOsc.type = idx === 0 ? 'triangle' : 'sine';
             pOsc.frequency.setValueAtTime(freq, t);
-            pGain.gain.setValueAtTime(0.28 / (idx + 1), t);
-            pGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45 + idx * 0.05);
+            pGain.gain.setValueAtTime(0.22 / (idx + 1), t);
+            pGain.gain.exponentialRampToValueAtTime(0.001, t + 0.36 + idx * 0.05);
             pOsc.connect(pGain);
             pGain.connect(this.getSfxDestination());
             pOsc.start(t);
-            pOsc.stop(t + 0.55);
+            pOsc.stop(t + 0.45);
           });
           return;
 
@@ -643,80 +683,137 @@ class GemAudioEngine {
           osc.stop(t + 0.35);
           break;
 
+        case 'hitLight':
+          // Crisp light martial-arts jab/slap (zero harsh beep!)
+          this._playSubDrop(t, 155, 54, 0.09, 0.24, 'sine');
+          this._playNoiseBurst(t, 0.045, 1180, 1.4, 0.16, 'bandpass');
+          return;
+
+        case 'hitHeavy':
+          // Visceral Tekken-grade heavy punch/finisher impact (sub-drop + crack + body resonance)
+          this._playSubDrop(t, 120, 34, 0.20, 0.44, 'sine');
+          this._playSubDrop(t, 250, 72, 0.11, 0.20, 'triangle');
+          this._playNoiseBurst(t, 0.095, 920, 1.0, 0.28, 'bandpass');
+          this._playNoiseBurst(t, 0.055, 2400, 1.6, 0.14, 'bandpass');
+          return;
+
+        case 'hitCrit':
+          // Dopamine Critical / Finisher Smash: heavy impact + warm crystalline harmonic chime!
+          this._playSubDrop(t, 130, 32, 0.24, 0.48, 'sine');
+          this._playNoiseBurst(t, 0.10, 1150, 1.1, 0.30, 'bandpass');
+          [880, 1318.5, 1760].forEach((freq, idx) => {
+            const co = this.ctx.createOscillator();
+            const cg = this.ctx.createGain();
+            co.type = 'sine';
+            co.frequency.setValueAtTime(freq, t + idx * 0.018);
+            cg.gain.setValueAtTime(0.14 / (idx + 1), t + idx * 0.018);
+            cg.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.018 + 0.24);
+            co.connect(cg);
+            cg.connect(this.getSfxDestination());
+            co.start(t + idx * 0.018);
+            co.stop(t + idx * 0.018 + 0.25);
+          });
+          return;
+
+        case 'shieldBlock':
+          // Muffled energy-barrier block thud
+          this._playSubDrop(t, 280, 110, 0.10, 0.22, 'triangle');
+          this._playNoiseBurst(t, 0.05, 1600, 3.2, 0.10, 'bandpass');
+          return;
+
+        case 'shieldBreak':
+          // Dramatic Guard Shatter: deep impact drop + shimmering crystal glass scatter!
+          this._playSubDrop(t, 140, 30, 0.28, 0.46, 'sine');
+          this._playNoiseBurst(t, 0.16, 2200, 1.2, 0.28, 'bandpass');
+          [1174.66, 1567.98, 2093.00, 1396.91].forEach((freq, idx) => {
+            const so = this.ctx.createOscillator();
+            const sg = this.ctx.createGain();
+            so.type = 'triangle';
+            so.frequency.setValueAtTime(freq, t + idx * 0.025);
+            so.frequency.exponentialRampToValueAtTime(freq * 0.72, t + idx * 0.025 + 0.22);
+            sg.gain.setValueAtTime(0.14, t + idx * 0.025);
+            sg.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.025 + 0.24);
+            so.connect(sg);
+            sg.connect(this.getSfxDestination());
+            so.start(t + idx * 0.025);
+            so.stop(t + idx * 0.025 + 0.26);
+          });
+          return;
+
+        case 'armorClang':
+          // Heavy armored metallic clank (warns player enemy has super-armor!)
+          this._playSubDrop(t, 190, 82, 0.12, 0.24, 'triangle');
+          [440, 675].forEach((freq, idx) => {
+            const ao = this.ctx.createOscillator();
+            const ag = this.ctx.createGain();
+            ao.type = 'triangle';
+            ao.frequency.setValueAtTime(freq, t);
+            ag.gain.setValueAtTime(0.12 / (idx + 1), t);
+            ag.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+            ao.connect(ag);
+            ag.connect(this.getSfxDestination());
+            ao.start(t);
+            ao.stop(t + 0.15);
+          });
+          return;
+
         case 'spindash':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(220, t);
-          osc.frequency.exponentialRampToValueAtTime(880, t + 0.3);
-          gain.gain.setValueAtTime(0.2, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
-          osc.start(t);
-          osc.stop(t + 0.35);
-          break;
+          // Smooth turbine whoosh sweep (warm triangle + filtered air rush, no harsh saw)
+          this._playSubDrop(t, 180, 520, 0.24, 0.22, 'triangle');
+          this._playNoiseBurst(t, 0.22, 950, 1.4, 0.18, 'bandpass');
+          return;
 
         case 'lightning':
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(600, t);
-          osc.frequency.exponentialRampToValueAtTime(80, t + 0.25);
-          gain.gain.setValueAtTime(0.25, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          // Electric crackle burst (filtered noise snap + deep thunder drop, no square beep)
+          this._playSubDrop(t, 160, 42, 0.22, 0.30, 'sine');
+          this._playNoiseBurst(t, 0.14, 2100, 1.8, 0.22, 'bandpass');
+          this._playNoiseBurst(t + 0.04, 0.12, 1300, 2.2, 0.16, 'bandpass');
+          return;
 
         case 'hammer':
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(140, t);
-          osc.frequency.exponentialRampToValueAtTime(45, t + 0.2);
-          gain.gain.setValueAtTime(0.35, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          // Heavy forge anvil/hammer impact (deep sub-drop + warm metallic body)
+          this._playSubDrop(t, 130, 36, 0.24, 0.42, 'sine');
+          this._playSubDrop(t, 280, 95, 0.14, 0.18, 'triangle');
+          this._playNoiseBurst(t, 0.11, 680, 1.1, 0.24, 'lowpass');
+          return;
 
         case 'water':
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(480, t);
-          osc.frequency.exponentialRampToValueAtTime(160, t + 0.22);
-          gain.gain.setValueAtTime(0.3, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
-          osc.start(t);
-          osc.stop(t + 0.25);
-          break;
+          this._playSubDrop(t, 360, 120, 0.20, 0.22, 'sine');
+          this._playNoiseBurst(t, 0.20, 820, 1.2, 0.18, 'bandpass');
+          return;
 
         case 'metal':
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(660, t);
+          osc.frequency.setValueAtTime(620, t);
           osc.frequency.exponentialRampToValueAtTime(240, t + 0.14);
-          gain.gain.setValueAtTime(0.16, t);
+          gain.gain.setValueAtTime(0.15, t);
           gain.gain.exponentialRampToValueAtTime(0.01, t + 0.16);
           osc.start(t);
           osc.stop(t + 0.16);
           break;
 
         case 'sword':
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(850, t);
-          osc.frequency.exponentialRampToValueAtTime(280, t + 0.12);
-          gain.gain.setValueAtTime(0.28, t);
-          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
-          osc.start(t);
-          osc.stop(t + 0.15);
-          break;
+          // Clean steel air-slice (filtered noise whoosh + crisp metallic sheen)
+          this._playNoiseBurst(t, 0.10, 1900, 1.8, 0.20, 'bandpass');
+          this._playSubDrop(t, 680, 240, 0.10, 0.14, 'triangle');
+          return;
 
         case 'overdrive':
-          // Pink Diamond Power-Up Surge Sound
-          [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          // Lush Pink Diamond Power-Up Surge (warm harmonic shimmer chord + deep bass swell, zero harsh sawtooth!)
+          this._playSubDrop(t, 95, 38, 0.45, 0.42, 'sine');
+          this._playNoiseBurst(t, 0.28, 1200, 1.2, 0.16, 'bandpass');
+          [261.63, 329.63, 392.00, 523.25, 659.25, 783.99].forEach((freq, idx) => {
             const o = this.ctx.createOscillator();
             const g = this.ctx.createGain();
-            o.type = 'sawtooth';
-            o.frequency.setValueAtTime(freq, t + idx * 0.05);
-            o.frequency.exponentialRampToValueAtTime(freq * 1.5, t + idx * 0.05 + 0.4);
-            g.gain.setValueAtTime(0.22, t + idx * 0.05);
-            g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.05 + 0.55);
+            o.type = idx % 2 === 0 ? 'triangle' : 'sine';
+            o.frequency.setValueAtTime(freq, t + idx * 0.045);
+            o.frequency.exponentialRampToValueAtTime(freq * 1.25, t + idx * 0.045 + 0.36);
+            g.gain.setValueAtTime(0.13, t + idx * 0.045);
+            g.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.045 + 0.50);
             o.connect(g);
             g.connect(this.getSfxDestination());
-            o.start(t + idx * 0.05);
-            o.stop(t + idx * 0.05 + 0.55);
+            o.start(t + idx * 0.045);
+            o.stop(t + idx * 0.045 + 0.52);
           });
           return;
 
@@ -726,7 +823,7 @@ class GemAudioEngine {
             const toneGain = this.ctx.createGain();
             toneOsc.type = 'triangle';
             toneOsc.frequency.setValueAtTime(freq, t + idx * 0.08);
-            toneGain.gain.setValueAtTime(0.2, t + idx * 0.08);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.08);
             toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.08 + 0.35);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
@@ -736,35 +833,37 @@ class GemAudioEngine {
           return;
 
         case 'waveWarning':
-          // Plants vs Zombies Style Huge Wave Alert Sound (Dramatic Brass Swell)
+          // Warm dramatic brass horn swell (triangle + sub, no buzzy sawtooth)
+          this._playSubDrop(t, 110, 62, 0.55, 0.32, 'sine');
           [130.81, 164.81, 196.00].forEach((freq, idx) => {
             const toneOsc = this.ctx.createOscillator();
             const toneGain = this.ctx.createGain();
-            toneOsc.type = 'sawtooth';
-            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.12);
-            toneOsc.frequency.exponentialRampToValueAtTime(freq * 0.82, t + idx * 0.12 + 0.65);
-            toneGain.gain.setValueAtTime(0.26, t + idx * 0.12);
-            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.12 + 0.7);
+            toneOsc.type = 'triangle';
+            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.11);
+            toneOsc.frequency.exponentialRampToValueAtTime(freq * 0.88, t + idx * 0.11 + 0.55);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.11);
+            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.11 + 0.62);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
-            toneOsc.start(t + idx * 0.12);
-            toneOsc.stop(t + idx * 0.12 + 0.7);
+            toneOsc.start(t + idx * 0.11);
+            toneOsc.stop(t + idx * 0.11 + 0.64);
           });
           return;
 
         case 'bossIntro':
-          // Dramatic Corrupted Boss Fanfare
-          [220.00, 277.18, 329.63, 440.00].forEach((freq, idx) => {
+          // Dramatic Corrupted Boss Fanfare (deep cinematic sub + warm brass triangle chord)
+          this._playSubDrop(t, 100, 36, 0.60, 0.40, 'sine');
+          [220.00, 261.63, 329.63, 440.00].forEach((freq, idx) => {
             const toneOsc = this.ctx.createOscillator();
             const toneGain = this.ctx.createGain();
-            toneOsc.type = 'square';
-            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.14);
-            toneGain.gain.setValueAtTime(0.24, t + idx * 0.14);
-            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.14 + 0.55);
+            toneOsc.type = 'triangle';
+            toneOsc.frequency.setValueAtTime(freq, t + idx * 0.13);
+            toneGain.gain.setValueAtTime(0.18, t + idx * 0.13);
+            toneGain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.13 + 0.55);
             toneOsc.connect(toneGain);
             toneGain.connect(this.getSfxDestination());
-            toneOsc.start(t + idx * 0.14);
-            toneOsc.stop(t + idx * 0.14 + 0.55);
+            toneOsc.start(t + idx * 0.13);
+            toneOsc.stop(t + idx * 0.13 + 0.56);
           });
           return;
 

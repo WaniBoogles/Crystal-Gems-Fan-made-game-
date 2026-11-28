@@ -77,6 +77,122 @@ class ParticleSystem {
     });
   }
 
+  // Tekken / Genshin Dopamine Hit Burst: differentiated light vs heavy vs crit impact choreography
+  addTekkenHitBurst(x, y, dirX = 1, color = '#fde047', tier = 'light') {
+    const scale = this.particleScale || 1;
+    const facing = dirX >= 0 ? 1 : -1;
+    const baseAngle = facing >= 0 ? 0 : Math.PI;
+    const isCrit = tier === 'crit';
+    const isHeavy = tier === 'heavy' || isCrit;
+
+    // 1. Crisp core cross-flare (small snappy flash for light; huge blazing star for heavy/crit)
+    this.addHitSpark(x, y, isCrit ? '#fde047' : color, isCrit ? 34 : (isHeavy ? 26 : 16), (Math.random() - 0.5) * 0.6);
+    if (isHeavy) {
+      this.addHitSpark(x, y, '#ffffff', isCrit ? 24 : 18, Math.PI / 4 + (Math.random() - 0.5) * 0.35);
+    }
+
+    // 2. Expanding shockwave ring(s)
+    if (isCrit) {
+      this.addShockwaveRing(x, y, 138, '#fde047', 4.6);
+      this.addShockwaveRing(x, y, 92, '#ffffff', 3.2);
+      this.addShockwaveRing(x, y, 112, color, 2.8);
+      this.addImpactFrame(x, y, color, 165);
+    } else if (isHeavy) {
+      this.addShockwaveRing(x, y, 102, color, 3.6);
+      this.addShockwaveRing(x, y, 64, '#ffffff', 2.4);
+    } else {
+      this.addShockwaveRing(x, y, 44, color, 2.0);
+    }
+
+    // 3. Directional high-velocity Tekken impact streaks
+    const streakCount = Math.max(3, Math.round((isCrit ? 14 : (isHeavy ? 10 : 6)) * scale));
+    for (let i = 0; i < streakCount; i++) {
+      const spread = isHeavy ? 1.85 : 1.15;
+      const ang = baseAngle + (Math.random() - 0.5) * spread;
+      const spd = (isCrit ? 11 : (isHeavy ? 8.5 : 5.5)) + Math.random() * 5.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - (Math.random() * 1.4),
+        angle: ang,
+        length: (isCrit ? 34 : (isHeavy ? 24 : 14)) + Math.random() * 12,
+        width: isCrit ? 3.4 : (isHeavy ? 2.6 : 1.8),
+        color: (i % 3 === 0) ? '#ffffff' : (isCrit && i % 3 === 1 ? '#fde047' : color),
+        life: isHeavy ? 0.52 : 0.38,
+        decay: isHeavy ? 0.048 : 0.058,
+        isTekkenStreak: true
+      });
+    }
+
+    // 4. Floating embers / sparks for heavy/crit dopamine tail
+    if (isHeavy) {
+      const emberCount = Math.max(3, Math.round((isCrit ? 12 : 7) * scale));
+      for (let i = 0; i < emberCount; i++) {
+        const ang = baseAngle + (Math.random() - 0.5) * 2.1;
+        const spd = 2.8 + Math.random() * 5.2;
+        this.particles.push({
+          x, y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 1.5,
+          size: (isCrit ? 4.8 : 3.6) + Math.random() * 2.2,
+          color: i % 2 === 0 ? '#ffffff' : (isCrit ? '#fde047' : color),
+          life: 0.85,
+          decay: 0.032,
+          isStar: true
+        });
+      }
+    }
+  }
+
+  // Front-Guard Shield Shatter VFX: flying cyan energy shards + expanding shatter ring
+  addGuardShatterVFX(x, y, color = '#38bdf8') {
+    const scale = this.particleScale || 1;
+    this.addShockwaveRing(x, y, 130, color, 4.2);
+    this.addShockwaveRing(x, y, 85, '#ffffff', 2.8);
+    this.addHitSpark(x, y, '#ffffff', 30, 0);
+    const shardCount = Math.max(5, Math.round(14 * scale));
+    for (let i = 0; i < shardCount; i++) {
+      const ang = (i / shardCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.35;
+      const spd = 4.5 + Math.random() * 6.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 2.2,
+        gravity: 0.28,
+        rot: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.42,
+        size: 5 + Math.random() * 5,
+        color: i % 3 === 0 ? '#ffffff' : color,
+        life: 0.95,
+        decay: 0.028,
+        isDebris: true
+      });
+    }
+  }
+
+  // Hyper-Armor Clang VFX: crisp metallic cross sparks + amber ring
+  addArmorClangVFX(x, y, color = '#fbbf24') {
+    this.addHitSpark(x, y, color, 20, Math.PI / 4);
+    this.addShockwaveRing(x, y, 56, color, 2.5);
+    const count = Math.max(3, Math.round(6 * (this.particleScale || 1)));
+    for (let i = 0; i < count; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 3.5 + Math.random() * 4.5;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 1.2,
+        angle: ang,
+        length: 14 + Math.random() * 8,
+        width: 2.2,
+        color: i % 2 === 0 ? '#ffffff' : color,
+        life: 0.42,
+        decay: 0.055,
+        isTekkenStreak: true
+      });
+    }
+  }
+
   addPerfectParryVFX(x, y) {
     this.addParryClash(x, y, '#fde047');
   }
@@ -603,6 +719,10 @@ class ParticleSystem {
         p.vy += p.gravity;
         p.rot += p.rotSpeed;
       }
+      if (p.isTekkenStreak) {
+        p.vx *= 0.90;
+        p.vy *= 0.90;
+      }
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
@@ -714,6 +834,22 @@ class ParticleSystem {
         ctx.fill();
         ctx.restore();
         p.angle += p.rotSpeed * 0.016;
+      } else if (p.isTekkenStreak) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life * 1.8);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        const len = p.length * (0.55 + p.life);
+        const w = Math.max(1, (p.width || 2.4) * p.life * 1.6);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.moveTo(len * 0.65, 0);
+        ctx.lineTo(-len * 0.55, -w);
+        ctx.lineTo(-len * 0.25, 0);
+        ctx.lineTo(-len * 0.55, w);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       } else if (p.isSpeedStreak) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.life) * 0.75;

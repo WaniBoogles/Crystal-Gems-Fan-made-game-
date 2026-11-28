@@ -10,6 +10,17 @@ class StevenUniverseGame {
     this.stageWidth = 2600; // Wide stage arena!
     this.cameraX = 0;
     this.cameraZoom = 1.0;
+    this.zoomImpulse = 0;
+    this.zoomImpulseTimer = 0;
+    this.camFocusX = cw / 2;
+    this.camFocusY = this.groundY - 70;
+    this.zoomFocusX = null;
+    this.zoomFocusY = null;
+    this.shakeDirX = 0;
+    this.shakeDirY = 0;
+    this.combatBadgeText = '';
+    this.combatBadgeColor = '#fde047';
+    this.combatBadgeTimer = 0;
     this.environment = new EnvironmentRenderer(cw, ch, this.stageWidth);
 
     this.playerMode = SafeStorage.getItem('su_playerMode') || '1p';
@@ -939,11 +950,34 @@ class StevenUniverseGame {
     }
   }
 
-  triggerHitstop(duration = 0.045, shake = 3.5) {
-    // Only trigger if not already active to prevent chain-freezing on continuous attacks
-    if (this.hitstopTimer > 0) return;
-    this.hitstopTimer = Math.min(0.05, duration);
-    this.hitShake = Math.max(this.hitShake, Math.min(4.5, shake));
+  triggerHitstop(duration = 0.045, shake = 3.5, dirX = 0, dirY = 0) {
+    // Allow heavier finishers/crits to upgrade a shorter active hitstop without chain-locking
+    const clampedDur = Math.min(0.095, Math.max(0.012, duration));
+    if (clampedDur > this.hitstopTimer) {
+      this.hitstopTimer = clampedDur;
+    }
+    this.hitShake = Math.max(this.hitShake, Math.min(8.5, shake));
+    if (dirX || dirY) {
+      this.shakeDirX = Math.max(-14, Math.min(14, (this.shakeDirX || 0) * 0.4 + dirX));
+      this.shakeDirY = Math.max(-10, Math.min(10, (this.shakeDirY || 0) * 0.4 + dirY));
+    }
+  }
+
+  triggerCameraZoom(delta = 0.06, duration = 0.26, focusX = null, focusY = null) {
+    const clamped = Math.max(-0.08, Math.min(0.14, delta));
+    if (Math.abs(clamped) >= Math.abs(this.zoomImpulse || 0) || (this.zoomImpulseTimer || 0) <= 0.05) {
+      this.zoomImpulse = clamped;
+      this.zoomImpulseTimer = Math.max(this.zoomImpulseTimer || 0, Math.min(0.85, duration));
+      if (typeof focusX === 'number' && !isNaN(focusX)) this.zoomFocusX = focusX;
+      if (typeof focusY === 'number' && !isNaN(focusY)) this.zoomFocusY = focusY;
+    }
+  }
+
+  showCombatBadge(text, color = '#fde047', duration = 1.05) {
+    if (!text) return;
+    this.combatBadgeText = String(text);
+    this.combatBadgeColor = color || '#fde047';
+    this.combatBadgeTimer = duration;
   }
 
   // Freebuff: finishing a 3-hit chain feeds the fusion meter — teamwork pays off
@@ -2121,13 +2155,25 @@ class StevenUniverseGame {
 
       if (this.hitstopTimer > 0) {
         this.hitstopTimer -= dt;
-        if (this.hitShake > 0) this.hitShake = Math.max(0, this.hitShake - dt * 25);
+        if (this.hitShake > 0) this.hitShake = Math.max(0, this.hitShake - dt * 26);
+        this.shakeDirX *= Math.pow(0.001, dt);
+        this.shakeDirY *= Math.pow(0.001, dt);
         this.render();
         requestAnimationFrame((t) => this.gameLoop(t));
         return;
       }
       if (this.hitShake > 0) {
-        this.hitShake = Math.max(0, this.hitShake - dt * 25);
+        this.hitShake = Math.max(0, this.hitShake - dt * 26);
+      }
+      if (Math.abs(this.shakeDirX) > 0.1 || Math.abs(this.shakeDirY) > 0.1) {
+        this.shakeDirX *= Math.pow(0.0008, dt);
+        this.shakeDirY *= Math.pow(0.0008, dt);
+      } else {
+        this.shakeDirX = 0;
+        this.shakeDirY = 0;
+      }
+      if (this.combatBadgeTimer > 0) {
+        this.combatBadgeTimer = Math.max(0, this.combatBadgeTimer - dt);
       }
 
       if (this.state === 'playing') {
@@ -2247,30 +2293,60 @@ class StevenUniverseGame {
     this.cameraX += (targetCamX - this.cameraX) * Math.min(1, dt * 6.5);
     this.cameraX = Math.max(0, Math.min(this.stageWidth - this.canvas.width, this.cameraX));
 
-    // Dynamic Camera Zooming: Close-quarters combat & skills vs roaming & wide separation
+    // Dynamic Camera Zooming (Genshin / Tekken spicy zoom-in & smooth zoom-out)
+    if (this.zoomImpulseTimer > 0) {
+      this.zoomImpulseTimer = Math.max(0, this.zoomImpulseTimer - dt);
+      if (this.zoomImpulseTimer <= 0) {
+        this.zoomImpulse = 0;
+        this.zoomFocusX = null;
+        this.zoomFocusY = null;
+      }
+    }
+
     let targetZoom = 1.0;
+    const anyOverdrive = !!(this.isOverdriveActive || this.isOverdriveActiveP2 || (this.player && this.player.isPinkOverdrive));
     if (this.playerMode === '2p' && this.player2) {
       const pDist = Math.abs(this.player.x - this.player2.x);
       if (pDist > 450) {
         targetZoom = Math.max(0.85, 1.0 - (pDist - 450) * 0.00035);
+      } else if (anyOverdrive || this.isFused) {
+        targetZoom = 1.07;
       }
     } else {
       if (!this.player.isGrounded && this.player.y < 340) {
         targetZoom = 0.93; // Leaping / high aerial view
-      } else if (this.isPinkOverdrive || this.isOverdriveActive || this.isFused || (this.player.isAttacking && this.player.actionType === 'skill')) {
-        targetZoom = 1.12; // Visceral close-up during intense combat & ultimate skills!
+      } else if (anyOverdrive || this.isFused || (this.player.isAttacking && this.player.actionType === 'skill')) {
+        targetZoom = 1.11; // Visceral close-up during intense combat & ultimate skills!
       } else {
-        const boss = this.enemyManager.enemies.find(e => e.isBoss && !e.isDead);
-        if (boss && Math.hypot(boss.x - this.player.x, boss.y - this.player.y) < 240) {
-          targetZoom = 1.08; // Boss close quarters duel
-        } else if (this.combo >= 6) {
-          targetZoom = 1.05; // Subtle focus pulse during high combo flow
+        const boss = this.enemyManager.enemies.find(e => e.isBoss && !e.isPoofed && !e.isImmortalDummy);
+        if (boss && Math.hypot(boss.x - this.player.x, boss.y - this.player.y) < 250) {
+          targetZoom = 1.07; // Boss close quarters duel
+        } else if ((this.comboHits || 0) >= 6) {
+          targetZoom = 1.04; // Subtle focus pulse during high combo flow
         }
       }
     }
+    const desiredZoom = targetZoom + (this.zoomImpulseTimer > 0 ? (this.zoomImpulse || 0) : 0);
     const minZoom = (this.playerMode === '2p' && this.player2) ? 0.85 : 0.92;
-    this.cameraZoom = (this.cameraZoom || 1.0) + (targetZoom - (this.cameraZoom || 1.0)) * Math.min(1, dt * 4.2);
-    this.cameraZoom = Math.max(minZoom, Math.min(1.14, this.cameraZoom));
+    const zoomRate = desiredZoom > (this.cameraZoom || 1.0) ? 7.8 : 4.4;
+    this.cameraZoom = (this.cameraZoom || 1.0) + (desiredZoom - (this.cameraZoom || 1.0)) * Math.min(1, dt * zoomRate);
+    this.cameraZoom = Math.max(minZoom, Math.min(1.18, this.cameraZoom));
+
+    // Smooth camera focus point (shifts toward impact/boss/hero during zoom-in)
+    const defaultFocusX = (this.playerMode === '2p' && this.player2)
+      ? ((this.player.x + this.player2.x) / 2)
+      : this.player.x;
+    const defaultFocusY = (this.playerMode === '2p' && this.player2)
+      ? ((this.player.y + this.player2.y) / 2) - 65
+      : this.player.y - 68;
+    const targetFocusX = (this.zoomImpulseTimer > 0 && typeof this.zoomFocusX === 'number')
+      ? (defaultFocusX * 0.45 + this.zoomFocusX * 0.55)
+      : defaultFocusX;
+    const targetFocusY = (this.zoomImpulseTimer > 0 && typeof this.zoomFocusY === 'number')
+      ? (defaultFocusY * 0.45 + this.zoomFocusY * 0.55)
+      : defaultFocusY;
+    this.camFocusX += (targetFocusX - this.camFocusX) * Math.min(1, dt * 7.5);
+    this.camFocusY += (targetFocusY - this.camFocusY) * Math.min(1, dt * 6.5);
 
     // Update Plants vs Zombies style wave progression bar
     this.updateWaveLine();
@@ -2975,6 +3051,7 @@ class StevenUniverseGame {
       this.player.activatePinkOverdrive(this.overdriveDuration);
 
       this.audio.playSfx('overdrive');
+      this.triggerCameraZoom(0.10, 0.50, this.player.x, this.player.y - 64);
       const theme = OVERDRIVE_THEMES[this.player.activeChar] || OVERDRIVE_THEMES.steven;
       const dualNow = isFusedBody && this.isOverdriveActiveP2;
       if (isFusedBody) {
@@ -3003,6 +3080,8 @@ class StevenUniverseGame {
       this.player2.activatePinkOverdrive(this.overdriveDuration);
 
       this.audio.playSfx('overdrive');
+      const odTarget = isFusedBody ? this.player : this.player2;
+      if (odTarget) this.triggerCameraZoom(0.10, 0.50, odTarget.x, odTarget.y - 64);
       const theme = OVERDRIVE_THEMES[this.player2.activeChar] || OVERDRIVE_THEMES.garnet;
       const dualNow = isFusedBody && this.isOverdriveActive;
       if (isFusedBody && this.player) {
@@ -3250,16 +3329,23 @@ class StevenUniverseGame {
     const boss = this.enemyManager.enemies.find(en => en.isBoss && !en.isPoofed && !en.isImmortalDummy);
     let shakeX = 0;
     let shakeY = 0;
-    if (this.hitShake && this.hitShake > 0) {
-      shakeX += (Math.random() - 0.5) * this.hitShake * 2.2;
-      shakeY += (Math.random() - 0.5) * this.hitShake * 2.2;
-    }
-    if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
-      const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
-      const amp = 1.4 + 4.2 * frac;
-      const t = Date.now() / 42;
-      shakeX = Math.sin(t) * amp;
-      shakeY = Math.cos(t * 1.7) * amp * 0.7;
+    const shakeAllowed = (this.screenShakeEnabled !== false);
+    if (shakeAllowed) {
+      if (this.hitShake && this.hitShake > 0) {
+        shakeX += (Math.random() - 0.5) * this.hitShake * 2.1;
+        shakeY += (Math.random() - 0.5) * this.hitShake * 2.1;
+      }
+      if (this.shakeDirX || this.shakeDirY) {
+        shakeX += (this.shakeDirX || 0);
+        shakeY += (this.shakeDirY || 0);
+      }
+      if (boss && boss.maxHp > 0 && boss.hp / boss.maxHp < 0.3) {
+        const frac = Math.min(1, (1 - (boss.hp / boss.maxHp) / 0.3));
+        const amp = 1.4 + 4.2 * frac;
+        const t = Date.now() / 42;
+        shakeX += Math.sin(t) * amp;
+        shakeY += Math.cos(t * 1.7) * amp * 0.7;
+      }
     }
     this.ctx.save();
     this.ctx.translate(shakeX, shakeY);
@@ -3267,14 +3353,19 @@ class StevenUniverseGame {
     // 1. Far Parallax Background (Screen Space)
     this.environment.drawBackground(this.ctx, this.stageIndex, this.cameraX, this.gameMode === 'practice');
 
-    // 2. World Space Elements (Shifted by camera offset -cameraX and scaled by cameraZoom)
+    // 2. World Space Elements (Safe Clamped Zoom-In / Zoom-Out without edge bleed or ground drift)
     this.ctx.save();
-    const viewCenterX = this.canvas.width / 2;
-    const viewCenterY = this.canvas.height * 0.58;
-    this.ctx.translate(viewCenterX, viewCenterY);
-    this.ctx.scale(this.cameraZoom, this.cameraZoom);
-    this.ctx.translate(-viewCenterX, -viewCenterY);
-    this.ctx.translate(-Math.round(this.cameraX), 0);
+    const z = Math.max(0.84, Math.min(1.18, this.cameraZoom || 1.0));
+    const cw = this.canvas.width;
+    const ch = this.canvas.height;
+    const visW = cw / z;
+    const visH = ch / z;
+    const focusX = (typeof this.camFocusX === 'number' && !isNaN(this.camFocusX)) ? this.camFocusX : (this.cameraX + cw / 2);
+    const focusY = (typeof this.camFocusY === 'number' && !isNaN(this.camFocusY)) ? this.camFocusY : (this.groundY - 68);
+    const camLeft = Math.max(0, Math.min(Math.max(0, this.stageWidth - visW), focusX - visW / 2));
+    const camTop = z < 1 ? (ch - visH) : Math.max(0, Math.min(ch - visH, focusY - visH * 0.58));
+    this.ctx.scale(z, z);
+    this.ctx.translate(-Math.round(camLeft), -Math.round(camTop));
 
     // Foreground Terrain & Platforms across full 2600px
     this.environment.drawForeground(this.ctx, this.stageIndex, this.gameMode === 'practice');
@@ -3301,11 +3392,102 @@ class StevenUniverseGame {
       this.player2.draw(this.ctx);
     }
 
-    // Particle System & Hit Numbers (culled to camera viewport for smooth FPS)
-    this.particles.draw(this.ctx, this.cameraX - 240, this.cameraX + this.canvas.width + 240);
+    // Particle System & Hit Numbers (culled to zoomed camera viewport for smooth FPS)
+    this.particles.draw(this.ctx, camLeft - 240, camLeft + visW + 240);
 
     this.ctx.restore();
     this.ctx.restore(); // screen-shake transform
+
+    // 3. Screen-Space Combat Clarity HUD (Boss Breakout Meter, Combat Badges, Practice Dojo Guide)
+    if (this.state === 'playing') {
+      this.drawCombatClarityOverlay(boss);
+    }
+  }
+
+  drawCombatClarityOverlay(boss) {
+    const ctx = this.ctx;
+    const cw = this.canvas.width;
+    ctx.save();
+
+    // A. Boss 20% Combo-Breakout Warning Meter (surfaces hidden anti-stunlock mechanic clearly)
+    if (boss && boss.maxHp > 0 && (boss.comboDamageTaken || 0) > 0) {
+      const pct = Math.min(1, (boss.comboDamageTaken || 0) / (boss.maxHp * 0.20));
+      const bw = 220;
+      const bh = 8;
+      const bx = Math.round((cw - bw) / 2);
+      const by = 82;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+      ctx.fillRect(bx - 2, by - 2, bw + 4, bh + 4);
+      ctx.fillStyle = pct >= 0.75 ? '#ef4444' : (pct >= 0.45 ? '#f59e0b' : '#38bdf8');
+      ctx.fillRect(bx, by, Math.round(bw * pct), bh);
+      ctx.font = "800 10px 'Nunito', sans-serif";
+      ctx.textAlign = 'center';
+      ctx.fillStyle = pct >= 0.75 ? '#fecaca' : '#e2e8f0';
+      ctx.fillText(pct >= 0.75 ? 'BOSS BREAKOUT IMMINENT!' : 'BOSS BREAKOUT GAUGE', cw / 2, by - 5);
+    }
+
+    // B. Crisp Tactical Combat Badge (GUARD SHATTER, ARMOR BREAK, DASH CANCEL, JUMP CANCEL)
+    const activeBadge = (this.combatBadgeTimer > 0 && this.combatBadgeText)
+      ? { text: this.combatBadgeText, color: this.combatBadgeColor, alpha: Math.min(1, this.combatBadgeTimer * 2.5) }
+      : (this.player && this.player.lastCancelTimer > 0 && this.player.lastCancelTag)
+        ? { text: this.player.lastCancelTag, color: '#38bdf8', alpha: Math.min(1, this.player.lastCancelTimer * 2.5) }
+        : null;
+    if (activeBadge) {
+      ctx.globalAlpha = activeBadge.alpha;
+      ctx.font = "900 13px 'Fredoka One', 'Nunito', sans-serif";
+      const tw = ctx.measureText(activeBadge.text).width + 26;
+      const bx = Math.round((cw - tw) / 2);
+      const by = 104;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
+      ctx.strokeStyle = activeBadge.color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, tw, 24, 12);
+      else ctx.rect(bx, by, tw, 24);
+      ctx.fill();
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillStyle = activeBadge.color;
+      ctx.fillText(activeBadge.text, cw / 2, by + 16);
+      ctx.globalAlpha = 1;
+    }
+
+    // C. Practice Dojo Hidden-Mechanics Clarity Strip (live indicators when training)
+    if (this.gameMode === 'practice' && this.player) {
+      const p = this.player;
+      const pills = [
+        { label: 'PERFECT LINK +12%', active: !!p.lastPerfectLink && p.comboStepTimer > 0, color: '#fde047' },
+        { label: 'CANCEL WINDOW', active: (p.hitConfirmTimer || 0) > 0, color: '#38bdf8' },
+        { label: 'PARRY 140ms [I]', active: (p.parryWindow || 0) > 0, color: '#4ade80' },
+        { label: 'GUARD BREAK: FINISHER / [K] / [L]', active: !!p.isFinisherSwing && p.isAttacking, color: '#f472b6' }
+      ];
+      ctx.font = "800 11px 'Nunito', sans-serif";
+      let totalW = 0;
+      const widths = pills.map(pl => {
+        const w = ctx.measureText(pl.label).width + 18;
+        totalW += w + 8;
+        return w;
+      });
+      let px = Math.round((cw - totalW) / 2);
+      const py = 136;
+      pills.forEach((pl, idx) => {
+        const w = widths[idx];
+        ctx.fillStyle = pl.active ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.58)';
+        ctx.strokeStyle = pl.active ? pl.color : 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = pl.active ? 2 : 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(px, py, w, 22, 11);
+        else ctx.rect(px, py, w, 22);
+        ctx.fill();
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.fillStyle = pl.active ? pl.color : '#cbd5e1';
+        ctx.fillText(pl.label, px + w / 2, py + 15);
+        px += w + 8;
+      });
+    }
+
+    ctx.restore();
   }
 
   drawPickup(p) {
@@ -4919,6 +5101,7 @@ class StevenUniverseGame {
     this.player.actionTimer = 1.3;
 
     const targetX = (this.playerMode === '2p' && this.player2) ? (this.player.x + this.player2.x) / 2 : this.player.x;
+    this.triggerCameraZoom(0.12, 0.60, targetX, this.groundY - 75);
     this.player.x = targetX;
     this.player.y = this.groundY;
     this.player.vx = 0;
@@ -6060,33 +6243,36 @@ class StevenUniverseGame {
         }
       };
 
+      const bufP1 = (act) => { if (!e.repeat && this.player && typeof this.player.bufferInput === 'function') this.player.bufferInput(act, 0.11); };
+      const bufP2 = (act) => { if (!e.repeat && this.player2 && typeof this.player2.bufferInput === 'function') this.player2.bufferInput(act, 0.11); };
+
       if (this.playerMode === '2p') {
         // Player 1 Controls (Left Hand side of keyboard)
         if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
         if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
-        if (e.code === 'KeyW') this.keysP1.jump = true;
+        if (e.code === 'KeyW') { this.keysP1.jump = true; bufP1('jump'); }
         if (e.code === 'KeyS') { this.keysP1.down = true; this.keysP1.shield = true; }
-        if (e.code === 'KeyE') { this.keysP1.dodge = true; this.triggerSlotAnimation('slotI'); }
-        if (e.code === 'KeyF') { this.keysP1.attack = true; this.triggerSlotAnimation('slotJ'); }
-        if (e.code === 'KeyG') { this.keysP1.special = true; this.triggerSlotAnimation('slotK'); }
-        if (e.code === 'KeyH') { this.keysP1.skill = true; this.triggerSlotAnimation('slotL'); }
+        if (e.code === 'KeyE') { this.keysP1.dodge = true; bufP1('dodge'); this.triggerSlotAnimation('slotI'); }
+        if (e.code === 'KeyF') { this.keysP1.attack = true; bufP1('attack'); this.triggerSlotAnimation('slotJ'); }
+        if (e.code === 'KeyG') { this.keysP1.special = true; bufP1('special'); this.triggerSlotAnimation('slotK'); }
+        if (e.code === 'KeyH') { this.keysP1.skill = true; bufP1('skill'); this.triggerSlotAnimation('slotL'); }
         if (e.code === 'KeyR') { this.activatePinkOverdrive('p1'); }
 
         // Player 2 Controls (Right Hand side / Arrow keys)
         if (e.code === 'ArrowLeft') { handleSprintTap(this.keysP2, 'left', 'ArrowLeft'); this.keysP2.left = true; }
         if (e.code === 'ArrowRight') { handleSprintTap(this.keysP2, 'right', 'ArrowRight'); this.keysP2.right = true; }
-        if (e.code === 'ArrowUp') this.keysP2.jump = true;
+        if (e.code === 'ArrowUp') { this.keysP2.jump = true; bufP2('jump'); }
         if (e.code === 'ArrowDown') { this.keysP2.down = true; this.keysP2.shield = true; }
-        if (e.code === 'KeyI') { this.keysP2.dodge = true; this.triggerSlotAnimation('slotP2_I'); }
-        if (e.code === 'KeyJ') { this.keysP2.attack = true; this.triggerSlotAnimation('slotP2_J'); }
-        if (e.code === 'KeyK') { this.keysP2.special = true; this.triggerSlotAnimation('slotP2_K'); }
-        if (e.code === 'KeyL') { this.keysP2.skill = true; this.triggerSlotAnimation('slotP2_L'); }
+        if (e.code === 'KeyI') { this.keysP2.dodge = true; bufP2('dodge'); this.triggerSlotAnimation('slotP2_I'); }
+        if (e.code === 'KeyJ') { this.keysP2.attack = true; bufP2('attack'); this.triggerSlotAnimation('slotP2_J'); }
+        if (e.code === 'KeyK') { this.keysP2.special = true; bufP2('special'); this.triggerSlotAnimation('slotP2_K'); }
+        if (e.code === 'KeyL') { this.keysP2.skill = true; bufP2('skill'); this.triggerSlotAnimation('slotP2_L'); }
         if (e.code === 'KeyO' || e.code === 'KeyP') { this.activatePinkOverdrive('p2'); }
       } else {
         // Solo 1-Player Mode: STRICTLY A, D, W/Space, S, J, K, L, I (Dodge), U/O (Overdrive)
         if (e.code === 'KeyA') { handleSprintTap(this.keysP1, 'left', 'KeyA'); this.keysP1.left = true; }
         if (e.code === 'KeyD') { handleSprintTap(this.keysP1, 'right', 'KeyD'); this.keysP1.right = true; }
-        if (e.code === 'KeyW' || e.code === 'Space') this.keysP1.jump = true;
+        if (e.code === 'KeyW' || e.code === 'Space') { this.keysP1.jump = true; bufP1('jump'); }
         if (e.code === 'KeyS') {
           this.keysP1.down = true;
           this.keysP1.shield = true;
@@ -6094,18 +6280,22 @@ class StevenUniverseGame {
 
         if (e.code === 'KeyJ') {
           this.keysP1.attack = true;
+          bufP1('attack');
           this.triggerSlotAnimation('slotJ');
         }
         if (e.code === 'KeyK') {
           this.keysP1.special = true;
+          bufP1('special');
           this.triggerSlotAnimation('slotK');
         }
         if (e.code === 'KeyL') {
           this.keysP1.skill = true;
+          bufP1('skill');
           this.triggerSlotAnimation('slotL');
         }
         if (e.code === 'KeyI') {
           this.keysP1.dodge = true;
+          bufP1('dodge');
           this.triggerSlotAnimation('slotI');
         }
         if (e.code === 'KeyU' || e.code === 'KeyO') {

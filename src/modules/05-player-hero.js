@@ -84,7 +84,14 @@ class PlayerHero {
     // Acrobatics & Jump Enhancements (Reach platforms effortlessly!)
     this.canDoubleJump = true;
     this.jumpDebounce = false;
-    this.inputBuffer = null; // 5-frame input buffer ({ action, timer })
+    this.inputBuffer = null; // 6-frame (105ms) rising-edge & hitstop-safe input buffer ({ action, timer })
+    this.prevInputs = { attack: false, special: false, skill: false, dodge: false, jump: false };
+    this.hitConfirmTimer = 0;      // Active cancel window after landing a hit
+    this.hitConfirmSwingId = -1;
+    this.isFinisherSwing = false;
+    this.lastPerfectLink = false;
+    this.lastCancelTag = '';
+    this.lastCancelTimer = 0;
 
     // Canonical Gem Fusion Attributes
     this.isFusion = false;
@@ -260,6 +267,18 @@ class PlayerHero {
     }
   }
 
+  // Queue an action into the 6-frame (105ms) buffer — safe to call from keydown even during hitstop!
+  bufferInput(action, windowSec = 0.105) {
+    if (!action || this.isFallen) return;
+    this.inputBuffer = { action, timer: Math.max(0.06, windowSec) };
+  }
+
+  // Open a responsive Hit-Confirm Cancel window (allows dash/jump cancel out of recovery frames)
+  markHitConfirm(isHeavy = false) {
+    this.hitConfirmTimer = isHeavy ? 0.28 : 0.22;
+    this.hitConfirmSwingId = this._swingId || 0;
+  }
+
   update(dt, input, audioEngine, particles, projectiles, pickups, platforms = []) {
     this.animTime = (this.animTime || 0) + dt;
     // Lore-Accurate Knockout / Poofed state freeze: Skip inputs and actions
@@ -414,22 +433,41 @@ class PlayerHero {
       }
     }
 
-    // 5-Frame Input Buffering (~85ms window) to prevent dropped inputs during recovery
-    if (input.attack) this.inputBuffer = { action: 'attack', timer: 0.085 };
-    else if (input.special) this.inputBuffer = { action: 'special', timer: 0.085 };
-    else if (input.skill) this.inputBuffer = { action: 'skill', timer: 0.085 };
-    else if (input.dodge) this.inputBuffer = { action: 'dodge', timer: 0.085 };
-    else if (input.jump && !this.jumpDebounce) this.inputBuffer = { action: 'jump', timer: 0.085 };
+    // 6-Frame (~105ms) Rising-Edge Input Buffering (works seamlessly with keydown hitstop buffering)
+    if (this.hitConfirmTimer > 0) this.hitConfirmTimer = Math.max(0, this.hitConfirmTimer - dt);
+    if (this.lastCancelTimer > 0) this.lastCancelTimer = Math.max(0, this.lastCancelTimer - dt);
+    const prev = this.prevInputs || { attack: false, special: false, skill: false, dodge: false, jump: false };
+    if (input.attack && !prev.attack) this.bufferInput('attack', 0.105);
+    else if (input.special && !prev.special) this.bufferInput('special', 0.105);
+    else if (input.skill && !prev.skill) this.bufferInput('skill', 0.105);
+    else if (input.dodge && !prev.dodge) this.bufferInput('dodge', 0.105);
+    else if (input.jump && !prev.jump && !this.jumpDebounce) this.bufferInput('jump', 0.105);
+    this.prevInputs = {
+      attack: !!input.attack,
+      special: !!input.special,
+      skill: !!input.skill,
+      dodge: !!input.dodge,
+      jump: !!input.jump
+    };
 
     if (this.inputBuffer) {
       this.inputBuffer.timer -= dt;
       if (this.inputBuffer.timer <= 0) this.inputBuffer = null;
     }
 
-    // Dodge Action Execution Check
-    const tryDodgeDirect = input.dodge || (this.inputBuffer?.action === 'dodge' && this.actionTimer <= 0);
-    if (tryDodgeDirect && this.dodgeCooldown <= 0 && !this.isDodging && !this.isSpinDashing) {
+    // Dodge Action Execution Check (with Hit-Confirm Dash Cancel!)
+    const canDashCancel = this.hitConfirmTimer > 0 && this.isAttacking;
+    const tryDodgeDirect = input.dodge || (this.inputBuffer?.action === 'dodge' && (this.actionTimer <= 0 || canDashCancel));
+    if (tryDodgeDirect && (this.dodgeCooldown <= 0 || (canDashCancel && this.dodgeCooldown <= 0.18)) && !this.isDodging && !this.isSpinDashing) {
       if (this.inputBuffer?.action === 'dodge') this.inputBuffer = null;
+      if (canDashCancel) {
+        this.actionTimer = 0;
+        this.attackCooldown = 0;
+        this.dodgeCooldown = 0;
+        this.hitConfirmTimer = 0;
+        this.lastCancelTag = 'DASH CANCEL';
+        this.lastCancelTimer = 0.85;
+      }
       this.executeDodge(audioEngine, particles, input);
     }
 
@@ -622,10 +660,19 @@ class PlayerHero {
       this.currentPlatform = null;
     }
 
-    // Enhanced Jump & Double Jump System with 5-Frame Input Buffer
-    const tryJump = (input.jump && !this.jumpDebounce && !input.down) || (this.isGrounded && this.inputBuffer?.action === 'jump');
+    // Enhanced Jump & Double Jump System with 6-Frame Input Buffer & Hit-Confirm Jump Cancel
+    const canJumpCancel = this.hitConfirmTimer > 0 && this.isAttacking;
+    const tryJump = (input.jump && !this.jumpDebounce && !input.down) || ((this.isGrounded || canJumpCancel) && this.inputBuffer?.action === 'jump');
     if (tryJump) {
       if (this.inputBuffer?.action === 'jump') this.inputBuffer = null;
+      if (canJumpCancel) {
+        this.actionTimer = 0;
+        this.isAttacking = false;
+        this.attackCooldown = Math.min(this.attackCooldown, 0.05);
+        this.hitConfirmTimer = 0;
+        this.lastCancelTag = 'JUMP CANCEL';
+        this.lastCancelTimer = 0.85;
+      }
       if (this.isGrounded) {
         this.vy = -680; // Powerful crisp leap: reaches 192px apex
         this.isGrounded = false;
@@ -935,6 +982,8 @@ class PlayerHero {
     this.comboStep = (this.comboStepTimer > 0) ? (this.comboStep + 1) % chainLen : 0;
     const isFinisher = (this.comboStep === chainLen - 1);
     const perfectLink = (this.comboStepTimer > 0.12 && this.comboStep > 0);
+    this.isFinisherSwing = isFinisher;
+    this.lastPerfectLink = perfectLink;
     this.comboLinkBonus = perfectLink ? 0.12 : 0;
     this.attackCombo = this.comboStep;
     this.attackStyle = profile.style || 'boxer';
@@ -2368,7 +2417,13 @@ class PlayerHero {
         particles.addDamageText(this.x, this.y - 65, '★ PERFECT PARRY!', true, '#fde047');
       }
       if (this.gameRef) {
-        this.gameRef.triggerHitstop(0.08, 4.0);
+        this.gameRef.triggerHitstop(0.082, 5.5, -this.facing * 7, -1.5);
+        if (this.gameRef.triggerCameraZoom) {
+          this.gameRef.triggerCameraZoom(0.085, 0.32, this.x, this.y - 48);
+        }
+        if (this.gameRef.showCombatBadge) {
+          this.gameRef.showCombatBadge('PERFECT PARRY!', '#4ade80');
+        }
         if (this.playerId === 'p2') {
           this.gameRef.starPowerMeterP2 = Math.min(100, (this.gameRef.starPowerMeterP2 || 0) + 15);
         } else {

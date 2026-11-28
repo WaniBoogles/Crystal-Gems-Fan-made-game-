@@ -311,7 +311,14 @@ class EnemyManager {
       diveTimer: 0,
       isFrenzied: false,
       name: 'Corrupted Gem',
-      animTime: Math.random() * 10
+      animTime: Math.random() * 10,
+      hitRecoilX: 0,
+      shieldActive: (type === 'destabilizer_soldier' || type === 'boss_agate_warden'),
+      shieldMaxHp: (type === 'boss_agate_warden') ? 140 : (type === 'destabilizer_soldier' ? 45 : 0),
+      shieldHp: (type === 'boss_agate_warden') ? 140 : (type === 'destabilizer_soldier' ? 45 : 0),
+      shieldCooldown: 0,
+      shieldFlashTimer: 0,
+      hyperArmorTimer: 0
     };
 
     if (type === 'centipeetle') {
@@ -763,6 +770,20 @@ class EnemyManager {
         continue;
       }
       if (e.hurtTimer > 0) e.hurtTimer -= dt;
+      if (e.hitRecoilX) {
+        e.hitRecoilX *= Math.pow(0.0015, dt);
+        if (Math.abs(e.hitRecoilX) < 0.25) e.hitRecoilX = 0;
+      }
+      if (e.shieldFlashTimer > 0) e.shieldFlashTimer = Math.max(0, e.shieldFlashTimer - dt);
+      if (e.hyperArmorTimer > 0) e.hyperArmorTimer = Math.max(0, e.hyperArmorTimer - dt);
+      if (e.shieldMaxHp > 0 && !e.shieldActive) {
+        e.shieldCooldown = Math.max(0, (e.shieldCooldown || 0) - dt);
+        if (e.shieldCooldown <= 0 && e.stunTimer <= 0 && e.hurtTimer <= 0) {
+          e.shieldActive = true;
+          e.shieldHp = e.shieldMaxHp;
+          if (particles) particles.addShockwaveRing(e.x, e.y - e.height * 0.5, 48, '#38bdf8', 2.4);
+        }
+      }
 
       // --- GEM COMBAT TYPE STATUSES ----------------------------------------
       if (e.vulnTimer > 0) { e.vulnTimer -= dt; if (e.vulnTimer <= 0) e.vulnMult = 1; }
@@ -795,8 +816,8 @@ class EnemyManager {
         }
       }
 
-      // Freebuff: clean hits interrupt a wind-up, rewarding aggressive play
-      if (e.hurtTimer > 0 && e.windup > 0) {
+      // Freebuff: clean hits interrupt a wind-up, rewarding aggressive play (unless Hyper-Armor is active)
+      if (e.hurtTimer > 0 && e.windup > 0 && !(e.hyperArmorTimer > 0)) {
         e.windup = 0;
         e.aiState = 'staggered';
       }
@@ -1083,6 +1104,10 @@ class EnemyManager {
           e.windup = this.getEnemyTelegraph(e);
           e.windupMax = e.windup;
           e.aiState = 'windup';
+          // Heavy brute enemies gain brief Hyper-Armor during windup charge (broken by Armor Break, [L], Fusion, or 2x weakness)
+          if (e.type === 'cluster' || e.type === 'obsidian' || e.type === 'forge_automaton') {
+            e.hyperArmorTimer = Math.min(0.55, e.windup + 0.08);
+          }
           if (audioEngine) audioEngine.playSfx('windup');
           if (particles) {
             particles.addDamageText(e.x, e.y - e.height - 26, '!', true, '#ef4444');
@@ -1744,18 +1769,33 @@ class EnemyManager {
           dmg = Math.round(dmg * 1.25);
         }
 
-        this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType), pStats);
+        const isFinisherHit = !!(player.isFinisherSwing || player.comboStep >= 2 || player.attackType === 'L' || player.isFusion);
+        const isHeavyHit = !!(isFinisherHit || player.attackType === 'K' || player.attackArmorBreak || player.isPinkOverdrive);
+        const meleeOpts = {
+          ...pStats,
+          isHeavy: isHeavyHit,
+          isFinisher: isFinisherHit,
+          armorBreak: !!player.attackArmorBreak,
+          attackerX: player.x,
+          attackerFacing: player.facing,
+          attackSlot: player.attackType || 'J',
+          isFusion: !!player.isFusion,
+          player
+        };
+        const hitRes = this.damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, player.getMoveType(player.attackType), player.getStabMultiplier(player.attackType), meleeOpts);
+        if (hitRes && (hitRes.blocked || hitRes.hyperArmored)) {
+          return;
+        }
+        if (typeof player.markHitConfirm === 'function') {
+          player.markHitConfirm(isHeavyHit || !!(hitRes && hitRes.isCrit));
+        }
         const sparkColor = player.isPinkOverdrive ? '#f43f5e' : ((typeof OVERDRIVE_THEMES !== 'undefined' && OVERDRIVE_THEMES[player.activeChar]?.color) || '#fde047');
         particles.addImpactSparks(e.x, e.y - e.height / 2, player.facing, sparkColor, 12);
-        if (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion) {
+        if (isFinisherHit) {
           particles.addImpactFrame(e.x, e.y - e.height / 2, sparkColor, player.isFusion ? 200 : 155);
           if (['connie', 'rose', 'pearl'].includes(player.activeChar) || (player.isFusion && ['stevonnie', 'rainbow2', 'rainbowClassic'].includes(player.fusionData?.id))) {
             particles.addDoubleSlashX(e.x - player.facing * 12, e.y - e.height / 2, player.facing, sparkColor);
           }
-        }
-        if (this.gameRef && this.gameRef.triggerHitstop) {
-          const isFinisherHit = (player.comboStep >= 2 || player.attackType === 'L' || player.isFusion);
-          this.gameRef.triggerHitstop(isFinisherHit ? 0.062 : 0.036, isFinisherHit ? 5.0 : 2.6);
         }
 
         // ENEMY STAGGER & KNOCKBACK FOR CLOSE-RANGE / MELEE ATTACKS
@@ -2121,60 +2161,149 @@ class EnemyManager {
   }
 
   damageEnemy(e, dmg, particles, audioEngine, onPoofed, enemyIndex, attackType = null, stabMult = 1, combatOpts = null) {
-    if (e.isPoofed) return;
+    if (e.isPoofed) return { ignored: true };
 
     const moveType = attackType ? String(attackType).toLowerCase() : null;
     const typeMeta = getTypeMeta(moveType || 'normal');
     const typeMult = typeMultiplier(moveType, e.types);
     const vulnMult = (e.vulnTimer > 0 ? (e.vulnMult || 1) : 1);
+    const opts = combatOpts || {};
+    const attackerX = (typeof opts.attackerX === 'number') ? opts.attackerX : (this.gameRef && this.gameRef.player ? this.gameRef.player.x : e.x - (e.facing || 1) * 60);
+    const hitDirX = (typeof opts.attackerFacing === 'number' && opts.attackerFacing !== 0) ? opts.attackerFacing : (e.x >= attackerX ? 1 : -1);
+    const attackSlot = String(opts.attackSlot || '').toUpperCase();
+    const isHeavyMove = !!(opts.isHeavy || opts.isFinisher || opts.isFusion || attackSlot === 'K' || attackSlot === 'L');
+    const isShieldBreaker = !!(opts.armorBreak || opts.isFinisher || opts.isFusion || attackSlot === 'K' || attackSlot === 'L');
 
     // Critical Chance & Critical Damage roll from active guardian's lore stats
     const fallbackStats = (this.gameRef && this.gameRef.player && typeof this.gameRef.player.getCombatStats === 'function')
       ? this.gameRef.player.getCombatStats()
       : null;
-    const critChance = (combatOpts && typeof combatOpts.critChance === 'number')
-      ? combatOpts.critChance
+    const critChance = (typeof opts.critChance === 'number')
+      ? opts.critChance
       : (fallbackStats ? fallbackStats.critChance : 0.12);
-    const critDamage = (combatOpts && typeof combatOpts.critDamage === 'number')
-      ? combatOpts.critDamage
+    const critDamage = (typeof opts.critDamage === 'number')
+      ? opts.critDamage
       : (fallbackStats ? fallbackStats.critDamage : 1.6);
-    const isCrit = (!combatOpts || combatOpts.allowCrit !== false) && (Math.random() < critChance);
+    const isCrit = (opts.allowCrit !== false) && (Math.random() < critChance);
     const critMult = isCrit ? critDamage : 1.0;
 
-    const finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult * critMult));
+    let finalDmg = Math.max(1, Math.round(dmg * typeMult * (stabMult || 1) * vulnMult * critMult));
+    const impactY = e.y - e.height * 0.5;
+
+    // --- DEFENSIVE COUNTERPLAY 1: FRONT-GUARD ENERGY SHIELD (Destabilizer Guard & Agate Warden) ---
+    const attackerInFront = ((attackerX - e.x) * (e.facing || -1)) > 0;
+    if (e.shieldActive && attackerInFront && (e.windup || 0) <= 0 && (e.hurtTimer || 0) <= 0 && (e.stunTimer || 0) <= 0) {
+      e.shieldHp = Math.max(0, (e.shieldHp || 0) - finalDmg);
+      if (isShieldBreaker || e.shieldHp <= 0) {
+        // GUARD SHATTER! Opens enemy to full stun & combo punish!
+        e.shieldActive = false;
+        e.shieldHp = 0;
+        e.shieldCooldown = 6.5;
+        e.stunTimer = Math.max(e.stunTimer || 0, 1.15);
+        e.hitRecoilX = hitDirX * 14;
+        if (particles && particles.addGuardShatterVFX) particles.addGuardShatterVFX(e.x + e.facing * 26, impactY, '#38bdf8');
+        if (audioEngine) audioEngine.playSfx('shieldBreak');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.072, 6.8, hitDirX * 10, -2);
+        if (this.gameRef && this.gameRef.triggerCameraZoom) this.gameRef.triggerCameraZoom(0.068, 0.28, e.x, impactY);
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('GUARD SHATTER!', '#38bdf8');
+      } else {
+        // FRONTAL LIGHT HIT BLOCKED: 25% chip damage, metallic cyan ripple, encourages flanking or heavy break
+        const chipDmg = Math.max(1, Math.round(finalDmg * 0.25));
+        e.shieldFlashTimer = 0.18;
+        e.hitRecoilX = hitDirX * 4;
+        if (!e.isImmortalDummy) e.hp = Math.max(1, e.hp - chipDmg);
+        if (particles) {
+          if (particles.addShieldBlockRipple) particles.addShieldBlockRipple(e.x + e.facing * 24, impactY, e.facing, '#38bdf8', 36);
+          particles.addDamageText(e.x, e.y - e.height - 10, `${chipDmg}`, false, '#67e8f9');
+        }
+        if (audioEngine) audioEngine.playSfx('shieldBlock');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.018, 1.6, hitDirX * 2.5, 0);
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('GUARDED — FLANK OR BREAK!', '#67e8f9');
+        return { blocked: true, isCrit: false, isHeavy: false };
+      }
+    }
+
+    // --- DEFENSIVE COUNTERPLAY 2: BRUTE HYPER-ARMOR CHARGE (Cluster, Obsidian, Forge Automaton) ---
+    let absorbedByHyperArmor = false;
+    if ((e.hyperArmorTimer || 0) > 0) {
+      const breaksArmor = !!(opts.armorBreak || attackSlot === 'L' || opts.isFusion || typeMult >= 2);
+      if (breaksArmor) {
+        e.hyperArmorTimer = 0;
+        if (particles && particles.addArmorClangVFX) particles.addArmorClangVFX(e.x, impactY, '#fde047');
+        if (audioEngine) audioEngine.playSfx('shieldBreak');
+        if (this.gameRef && this.gameRef.showCombatBadge) this.gameRef.showCombatBadge('ARMOR BREAK!', '#fbbf24');
+      } else {
+        absorbedByHyperArmor = true;
+        finalDmg = Math.max(1, Math.round(finalDmg * 0.75));
+        e.hitRecoilX = hitDirX * 3.5;
+        if (particles && particles.addArmorClangVFX) particles.addArmorClangVFX(e.x, impactY, '#fbbf24');
+        if (audioEngine) audioEngine.playSfx('armorClang');
+        if (this.gameRef && this.gameRef.triggerHitstop) this.gameRef.triggerHitstop(0.022, 2.2, hitDirX * 3, 0);
+      }
+    }
 
     if (this.onComboHit) {
       this.onComboHit(finalDmg);
     }
 
     const nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-    const canShowFeedback = nowMs - (e._lastFeedbackAt || 0) >= 85;
+    const canShowFeedback = nowMs - (e._lastFeedbackAt || 0) >= 70;
     if (canShowFeedback) {
       e._lastFeedbackAt = nowMs;
     }
 
+    const isBigImpact = !!(isCrit || isHeavyMove || typeMult >= 2 || finalDmg >= 42);
+    const impactTier = (isCrit || opts.isFinisher || opts.isFusion) ? 'crit' : (isBigImpact ? 'heavy' : 'light');
+    const burstColor = isCrit ? '#fde047' : (typeMeta.color || '#ffd700');
+
     // Tekken Practice Dojo: Training dummy takes zero permanent damage!
     if (e.isImmortalDummy) {
       e.hp = e.maxHp;
-      e.hurtTimer = 0.28;
+      if (!absorbedByHyperArmor) e.hurtTimer = 0.28;
+      e.hitRecoilX = hitDirX * (isBigImpact ? 12 : 6);
       if (canShowFeedback) {
-        if (particles) particles.addDamageText(e.x, e.y - e.height - 14, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35, isCrit ? '#fde047' : typeMeta.color);
-        if (audioEngine) audioEngine.playSfx('hitfeedback');
-        if (particles) particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+        if (particles) {
+          particles.addDamageText(e.x, e.y - e.height - 14, isCrit ? `${finalDmg}!` : `${finalDmg}`, isBigImpact, burstColor);
+          if (particles.addTekkenHitBurst) particles.addTekkenHitBurst(e.x, impactY, hitDirX, burstColor, impactTier);
+        }
+        if (audioEngine) audioEngine.playSfx(impactTier === 'crit' ? 'hitCrit' : (impactTier === 'heavy' ? 'hitHeavy' : 'hitLight'));
+      }
+      if (this.gameRef && this.gameRef.triggerHitstop) {
+        this.gameRef.triggerHitstop(impactTier === 'crit' ? 0.064 : (impactTier === 'heavy' ? 0.044 : 0.022), impactTier === 'crit' ? 6.2 : (impactTier === 'heavy' ? 4.2 : 2.0), hitDirX * (isBigImpact ? 8 : 3.5), isBigImpact ? -2 : -0.8);
+      }
+      if (isBigImpact && this.gameRef && this.gameRef.triggerCameraZoom) {
+        this.gameRef.triggerCameraZoom(impactTier === 'crit' ? 0.06 : 0.038, 0.22, e.x, impactY);
       }
       this.applyTypeStatus(e, moveType, particles);
-      return;
+      return { blocked: false, hyperArmored: absorbedByHyperArmor, isCrit, isHeavy: isBigImpact };
     }
 
     e.hp -= finalDmg;
-    e.hurtTimer = 0.35;
+    if (!absorbedByHyperArmor) {
+      e.hurtTimer = 0.35;
+      e.hitRecoilX = hitDirX * (isBigImpact ? 13 : 6);
+    }
     this.applyTypeStatus(e, moveType, particles);
     if (canShowFeedback) {
       if (particles) {
-        particles.addDamageText(e.x, e.y - e.height - 12, isCrit ? `${finalDmg}!` : `${finalDmg}`, isCrit || finalDmg >= 35 || typeMult >= 2, isCrit ? '#fde047' : typeMeta.color);
-        particles.addHitSparks(e.x, e.y - e.height / 2, isCrit ? '#fde047' : (typeMeta.color || '#ffd700'));
+        particles.addDamageText(e.x, e.y - e.height - 12, isCrit ? `${finalDmg}!` : `${finalDmg}`, isBigImpact, burstColor);
+        if (particles.addTekkenHitBurst) particles.addTekkenHitBurst(e.x, impactY, hitDirX, burstColor, impactTier);
+        else particles.addHitSparks(e.x, impactY, burstColor);
       }
-      if (audioEngine) audioEngine.playSfx('hitfeedback');
+      if (audioEngine && !absorbedByHyperArmor) {
+        audioEngine.playSfx(impactTier === 'crit' ? 'hitCrit' : (impactTier === 'heavy' ? 'hitHeavy' : 'hitLight'));
+      }
+    }
+    if (!absorbedByHyperArmor && this.gameRef && this.gameRef.triggerHitstop) {
+      this.gameRef.triggerHitstop(
+        impactTier === 'crit' ? 0.068 : (impactTier === 'heavy' ? 0.046 : 0.022),
+        impactTier === 'crit' ? 6.5 : (impactTier === 'heavy' ? 4.5 : 2.0),
+        hitDirX * (isBigImpact ? 9 : 3.5),
+        isBigImpact ? -2.2 : -0.8
+      );
+    }
+    if (!absorbedByHyperArmor && isBigImpact && this.gameRef && this.gameRef.triggerCameraZoom) {
+      this.gameRef.triggerCameraZoom(impactTier === 'crit' ? 0.062 : 0.038, 0.22, e.x, impactY);
     }
 
     e.comboHitCount = (e.comboHitCount || 0) + 1;
@@ -2191,10 +2320,13 @@ class EnemyManager {
         e.poofTimer = 0.16;
         e.maxPoofTime = 0.16;
         if (this.gameRef && this.gameRef.triggerHitstop) {
-          this.gameRef.triggerHitstop(0.065, 5.0);
+          this.gameRef.triggerHitstop(e.isBoss ? 0.088 : 0.062, e.isBoss ? 8.2 : 5.2, hitDirX * 10, -2.5);
+        }
+        if (e.isBoss && this.gameRef && this.gameRef.triggerCameraZoom) {
+          this.gameRef.triggerCameraZoom(0.11, 0.45, e.x, impactY);
         }
       }
-      return;
+      return { blocked: false, hyperArmored: false, isCrit, isHeavy: isBigImpact, defeated: true };
     }
 
     // Loophole 1 Fix: Boss Super-Armor Breakout Burst (only while boss still has HP > 0)
@@ -2212,14 +2344,18 @@ class EnemyManager {
         particles.addExplosion(e.x, e.y - e.height / 2, '#fbbf24', 28);
         particles.addHitSpark(e.x, e.y - e.height / 2, '#ef4444', 30, 0);
       }
+      if (this.gameRef && this.gameRef.triggerCameraZoom) {
+        this.gameRef.triggerCameraZoom(0.075, 0.30, e.x, impactY);
+      }
       if (this.gameRef && this.gameRef.player) {
         const p = this.gameRef.player;
         const pDir = p.x < e.x ? -1 : 1;
         p.vx = pDir * 380;
         p.vy = -180;
       }
-      return;
+      return { blocked: false, hyperArmored: false, isCrit, isHeavy: isBigImpact, breakout: true };
     }
+    return { blocked: false, hyperArmored: absorbedByHyperArmor, isCrit, isHeavy: isBigImpact };
   }
 
   poofEnemy(e, enemyIndex, particles, audioEngine, onPoofed) {
@@ -2548,7 +2684,7 @@ class EnemyManager {
       ctx.restore();
 
       ctx.save();
-      ctx.translate(e.x, e.y);
+      ctx.translate(e.x + (e.hitRecoilX || 0), e.y);
 
       // Dramatic Warp-In / Corruption Materialize Spawn Animation
       let spawnScaleY = 1;
@@ -2579,6 +2715,50 @@ class EnemyManager {
 
       ctx.scale(e.facing * spawnScaleX, spawnScaleY);
       ctx.globalAlpha *= spawnAlpha;
+
+      // Visual Telegraph: Brute Hyper-Armor Aura (golden-amber armored glint during unstoppable windup)
+      if ((e.hyperArmorTimer || 0) > 0) {
+        const haPulse = 0.55 + 0.45 * Math.sin((e.animTime || 0) * 18);
+        const haR = Math.max(e.width, e.height) * 0.68;
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.fillStyle = `rgba(251, 191, 36, ${0.14 + haPulse * 0.14})`;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.ellipse(0, -e.height * 0.48, haR * 0.82, haR, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Visual Telegraph: Front-Guard Energy Shield (blocks frontal light hits; flank or shatter!)
+      if (e.shieldActive && (e.windup || 0) <= 0 && (e.stunTimer || 0) <= 0) {
+        const shFlash = (e.shieldFlashTimer || 0) > 0;
+        const shR = e.height * 0.56;
+        const shX = (e.width * 0.38) + 8;
+        const shY = -e.height * 0.48;
+        ctx.save();
+        ctx.fillStyle = shFlash ? 'rgba(255, 255, 255, 0.48)' : 'rgba(56, 189, 248, 0.22)';
+        ctx.strokeStyle = shFlash ? '#ffffff' : '#38bdf8';
+        ctx.lineWidth = shFlash ? 4.2 : 3.0;
+        ctx.beginPath();
+        ctx.arc(shX, shY, shR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(shX, shY, shR, -Math.PI * 0.42, Math.PI * 0.42);
+        ctx.lineTo(shX - 8, shY + shR * 0.72);
+        ctx.lineTo(shX - 8, shY - shR * 0.72);
+        ctx.closePath();
+        ctx.fill();
+        // Shield durability bar tick
+        const shPct = Math.max(0, Math.min(1, (e.shieldHp || 0) / Math.max(1, e.shieldMaxHp || 1)));
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.arc(shX - 3, shY, shR * 0.86, -Math.PI * 0.36 * shPct, Math.PI * 0.36 * shPct);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       if (e.isPoofing) {
         const poofProgress = Math.max(0, Math.min(1, 1 - (e.poofTimer / (e.maxPoofTime || 0.16))));
